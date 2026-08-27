@@ -1,0 +1,13 @@
+# Cache e arquivos gerados pelo Godot 4
+.godot/
+/android/
+
+# Builds exportados
+/build/
+/export/
+*.zip
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store

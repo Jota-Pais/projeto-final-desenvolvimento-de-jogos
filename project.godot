@@ -1,0 +1,14 @@
+; Nome do jogo ainda nao definido - e o topico 1 do High Concept.
+; Trocar config/name quando o titulo estiver fechado.
+
+config_version=5
+
+[application]
+
+config/name="Projeto Final - Jogos"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
