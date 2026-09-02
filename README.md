@@ -15,19 +15,50 @@ versões alfa, beta e gold vão ser entregues para o professor rodar.
 O editor é portátil, não tem instalador: baixar em
 <https://godotengine.org/download>, extrair e abrir o `project.godot` desta pasta.
 
+O código se escreve **no editor de script do próprio Godot** (02/09/2026) — é lá
+que a cena, o node e o debugger já estão. Quem preferir VS Code pode ligar o
+editor externo com a extensão `godot-tools`, mas cena continua sendo editada no
+Godot.
+
 ## Estado
 
 Esqueleto. **O jogo ainda não foi definido** — gênero, core mechanic e título
 saem do High Concept, a primeira entrega do projeto final. Por isso não há
-estrutura de pastas nem cenas ainda: `entities/`, `levels/` e o resto dependem
-de saber o que o jogo é.
+estrutura de pastas de verdade nem cenas do jogo: `entities/`, `levels/` e o
+resto dependem de saber o que o jogo é.
+
+A única coisa que roda é a **cena de teste** em `teste-movimento/`, descrita
+abaixo.
 
 Pendentes de decisão da equipe:
 
 - [ ] Título do jogo — o nome deste repositório é provisório e será renomeado
 - [ ] Estrutura de pastas
-- [ ] Convenções de código e de cena
+- [ ] Convenções de código e de cena — inclusive **em que idioma** nomear node,
+      variável e arquivo. O teste está em português só para combinar com a
+      documentação; não é decisão tomada
 - [ ] Divisão de tarefas
+
+## Cena de teste (`teste-movimento/`)
+
+Serve **só para confirmar que o Godot abre e roda o projeto**. Não é o jogo, não
+tem relação com o que vier a ser o jogo, e some assim que a primeira cena de
+verdade existir.
+
+Abrir o `project.godot` no Godot e apertar **F5** — ela já é a cena principal.
+Setas ou WASD movem um quadrado vermelho por um chão xadrez cinza com blocos
+espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D` é filha dele,
+então quem se mexe é o cenário. O xadrez e os blocos existem por isso — num chão
+liso e uniforme não dá para perceber movimento nenhum.
+
+- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Polygon2D`
+  vermelho, colisão e câmera)
+- `chao.gd` — desenha o xadrez, os blocos e a borda do mundo (3200×1800) com
+  `_draw()`, sem precisar de nenhuma imagem
+- `jogador.gd` — movimento em 8 direções com `move_and_slide()` e trava nas
+  bordas do mundo
+
+Ao apagar, lembrar de trocar o `run/main_scene` no `project.godot`.
 
 ## Combinados de Git
 
