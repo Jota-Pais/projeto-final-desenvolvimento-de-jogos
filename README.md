@@ -32,7 +32,10 @@ abaixo.
 
 Pendentes de decisão da equipe:
 
-- [ ] Título do jogo — o nome deste repositório é provisório e será renomeado
+- [ ] Título do jogo — o nome deste repositório e o `config/name` do
+      `project.godot` são provisórios. O Godot apaga comentário do
+      `project.godot` toda vez que salva as configurações, então o lembrete
+      mora aqui
 - [ ] Estrutura de pastas
 - [ ] Convenções de código e de cena — inclusive **em que idioma** nomear node,
       variável e arquivo. O teste está em português só para combinar com a
@@ -46,13 +49,15 @@ tem relação com o que vier a ser o jogo, e some assim que a primeira cena de
 verdade existir.
 
 Abrir o `project.godot` no Godot e apertar **F5** — ela já é a cena principal.
-Setas ou WASD movem um quadrado vermelho por um chão xadrez cinza com blocos
-espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D` é filha dele,
-então quem se mexe é o cenário. O xadrez e os blocos existem por isso — num chão
-liso e uniforme não dá para perceber movimento nenhum.
+Setas ou WASD movem um quadrado de 64 px com a foto por um chão xadrez cinza
+com blocos espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D`
+é filha dele, então quem se mexe é o cenário. O xadrez e os blocos existem por
+isso — num chão liso e uniforme não dá para perceber movimento nenhum.
 
-- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Polygon2D`
-  vermelho, colisão e câmera)
+- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Sprite2D`,
+  colisão e câmera)
+- `jogador.png` — a foto usada de sprite. O `Sprite2D` recorta um quadrado
+  central dela por `region_rect`, para não distorcer, e reduz para 64 px
 - `chao.gd` — desenha o xadrez, os blocos e a borda do mundo (3200×1800) com
   `_draw()`, sem precisar de nenhuma imagem
 - `jogador.gd` — movimento em 8 direções com `move_and_slide()` e trava nas

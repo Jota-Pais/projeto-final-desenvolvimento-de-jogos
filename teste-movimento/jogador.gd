@@ -1,11 +1,11 @@
 extends CharacterBody2D
-## Quadrado vermelho de teste. A camera e filha dele, entao quem anda na tela e
-## o chao: o jogador fica fixo no meio. Setas ou WASD.
+## Boneco de teste (um quadrado com a foto). A camera e filha dele, entao quem
+## anda na tela e o chao: o jogador fica fixo no meio. Setas ou WASD.
 
 const Chao := preload("res://teste-movimento/chao.gd")
 
 const VELOCIDADE := 420.0
-const METADE_DO_CORPO := 16.0
+const METADE_DO_CORPO := 32.0
 
 func _physics_process(_delta: float) -> void:
 	velocity = _direcao() * VELOCIDADE
