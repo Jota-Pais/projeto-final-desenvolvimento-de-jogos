@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://teste-movimento/chao.gd" id="1_chao"]
 [ext_resource type="Script" path="res://teste-movimento/jogador.gd" id="2_jogador"]
 [ext_resource type="Texture2D" uid="uid://dbxfrk6rw26uc" path="res://teste-movimento/jogador.png" id="3_sprite"]
+[ext_resource type="PackedScene" path="res://teste-movimento/inimigo.tscn" id="4_inimigo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
 size = Vector2(64, 64)
@@ -12,7 +13,7 @@ size = Vector2(64, 64)
 [node name="Chao" type="Node2D" parent="."]
 script = ExtResource("1_chao")
 
-[node name="Jogador" type="CharacterBody2D" parent="."]
+[node name="Jogador" type="CharacterBody2D" parent="." groups=["jogador"]]
 script = ExtResource("2_jogador")
 
 [node name="Corpo" type="Sprite2D" parent="Jogador"]
@@ -26,3 +27,15 @@ region_rect = Rect2(25, 0, 310, 310)
 shape = SubResource("RectangleShape2D_corpo")
 
 [node name="Camera" type="Camera2D" parent="Jogador"]
+
+[node name="Inimigo1" parent="." instance=ExtResource("4_inimigo")]
+position = Vector2(-700, -400)
+
+[node name="Inimigo2" parent="." instance=ExtResource("4_inimigo")]
+position = Vector2(700, -450)
+
+[node name="Inimigo3" parent="." instance=ExtResource("4_inimigo")]
+position = Vector2(-800, 450)
+
+[node name="Inimigo4" parent="." instance=ExtResource("4_inimigo")]
+position = Vector2(750, 400)

@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://teste-movimento/inimigo.gd" id="1_inimigo"]
+[ext_resource type="Texture2D" uid="uid://y3cd8uko4ply" path="res://teste-movimento/inimigo.png" id="2_sprite"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
+size = Vector2(44, 80)
+
+[node name="Inimigo" type="CharacterBody2D"]
+script = ExtResource("1_inimigo")
+
+[node name="Corpo" type="Sprite2D" parent="."]
+texture_filter = 4
+scale = Vector2(0.1851852, 0.1851852)
+texture = ExtResource("2_sprite")
+
+[node name="Colisao" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_corpo")

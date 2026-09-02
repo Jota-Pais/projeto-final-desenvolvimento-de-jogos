@@ -54,10 +54,20 @@ com blocos espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D`
 é filha dele, então quem se mexe é o cenário. O xadrez e os blocos existem por
 isso — num chão liso e uniforme não dá para perceber movimento nenhum.
 
+Quatro **inimigos** nascem nos cantos e andam devagar (110 contra os 420 do
+jogador) na direção dele, o tempo todo. Não atacam, não morrem e não desviam de
+nada — dá para ficar dando a volta neles à vontade.
+
 - `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Sprite2D`,
-  colisão e câmera)
+  colisão e câmera) e quatro `Inimigo`
 - `jogador.png` — a foto usada de sprite. O `Sprite2D` recorta um quadrado
   central dela por `region_rect`, para não distorcer, e reduz para 64 px
+- `inimigo.tscn` e `inimigo.png` — o inimigo, instanciado quatro vezes na cena.
+  A foto é retrato (240×432), então entra inteira, sem recorte, reduzida para
+  80 px de altura
+- `inimigo.gd` — anda na direção do jogador e nada mais. Acha o jogador pelo
+  **grupo** `jogador`, não por caminho de node, para não depender de onde ele
+  está na árvore
 - `chao.gd` — desenha o xadrez, os blocos e a borda do mundo (3200×1800) com
   `_draw()`, sem precisar de nenhuma imagem
 - `jogador.gd` — movimento em 8 direções com `move_and_slide()` e trava nas
