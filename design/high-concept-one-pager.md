@@ -328,18 +328,62 @@ a fórmula simplificada. Não precisamos ir por ali.
 
 ### Protótipo — desenho de uma tela de gameplay
 
-⬜ **Falta desenhar.** O tópico 14 pede a versão alfa mais um desenho de tela.
-A alfa é outra entrega; o desenho é desta. O que a tela precisa mostrar:
+Este bloco é **obrigatório** e hoje não existe. O texto do modelo:
 
-- Vista **top-down**, personagem no centro, rua com casas dos dois lados
-- Alguns zumbis se aproximando de direções diferentes
-- **HUD:** dia atual e quanto falta para o prazo · vida · fome/água ·
-  espaço da mochila
-- Uma casa com a porta destacada, indicando que dá para entrar e vasculhar
-- Um documento no chão, com brilho, diferente dos outros itens
+> *"Foi realizado um protótipo para melhor entendimento de como será o jogo?
+> Realizar a versão alfa do seu jogo (outra etapa do projeto final) e **um
+> desenho de uma tela de gameplay que ajude a explicar o jogo** que estão
+> propondo aqui."*
 
-Rabisco serve — o professor aceita desenho de conceito. O que não pode é o bloco
-ficar vazio.
+A alfa é outra entrega. O que cabe aqui é o desenho — e a barra é **explicar o
+jogo**, não impressionar. Mockup anotado vale tanto quanto ilustração; anotado,
+vale mais.
+
+**O que desenhar: uma tela do modo Rua, num dia intermediário da partida.**
+
+*Enquadramento*
+
+- Vista **top-down**, câmera de cima, como em *Project Zomboid* ou
+  *Vampire Survivors*
+- O **protagonista fica no centro exato** da tela — a câmera segue ele, então
+  quem se move é o cenário
+- Proporção 16:9, para encaixar num bloco do mural
+
+*Cenário*
+
+- Rua de bairro residencial: asfalto rachado, calçada, casas dos dois lados,
+  um ou dois carros abandonados, lixo espalhado
+- Já se vê degradação — não é o primeiro dia. Vegetação tomando a calçada,
+  janelas quebradas, algum vidro no chão
+- Paleta **fria e dessaturada**: concreto, ferrugem, verde-acinzentado, céu
+  lavado. Pixel art
+
+*Elementos que precisam aparecer, porque é o que explica o jogo*
+
+- **Três ou quatro zumbis** chegando de direções diferentes e em distâncias
+  diferentes — um perto o bastante para ser ameaça imediata, os outros ainda
+  longe. É isso que comunica "pressão"
+- **Uma casa com a porta destacada ou aberta**, sinalizando que dá para entrar e
+  vasculhar
+- **Um documento no chão, com brilho**, visualmente distinto dos outros itens.
+  É o item que destrava a história — precisa parecer especial
+- Dois ou três itens comuns espalhados (lata de comida, garrafa de água), para
+  contrastar com o documento
+
+*HUD, nos cantos*
+
+- **Topo:** o dia atual e quantos faltam para o prazo da cura
+- **Canto inferior esquerdo:** vida, fome e água
+- **Canto inferior direito:** mochila, com o espaço já ocupado visível
+
+*O que faz o desenho cumprir o objetivo*
+
+Legendas com seta apontando cada elemento — "documento: destrava a pesquisa em
+casa", "porta: entra e vasculha", "prazo: quantos dias restam". O professor
+avalia se o desenho **ajuda a explicar o jogo**, e é a legenda que faz isso.
+
+O restante do tom, da premissa e do funcionamento dos dois modos está neste
+mesmo documento, nas seções acima.
 
 ## Direção de arte
 
@@ -375,4 +419,4 @@ lido.
 - [ ] Nome de todos os integrantes, turma (quarta) e curso na peça
 - [ ] Uma página, PDF, paisagem
 - [ ] Não parece documento de texto
-- [ ] Um desenho de tela de gameplay incluído (tópico 14)
+- [ ] Um desenho de tela de gameplay incluído e **com legendas** (tópico 14)

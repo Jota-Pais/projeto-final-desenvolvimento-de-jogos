@@ -92,7 +92,7 @@ e o conceito de arte de cada fase na seção de estética.
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
 | 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
 | 13 | Orçamento | **R$ 3.600** — 12 encontros (09/09 a 25/11) × 3h × R$ 100/hora. Simulado, pela fórmula literal do modelo |
-| 14 | Protótipo | ⬜ — a alfa é outra entrega; falta o **desenho de uma tela de gameplay**, especificado no brief |
+| 14 | Protótipo | A alfa é outra entrega. O **desenho de uma tela de gameplay** está descrito em detalhe no brief, para o agente de design executar |
 
 ## O que ficou resolvido
 
