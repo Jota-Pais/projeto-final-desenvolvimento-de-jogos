@@ -1,62 +1,121 @@
-# Brief — one-pager do High Concept
+# Brief de design — one-pager do High Concept
 
-Instruções para quem for **desenhar a peça de entrega**. O que está escrito aqui
-pode ser diagramado como está; o que está marcado com ⬜ **a equipe precisa
-preencher antes de entregar**.
+**Você me amaria se eu fosse um zumbi?** · Projeto Final da disciplina de
+Desenvolvimento de Jogos · Engenharia de Software, SATC 2026.2 · Turma de quarta
 
-A fonte completa do projeto é [`high-concept.md`](high-concept.md). Este arquivo
-é só o recorte que vai para a peça.
+Este documento é autossuficiente: tudo o que você precisa para produzir a peça
+está aqui — o texto final, o layout, a direção de arte e os critérios pelos
+quais ela vai ser avaliada. Quatro campos ainda não chegaram e estão marcados
+como ⬜; eles são enviados depois e não bloqueiam o resto.
 
-## Regras que não se negociam
+---
 
-- **Prazo: 09/09/2026, 23h59.** A tarefa no AVA (*High Concept do Jogo
-  Completo*, aberta desde 12/08) tem duas questões: a primeira, peso 1%, é só
-  **os nomes dos integrantes com sobrenome** — o professor pede sobrenome porque
-  há nomes iguais na turma. A segunda, peso **99%**, é a peça.
-- **Formato visual é eliminatório.** O professor zera o High Concept entregue
-  como documento de texto formal. O campo do AVA aceita DOC, mas isso é só o
-  formato do upload — não é licença para entregar texto corrido.
-- **Como enviar:** arquivo, ou **link** de Drive, Figma ou similar. Se for link,
-  ele tem que ir **dentro de um arquivo `.txt`**. Se precisar compactar, usar
-  **RAR** — o professor avisa que zip costuma dar problema no AVA.
-- **Uma página só.** PDF é o formato seguro.
-- **Paisagem, larga.** O exemplo que o professor deu como formato certo
-  (`exemplo-high-concept-sunny-fox.pdf`) tem 5125 × 3195 pt — proporção ≈ 16:10.
-  É um mural, não um A4.
-- A peça tem que trazer **o nome de todos**, a turma (**quarta**) e o curso.
+## 1. O que você vai produzir
 
-## Como a peça é avaliada
+Um **one-pager visual** que apresenta um jogo digital. É a primeira entrega
+avaliada de um projeto de faculdade e vale 10% da nota final da disciplina.
+
+- **Peça:** uma página, formato paisagem
+- **Entrega:** PDF, ou link de Figma/Canva/Drive
+- **Prazo:** 09/09/2026, 23h59
+
+O público da peça é o professor da disciplina, que vai avaliá-la segundo
+critérios fixos, e uma banca imaginária de investidores — o mesmo material
+alimenta um pitch mais adiante no semestre.
+
+## 2. A regra que zera o trabalho
+
+> **A peça não pode parecer um documento de texto formal.**
+
+Este é um critério **eliminatório** no gabarito do professor: High Concept
+entregue em formato de documento de texto **zera o trabalho**, por melhor que
+seja o conteúdo. Nada de Word, Docs, relatório, capa com título centralizado ou
+parágrafos empilhados.
+
+O que ele pede é um **mural visual**: blocos, ícones, tabelas curtas, nuvens de
+tags, linha do tempo, imagens.
+
+## 3. Especificação da peça
+
+| Item | Valor |
+|---|---|
+| Orientação | Paisagem |
+| Proporção | ≈ 16:10 |
+| Referência de tamanho | 5125 × 3195 pt — as medidas da peça que o professor deu como exemplo aprovado |
+| Páginas | 1 |
+| Formato final | PDF (ou link editável) |
+
+A peça precisa trazer, em algum canto legível: **os nomes completos dos quatro
+integrantes**, a **turma (quarta)** e o **curso (Engenharia de Software)**.
+
+## 4. Como a peça é avaliada
 
 | Critério | Peso |
 |---|---|
-| Formato visual | **eliminatório** |
-| Cumpre os tópicos | 2 |
+| Formato visual, não documento de texto | **eliminatório** |
+| Cumpre todos os tópicos exigidos | 2 |
 | Linguagem clara e objetiva | 4 |
 | Apresentação organizada | 2 |
-| Compreensível por artista, programador, game designer, narrative designer e produtor | 2 |
+| Compreensível por perfis diferentes — artista, programador, game designer, narrative designer, produtor | 2 |
 
-O peso maior é **clareza**, não beleza. Texto curto, blocos bem separados, nada
-de parágrafo corrido.
+**O peso maior é clareza, não beleza.** Uma peça bonita e confusa perde para uma
+peça simples e legível. Isso deve guiar toda decisão de tipografia, densidade e
+hierarquia.
 
-## Referência de estrutura
+## 5. Referência de estrutura
 
-O exemplo aprovado pelo professor é um mural denso, dividido em blocos pequenos,
-com pouquíssimo texto em cada um. Ele usa: título e ficha rápida, descrição de
-duas linhas, lore, equipe com funções, barras de progresso do desenvolvimento,
-cronograma em linha do tempo, custos, público-alvo, diferenciais, mecânicas como
-**lista de verbos**, características, referências e gêneros como **nuvem de
-tags**. Nenhum parágrafo passa de quatro linhas.
+O exemplo que o professor deu como formato correto é um mural denso, dividido em
+blocos pequenos, com pouquíssimo texto em cada um. Ele usa:
 
-## Layout proposto
+título e ficha rápida · descrição de duas linhas · lore · equipe com funções ·
+barras de progresso do desenvolvimento · cronograma em linha do tempo · custos ·
+público-alvo · diferenciais · **mecânicas como lista de verbos** ·
+características · **referências e gêneros como nuvem de tags**
 
-Bandas horizontais, e no meio o coração da peça: os dois modos lado a lado. A
-divisão visual **é** o conceito do jogo — quem bater o olho tem que entender na
-hora que são dois jogos que se alternam.
+Nenhum parágrafo dele passa de quatro linhas. Vale seguir essa disciplina.
+
+---
+
+## 6. O jogo — para você entender o que está desenhando
+
+**Apocalipse zumbi.** A namorada do protagonista foi mordida e se transformou.
+Em vez de abandoná-la, ele a trancou no porão de casa e passou a sair todo dia
+às ruas atrás dos recursos e do conhecimento necessários para desenvolver uma
+cura. O processo é lento e imperfeito, e cada tentativa exige mais do mundo lá
+fora.
+
+O jogo se divide em **dois modos que se alternam a cada dia**, e a distância
+entre eles é proposital:
+
+- **Rua** — top-down pixelado, ação, hordas de zumbis, vasculhar casas atrás de
+  suprimentos e documentos. Frio, sujo, simples. É onde o jogador passa a maior
+  parte do tempo.
+- **Casa** — ponto e clique, arte detalhada, tom enigmático. Cuidar dela e
+  trabalhar na cura com o que foi trazido de fora. Quente, íntimo, denso.
+
+**A rua é o gameplay. A casa é a história.** O que o jogador arrisca lá fora é o
+que destrava o que acontece dentro de casa.
+
+O tempo é contado em dias, com um prazo. Cada dia é uma fase, sempre nos mesmos
+lugares — a geografia é fixa e o que muda é o estado do mundo, que vai ficando
+mais apocalíptico. No fim, ou a cura fica pronta a tempo, ou o prazo se esgota e
+os dois viram zumbis, num final apresentado como paródia de final feliz de
+casal.
+
+**Essa dualidade é o conceito da peça.** Se alguém bater o olho no mural e
+entender na hora que são dois jogos que se alternam, o design funcionou.
+
+---
+
+## 7. Layout
+
+Bandas horizontais. No meio, o coração da peça: os dois modos lado a lado, com a
+divisão visual servindo de argumento.
 
 ```
 +---------------------------------------------------------------------------+
 |  [TITULO GRANDE]                        |                                  |
-|  tagline de uma linha                   |   KEY ART                        |
+|  tagline                                |   KEY ART                        |
 |  1 jogador . PC e navegador . 14 anos   |   (rua a esquerda, casa a        |
 |  -------------------------------------  |    direita, no mesmo quadro)     |
 |  pitch de duas linhas                   |                                  |
@@ -72,49 +131,59 @@ hora que são dois jogos que se alternam.
 |     suprimentos,         |                        |     com o que voce     |
 |     documentos           |                        |     trouxe             |
 +--------------------------+------------------------+------------------------+
-|  PROGRESSAO - linha do tempo em dias, com o prazo e dois desfechos          |
+|  PROGRESSAO - linha do tempo em dias, com o prazo e os dois desfechos       |
 |  -- dia 1 ----------- dia N ------+-- VITORIA: a cura fica pronta           |
 |                                   +-- DERROTA: o "final feliz" em parodia   |
 +------------+------------+------------+------------+------------+-----------+
 | CORE       | MECANICAS  | DIFEREN-   | GENEROS +  | PUBLICO    | EQUIPE    |
-| MECHANIC   | (verbos)   | CIAIS      | REFERENCIAS| ALVO       | + FUNCOES |
-|            |            |            | (tags)     |            |           |
+| MECHANIC   | (verbos)   | CIAIS      | CONCORRENT.| ALVO       | + FUNCOES |
 +------------+------------+------------+------------+------------+-----------+
 | CRONOGRAMA (marcos em linha)          | ORCAMENTO (numero grande)          |
 +---------------------------------------+------------------------------------+
+| TELA DE GAMEPLAY (desenho anotado, ocupando bloco proprio)                 |
++----------------------------------------------------------------------------+
 ```
 
-## O conteúdo, bloco a bloco
+**Hierarquia de leitura**, em ordem: título → key art → a divisão rua/casa →
+progressão e finais → os blocos pequenos. Se o leitor parar no terceiro nível,
+ele já entendeu o jogo.
 
-Tudo que não está marcado com ⬜ pode ser diagramado como está.
+---
 
-### Título e tagline
+## 8. O conteúdo, bloco a bloco
+
+Todo o texto abaixo é final e pode ser diagramado como está, salvo os ⬜.
+
+### Título
 
 # Você me amaria se eu fosse um zumbi?
 
-**Título de trabalho.** É o que vai na peça enquanto o grupo não propuser algo
-melhor — a equipe foi consultada em 03/09/2026 e pode trocar.
+⬜ **Pode mudar** — o título definitivo chega depois. O que ele precisa manter,
+caso mude: ser uma pergunta, entregar o tom e antecipar a piada do final.
 
-O título é uma pergunta, e é o melhor ativo da peça: entrega tom, premissa e o
-deboche do final em uma linha só. O designer deve tratá-lo como imagem, não como
-texto — é ele que ocupa o maior espaço do mural. Se o título mudar, essa
-qualidade é o que a substituição precisa manter.
+Trate o título **como imagem, não como texto**. É o elemento que ocupa o maior
+espaço do mural e é o que vende a peça sozinho.
 
-⬜ **A tagline está em aberto.** A linha curta que fica embaixo do título, no
-espírito de cartaz de cinema. O grupo vai propor. Enquanto não houver uma
-escolhida, o designer pode diagramar com este placeholder, que existe só para
-ocupar o espaço certo:
+### Tagline
 
-> *Ela perguntou antes. Agora você tem dias para responder.*
+⬜ **Chega depois.** É a linha curta embaixo do título, no espírito de cartaz de
+cinema: dá o tom em uma frase, sem explicar o jogo. Entre 8 e 12 palavras.
+Reserve o espaço.
 
-O que a tagline precisa fazer: dar o tom em uma linha, sem explicar o jogo — a
-explicação é trabalho do pitch, logo abaixo. Cabe em torno de 8 a 12 palavras.
-
-### Pitch — o texto de entrada da peça, duas linhas
+### Pitch — texto de entrada, duas linhas
 
 > Sobrevivência zumbi em dois modos que se alternam a cada dia: você vasculha a
 > rua atrás de recursos e respostas, e volta para casa para trabalhar na cura da
 > namorada — que está trancada no porão, e já não é mais ela.
+
+### Ficha rápida — linha embaixo do título
+
+| Campo | Conteúdo |
+|---|---|
+| Jogadores | 1 jogador, offline |
+| Plataformas | PC (Windows) e navegador |
+| Classificação | 14 anos |
+| Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
 
 ### Lore — quatro linhas no máximo
 
@@ -142,7 +211,7 @@ fora.
 
 **Controles:** mouse, só. Clique para andar, examinar e combinar itens.
 
-### O ciclo — o texto que fica entre as duas colunas
+### O ciclo — texto entre as duas colunas
 
 > A rua é o gameplay. A casa é a história. **O que você arrisca lá fora é o que
 > destrava o que acontece aqui dentro.**
@@ -160,18 +229,18 @@ fora.
 
 ### Progressão e finais
 
-- O tempo é contado em **dias**, e há um **prazo** para completar a cura.
+- O tempo é contado em **dias**, e há um **prazo** para completar a cura
 - Cada dia é uma **fase**, sempre nos mesmos lugares — a geografia é fixa e o
-  que muda é o estado do mundo, que vai ficando mais apocalíptico.
+  que muda é o estado do mundo, que vai ficando mais apocalíptico
 - **Vitória:** a cura fica pronta a tempo, ela volta a ser humana, e os dois
-  seguem sobrevivendo juntos.
+  seguem sobrevivendo juntos
 - **Derrota:** o prazo se esgota, ela escapa do porão, morde o protagonista, e
   os dois viram zumbis. A tela de fim mostra isso **em tom de paródia**, como o
-  final feliz de um casal — mas é o game over.
+  final feliz de um casal — mas é o game over
 
-O bloco da derrota é o melhor momento da peça e merece tratamento visual
-próprio: o "final feliz" com moldura de retrato de casal, e o deboche na
-entrelinha. É a resposta da pergunta do título.
+O bloco da derrota é o melhor momento da peça e merece tratamento próprio: o
+"final feliz" com moldura de retrato de casal, e o deboche na entrelinha. É a
+resposta da pergunta do título.
 
 ### Core mechanic — bloco destacado, uma frase
 
@@ -192,30 +261,12 @@ sobreviver
 3. **Risco compra história** — o quanto se arrisca na rua é literalmente quanta
    narrativa se destrava em casa.
 
-### Ficha rápida — a linha embaixo do título
-
-| Campo | Conteúdo |
-|---|---|
-| Jogadores | 1 jogador, offline |
-| Plataformas | PC (Windows) e navegador — o Godot exporta para web |
-| Classificação | 14 anos — sangue e tema, sem violência gratuita |
-| Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
-
-A **classificação 14 anos** foi decidida pela equipe em 03/09/2026: o jogo tem
-sangue, mas não é um jogo violento — daí não subir para 16. Isso vira uma
-baliza para a arte: sangue e morte podem aparecer, mutilação, crueldade e
-violência gratuita não. Se a arte final passar disso, a classificação sobe
-junto.
-
-As outras três linhas são **proposta minha** e a equipe ainda não discutiu
-nenhuma delas.
-
 ### Concorrentes e benchmarking
 
-Levantado no SteamSpy em **03/09/2026**. Preços em dólar e com desconto vigente
-na data; os donos são estimativa do SteamSpy, não número oficial da Valve.
+Dados do SteamSpy em 03/09/2026. Preços em dólar, com desconto vigente na data;
+os donos são estimativa do SteamSpy.
 
-**Concorrentes — escopo comparável ao nosso, time pequeno**
+**Concorrentes — porte comparável, time pequeno**
 
 | Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
 |---|---|---|---|---|---|
@@ -224,7 +275,7 @@ na data; os donos são estimativa do SteamSpy, não número oficial da Valve.
 | *Vampire Survivors* | poncle | 2022 | US$ 3,74 | 5–10 mi | 98% |
 | *Papers, Please* | Lucas Pope | 2013 | US$ 9,99 | 2–5 mi | 97% |
 
-**Referências de estrutura e de público — escopo maior, fora da nossa liga**
+**Referências de estrutura e público — escopo maior**
 
 | Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
 |---|---|---|---|---|---|
@@ -232,37 +283,27 @@ na data; os donos são estimativa do SteamSpy, não número oficial da Valve.
 | *This War of Mine* | 11 bit studios | 2014 | US$ 19,99 | 2–5 mi | 92% |
 | *Inscryption* | Daniel Mullins Games | 2021 | US$ 19,99 | 2–5 mi | 96% |
 
-**O que os números dizem — usar isto no tópico 9 e no pitch**
+**A leitura desses números — vale um bloco de texto curto na peça:**
 
-- **A estrutura de dois modos é fórmula testada de time pequeno.** A descrição
-  do *Darkwood* na própria Steam é *"scavenge and explore a rich, ever-changing
-  free-roam world by day, then hunker down in your hideout and pray for the
-  morning light"* — vasculhar de dia, se recolher no abrigo depois. É o nosso
-  desenho, feito por **três pessoas**, com 94% de aprovação e mais de um milhão
-  de donos. *60 Seconds!* faz o mesmo: vasculhar contra o relógio, depois
-  administrar o abrigo.
-- **Escopo pequeno não limita alcance.** *Vampire Survivors* foi feito
-  essencialmente por uma pessoa e tem entre 5 e 10 milhões de donos.
-  *Papers, Please* é de um desenvolvedor só. Nenhum dos dois depende de produção
-  cara — dependem de um loop bem afinado, que é exatamente a aposta deste
-  projeto.
-- **O público existe e continua comprando.** *Project Zomboid* saiu em 2013 e
-  tem de 10 a 20 milhões de donos. Ele não é concorrente de escopo, mas prova
-  que o mercado de sobrevivência zumbi está longe de saturado.
-- **Faixa de preço.** Os concorrentes de porte parecido ficam entre **US$ 4 e
-  US$ 10**. *Inscryption* e *This War of Mine*, com produção bem maior, ficam em
-  US$ 20. Nosso lugar é a faixa de baixo.
+- A estrutura de dois modos é fórmula testada de time pequeno. A descrição do
+  *Darkwood* na própria Steam é *"scavenge and explore by day, then hunker down
+  in your hideout"* — vasculhar de dia, se recolher no abrigo depois. Feito por
+  três pessoas, 94% de aprovação, mais de um milhão de donos.
+- Escopo pequeno não limita alcance: *Vampire Survivors* foi feito
+  essencialmente por uma pessoa e tem de 5 a 10 milhões de donos.
+- O público continua comprando: *Project Zomboid* saiu em 2013 e tem de 10 a 20
+  milhões de donos.
+- Faixa de preço dos comparáveis: **US$ 4 a US$ 10**.
 
 ### Público-alvo
 
 **Demografia** — 18 a 30 anos, joga em PC, compra na Steam, não precisa de
 máquina forte. Renda média, brasileiro e internacional.
 
-**Psicografia** — na taxonomia que o professor usa no exemplo, é o perfil
-**explorador**: joga para entender o sistema, não para vencer os outros. Gosta
-de descobrir a regra escondida, testar o limite da mecânica e otimizar — mas o
-que faz terminar o jogo é a história. **Não é try-hard:** não liga para
-ranking, dificuldade máxima nem platinar.
+**Psicografia** — perfil **explorador**: joga para entender o sistema, não para
+vencer os outros. Gosta de descobrir a regra escondida, testar o limite da
+mecânica e otimizar — mas o que faz terminar o jogo é a história. **Não é
+try-hard:** não liga para ranking, dificuldade máxima nem platinar.
 
 **Proto-persona**
 
@@ -289,107 +330,80 @@ ranking, dificuldade máxima nem platinar.
 | ⬜ | ⬜ | ⬜ |
 | ⬜ | ⬜ | ⬜ |
 
-Quatro pessoas, **metade em cada frente** — dois na rua, dois na casa.
-⬜ Faltam três nomes **com sobrenome** (o professor pede por causa de nomes
-repetidos na turma) e as funções de cada um: artista, programador, game
-designer, sound designer, narrative designer. Uma pessoa pode acumular.
+⬜ **Três nomes e todas as funções chegam depois.** São quatro pessoas, metade
+em cada frente — dois na rua, dois na casa. As funções possíveis são artista,
+programador, game designer, sound designer e narrative designer; uma pessoa pode
+acumular mais de uma. Reserve o espaço para quatro linhas.
 
-Estes mesmos nomes são a **questão 1 da tarefa no AVA**.
-
-### Cronograma
+### Cronograma — linha do tempo horizontal
 
 `09/09 High Concept` · `30/09 Alfa + prévia do GDD` · `11/11 Beta + GDD final` ·
 `02/12 Gold + pitch`
 
-⬜ O encaixe de Alfa, Beta, GDD e Gold nas duas etapas de andamento é dedução
-minha a partir do plano de ensino. O `prazosAtividades(turma)` do AVA tem as
-datas reais e resolveria isso — continua sem baixar.
+### Orçamento — número grande, com a conta visível
 
-### Orçamento
+**R$ 3.600**
 
-**R$ 3.600** — 12 encontros × 3h × R$ 100/hora.
+12 encontros × 3h × R$ 100/hora
 
-É orçamento **simulado**: o High Concept é documento de pitch, e pitch tem linha
-de custo. O que se precifica é o trabalho da equipe como se fosse pago. O texto
-do modelo é este:
+É orçamento simulado — precifica o trabalho da equipe como se fosse pago. **A
+conta precisa aparecer junto do total**, não só o número: é o que torna a cifra
+defensável na avaliação.
 
-> *"Qual o orçamento previsto para o projeto? Quanto vai custar o jogo?
-> Simplifiquem aqui, considerando os dias de aula dedicados ao projeto final ×
-> R$ 100,00 × 3 (cada aula tem 3 horas de duração)"*
+---
 
-**A conta tem que aparecer na peça**, não só o total — é o que a torna
-defensável. A leitura da equipe (03/09/2026) é que **todas as aulas se
-relacionam com o projeto**, então contam os 12 encontros entre o High Concept e
-o último dia de desenvolvimento antes da Gold: de **09/09 a 25/11**.
+## 9. A tela de gameplay — bloco obrigatório
 
-Para referência, o exemplo do professor chega a R$ 18.000 por outra conta
-(100 horas × R$ 150 + R$ 3.000 de assets) — aquilo é custo real de produção, não
-a fórmula simplificada. Não precisamos ir por ali.
+O gabarito exige **um desenho de uma tela de gameplay que ajude a explicar o
+jogo**. A barra é *explicar*, não impressionar: mockup anotado vale tanto quanto
+ilustração; anotado, vale mais.
 
-### Protótipo — desenho de uma tela de gameplay
-
-Este bloco é **obrigatório** e hoje não existe. O texto do modelo:
-
-> *"Foi realizado um protótipo para melhor entendimento de como será o jogo?
-> Realizar a versão alfa do seu jogo (outra etapa do projeto final) e **um
-> desenho de uma tela de gameplay que ajude a explicar o jogo** que estão
-> propondo aqui."*
-
-A alfa é outra entrega. O que cabe aqui é o desenho — e a barra é **explicar o
-jogo**, não impressionar. Mockup anotado vale tanto quanto ilustração; anotado,
-vale mais.
-
-**O que desenhar: uma tela do modo Rua, num dia intermediário da partida.**
+**Desenhe uma tela do modo Rua, num dia intermediário da partida.**
 
 *Enquadramento*
 
-- Vista **top-down**, câmera de cima, como em *Project Zomboid* ou
-  *Vampire Survivors*
-- O **protagonista fica no centro exato** da tela — a câmera segue ele, então
-  quem se move é o cenário
-- Proporção 16:9, para encaixar num bloco do mural
+- Vista **top-down**, câmera de cima
+- O **protagonista no centro exato** da tela — a câmera segue ele, então quem se
+  move é o cenário
+- Proporção 16:9, para encaixar no bloco
 
 *Cenário*
 
-- Rua de bairro residencial: asfalto rachado, calçada, casas dos dois lados,
-  um ou dois carros abandonados, lixo espalhado
+- Rua de bairro residencial: asfalto rachado, calçada, casas dos dois lados, um
+  ou dois carros abandonados, lixo espalhado
 - Já se vê degradação — não é o primeiro dia. Vegetação tomando a calçada,
-  janelas quebradas, algum vidro no chão
-- Paleta **fria e dessaturada**: concreto, ferrugem, verde-acinzentado, céu
-  lavado. Pixel art
+  janelas quebradas, vidro no chão
+- Paleta fria e dessaturada: concreto, ferrugem, verde-acinzentado, céu lavado.
+  Pixel art
 
-*Elementos que precisam aparecer, porque é o que explica o jogo*
+*Elementos obrigatórios, porque é o que explica o jogo*
 
-- **Três ou quatro zumbis** chegando de direções diferentes e em distâncias
-  diferentes — um perto o bastante para ser ameaça imediata, os outros ainda
-  longe. É isso que comunica "pressão"
+- **Três ou quatro zumbis** chegando de direções e distâncias diferentes — um
+  perto o bastante para ser ameaça imediata, os outros ainda longe. É isso que
+  comunica pressão
 - **Uma casa com a porta destacada ou aberta**, sinalizando que dá para entrar e
   vasculhar
-- **Um documento no chão, com brilho**, visualmente distinto dos outros itens.
-  É o item que destrava a história — precisa parecer especial
+- **Um documento no chão, com brilho**, visualmente distinto dos outros itens —
+  é o que destrava a história, precisa parecer especial
 - Dois ou três itens comuns espalhados (lata de comida, garrafa de água), para
   contrastar com o documento
 
 *HUD, nos cantos*
 
 - **Topo:** o dia atual e quantos faltam para o prazo da cura
-- **Canto inferior esquerdo:** vida, fome e água
-- **Canto inferior direito:** mochila, com o espaço já ocupado visível
+- **Inferior esquerdo:** vida, fome e água
+- **Inferior direito:** mochila, com o espaço já ocupado visível
 
-*O que faz o desenho cumprir o objetivo*
+*O que faz o desenho cumprir o critério*
 
-Legendas com seta apontando cada elemento — "documento: destrava a pesquisa em
-casa", "porta: entra e vasculha", "prazo: quantos dias restam". O professor
-avalia se o desenho **ajuda a explicar o jogo**, e é a legenda que faz isso.
+Legendas com seta apontando cada elemento — *"documento: destrava a pesquisa em
+casa"*, *"porta: entra e vasculha"*, *"prazo: quantos dias restam"*. É a legenda
+que transforma o desenho em explicação.
 
-O restante do tom, da premissa e do funcionamento dos dois modos está neste
-mesmo documento, nas seções acima.
+## 10. Direção de arte
 
-## Direção de arte
-
-O conceito visual da peça é um só: **frio contra quente, simples contra
-detalhado**. A peça tem que passar essa sensação antes de qualquer texto ser
-lido.
+O conceito visual é um só: **frio contra quente, simples contra detalhado**. A
+peça deve transmitir isso antes de qualquer texto ser lido.
 
 - **Rua** — cinza-esverdeado dessaturado, concreto, ferrugem, céu lavado. Pixel
   art, poucos pixels, sombra dura.
@@ -398,25 +412,39 @@ lido.
 - **A costura entre as duas** — o elemento de ciclo (seta, engrenagem, relógio
   de dia) fica exatamente na divisa e usa as duas cores.
 - **Tipografia** — título com peso e presença; corpo em sans de alta
-  legibilidade. **Nada de fonte de terror pingando sangue**: o critério de maior
+  legibilidade. **Nada de fonte de terror pingando sangue:** o critério de maior
   peso é linguagem clara, e fonte decorativa derruba isso.
-- **Densidade** — como no exemplo do professor: muitos blocos pequenos, cada um
-  com título curto e no máximo quatro linhas de conteúdo.
+- **Densidade** — muitos blocos pequenos, cada um com título curto e no máximo
+  quatro linhas de conteúdo.
+- **Limite de gore** — a classificação declarada é **14 anos**. Sangue e morte
+  podem aparecer; mutilação, crueldade e violência gratuita, não. Se a arte
+  passar disso, a classificação na peça fica incoerente com o que está desenhado.
 
-## O que não fazer
+## 11. Os quatro campos que chegam depois
+
+Reserve espaço para eles e siga com o resto:
+
+1. **Título definitivo** — se mudar, mantém o espírito de pergunta
+2. **Tagline** — 8 a 12 palavras, embaixo do título
+3. **Três nomes completos** dos integrantes
+4. **Frente e função de cada um** dos quatro
+
+## 12. O que não fazer
 
 - Nada que pareça documento de texto — é o item que zera.
 - Nada de parágrafo longo. Se um bloco passa de quatro linhas, vira bullet ou
   tag.
 - Nada de fonte decorativa ilegível "porque é jogo de terror".
-- Não inventar conteúdo para preencher os ⬜. Bloco vazio é problema da equipe
-  resolver, não do designer preencher.
+- Não inventar conteúdo para preencher os ⬜ — bloco reservado e vazio é melhor
+  que bloco preenchido com informação falsa.
 
-## Checklist antes de entregar
+## 13. Checklist antes de fechar
 
-- [x] Título definido e no topo da peça
-- [ ] Os 14 tópicos aparecem — nenhum bloco em branco
-- [ ] Nome de todos os integrantes, turma (quarta) e curso na peça
-- [ ] Uma página, PDF, paisagem
+- [ ] Todos os blocos das seções 8 e 9 estão na peça
+- [ ] Nenhum bloco em branco, exceto os quatro campos da seção 11
+- [ ] Nomes dos integrantes, turma (quarta) e curso (Engenharia de Software)
+- [ ] Uma página, paisagem, ≈16:10, PDF
 - [ ] Não parece documento de texto
-- [ ] Um desenho de tela de gameplay incluído e **com legendas** (tópico 14)
+- [ ] O desenho da tela de gameplay está incluído **e legendado**
+- [ ] A conta do orçamento aparece junto do total
+- [ ] Dá para entender o jogo lendo só o título, a key art e o bloco rua/casa
