@@ -92,15 +92,23 @@ Tudo que não está marcado com ⬜ pode ser diagramado como está.
 
 # Você me amaria se eu fosse um zumbi?
 
-Título **confirmado** pela equipe em 03/09/2026.
+**Título de trabalho.** É o que vai na peça enquanto o grupo não propuser algo
+melhor — a equipe foi consultada em 03/09/2026 e pode trocar.
 
-Tagline, embaixo do título:
+O título é uma pergunta, e é o melhor ativo da peça: entrega tom, premissa e o
+deboche do final em uma linha só. O designer deve tratá-lo como imagem, não como
+texto — é ele que ocupa o maior espaço do mural. Se o título mudar, essa
+qualidade é o que a substituição precisa manter.
+
+⬜ **A tagline está em aberto.** A linha curta que fica embaixo do título, no
+espírito de cartaz de cinema. O grupo vai propor. Enquanto não houver uma
+escolhida, o designer pode diagramar com este placeholder, que existe só para
+ocupar o espaço certo:
 
 > *Ela perguntou antes. Agora você tem dias para responder.*
 
-O título é uma pergunta, e é o melhor ativo da peça: já entrega tom, premissa e
-o deboche do final, tudo em uma linha. O designer deve tratá-lo como imagem, não
-como texto — é ele que ocupa o maior espaço do mural.
+O que a tagline precisa fazer: dar o tom em uma linha, sem explicar o jogo — a
+explicação é trabalho do pitch, logo abaixo. Cabe em torno de 8 a 12 palavras.
 
 ### Pitch — o texto de entrada da peça, duas linhas
 

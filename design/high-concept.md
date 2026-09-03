@@ -79,7 +79,7 @@ e o conceito de arte de cada fase na seção de estética.
 
 | # | Tópico | Situação |
 |---|---|---|
-| 1 | Título do jogo | ✅ **Você me amaria se eu fosse um zumbi?** — confirmado em 03/09/2026 |
+| 1 | Título do jogo | **Você me amaria se eu fosse um zumbi?** — título de trabalho; o grupo foi consultado e pode propor outro. ⬜ falta a **tagline** |
 | 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
@@ -127,6 +127,9 @@ O que ninguém além do grupo pode resolver:
 
 - **Os três nomes que faltam**, com sobrenome — o professor pede por causa de
   nomes repetidos na turma. São também a questão 1 da tarefa no AVA.
+- **O título definitivo e a tagline.** *Você me amaria se eu fosse um zumbi?* é
+  título de trabalho, e o grupo foi convidado a propor alternativas e a escrever
+  a tagline — a linha curta de cartaz que fica embaixo do título.
 - **Quem fica na rua e quem fica na casa**, e as funções formais de cada um
   (artista, programador, game designer, sound designer, narrative designer;
   uma pessoa pode acumular).

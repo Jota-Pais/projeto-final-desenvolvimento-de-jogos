@@ -32,7 +32,8 @@ exige no lugar de um documento de texto — estão em
 para entregar a quem for diagramar.
 para a narrativa — e um prazo em dias para desenvolver a cura.
 
-O título é **Você me amaria se eu fosse um zumbi?**, confirmado em 03/09/2026.
+O título de trabalho é **Você me amaria se eu fosse um zumbi?**. O grupo foi
+consultado em 03/09/2026 e pode propor outro — a tagline ainda não existe.
 
 O que ainda não existe é código do jogo, e é a decisão de estrutura de pastas e
 as primeiras cenas de verdade que dependem disso. A única coisa que roda é a
@@ -41,10 +42,10 @@ nenhuma com o jogo.
 
 Pendentes de decisão da equipe:
 
-- [ ] **Renomear o repositório** — o título está fechado, então o nome
-      `projeto-final-desenvolvimento-de-jogos` já pode virar
-      `voce-me-amaria-se-eu-fosse-um-zumbi`. O GitHub mantém redirect da URL
-      antiga, ninguém precisa reclonar
+- [ ] **Fechar o título e escrever a tagline** — hoje o título é de trabalho.
+      Quando fechar, o repositório pode ser renomeado (`projeto-final-...` →
+      um slug do título) e o `config/name` do `project.godot` acompanha. O
+      GitHub mantém redirect da URL antiga, ninguém reclona
 - [ ] Aprovar ou trocar o que foi proposto no High Concept sem passar pelo grupo:
       gênero, plataformas, nº de jogadores, classificação etária, objetivos
       secundários, controles e público-alvo
