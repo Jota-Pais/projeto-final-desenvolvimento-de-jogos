@@ -1,7 +1,6 @@
 # High Concept — Você me amaria se eu fosse um zumbi?
 
-Registro do que a equipe fechou em conversa, escrito em **03/09/2026**. O título
-é **provisório**.
+Registro do que a equipe fechou em conversa, escrito em **03/09/2026**.
 
 > **Isto não é a entrega.** O professor zera o High Concept entregue como
 > documento de texto formal — é item eliminatório. A entrega tem que ser um
@@ -80,7 +79,7 @@ e o conceito de arte de cada fase na seção de estética.
 
 | # | Tópico | Situação |
 |---|---|---|
-| 1 | Título do jogo | **Você me amaria se eu fosse um zumbi?** — provisório (03/09/2026), a equipe pode trocar |
+| 1 | Título do jogo | ✅ **Você me amaria se eu fosse um zumbi?** — confirmado em 03/09/2026 |
 | 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
@@ -131,8 +130,6 @@ O que ninguém além do grupo pode resolver:
 - **Quem fica na rua e quem fica na casa**, e as funções formais de cada um
   (artista, programador, game designer, sound designer, narrative designer;
   uma pessoa pode acumular).
-- **O título**, que hoje está como *Você me amaria se eu fosse um zumbi?* em
-  caráter provisório.
 
 ## Pontos de atenção
 

@@ -32,7 +32,7 @@ exige no lugar de um documento de texto — estão em
 para entregar a quem for diagramar.
 para a narrativa — e um prazo em dias para desenvolver a cura.
 
-O título provisório é **Você me amaria se eu fosse um zumbi?** (03/09/2026).
+O título é **Você me amaria se eu fosse um zumbi?**, confirmado em 03/09/2026.
 
 O que ainda não existe é código do jogo, e é a decisão de estrutura de pastas e
 as primeiras cenas de verdade que dependem disso. A única coisa que roda é a
@@ -41,10 +41,10 @@ nenhuma com o jogo.
 
 Pendentes de decisão da equipe:
 
-- [ ] **Confirmar o título** — enquanto for provisório, o nome deste repositório
-      e o `config/name` do `project.godot` continuam como estão. O Godot apaga
-      comentário do `project.godot` toda vez que salva as configurações, então o
-      lembrete mora aqui
+- [ ] **Renomear o repositório** — o título está fechado, então o nome
+      `projeto-final-desenvolvimento-de-jogos` já pode virar
+      `voce-me-amaria-se-eu-fosse-um-zumbi`. O GitHub mantém redirect da URL
+      antiga, ninguém precisa reclonar
 - [ ] Aprovar ou trocar o que foi proposto no High Concept sem passar pelo grupo:
       gênero, plataformas, nº de jogadores, classificação etária, objetivos
       secundários, controles e público-alvo

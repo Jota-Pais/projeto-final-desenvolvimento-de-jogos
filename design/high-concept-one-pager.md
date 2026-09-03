@@ -92,7 +92,7 @@ Tudo que não está marcado com ⬜ pode ser diagramado como está.
 
 # Você me amaria se eu fosse um zumbi?
 
-⚠️ Título **provisório** — a equipe pode trocar, e aí a peça muda junto.
+Título **confirmado** pela equipe em 03/09/2026.
 
 Tagline, embaixo do título:
 
@@ -337,7 +337,7 @@ lido.
 
 ## Checklist antes de entregar
 
-- [x] Título definido e no topo da peça — provisório, mas serve
+- [x] Título definido e no topo da peça
 - [ ] Os 14 tópicos aparecem — nenhum bloco em branco
 - [ ] Nome de todos os integrantes, turma (quarta) e curso na peça
 - [ ] Uma página, PDF, paisagem

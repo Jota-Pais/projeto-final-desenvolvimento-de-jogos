@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Projeto Final - Jogos"
+config/name="Você me amaria se eu fosse um zumbi?"
 run/main_scene="res://teste-movimento/teste.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
