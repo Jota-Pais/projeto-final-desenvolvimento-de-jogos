@@ -25,6 +25,11 @@ Godot.
 **A premissa e a estrutura do jogo já foram decididas** pela equipe e estão em
 [`design/high-concept.md`](design/high-concept.md): apocalipse zumbi, dois modos
 que se alternam a cada dia — rua top-down para o gameplay, casa ponto e clique
+
+O conteúdo e o layout da **peça de entrega** — o one-pager visual que o professor
+exige no lugar de um documento de texto — estão em
+[`design/high-concept-one-pager.md`](design/high-concept-one-pager.md), pronto
+para entregar a quem for diagramar.
 para a narrativa — e um prazo em dias para desenvolver a cura.
 
 O que ainda não existe é código do jogo. Título, gênero escrito e controles
