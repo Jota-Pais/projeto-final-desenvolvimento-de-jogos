@@ -58,7 +58,8 @@ integrantes**, a **turma (quarta)** e o **curso (Engenharia de Software)**.
 | Apresentação organizada | 2 |
 | Compreensível por perfis diferentes — artista, programador, game designer, narrative designer, produtor | 2 |
 
-**O peso maior é clareza, não beleza.** Uma peça bonita e confusa perde para uma
+**O peso maior é clareza, não beleza.** A conferência item a item dos tópicos
+exigidos está na **seção 14**. Uma peça bonita e confusa perde para uma
 peça simples e legível. Isso deve guiar toda decisão de tipografia, densidade e
 hierarquia.
 
@@ -180,10 +181,16 @@ Reserve o espaço.
 
 | Campo | Conteúdo |
 |---|---|
-| Jogadores | 1 jogador, offline |
+| Jogadores | **1 jogador**, partida solo e offline — não há multijogador local nem remoto |
 | Plataformas | PC (Windows) e navegador |
-| Classificação | 14 anos |
-| Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
+| Classificação | **14 anos** (modelo nacional) |
+| Gênero principal | **Survival horror narrativo** |
+| Subgêneros | ação top-down · aventura ponto e clique · sobrevivência · pixel art |
+| Recursos e dispositivos | Entrada: teclado e mouse. Saída: monitor e áudio estéreo (fone recomendado) |
+
+A distinção entre **gênero principal e subgêneros** precisa ficar visível na
+peça — não vale empilhar tudo numa nuvem de tags só. O gabarito pergunta as duas
+coisas separadamente.
 
 ### Lore — quatro linhas no máximo
 
@@ -297,8 +304,9 @@ os donos são estimativa do SteamSpy.
 
 ### Público-alvo
 
-**Demografia** — 18 a 30 anos, joga em PC, compra na Steam, não precisa de
-máquina forte. Renda média, brasileiro e internacional.
+**Demografia** — 18 a 30 anos, maioria masculina mas sem recorte rígido de
+sexo, renda média, brasileiro e internacional. Joga em PC e compra na Steam;
+não precisa de máquina forte.
 
 **Psicografia** — perfil **explorador**: joga para entender o sistema, não para
 vencer os outros. Gosta de descobrir a regra escondida, testar o limite da
@@ -337,8 +345,33 @@ acumular mais de uma. Reserve o espaço para quatro linhas.
 
 ### Cronograma — linha do tempo horizontal
 
-`09/09 High Concept` · `30/09 Alfa + prévia do GDD` · `11/11 Beta + GDD final` ·
-`02/12 Gold + pitch`
+O gabarito pede **atividades e prazos casados com os dias de aula da
+disciplina**, não só as datas de entrega. Todas as datas abaixo são quartas —
+o dia da turma.
+
+| Data | Tipo | Atividade |
+|---|---|---|
+| **09/09** | aula | **Entrega: High Concept** |
+| 16/09 | aula | Rua: core mechanic jogável numa fase de teste |
+| 23/09 | projeto | Rua: primeira versão da fase · Casa: telas e fluxo do ponto e clique |
+| **30/09** | projeto | **Entrega: Alfa + prévia do GDD** |
+| 07/10 | prova A1 | — |
+| 14/10 | aula | Estética das duas frentes definida |
+| 21/10 | aula | Level design da rua e progressão dos dias |
+| 28/10 | aula | Balanceamento: prazo, fome e ritmo de horda |
+| 04/11 | projeto | Integração dos dois modos · áudio mapeado |
+| **11/11** | projeto | **Entrega: Beta + GDD final** |
+| 18/11 | prova A2 | — |
+| 25/11 | projeto | Polimento e aplicação dos assets |
+| **02/12** | aula | **Entrega: Gold + pitch de investimentos** |
+
+**Como diagramar:** uma faixa horizontal com as quatro entregas em destaque
+(09/09, 30/09, 11/11, 02/12) e as atividades entre elas em texto menor. Não
+precisa caber a tabela inteira — precisa dar para ver que existe plano entre uma
+entrega e outra.
+
+São **12 encontros de 09/09 a 25/11**, que é exatamente a base do orçamento
+abaixo. Os dois blocos conversam: se um mudar, o outro muda junto.
 
 ### Orçamento — número grande, com a conta visível
 
@@ -440,6 +473,7 @@ Reserve espaço para eles e siga com o resto:
 
 ## 13. Checklist antes de fechar
 
+- [ ] Todos os 14 tópicos da seção 14 estão cobertos — conferir um a um
 - [ ] Todos os blocos das seções 8 e 9 estão na peça
 - [ ] Nenhum bloco em branco, exceto os quatro campos da seção 11
 - [ ] Nomes dos integrantes, turma (quarta) e curso (Engenharia de Software)
@@ -448,3 +482,34 @@ Reserve espaço para eles e siga com o resto:
 - [ ] O desenho da tela de gameplay está incluído **e legendado**
 - [ ] A conta do orçamento aparece junto do total
 - [ ] Dá para entender o jogo lendo só o título, a key art e o bloco rua/casa
+
+## 14. Mapa dos tópicos obrigatórios
+
+O professor define 14 tópicos e avalia se a peça **cumpre todos**. Esta é a
+conferência item a item, com a pergunta dele de um lado e o bloco da peça do
+outro. Se algum bloco sumir na diagramação, o critério cai junto.
+
+| # | O que o professor pergunta | Bloco da peça |
+|---|---|---|
+| 1 | Qual o título do jogo? | Título |
+| 2 | Para quais plataformas o jogo vai funcionar? | Ficha rápida |
+| 3 | Quantos jogadores e como vão interagir — local ou remotamente? | Ficha rápida |
+| 4 | Qual o gênero principal? Existem subgêneros? Quais? | Ficha rápida, em **duas linhas separadas** |
+| 5 | Qual a classificação etária, no modelo nacional vigente? | Ficha rápida |
+| 6 | Resumo da história (plot) com foco na jogabilidade — o que o jogador faz? | Lore + Pitch + blocos Rua e Casa |
+| 7 | Objetivo principal para vencer, e os secundários? | Objetivos |
+| 8 | Modos diferentes de jogabilidade e recursos usados (dispositivos de entrada e saída)? | Rua e Casa, com os controles, mais a linha *Recursos e dispositivos* da ficha |
+| 9 | Diferenciais de venda e concorrentes, com benchmarking? | Diferenciais + Concorrentes e benchmarking |
+| 10 | Quem é o público-alvo? Como aprende, como joga, idade, sexo, demografia, psicografia, proto-persona? | Público-alvo |
+| 11 | Cronograma de atividades e prazos, considerando os dias de aula do projeto? | Cronograma |
+| 12 | Quem é a equipe e que funções assumem? | Equipe e funções |
+| 13 | Qual o orçamento previsto? | Orçamento |
+| 14 | Foi feito protótipo? Desenho de uma tela de gameplay que ajude a explicar o jogo | Tela de gameplay |
+
+Quatro observações que decorrem da lista e são fáceis de perder:
+
+- O tópico 4 pede **principal e subgêneros separados**, não uma nuvem única.
+- O tópico 3 pede **como os jogadores interagem** — mesmo sendo um jogador só,
+  a peça tem que dizer isso.
+- O tópico 8 pede **entrada e saída**, não só os controles.
+- O tópico 11 pede **atividades e prazos**, não só as datas de entrega.
