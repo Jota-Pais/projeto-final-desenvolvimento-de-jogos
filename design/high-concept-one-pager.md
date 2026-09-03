@@ -274,13 +274,27 @@ datas reais e resolveria isso — continua sem baixar.
 
 ### Orçamento
 
-**R$ 6.000** — 5 encontros de projeto × 3h × R$ 100/hora × 4 integrantes.
+**R$ 1.500** — 5 encontros dedicados ao projeto × 3h × R$ 100/hora.
 
-⬜ **Confirmar a leitura antes de imprimir o número.** A fórmula do modelo é
-*dias de aula dedicados ao projeto × R$ 100 × 3*, e ela não diz se conta por
-pessoa nem quais dias entram. O exemplo do professor chega a R$ 18.000 por outra
-conta (100 horas × R$ 150 + R$ 3.000 de assets). Seja qual for a escolha, **a
-conta tem que aparecer na peça** — é o que torna o número defensável.
+É orçamento **simulado**: o High Concept é documento de pitch, e pitch tem linha
+de custo. O que se precifica é o trabalho da equipe como se fosse pago. O texto
+do modelo é este:
+
+> *"Qual o orçamento previsto para o projeto? Quanto vai custar o jogo?
+> Simplifiquem aqui, considerando os dias de aula dedicados ao projeto final ×
+> R$ 100,00 × 3 (cada aula tem 3 horas de duração)"*
+
+**A conta tem que aparecer na peça**, não só o total — é o que torna o número
+defensável. Os 5 encontros são os marcados como projeto no plano de ensino:
+23/09, 30/09, 04/11, 11/11 e 25/11.
+
+⬜ A única dúvida que sobra é **quais dias contam**. Se a equipe entender que
+todos os encontros do High Concept até a Gold são dedicados ao projeto, são 12
+aulas e o número vira R$ 3.600. A fórmula não multiplica por número de
+integrantes — o professor pede simplificação, então não vale inventar fator que
+ele não escreveu. O exemplo dele chega a R$ 18.000 por outra conta (100 horas ×
+R$ 150 + R$ 3.000 de assets), que é o custo real de produção e não a fórmula
+simplificada.
 
 ### Protótipo — desenho de uma tela de gameplay
 
