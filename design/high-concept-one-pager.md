@@ -274,7 +274,7 @@ datas reais e resolveria isso — continua sem baixar.
 
 ### Orçamento
 
-**R$ 1.500** — 5 encontros dedicados ao projeto × 3h × R$ 100/hora.
+**R$ 3.600** — 12 encontros × 3h × R$ 100/hora.
 
 É orçamento **simulado**: o High Concept é documento de pitch, e pitch tem linha
 de custo. O que se precifica é o trabalho da equipe como se fosse pago. O texto
@@ -284,17 +284,14 @@ do modelo é este:
 > Simplifiquem aqui, considerando os dias de aula dedicados ao projeto final ×
 > R$ 100,00 × 3 (cada aula tem 3 horas de duração)"*
 
-**A conta tem que aparecer na peça**, não só o total — é o que torna o número
-defensável. Os 5 encontros são os marcados como projeto no plano de ensino:
-23/09, 30/09, 04/11, 11/11 e 25/11.
+**A conta tem que aparecer na peça**, não só o total — é o que a torna
+defensável. A leitura da equipe (03/09/2026) é que **todas as aulas se
+relacionam com o projeto**, então contam os 12 encontros entre o High Concept e
+o último dia de desenvolvimento antes da Gold: de **09/09 a 25/11**.
 
-⬜ A única dúvida que sobra é **quais dias contam**. Se a equipe entender que
-todos os encontros do High Concept até a Gold são dedicados ao projeto, são 12
-aulas e o número vira R$ 3.600. A fórmula não multiplica por número de
-integrantes — o professor pede simplificação, então não vale inventar fator que
-ele não escreveu. O exemplo dele chega a R$ 18.000 por outra conta (100 horas ×
-R$ 150 + R$ 3.000 de assets), que é o custo real de produção e não a fórmula
-simplificada.
+Para referência, o exemplo do professor chega a R$ 18.000 por outra conta
+(100 horas × R$ 150 + R$ 3.000 de assets) — aquilo é custo real de produção, não
+a fórmula simplificada. Não precisamos ir por ali.
 
 ### Protótipo — desenho de uma tela de gameplay
 

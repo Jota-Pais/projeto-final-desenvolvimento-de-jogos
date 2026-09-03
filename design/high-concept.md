@@ -92,7 +92,7 @@ e o conceito de arte de cada fase na seção de estética.
 | 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Marina, 24) estão no brief |
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
 | 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
-| 13 | Orçamento | **R$ 1.500** — 5 encontros de projeto × 3h × R$ 100/hora. Simulado, e é a fórmula literal do modelo. ⬜ confirmar quais dias contam |
+| 13 | Orçamento | **R$ 3.600** — 12 encontros (09/09 a 25/11) × 3h × R$ 100/hora. Simulado, pela fórmula literal do modelo |
 | 14 | Protótipo | ⬜ — a alfa é outra entrega; falta o **desenho de uma tela de gameplay**, especificado no brief |
 
 ## O que ficou resolvido
@@ -131,8 +131,6 @@ O que ninguém além do grupo pode resolver:
 - **Quem fica na rua e quem fica na casa**, e as funções formais de cada um
   (artista, programador, game designer, sound designer, narrative designer;
   uma pessoa pode acumular).
-- **Quais dias entram no orçamento** — a fórmula é literal, mas o número de
-  encontros "dedicados ao projeto" admite mais de uma contagem.
 - **O título**, que hoje está como *Você me amaria se eu fosse um zumbi?* em
   caráter provisório.
 
