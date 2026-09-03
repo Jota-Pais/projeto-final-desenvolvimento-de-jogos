@@ -86,16 +86,21 @@ hora que são dois jogos que se alternam.
 
 ## O conteúdo, bloco a bloco
 
+Tudo que não está marcado com ⬜ pode ser diagramado como está.
+
 ### Título e tagline
 
-⬜ **O título não existe ainda.** É o tópico 1 e é o maior buraco da peça — sem
-ele o designer não tem nem o bloco principal.
+# Você me amaria se eu fosse um zumbi?
 
-Tagline, três opções para a equipe escolher (⬜ nenhuma foi aprovada):
+⚠️ Título **provisório** — a equipe pode trocar, e aí a peça muda junto.
 
-- *Ela ainda está lá embaixo. Você tem dias para trazê-la de volta.*
-- *Todo dia você sai. Todo dia o mundo está pior.*
-- *O amor não sobrevive sozinho ao apocalipse.*
+Tagline, embaixo do título:
+
+> *Ela perguntou antes. Agora você tem dias para responder.*
+
+O título é uma pergunta, e é o melhor ativo da peça: já entrega tom, premissa e
+o deboche do final, tudo em uma linha. O designer deve tratá-lo como imagem, não
+como texto — é ele que ocupa o maior espaço do mural.
 
 ### Pitch — o texto de entrada da peça, duas linhas
 
@@ -118,16 +123,32 @@ Vasculhar casas atrás de comida, água, suprimentos e **documentos** — que
 revelam a origem do apocalipse e dão pistas da cura. É onde o jogador passa a
 maior parte do tempo.
 
+**Controles:** `WASD` ou setas para andar · mouse para mirar e interagir ·
+`E` para vasculhar · `Shift` para correr.
+
 ### Casa — a narrativa
 
 Ponto e clique, arte detalhada, tom enigmático — contraste proposital com a
 simplicidade da rua. Cuidar dela e montar a pesquisa com o que foi trazido de
 fora.
 
+**Controles:** mouse, só. Clique para andar, examinar e combinar itens.
+
 ### O ciclo — o texto que fica entre as duas colunas
 
 > A rua é o gameplay. A casa é a história. **O que você arrisca lá fora é o que
 > destrava o que acontece aqui dentro.**
+
+### Objetivos
+
+**Principal** — completar a cura antes do prazo.
+
+**Secundários:**
+
+- Descobrir a origem do apocalipse pelos documentos espalhados na rua
+- Manter ela estável: quanto pior o estado dela, menos tempo sobra
+- Equipar a casa e o laboratório para acelerar as tentativas de cura
+- Sobreviver mais um dia com menos dano do que no anterior
 
 ### Progressão e finais
 
@@ -142,7 +163,7 @@ fora.
 
 O bloco da derrota é o melhor momento da peça e merece tratamento visual
 próprio: o "final feliz" com moldura de retrato de casal, e o deboche na
-entrelinha.
+entrelinha. É a resposta da pergunta do título.
 
 ### Core mechanic — bloco destacado, uma frase
 
@@ -163,55 +184,118 @@ sobreviver
 3. **Risco compra história** — o quanto se arrisca na rua é literalmente quanta
    narrativa se destrava em casa.
 
-### Gêneros — tags
-
-⬜ **Não decidido.** Sugestão: `survival horror narrativo` · `ação top-down` ·
-`aventura ponto e clique` · `pixel art` · `sobrevivência`
-
-### Referências — tags
-
-`Project Zomboid` · `Vampire Survivors` · ⬜ **faltam dois ou três jogos de
-escopo pequeno** — o tópico 9 pede concorrentes de porte parecido com o do
-projeto, e esses dois são gigantes.
-
 ### Ficha rápida — a linha embaixo do título
 
 | Campo | Conteúdo |
 |---|---|
-| Jogadores | ⬜ *proposta:* 1 jogador, offline |
-| Plataformas | ⬜ *proposta:* PC (Windows) e navegador — o Godot exporta para web |
-| Classificação | ⬜ *proposta:* 16 anos, por violência e tema |
+| Jogadores | 1 jogador, offline |
+| Plataformas | PC (Windows) e navegador — o Godot exporta para web |
+| Classificação | 16 anos — violência e tema |
+| Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
+
+Tudo nesta tabela é **proposta minha**, coerente com o que já foi decidido, e a
+equipe pode trocar qualquer linha. Nenhuma delas foi discutida em grupo.
+
+### Concorrentes e referências — nuvem de tags, em dois grupos
+
+O tópico 9 pede concorrentes **de escopo similar ao do projeto**, então vale
+separar quem é comparável de quem é só inspiração.
+
+**Concorrentes — escopo parecido, time pequeno:**
+
+`Papers, Please` — loop mecânico simples carregando peso narrativo, feito
+praticamente por uma pessoa · `60 Seconds!` — vasculhar sob pressão e depois
+administrar o abrigo, que é literalmente a nossa estrutura de dois modos ·
+`Darkwood` — top-down de horror com dia de exploração e noite de sobrevivência
+
+**Referências de estrutura e de público, escopo maior:**
+
+`This War of Mine` — o parente mais próximo: sai para vasculhar, volta para
+administrar a casa · `Inscryption` — a referência de **público**, não de gênero ·
+`Project Zomboid` — a sensação de exploração · `Vampire Survivors` — o ritmo de
+horda
+
+⬜ **Falta o benchmarking numérico.** O professor indica
+<https://steamdb.info/sales/>, <https://steamspy.com/> e
+<https://games-stats.com/> para levantar preço, número de avaliações e vendas.
+Isso é pesquisa de meia hora que ninguém fez ainda.
 
 ### Público-alvo
 
-⬜ **Vazio.** O tópico 10 pede demografia, psicografia e proto-persona. Sem isso
-o bloco fica em branco na peça.
+**Demografia** — 18 a 30 anos, joga em PC, compra na Steam, não precisa de
+máquina forte. Renda média, brasileiro e internacional.
+
+**Psicografia** — na taxonomia que o professor usa no exemplo, é o perfil
+**explorador**: joga para entender o sistema, não para vencer os outros. Gosta
+de descobrir a regra escondida, testar o limite da mecânica e otimizar — mas o
+que faz terminar o jogo é a história. **Não é try-hard:** não liga para
+ranking, dificuldade máxima nem platinar.
+
+**Proto-persona**
+
+> **Marina, 24 anos, estudante de design e estagiária.**
+> Joga de 4 a 6 horas por semana, quase sempre à noite, sozinha, no notebook.
+> A biblioteca dela é quase toda indie, e o último jogo que comprou foi na
+> promoção, depois de ver um vídeo-ensaio no YouTube.
+>
+> **Como aprende:** lendo a mecânica jogando. Odeia tutorial longo — prefere
+> descobrir errando.
+> **Como joga:** sessões de 45 min a 1h30. Jogo ideal termina em 8 a 12 horas.
+> **O que ela quer:** um sistema que dê para entender e otimizar, dentro de uma
+> história que tenha algo a dizer. Adorou *Inscryption* exatamente por isso.
+> **O que a afasta:** grind, tutorial arrastado e jogo que promete história e
+> entrega só sistema — ou o contrário.
+> **Onde descobre jogo:** YouTube, Steam Next Fest e indicação de amigo.
 
 ### Equipe e funções
 
+| Integrante | Frente | Função |
+|---|---|---|
+| João Carlos Pais | ⬜ | ⬜ |
+| ⬜ | ⬜ | ⬜ |
+| ⬜ | ⬜ | ⬜ |
+| ⬜ | ⬜ | ⬜ |
+
 Quatro pessoas, **metade em cada frente** — dois na rua, dois na casa.
-⬜ Faltam os nomes e as funções formais (artista, programador, game designer,
-sound designer, narrative designer; uma pessoa pode acumular).
+⬜ Faltam três nomes **com sobrenome** (o professor pede por causa de nomes
+repetidos na turma) e as funções de cada um: artista, programador, game
+designer, sound designer, narrative designer. Uma pessoa pode acumular.
+
+Estes mesmos nomes são a **questão 1 da tarefa no AVA**.
 
 ### Cronograma
 
-⬜ As outras datas estão no `prazosAtividades(turma)` do AVA, que ainda não foi
-baixado. Os marcos já conhecidos pelo plano de ensino:
+`09/09 High Concept` · `30/09 Alfa + prévia do GDD` · `11/11 Beta + GDD final` ·
+`02/12 Gold + pitch`
 
-`09/09 High Concept` · `30/09 andamento 1` · `11/11 andamento 2` · `02/12 pitch`
+⬜ O encaixe de Alfa, Beta, GDD e Gold nas duas etapas de andamento é dedução
+minha a partir do plano de ensino. O `prazosAtividades(turma)` do AVA tem as
+datas reais e resolveria isso — continua sem baixar.
 
 ### Orçamento
 
-⬜ **A leitura precisa ser confirmada.** A fórmula do modelo é *dias de aula
-dedicados ao projeto × R$ 100 × 3*. Contando só os 5 encontros marcados como
-projeto, dá **R$ 1.500** — mas o exemplo do professor chega a R$ 18.000 (100
-horas × R$ 150 + R$ 3.000 de assets), o que sugere uma contagem bem mais larga.
-Perguntar antes de imprimir um número na peça.
+**R$ 6.000** — 5 encontros de projeto × 3h × R$ 100/hora × 4 integrantes.
 
-### Protótipo
+⬜ **Confirmar a leitura antes de imprimir o número.** A fórmula do modelo é
+*dias de aula dedicados ao projeto × R$ 100 × 3*, e ela não diz se conta por
+pessoa nem quais dias entram. O exemplo do professor chega a R$ 18.000 por outra
+conta (100 horas × R$ 150 + R$ 3.000 de assets). Seja qual for a escolha, **a
+conta tem que aparecer na peça** — é o que torna o número defensável.
 
-⬜ **Não existe.** O tópico 14 pede a versão alfa mais **um desenho de uma tela
-de gameplay**. O desenho da tela dá para fazer junto com a peça; a alfa não.
+### Protótipo — desenho de uma tela de gameplay
+
+⬜ **Falta desenhar.** O tópico 14 pede a versão alfa mais um desenho de tela.
+A alfa é outra entrega; o desenho é desta. O que a tela precisa mostrar:
+
+- Vista **top-down**, personagem no centro, rua com casas dos dois lados
+- Alguns zumbis se aproximando de direções diferentes
+- **HUD:** dia atual e quanto falta para o prazo · vida · fome/água ·
+  espaço da mochila
+- Uma casa com a porta destacada, indicando que dá para entrar e vasculhar
+- Um documento no chão, com brilho, diferente dos outros itens
+
+Rabisco serve — o professor aceita desenho de conceito. O que não pode é o bloco
+ficar vazio.
 
 ## Direção de arte
 
@@ -242,7 +326,7 @@ lido.
 
 ## Checklist antes de entregar
 
-- [ ] Título definido e no topo da peça
+- [x] Título definido e no topo da peça — provisório, mas serve
 - [ ] Os 14 tópicos aparecem — nenhum bloco em branco
 - [ ] Nome de todos os integrantes, turma (quarta) e curso na peça
 - [ ] Uma página, PDF, paisagem

@@ -1,6 +1,7 @@
-# High Concept
+# High Concept — Você me amaria se eu fosse um zumbi?
 
-Registro do que a equipe fechou em conversa, escrito em **03/09/2026**.
+Registro do que a equipe fechou em conversa, escrito em **03/09/2026**. O título
+é **provisório**.
 
 > **Isto não é a entrega.** O professor zera o High Concept entregue como
 > documento de texto formal — é item eliminatório. A entrega tem que ser um
@@ -79,20 +80,20 @@ e o conceito de arte de cada fase na seção de estética.
 
 | # | Tópico | Situação |
 |---|---|---|
-| 1 | Título do jogo | ⬜ — trava também o nome do repositório e o `config/name` |
-| 2 | Plataformas | ⬜ — a escolha do Godot com export web aponta para PC e navegador; falta bater o martelo |
-| 3 | Jogadores e interação | ⬜ — a premissa é de um jogador só, offline, mas isso nunca foi dito em voz alta |
-| 4 | Gênero e subgêneros | ⬜ — ver *O gênero precisa de nome* abaixo |
-| 5 | Classificação etária | ⬜ — zumbi, mordida e violência puxam para 16 ou 18 |
+| 1 | Título do jogo | **Você me amaria se eu fosse um zumbi?** — provisório (03/09/2026), a equipe pode trocar |
+| 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
+| 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
+| 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
+| 5 | Classificação etária | 16 anos, por violência e tema — *proposta* |
 | 6 | Resumo da história | ✅ — a *Premissa* acima |
-| 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. ⬜ os secundários |
-| 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação entre eles é proposital. ⬜ os controles de cada um |
-| 9 | Diferenciais e concorrentes | *Project Zomboid* e *Vampire Survivors* são as referências citadas. ⬜ o benchmarking e o diferencial escrito |
-| 10 | Público-alvo | ⬜ — demografia, psicografia e proto-persona |
-| 11 | Cronograma | ⬜ — depende do `prazosAtividades(turma)`, que ainda não foi baixado do AVA |
-| 12 | Equipe e funções | Quatro pessoas, metade em cada modo. ⬜ quem fica em qual frente e as funções formais |
-| 13 | Orçamento | Fórmula do professor: dias de aula no projeto × R$ 100 × 3. São 5 encontros marcados como projeto (23/09, 30/09, 04/11, 11/11, 25/11) → **R$ 1.500**. ⬜ confirmar a leitura |
-| 14 | Protótipo | ⬜ — versão alfa mais um desenho de tela de gameplay |
+| 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários redigidos no brief — *proposta* |
+| 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles redigidos no brief — *proposta* |
+| 9 | Diferenciais e concorrentes | Diferenciais escritos. Concorrentes de escopo parecido levantados (*Papers, Please*, *60 Seconds!*, *Darkwood*). ⬜ falta o benchmarking numérico na Steam |
+| 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Marina, 24) estão no brief |
+| 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
+| 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
+| 13 | Orçamento | **R$ 6.000** por uma leitura da fórmula (5 encontros × 3h × R$ 100 × 4 pessoas). ⬜ confirmar com o professor |
+| 14 | Protótipo | ⬜ — a alfa é outra entrega; falta o **desenho de uma tela de gameplay**, especificado no brief |
 
 ## O que ficou resolvido
 
@@ -118,18 +119,21 @@ leitura pronta para a conversa de calibragem de escopo com ele.
 
 ## O que ainda falta decidir
 
-### O gênero precisa de nome escrito
+Tudo o que aparece como *proposta* na tabela acima foi escrito por mim para a
+peça não sair com bloco vazio, e **nenhuma dessas linhas passou pelo grupo**:
+gênero, plataformas, número de jogadores, classificação etária, objetivos
+secundários, controles e o público-alvo. Aprovar ou rasgar é decisão da equipe.
 
-O tópico 4 pede gênero principal e subgêneros, e ainda não há resposta. O que
-existe descreve duas coisas: a rua é ação/sobrevivência top-down, a casa é
-aventura ponto e clique. *Sugestão:* **survival horror narrativo**, com ação
-top-down e aventura ponto e clique como subgêneros — mas quem decide é a equipe.
+O que ninguém além do grupo pode resolver:
 
-### Quem fica em qual frente
-
-A divisão é metade da equipe por modo, mas os nomes não estão amarrados a
-nenhuma das duas — nem as funções que o tópico 12 cobra (artista, programador,
-game designer, sound designer, narrative designer; uma pessoa pode acumular).
+- **Os três nomes que faltam**, com sobrenome — o professor pede por causa de
+  nomes repetidos na turma. São também a questão 1 da tarefa no AVA.
+- **Quem fica na rua e quem fica na casa**, e as funções formais de cada um
+  (artista, programador, game designer, sound designer, narrative designer;
+  uma pessoa pode acumular).
+- **A leitura do orçamento**, que é pergunta para o professor.
+- **O título**, que hoje está como *Você me amaria se eu fosse um zumbi?* em
+  caráter provisório.
 
 ## Pontos de atenção
 

@@ -32,18 +32,22 @@ exige no lugar de um documento de texto — estão em
 para entregar a quem for diagramar.
 para a narrativa — e um prazo em dias para desenvolver a cura.
 
-O que ainda não existe é código do jogo. Título, gênero escrito e controles
-continuam em aberto, e é deles que dependem a estrutura de pastas e as primeiras
-cenas de verdade. A única coisa que roda é a **cena de teste** em
-`teste-movimento/`, descrita abaixo, que não tem relação nenhuma com o jogo.
+O título provisório é **Você me amaria se eu fosse um zumbi?** (03/09/2026).
+
+O que ainda não existe é código do jogo, e é a decisão de estrutura de pastas e
+as primeiras cenas de verdade que dependem disso. A única coisa que roda é a
+**cena de teste** em `teste-movimento/`, descrita abaixo, que não tem relação
+nenhuma com o jogo.
 
 Pendentes de decisão da equipe:
 
-- [ ] Título do jogo — o nome deste repositório e o `config/name` do
-      `project.godot` são provisórios. O Godot apaga comentário do
-      `project.godot` toda vez que salva as configurações, então o lembrete
-      mora aqui
-- [ ] Gênero escrito (tópico 4 do High Concept) e os controles de cada modo
+- [ ] **Confirmar o título** — enquanto for provisório, o nome deste repositório
+      e o `config/name` do `project.godot` continuam como estão. O Godot apaga
+      comentário do `project.godot` toda vez que salva as configurações, então o
+      lembrete mora aqui
+- [ ] Aprovar ou trocar o que foi proposto no High Concept sem passar pelo grupo:
+      gênero, plataformas, nº de jogadores, classificação etária, objetivos
+      secundários, controles e público-alvo
 - [ ] Quem fica na rua e quem fica na casa — a divisão é metade da equipe em
       cada frente, mas os nomes não estão amarrados
 - [ ] Estrutura de pastas
