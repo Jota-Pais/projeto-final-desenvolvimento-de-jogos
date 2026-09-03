@@ -27,11 +27,10 @@ Godot.
 que se alternam a cada dia — rua top-down para o gameplay, casa ponto e clique
 para a narrativa — e um prazo em dias para desenvolver a cura.
 
-O que ainda não existe é código do jogo. Título, gênero escrito, core mechanic
-única e controles continuam em aberto, e é deles que dependem a estrutura de
-pastas e as primeiras cenas de verdade. A única coisa que roda é a **cena de
-teste** em `teste-movimento/`, descrita abaixo, que não tem relação nenhuma com
-o jogo.
+O que ainda não existe é código do jogo. Título, gênero escrito e controles
+continuam em aberto, e é deles que dependem a estrutura de pastas e as primeiras
+cenas de verdade. A única coisa que roda é a **cena de teste** em
+`teste-movimento/`, descrita abaixo, que não tem relação nenhuma com o jogo.
 
 Pendentes de decisão da equipe:
 
@@ -39,8 +38,9 @@ Pendentes de decisão da equipe:
       `project.godot` são provisórios. O Godot apaga comentário do
       `project.godot` toda vez que salva as configurações, então o lembrete
       mora aqui
-- [ ] Gênero, core mechanic única e o que conta como "fase" — as três decisões
-      que faltam para fechar o High Concept, discutidas em `design/`
+- [ ] Gênero escrito (tópico 4 do High Concept) e os controles de cada modo
+- [ ] Quem fica na rua e quem fica na casa — a divisão é metade da equipe em
+      cada frente, mas os nomes não estão amarrados
 - [ ] Estrutura de pastas
 - [ ] Convenções de código e de cena — inclusive **em que idioma** nomear node,
       variável e arquivo. O teste está em português só para combinar com a
