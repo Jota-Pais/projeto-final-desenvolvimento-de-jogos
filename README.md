@@ -22,13 +22,16 @@ Godot.
 
 ## Estado
 
-Esqueleto. **O jogo ainda não foi definido** — gênero, core mechanic e título
-saem do High Concept, a primeira entrega do projeto final. Por isso não há
-estrutura de pastas de verdade nem cenas do jogo: `entities/`, `levels/` e o
-resto dependem de saber o que o jogo é.
+**A premissa e a estrutura do jogo já foram decididas** pela equipe e estão em
+[`design/high-concept.md`](design/high-concept.md): apocalipse zumbi, dois modos
+que se alternam a cada dia — rua top-down para o gameplay, casa ponto e clique
+para a narrativa — e um prazo em dias para desenvolver a cura.
 
-A única coisa que roda é a **cena de teste** em `teste-movimento/`, descrita
-abaixo.
+O que ainda não existe é código do jogo. Título, gênero escrito, core mechanic
+única e controles continuam em aberto, e é deles que dependem a estrutura de
+pastas e as primeiras cenas de verdade. A única coisa que roda é a **cena de
+teste** em `teste-movimento/`, descrita abaixo, que não tem relação nenhuma com
+o jogo.
 
 Pendentes de decisão da equipe:
 
@@ -36,6 +39,8 @@ Pendentes de decisão da equipe:
       `project.godot` são provisórios. O Godot apaga comentário do
       `project.godot` toda vez que salva as configurações, então o lembrete
       mora aqui
+- [ ] Gênero, core mechanic única e o que conta como "fase" — as três decisões
+      que faltam para fechar o High Concept, discutidas em `design/`
 - [ ] Estrutura de pastas
 - [ ] Convenções de código e de cena — inclusive **em que idioma** nomear node,
       variável e arquivo. O teste está em português só para combinar com a
