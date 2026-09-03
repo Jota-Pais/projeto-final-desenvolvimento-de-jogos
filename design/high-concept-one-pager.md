@@ -196,29 +196,48 @@ sobreviver
 Tudo nesta tabela é **proposta minha**, coerente com o que já foi decidido, e a
 equipe pode trocar qualquer linha. Nenhuma delas foi discutida em grupo.
 
-### Concorrentes e referências — nuvem de tags, em dois grupos
+### Concorrentes e benchmarking
 
-O tópico 9 pede concorrentes **de escopo similar ao do projeto**, então vale
-separar quem é comparável de quem é só inspiração.
+Levantado no SteamSpy em **03/09/2026**. Preços em dólar e com desconto vigente
+na data; os donos são estimativa do SteamSpy, não número oficial da Valve.
 
-**Concorrentes — escopo parecido, time pequeno:**
+**Concorrentes — escopo comparável ao nosso, time pequeno**
 
-`Papers, Please` — loop mecânico simples carregando peso narrativo, feito
-praticamente por uma pessoa · `60 Seconds!` — vasculhar sob pressão e depois
-administrar o abrigo, que é literalmente a nossa estrutura de dois modos ·
-`Darkwood` — top-down de horror com dia de exploração e noite de sobrevivência
+| Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
+|---|---|---|---|---|---|
+| *Darkwood* | Acid Wizard Studio | 2017 | US$ 3,99 | 1–2 mi | 94% |
+| *60 Seconds!* | Robot Gentleman | 2015 | US$ 8,99 | 0,5–1 mi | 84% |
+| *Vampire Survivors* | poncle | 2022 | US$ 3,74 | 5–10 mi | 98% |
+| *Papers, Please* | Lucas Pope | 2013 | US$ 9,99 | 2–5 mi | 97% |
 
-**Referências de estrutura e de público, escopo maior:**
+**Referências de estrutura e de público — escopo maior, fora da nossa liga**
 
-`This War of Mine` — o parente mais próximo: sai para vasculhar, volta para
-administrar a casa · `Inscryption` — a referência de **público**, não de gênero ·
-`Project Zomboid` — a sensação de exploração · `Vampire Survivors` — o ritmo de
-horda
+| Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
+|---|---|---|---|---|---|
+| *Project Zomboid* | The Indie Stone | 2013 | US$ 16,74 | 10–20 mi | 94% |
+| *This War of Mine* | 11 bit studios | 2014 | US$ 19,99 | 2–5 mi | 92% |
+| *Inscryption* | Daniel Mullins Games | 2021 | US$ 19,99 | 2–5 mi | 96% |
 
-⬜ **Falta o benchmarking numérico.** O professor indica
-<https://steamdb.info/sales/>, <https://steamspy.com/> e
-<https://games-stats.com/> para levantar preço, número de avaliações e vendas.
-Isso é pesquisa de meia hora que ninguém fez ainda.
+**O que os números dizem — usar isto no tópico 9 e no pitch**
+
+- **A estrutura de dois modos é fórmula testada de time pequeno.** A descrição
+  do *Darkwood* na própria Steam é *"scavenge and explore a rich, ever-changing
+  free-roam world by day, then hunker down in your hideout and pray for the
+  morning light"* — vasculhar de dia, se recolher no abrigo depois. É o nosso
+  desenho, feito por **três pessoas**, com 94% de aprovação e mais de um milhão
+  de donos. *60 Seconds!* faz o mesmo: vasculhar contra o relógio, depois
+  administrar o abrigo.
+- **Escopo pequeno não limita alcance.** *Vampire Survivors* foi feito
+  essencialmente por uma pessoa e tem entre 5 e 10 milhões de donos.
+  *Papers, Please* é de um desenvolvedor só. Nenhum dos dois depende de produção
+  cara — dependem de um loop bem afinado, que é exatamente a aposta deste
+  projeto.
+- **O público existe e continua comprando.** *Project Zomboid* saiu em 2013 e
+  tem de 10 a 20 milhões de donos. Ele não é concorrente de escopo, mas prova
+  que o mercado de sobrevivência zumbi está longe de saturado.
+- **Faixa de preço.** Os concorrentes de porte parecido ficam entre **US$ 4 e
+  US$ 10**. *Inscryption* e *This War of Mine*, com produção bem maior, ficam em
+  US$ 20. Nosso lugar é a faixa de baixo.
 
 ### Público-alvo
 

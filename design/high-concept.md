@@ -87,7 +87,7 @@ e o conceito de arte de cada fase na seção de estética.
 | 6 | Resumo da história | ✅ — a *Premissa* acima |
 | 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários redigidos no brief — *proposta* |
 | 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles redigidos no brief — *proposta* |
-| 9 | Diferenciais e concorrentes | Diferenciais escritos. Concorrentes de escopo parecido levantados (*Papers, Please*, *60 Seconds!*, *Darkwood*). ⬜ falta o benchmarking numérico na Steam |
+| 9 | Diferenciais e concorrentes | ✅ — diferenciais escritos e benchmarking levantado no SteamSpy em 03/09/2026 (*Darkwood*, *60 Seconds!*, *Vampire Survivors*, *Papers, Please* como concorrentes de porte; *Project Zomboid*, *This War of Mine* e *Inscryption* como referência). Tabelas no brief |
 | 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Marina, 24) estão no brief |
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
 | 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
@@ -138,10 +138,10 @@ aparecem lá na frente e saem mais barato agora.
 
 - **A arte da casa é a parte cara.** "Visual mais detalhado e bem desenhado" é o
   tipo de item que estoura prazo, e ainda não se sabe quem na equipe faz arte.
-- **As referências são gigantes.** *Project Zomboid* tem mais de dez anos de
-  desenvolvimento. Serve de referência de sensação, não de escopo — e o tópico 9
-  pede concorrentes **de escopo similar ao do projeto**, o que vai exigir uma
-  segunda lista, de jogos pequenos.
+- **A estrutura de dois modos tem precedente de time pequeno.** O benchmarking
+  de 03/09/2026 mostrou que *Darkwood* (três pessoas) e *60 Seconds!* fazem
+  exatamente vasculhar-depois-abrigo, com boa recepção. Isso é argumento a favor
+  na conversa de escopo, não contra.
 - **O professor calibra o escopo caso a caso.** Essa conversa continua pendente.
   As duas frentes em paralelo são o assunto a levar — não para pedir licença,
   mas para ele conhecer o desenho antes de avaliar as entregas.
