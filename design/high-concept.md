@@ -83,7 +83,7 @@ e o conceito de arte de cada fase na seção de estética.
 | 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
-| 5 | Classificação etária | 12 anos — decidido pela equipe em 03/09/2026 |
+| 5 | Classificação etária | 14 anos — decidido pela equipe em 03/09/2026: tem sangue, mas não é jogo violento |
 | 6 | Resumo da história | ✅ — a *Premissa* acima |
 | 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários redigidos no brief — *proposta* |
 | 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles redigidos no brief — *proposta* |

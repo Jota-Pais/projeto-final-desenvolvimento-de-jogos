@@ -57,7 +57,7 @@ hora que são dois jogos que se alternam.
 +---------------------------------------------------------------------------+
 |  [TITULO GRANDE]                        |                                  |
 |  tagline de uma linha                   |   KEY ART                        |
-|  1 jogador . PC e navegador . 12 anos   |   (rua a esquerda, casa a        |
+|  1 jogador . PC e navegador . 14 anos   |   (rua a esquerda, casa a        |
 |  -------------------------------------  |    direita, no mesmo quadro)     |
 |  pitch de duas linhas                   |                                  |
 +--------------------------+--------------+----------------------------------+
@@ -198,13 +198,14 @@ sobreviver
 |---|---|
 | Jogadores | 1 jogador, offline |
 | Plataformas | PC (Windows) e navegador — o Godot exporta para web |
-| Classificação | 12 anos — violência estilizada, medo e tensão |
+| Classificação | 14 anos — sangue e tema, sem violência gratuita |
 | Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
 
-A **classificação 12 anos** foi decidida pela equipe em 03/09/2026. Isso vira
-restrição de arte: a violência tem que ficar estilizada, sem sangue explícito
-nem mutilação — o susto vem de tensão e de escuridão, não de gore. Se a arte
-final passar disso, a classificação sobe junto.
+A **classificação 14 anos** foi decidida pela equipe em 03/09/2026: o jogo tem
+sangue, mas não é um jogo violento — daí não subir para 16. Isso vira uma
+baliza para a arte: sangue e morte podem aparecer, mutilação, crueldade e
+violência gratuita não. Se a arte final passar disso, a classificação sobe
+junto.
 
 As outras três linhas são **proposta minha** e a equipe ainda não discutiu
 nenhuma delas.
