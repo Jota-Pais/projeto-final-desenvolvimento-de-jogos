@@ -9,15 +9,21 @@ A fonte completa do projeto é [`high-concept.md`](high-concept.md). Este arquiv
 
 ## Regras que não se negociam
 
+- **Prazo: 09/09/2026, 23h59.** A tarefa no AVA (*High Concept do Jogo
+  Completo*, aberta desde 12/08) tem duas questões: a primeira, peso 1%, é só
+  **os nomes dos integrantes com sobrenome** — o professor pede sobrenome porque
+  há nomes iguais na turma. A segunda, peso **99%**, é a peça.
 - **Formato visual é eliminatório.** O professor zera o High Concept entregue
-  como documento de texto formal. A peça não pode parecer Word, Docs ou
-  relatório.
-- **Uma página só**, entregue em **PDF**.
+  como documento de texto formal. O campo do AVA aceita DOC, mas isso é só o
+  formato do upload — não é licença para entregar texto corrido.
+- **Como enviar:** arquivo, ou **link** de Drive, Figma ou similar. Se for link,
+  ele tem que ir **dentro de um arquivo `.txt`**. Se precisar compactar, usar
+  **RAR** — o professor avisa que zip costuma dar problema no AVA.
+- **Uma página só.** PDF é o formato seguro.
 - **Paisagem, larga.** O exemplo que o professor deu como formato certo
   (`exemplo-high-concept-sunny-fox.pdf`) tem 5125 × 3195 pt — proporção ≈ 16:10.
   É um mural, não um A4.
-- Entrega **pelo AVA**, por um integrante, com **o nome de todos**, a turma
-  (**quarta**) e o curso identificados.
+- A peça tem que trazer **o nome de todos**, a turma (**quarta**) e o curso.
 
 ## Como a peça é avaliada
 
@@ -189,10 +195,10 @@ sound designer, narrative designer; uma pessoa pode acumular).
 
 ### Cronograma
 
-⬜ As datas reais estão no `prazosAtividades(turma)` do AVA, que ainda não foi
+⬜ As outras datas estão no `prazosAtividades(turma)` do AVA, que ainda não foi
 baixado. Os marcos já conhecidos pelo plano de ensino:
 
-`30/09 andamento 1` · `11/11 andamento 2` · `02/12 pitch`
+`09/09 High Concept` · `30/09 andamento 1` · `11/11 andamento 2` · `02/12 pitch`
 
 ### Orçamento
 
