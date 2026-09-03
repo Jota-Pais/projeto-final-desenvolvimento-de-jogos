@@ -83,12 +83,12 @@ e o conceito de arte de cada fase na seção de estética.
 | 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
-| 5 | Classificação etária | 16 anos, por violência e tema — *proposta* |
+| 5 | Classificação etária | 12 anos — decidido pela equipe em 03/09/2026 |
 | 6 | Resumo da história | ✅ — a *Premissa* acima |
 | 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários redigidos no brief — *proposta* |
 | 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles redigidos no brief — *proposta* |
 | 9 | Diferenciais e concorrentes | ✅ — diferenciais escritos e benchmarking levantado no SteamSpy em 03/09/2026 (*Darkwood*, *60 Seconds!*, *Vampire Survivors*, *Papers, Please* como concorrentes de porte; *Project Zomboid*, *This War of Mine* e *Inscryption* como referência). Tabelas no brief |
-| 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Marina, 24) estão no brief |
+| 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Rafael, 24) estão no brief |
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
 | 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
 | 13 | Orçamento | **R$ 3.600** — 12 encontros (09/09 a 25/11) × 3h × R$ 100/hora. Simulado, pela fórmula literal do modelo |

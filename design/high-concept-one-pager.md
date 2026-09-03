@@ -57,7 +57,7 @@ hora que são dois jogos que se alternam.
 +---------------------------------------------------------------------------+
 |  [TITULO GRANDE]                        |                                  |
 |  tagline de uma linha                   |   KEY ART                        |
-|  1 jogador . PC e navegador . 16 anos   |   (rua a esquerda, casa a        |
+|  1 jogador . PC e navegador . 12 anos   |   (rua a esquerda, casa a        |
 |  -------------------------------------  |    direita, no mesmo quadro)     |
 |  pitch de duas linhas                   |                                  |
 +--------------------------+--------------+----------------------------------+
@@ -190,11 +190,16 @@ sobreviver
 |---|---|
 | Jogadores | 1 jogador, offline |
 | Plataformas | PC (Windows) e navegador — o Godot exporta para web |
-| Classificação | 16 anos — violência e tema |
+| Classificação | 12 anos — violência estilizada, medo e tensão |
 | Gêneros | survival horror narrativo · ação top-down · aventura ponto e clique · pixel art |
 
-Tudo nesta tabela é **proposta minha**, coerente com o que já foi decidido, e a
-equipe pode trocar qualquer linha. Nenhuma delas foi discutida em grupo.
+A **classificação 12 anos** foi decidida pela equipe em 03/09/2026. Isso vira
+restrição de arte: a violência tem que ficar estilizada, sem sangue explícito
+nem mutilação — o susto vem de tensão e de escuridão, não de gore. Se a arte
+final passar disso, a classificação sobe junto.
+
+As outras três linhas são **proposta minha** e a equipe ainda não discutiu
+nenhuma delas.
 
 ### Concorrentes e benchmarking
 
@@ -252,17 +257,17 @@ ranking, dificuldade máxima nem platinar.
 
 **Proto-persona**
 
-> **Marina, 24 anos, estudante de design e estagiária.**
-> Joga de 4 a 6 horas por semana, quase sempre à noite, sozinha, no notebook.
-> A biblioteca dela é quase toda indie, e o último jogo que comprou foi na
+> **Rafael, 24 anos, estudante de design e estagiário.**
+> Joga de 4 a 6 horas por semana, quase sempre à noite, sozinho, no notebook.
+> A biblioteca dele é quase toda indie, e o último jogo que comprou foi na
 > promoção, depois de ver um vídeo-ensaio no YouTube.
 >
 > **Como aprende:** lendo a mecânica jogando. Odeia tutorial longo — prefere
 > descobrir errando.
 > **Como joga:** sessões de 45 min a 1h30. Jogo ideal termina em 8 a 12 horas.
-> **O que ela quer:** um sistema que dê para entender e otimizar, dentro de uma
+> **O que ele quer:** um sistema que dê para entender e otimizar, dentro de uma
 > história que tenha algo a dizer. Adorou *Inscryption* exatamente por isso.
-> **O que a afasta:** grind, tutorial arrastado e jogo que promete história e
+> **O que o afasta:** grind, tutorial arrastado e jogo que promete história e
 > entrega só sistema — ou o contrário.
 > **Onde descobre jogo:** YouTube, Steam Next Fest e indicação de amigo.
 
