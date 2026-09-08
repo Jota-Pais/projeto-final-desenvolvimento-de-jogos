@@ -13,6 +13,8 @@ extends Node2D
 
 const Bairro := preload("res://rua/bairro.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
+const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
+const Navegacao := preload("res://rua/navegacao.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
@@ -35,6 +37,11 @@ const COR_CERCA := Color("5a5347")
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
 
+## Todo retangulo que bloqueia passagem, juntado enquanto a colisao e criada.
+## E a partir desta lista que a navegacao do zumbi e montada: os obstaculos
+## aqui ja sao retangulos conhecidos, entao nao ha o que descobrir depois.
+var _obstaculos: Array[Rect2] = []
+
 func _ready() -> void:
 	_sorteio.seed = 20260907
 
@@ -53,6 +60,9 @@ func _ready() -> void:
 
 	_plantar_arvores()
 	_criar_muros_do_mundo()
+	# Depois de tudo: a navegacao le a lista de obstaculos que acabou de encher.
+	_montar_navegacao()
+	_povoar_de_zumbis()
 	# A camera do jogador so fica corrente depois que a cena inteira entra na
 	# arvore, por isso o deferido.
 	_limitar_camera.call_deferred()
@@ -185,6 +195,21 @@ func _povoar(construcao: Dictionary) -> void:
 			var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
 			_criar_movel(tipos[j], Vector2(quarto.position.x + quarto.size.x * fracao, y))
 
+## A navegacao do zumbi, montada da lista de obstaculos. Fica num no proprio,
+## no grupo "navegacao", que e como o zumbi acha ela.
+func _montar_navegacao() -> void:
+	var navegacao := Navegacao.new()
+	navegacao.name = "Navegacao"
+	navegacao.add_to_group("navegacao")
+	add_child(navegacao)
+	navegacao.montar(Bairro.MUNDO, _obstaculos)
+
+func _povoar_de_zumbis() -> void:
+	for onde in Bairro.ZUMBIS:
+		var zumbi := CENA_DO_ZUMBI.instantiate()
+		zumbi.position = onde
+		add_child(zumbi)
+
 func _criar_movel(tipo: String, posicao: Vector2) -> void:
 	var ficha: Dictionary = Bairro.MOVEIS[tipo]
 	var movel := CENA_DO_MOVEL.instantiate()
@@ -198,6 +223,10 @@ func _criar_movel(tipo: String, posicao: Vector2) -> void:
 	movel.solido = tipo != "lata"
 	movel.achados = _sortear_achados(tipo)
 	add_child(movel)
+	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
+	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
+	if movel.solido:
+		_obstaculos.append(Rect2(posicao - ficha["tamanho"] / 2.0, ficha["tamanho"]))
 
 ## O que sai do movel. Cada tipo tem a sua tabela, e de tantos em tantos
 ## moveis entra um documento - o item que destrava a historia dentro de casa.
@@ -273,6 +302,8 @@ func _e_terreno(area: Rect2) -> bool:
 # --------------------------------------------------------------------- colisao
 
 func _criar_corpo(area: Rect2) -> void:
+	_obstaculos.append(area)
+
 	var forma := RectangleShape2D.new()
 	forma.size = area.size
 

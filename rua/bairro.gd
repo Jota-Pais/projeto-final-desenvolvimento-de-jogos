@@ -142,6 +142,33 @@ const MOVEIS_DE_RUA := [
 	{ "tipo": "lata", "pos": Vector2(4600.0, 2080.0) },
 ]
 
+## Onde os zumbis comecam o dia. Nao e sistema de onda - e povoamento, do jeito
+## do PZ: alguns arrastando na rua, alguns no quintal, e **dois dentro de
+## construcao**, que e o que faz entrar numa casa nao ser abrigo garantido.
+##
+## O ritmo de horda que o High Concept pede sai do chamado entre eles (ver
+## rua/zumbi.gd), nao da quantidade.
+const ZUMBIS := [
+	# Rua principal.
+	Vector2(900.0, 1820.0),
+	Vector2(1700.0, 1780.0),
+	Vector2(2350.0, 1900.0),
+	Vector2(3300.0, 1820.0),
+	Vector2(4200.0, 1880.0),
+	Vector2(5100.0, 1800.0),
+	# Rua transversal.
+	Vector2(2900.0, 700.0),
+	Vector2(2900.0, 2600.0),
+	# Quintais.
+	Vector2(1300.0, 620.0),
+	Vector2(4600.0, 640.0),
+	Vector2(600.0, 3000.0),
+	# Dentro da terceira casa do lado norte, na sala.
+	Vector2(2085.0, 1222.0),
+	# Dentro do mercadinho.
+	Vector2(710.0, 2450.0),
+]
+
 ## Cada movel: quanto custa vasculhar, o tamanho e a cor. A duracao e o unico
 ## numero que separa uma lata de lixo de uma estante - mesmo verbo, custos
 ## diferentes.

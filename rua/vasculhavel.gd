@@ -118,13 +118,22 @@ func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = true
+	# Enquanto ele estiver aqui, levar dano interrompe o vasculho. Este arquivo
+	# nao sabe que zumbi existe: escuta o jogador, que e quem apanha.
+	if corpo.has_signal("atingido") and not corpo.atingido.is_connected(_ao_ser_atingido):
+		corpo.atingido.connect(_ao_ser_atingido)
 	queue_redraw()
 
 func _ao_sair(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = false
+	if corpo.has_signal("atingido") and corpo.atingido.is_connected(_ao_ser_atingido):
+		corpo.atingido.disconnect(_ao_ser_atingido)
 	queue_redraw()
+
+func _ao_ser_atingido(_dano: float) -> void:
+	interromper()
 
 func _draw() -> void:
 	var caixa := Rect2(-tamanho / 2.0, tamanho)

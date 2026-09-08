@@ -36,9 +36,8 @@ O título de trabalho é **Você me amaria se eu fosse um zumbi?**. O grupo foi
 consultado em 03/09/2026 e pode propor outro — a tagline ainda não existe.
 
 A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo,
-e é ela que roda no F5. A **cena de teste** em `teste-movimento/` continua no
-repositório só porque o `inimigo.gd` dela vai ser reaproveitado no passo
-seguinte — não tem relação nenhuma com o jogo e sai depois disso.
+e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
+08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
 Pendentes de decisão da equipe:
 
@@ -160,7 +159,13 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
 - `telhados.gd` — desenha os telhados por cima de tudo e esconde o da
   construção onde o jogador está. Tem que ser o **último irmão** da cena: o
   Godot desenha na ordem da árvore
-- `conferir_bairro.tscn` — **ferramenta, roda com F6.** Ver abaixo
+- `zumbi.gd` — o zumbi. Campo de visão com parede cortando, chamado de horda e
+  toque que interrompe o vasculho. Ver a seção própria abaixo
+- `navegacao.gd` — grade A* montada dos retângulos de obstáculo que o cenário
+  gerou. É o que faz o zumbi **achar o vão da porta** em vez de encalhar na
+  parede
+- `conferir_bairro.tscn` e `conferir_zumbi.tscn` — **ferramentas, rodam com
+  F6.** Ver abaixo
 
 ### Duas coisas de propósito
 
@@ -195,14 +200,75 @@ inalcançáveis** e nada disso aparecia lendo o código nem jogando dois minutos
 Layout de greybox se mexe por número, e número errado fecha caminho sem avisar.
 Rodar isso custa dois segundos.
 
+### O zumbi (`zumbi.gd`)
+
+**08/09/2026.** Escrito do zero para servir a core mechanic: ele **existe para
+atrapalhar o vasculho**, não para ser um combate. Nada foi reaproveitado do
+`inimigo.gd` da cena de teste, que perseguia em linha reta de qualquer distância
+e atravessava o mapa.
+
+São treze, espalhados pelo bairro — alguns na rua, alguns no quintal e **dois
+dentro de construção**, que é o que faz entrar numa casa não ser abrigo
+garantido. Não há sistema de onda; é povoamento, como no PZ.
+
+Os três comportamentos vêm direto do High Concept:
+
+1. **Campo de visão.** Ele não sabe onde você está: vê num cone de 110° até
+   520 px, e **parede corta a linha de visão**. Entrar numa casa quebra a
+   perseguição — e ficar dentro dela com ele te encurrala.
+2. **Horda.** Quem enxerga você chama quem está vagando num raio de 700 px. Um
+   zumbi não é ameaça, três são. O *ritmo de horda* que o High Concept pede sai
+   daí, não da quantidade.
+3. **Pressão sobre a mesma ação.** O toque interrompe o vasculho e tira vida.
+   Não existe atacar de volta: a resposta é sair de perto.
+
+**Ele é mais lento que você andando** — 165 contra 280, e 460 correndo. Dá para
+sempre fugir, de propósito: o que ele tira não é vida, é o tempo que você
+precisava para terminar de vasculhar.
+
+O `interromper()` do vasculhável, que estava sem cliente desde 07/09, agora tem
+um. E a ligação é indireta: o zumbi chama `levar_dano()` no jogador, o jogador
+emite `atingido`, e é o **vasculhável** que escuta esse sinal. O zumbi não sabe
+que móvel existe e o móvel não sabe que zumbi existe.
+
+Ele acha o caminho por uma **grade A*** (`navegacao.gd`), montada dos retângulos
+de obstáculo que o cenário acabou de gerar. A malha de navegação do Godot foi a
+primeira tentativa e não serviu: `bake_navigation_polygon()` sobre este bairro
+(umas 250 colisões num mundo de 5760 × 3600) travou o processo, cinco minutos
+sem sair uma linha.
+
+O cone de visão aparece desenhado na tela (`MOSTRAR_A_VISTA` no `zumbi.gd`).
+É **auxílio de protótipo**, não decisão de design: sem ver o cone não dá para
+entender por que ele te viu ou não.
+
+### Mexeu no zumbi? Rode o `conferir_zumbi.tscn` (F6)
+
+Confere seis coisas: ninguém nasce dentro de parede, a navegação acha caminho
+para dentro de casa, parede corta a visão, ele persegue e o toque interrompe o
+vasculho, ele entra na casa atrás de você, e o chamado da horda funciona.
+
+Achou três bugs na primeira rodada, todos de comportamento — nenhum dava erro
+em tela:
+
+- **Desistência por tempo fixo** (4 s) fazia ele parar no meio do caminho:
+  atravessar a casa da calçada até o quarto do fundo dá 1085 px, que a 165 px/s
+  leva 6,6 s. Entrar em casa virava abrigo garantido.
+- **Desistência por distância em linha reta** era pior: contornando a casa para
+  chegar na porta a linha reta *aumenta*, e ele desistia justamente quando
+  estava fazendo a coisa certa. Hoje é por distância andada.
+- **No fim do caminho** ele devolvia direção zero e ficava parado até o
+  recalculo, andando a menos da metade da velocidade dele.
+
 ### O que ainda não tem
 
-Zumbi, prazo, fome, mochila e HUD — os passos 2 a 5. Nada disso precisa existir
-para a mecânica ser avaliada, e a ordem é essa de propósito: em qualquer corte
-já tem coisa demonstrável.
+Prazo, fome, mochila e HUD — os passos 3 a 5. Nada disso precisa existir para a
+mecânica ser avaliada, e a ordem é essa de propósito: em qualquer corte já tem
+coisa demonstrável.
 
-O `interromper()` do vasculhável já existe e não tem quem chame: é o gancho do
-passo 2, quando o zumbi encostar.
+A vida do jogador existe, mas **a HUD não**: aparece só como uma barrinha em
+cima da cabeça, e é o mínimo para o dano ser visível. Zerar a vida hoje encerra
+o dia e te manda para casa — provisório, porque morte e tela de fim de jogo são
+o passo 5.
 
 Também não tem **estado que atravesse o dia**: ao voltar para o bairro, todo o
 loot reaparece. O PZ gera o loot no primeiro acesso e não repõe, e o nosso High
@@ -260,40 +326,6 @@ em nada da rua.**
 Ainda sem dono: **onde fica o laboratório.** Os objetivos do High Concept falam
 em *equipar a casa e o laboratório* — se é o porão junto com ela ou outro canto
 da casa, é decisão de quem fizer essa frente.
-
-## Cena de teste (`teste-movimento/`)
-
-Serviu **só para confirmar que o Godot abre e roda o projeto**. Não é o jogo e
-não tem relação com o que vier a ser o jogo. **Já não é mais a cena principal** —
-o F5 abre a `rua/`. Continua aqui só porque o `inimigo.gd` vai ser reaproveitado
-no passo 2, e sai depois disso.
-
-Para ver rodando, abrir `teste-movimento/teste.tscn` e apertar **F6**.
-Setas ou WASD movem um quadrado vermelho de 64 px por um chão xadrez cinza com
-blocos espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D` é
-filha dele, então quem se mexe é o cenário. O xadrez e os blocos existem por
-isso — num chão liso e uniforme não dá para perceber movimento nenhum.
-
-Quatro **inimigos** — retângulos verde-acinzentados de 44×80 — nascem nos cantos
-e andam devagar (110 contra os 420 do jogador) na direção dele, o tempo todo.
-Não atacam, não morrem e não desviam de nada.
-
-Tudo é forma geométrica de cor chapada, sem nenhuma imagem: a cena não depende
-de asset nenhum e por isso não tem o que baixar nem o que versionar em binário.
-
-- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Polygon2D`,
-  colisão e câmera) e quatro `Inimigo`
-- `inimigo.tscn` — o inimigo, instanciado quatro vezes na cena
-- `inimigo.gd` — anda na direção do jogador e nada mais. Acha o jogador pelo
-  **grupo** `jogador`, não por caminho de node, para não depender de onde ele
-  está na árvore
-- `chao.gd` — desenha o xadrez, os blocos e a borda do mundo (3200×1800) com
-  `_draw()`, sem precisar de nenhuma imagem
-- `jogador.gd` — movimento em 8 direções com `move_and_slide()` e trava nas
-  bordas do mundo
-
-O `run/main_scene` do `project.godot` já aponta para a `rua/`, então apagar esta
-pasta não quebra nada.
 
 ## Combinados de Git
 
