@@ -47,14 +47,17 @@ const COR_DO_AVISO_GRAVE := Color("c0463c")
 @onready var _aviso := $Aviso as Label
 @onready var _esquerda := $Esquerda as Label
 @onready var _direita := $Direita as Label
+@onready var _documentos := $Documentos as Label
 
 func _process(_delta: float) -> void:
 	var relogio := get_tree().get_first_node_in_group("relogio") as Relogio
 	var jogador := get_tree().get_first_node_in_group("jogador")
+	var mochila := get_tree().get_first_node_in_group("mochila")
 
 	_topo.text = _linha_do_topo(relogio)
 	_esquerda.text = _linha_da_esquerda(jogador)
-	_direita.text = _linha_da_direita()
+	_direita.text = _linha_da_direita(mochila)
+	_documentos.text = _linha_dos_documentos(mochila)
 	_anoitecer.color.a = _quanto_escuro(relogio)
 	_avisar(relogio)
 
@@ -81,11 +84,30 @@ func _linha_da_esquerda(jogador: Node) -> String:
 	# Alinhado com espaco em vez de tabulacao: fonte de fallback nao tem tab.
 	return "vida    %s\nfome    —\nágua    —" % vida
 
-func _linha_da_direita() -> String:
-	var quanto := Travessia.mochila.size() + Travessia.documentos.size()
-	if quanto == 0:
+## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
+## Some tudo se voce nao voltar pela porta do porao.
+func _linha_da_direita(mochila: Node) -> String:
+	if mochila == null:
+		return "mochila   —"
+	var quantos: int = mochila.itens.size()
+	if quantos == 0:
 		return "mochila   vazia"
-	return "mochila   %d" % quanto
+	if quantos == 1:
+		return "mochila   1 item"
+	return "mochila   %d itens" % quantos
+
+## O documento tem linha propria, acima da mochila e na cor dele. E o que o
+## one-pager pede - "conta separado" - e o que prova o eixo rua -> casa mesmo
+## sem a casa existir: e a unica coisa que voce traz que faz a historia andar.
+func _linha_dos_documentos(mochila: Node) -> String:
+	if mochila == null:
+		return ""
+	var quantos: int = mochila.documentos.size()
+	if quantos == 0:
+		return ""
+	if quantos == 1:
+		return "1 documento"
+	return "%d documentos" % quantos
 
 ## O aviso vai piorando com a noite, e e ele que responde "e agora, o que eu
 ## faco?". Sem isso a noite so fica dificil e o jogador nao sabe por que.

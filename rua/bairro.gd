@@ -188,8 +188,9 @@ const MOVEIS := {
 }
 
 ## O que sai de cada movel. PZ tira o loot de uma tabela por tipo de movel, e o
-## conteudo combina com o quarto - mesma ideia aqui, ainda em texto solto
-## enquanto a mochila nao existe (passo 4).
+## conteudo combina com o quarto - mesma ideia aqui. Continua sendo texto solto:
+## item com peso, uso e valor e assunto de quem fizer o modo Casa, que e quem
+## consome.
 const CONTEUDO := {
 	"geladeira": ["lata de comida", "garrafa de água", "comida estragada"],
 	"armario": ["lata de comida", "fósforos", "pano limpo"],
@@ -216,6 +217,15 @@ const DOCUMENTOS := [
 # ------------------------------------------------------------------ geometria
 
 ## As calcadas: uma faixa de cada lado de cada rua.
+## Se um achado e documento e nao comida.
+##
+## Documento conta separado, aparece com destaque e e o que destrava a historia
+## dentro de casa - entao alguem precisa saber distinguir os dois. Fica aqui, e
+## pela propria lista, para nao existir uma segunda fonte de verdade sobre o
+## que e documento.
+static func e_documento(achado: String) -> bool:
+	return DOCUMENTOS.has(achado)
+
 static func calcadas() -> Array[Rect2]:
 	var lista: Array[Rect2] = []
 	for rua in [RUA_PRINCIPAL, RUA_TRANSVERSAL]:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://rua/relogio.gd" id="1_relogio"]
 [ext_resource type="Script" path="res://rua/cenario.gd" id="2_cenario"]
@@ -6,11 +6,15 @@
 [ext_resource type="PackedScene" path="res://rua/entrada_de_casa.tscn" id="4_entrada"]
 [ext_resource type="Script" path="res://rua/telhados.gd" id="5_telhados"]
 [ext_resource type="PackedScene" path="res://rua/hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://rua/mochila.gd" id="7_mochila"]
 
 [node name="Rua" type="Node2D"]
 
 [node name="Relogio" type="Node" parent="." groups=["relogio"]]
 script = ExtResource("1_relogio")
+
+[node name="Mochila" type="Node" parent="." groups=["mochila"]]
+script = ExtResource("7_mochila")
 
 [node name="Cenario" type="Node2D" parent="."]
 script = ExtResource("2_cenario")

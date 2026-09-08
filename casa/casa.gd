@@ -74,12 +74,26 @@ func _derrota() -> void:
 	saida.text = "Aqui entra a tela de fim de jogo — a derrota em tom de paródia (passo 5)."
 	saida.add_theme_color_override("font_color", COR_DERROTA)
 
+## O que chegou, ou o que ficou na calcada. Sao as duas metades da mesma regra:
+## so entra em casa o que passou pela porta do porao.
 func _o_que_voltou() -> String:
+	if Travessia.fim_do_dia != Travessia.FimDoDia.PELA_PORTA:
+		var perdeu := Travessia.itens_perdidos + Travessia.documentos_perdidos
+		if perdeu == 0:
+			return "Você não estava carregando nada — não havia o que perder."
+		var linha := "Ficou na rua: %d %s" % [
+			Travessia.itens_perdidos,
+			"item" if Travessia.itens_perdidos == 1 else "itens"
+		]
+		if Travessia.documentos_perdidos > 0:
+			linha += " e %d documento%s" % [
+				Travessia.documentos_perdidos,
+				"" if Travessia.documentos_perdidos == 1 else "s"
+			]
+		return linha + ". Nada disso entrou em casa."
+
 	if Travessia.mochila.is_empty() and Travessia.documentos.is_empty():
-		if Travessia.fim_do_dia == Travessia.FimDoDia.PELA_PORTA:
-			return "Da rua não veio nada — a mochila só passa a ser preenchida no passo 4."
-		return ("Não veio nada da rua. Quando a mochila existir (passo 4), é aqui "
-			+ "que não voltar pela porta do porão vai custar o que você achou.")
+		return "Da rua não veio nada — você voltou de mochila vazia."
 
 	var linhas := []
 	if not Travessia.mochila.is_empty():

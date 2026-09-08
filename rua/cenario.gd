@@ -54,6 +54,14 @@ var _relogio: Node
 ## Quantos zumbis a noite ja trouxe hoje.
 var _zumbis_da_noite := 0
 
+## A mochila do dia, achada pelo grupo. Mesmo arranjo do relogio: e aqui que
+## ela se liga em cada movel, e nem o movel nem a mochila precisam se conhecer.
+var _mochila: Node
+
+## Quantos moveis nasceram vazios hoje porque foram vasculhados antes. Nao muda
+## nada no jogo - e o numero que diz o quanto do bairro ja acabou.
+var _moveis_ja_vazios := 0
+
 ## Todo retangulo que bloqueia passagem, juntado enquanto a colisao e criada.
 ## E a partir desta lista que a navegacao do zumbi e montada: os obstaculos
 ## aqui ja sao retangulos conhecidos, entao nao ha o que descobrir depois.
@@ -65,6 +73,7 @@ func _ready() -> void:
 	# vem declarado no rua.tscn, entao ja existe mesmo que o _ready do relogio
 	# ainda nao tenha rodado.
 	_relogio = get_tree().get_first_node_in_group("relogio")
+	_mochila = get_tree().get_first_node_in_group("mochila")
 
 	for construcao in Bairro.CONSTRUCOES:
 		for parede in Bairro.paredes_externas(construcao):
@@ -280,14 +289,30 @@ func _criar_movel(tipo: String, posicao: Vector2) -> void:
 	movel.tamanho = ficha["tamanho"]
 	movel.cor = ficha["cor"]
 	movel.solido = tipo != "lata"
+	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
+	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
+	# outros. O indice tambem sai daqui, e e o nome do movel entre os dias.
 	movel.achados = _sortear_achados(tipo)
+	var indice := _moveis_gerados
+	movel.nasce_vazio = Travessia.moveis_vazios.has(indice)
+	if movel.nasce_vazio:
+		_moveis_ja_vazios += 1
+
 	add_child(movel)
 	if _relogio != null:
 		movel.vasculhando.connect(_relogio.ao_vasculhar)
+	if _mochila != null:
+		movel.vasculhado.connect(_mochila.ao_vasculhar)
+	# O movel nao sabe que existe dia seguinte; quem anota e quem conhece o
+	# indice. bind() pendura o indice no fim dos argumentos do sinal.
+	movel.vasculhado.connect(_anotar_movel_vazio.bind(indice))
 	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
 	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - ficha["tamanho"] / 2.0, ficha["tamanho"]))
+
+func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], indice: int) -> void:
+	Travessia.moveis_vazios[indice] = true
 
 ## O que sai do movel. Cada tipo tem a sua tabela, e de tantos em tantos
 ## moveis entra um documento - o item que destrava a historia dentro de casa.

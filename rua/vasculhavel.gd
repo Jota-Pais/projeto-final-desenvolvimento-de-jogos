@@ -10,8 +10,11 @@ extends Area2D
 ## que sai dentro. Mesmo verbo, custos e recompensas diferentes - e isso que a
 ## Alfa cobra como "aplicabilidade da core mechanic".
 
-## Emitido quando o vasculho termina. O passo 4 (mochila, itens e documentos)
-## se pendura aqui.
+## Le so a tabela de documentos, para saber qual achado desenhar com destaque.
+const Bairro := preload("res://rua/bairro.gd")
+
+## Emitido quando o vasculho termina. Quem escuta e a mochila da rua, e e ela
+## quem separa documento de comida.
 signal vasculhado(rotulo: String, achados: Array[String])
 
 ## Emitido enquanto o vasculho avanca, com quanto ele avancou neste quadro.
@@ -27,6 +30,10 @@ signal vasculhando(segundos: float)
 @export var duracao := 3.0
 ## O que sai daqui. Provisorio - texto solto so para o teste ter retorno.
 @export var achados: Array[String] = []
+## Se ele ja foi vasculhado num dia anterior. O mundo nao repoe loot, entao um
+## movel esvaziado ontem nasce vazio hoje - quem sabe disso e o cenario, que le
+## o Travessia.
+@export var nasce_vazio := false
 @export var tamanho := Vector2(64.0, 64.0)
 @export var cor := Color("59504a")
 ## Se bloqueia a passagem. Carro e porta bloqueiam; lata de lixo nao precisa.
@@ -61,12 +68,23 @@ const COR_VAZIO := Color("34302d")
 const COR_BARRA := Color("c8b78a")
 const COR_FUNDO_DA_BARRA := Color("22201e")
 const COR_DO_AVISO := Color("e8e2d6")
+## O documento tem cor propria, e a mesma do modo Casa. O one-pager pede que
+## ele seja "visualmente distinto dos outros itens, com brilho": e o que
+## destrava a historia, e no meio de lata de comida e pano sujo tem que dar
+## para ver de longe qual movel valeu a pena.
+const COR_DO_DOCUMENTO := Color("e8b061")
 
 var _progresso := 0.0
 var _jogador_dentro := false
 var _vazio := false
 
 func _ready() -> void:
+	if nasce_vazio:
+		# Vasculhado num dia anterior. Nao se recusa o vasculho por regra: ele
+		# ja esta vazio, e a barra nem comeca.
+		achados = []
+		_vazio = true
+		_progresso = duracao
 	_montar_formas()
 	body_entered.connect(_ao_entrar)
 	body_exited.connect(_ao_sair)
@@ -107,6 +125,32 @@ func _esvaziar() -> void:
 ## instancia se ajustar sozinha quando alguem mudar o tamanho no Inspetor.
 ## Sao formas novas, nao as do .tscn - sub-recurso de cena e compartilhado
 ## entre as instancias, e mexer nele mexeria em todas.
+## O que saiu do movel, depois de vasculhado. Documento em cima, na cor dele e
+## com uma marca ao lado; comida e traste embaixo, apagados. Sao duas linhas e
+## nao uma porque draw_string desenha numa cor so - e a cor e justamente o que
+## separa a recompensa que importa da que nao importa.
+func _desenhar_o_saldo(fonte: Font, esquerda: float, topo: float) -> void:
+	var comuns: Array[String] = []
+	var achou_documento := false
+	for achado in achados:
+		if Bairro.e_documento(achado):
+			achou_documento = true
+			draw_string(fonte, Vector2(esquerda + 16.0, topo - 26.0), achado,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_DOCUMENTO)
+		else:
+			comuns.append(achado)
+
+	if achou_documento:
+		# A "marca com brilho" do one-pager, na medida do greybox: um quadrado
+		# na cor do documento com um halo em volta.
+		var marca := Rect2(esquerda, topo - 36.0, 11.0, 11.0)
+		draw_rect(marca.grow(4.0), Color(COR_DO_DOCUMENTO, 0.22))
+		draw_rect(marca, COR_DO_DOCUMENTO)
+
+	var saldo := "vazio" if comuns.is_empty() else ", ".join(comuns)
+	draw_string(fonte, Vector2(esquerda, topo - 8.0), saldo,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
+
 func _montar_formas() -> void:
 	var deteccao := RectangleShape2D.new()
 	deteccao.size = tamanho + Vector2.ONE * ALCANCE * 2.0
@@ -153,9 +197,7 @@ func _draw() -> void:
 	var esquerda := -tamanho.x / 2.0
 
 	if _vazio:
-		var saldo := "vazio" if achados.is_empty() else ", ".join(achados)
-		draw_string(fonte, Vector2(esquerda, topo - 8.0), saldo,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
+		_desenhar_o_saldo(fonte, esquerda, topo)
 		return
 
 	if _progresso > 0.0:

@@ -35,13 +35,44 @@ const PRAZO_DA_CURA := 10
 ## rua/relogio.gd.
 var dia := 1
 
-## O que o jogador trouxe da rua. Fica vazio ate o passo 4 (mochila e itens):
-## hoje isto e so o contrato, para o lado da casa ja ter o que ler.
+## O que o jogador **entregou** em casa, acumulado de todos os dias.
+##
+## Nao e o que ele carrega: isso e a mochila da rua (rua/mochila.gd), e so vira
+## isto aqui quando o dia acaba pela porta do porao. Quem for pego pelo
+## amanhecer ou cair sem vida chega de mao vazia.
 ##
 ## A rua so acrescenta. **Quem constroi a casa decide o que e consumido** e
 ## esvazia o que gastou - por isso nada aqui se limpa sozinho.
 var mochila: Array[String] = []
 var documentos: Array[String] = []
+
+## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
+## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
+## voltado com a mochila vazia.
+var itens_perdidos := 0
+var documentos_perdidos := 0
+
+## Quais moveis do bairro ja foram vasculhados, por indice.
+##
+## **O mundo esvazia e nao repoe** - e o que o PZ faz e o que o High Concept
+## declara: "a geografia e fixa e o que muda e o estado do mundo". O bairro e
+## gerado sempre igual, de semente fixa, entao o indice de um movel e o mesmo
+## todo dia e serve de nome.
+##
+## Vale mesmo no dia que deu errado: se voce tirou o loot do movel, ele saiu do
+## mundo, tenha voce chegado em casa ou nao. Gastar o dia numa casa custa
+## aquela casa amanha.
+var moveis_vazios := {}
+
+## Chamado pela mochila da rua quando o dia acaba pela porta do porao.
+func receber(itens: Array[String], docs: Array[String]) -> void:
+	mochila.append_array(itens)
+	documentos.append_array(docs)
+
+## Chamado pela mochila da rua quando o dia acaba de qualquer outro jeito.
+func perder_na_rua(quantos_itens: int, quantos_documentos: int) -> void:
+	itens_perdidos = quantos_itens
+	documentos_perdidos = quantos_documentos
 
 ## Como o dia na rua acabou. Sao tres jeitos, e eles NAO valem o mesmo:
 ##
@@ -78,5 +109,8 @@ func e_o_ultimo_dia() -> bool:
 ## prazo - quem confere e quem chama, por e_o_ultimo_dia().
 func sair_para_a_rua() -> void:
 	dia += 1
+	# O prejuizo de ontem ja foi mostrado; a mochila do dia novo nasce vazia.
+	itens_perdidos = 0
+	documentos_perdidos = 0
 	saiu_para_a_rua.emit()
 	get_tree().change_scene_to_file(CENA_DA_RUA)

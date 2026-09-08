@@ -70,7 +70,9 @@ text = "Aqui entra o ponto e clique: cuidar dela no porão e montar a pesquisa d
 
 Por onde começar: trocar esta cena por uma de verdade, em casa/casa.tscn. O jogo chega aqui por Travessia.entrar_em_casa() e sai por Travessia.sair_para_a_rua(); nada na rua precisa ser tocado.
 
-O que a rua entrega está no autoload Travessia: dia, mochila e documentos. A rua só acrescenta — quem faz a casa decide o que é consumido e esvazia o que gastou."
+O que a rua entrega está no autoload Travessia: dia, prazo da cura, mochila, documentos e como o dia acabou. Documento conta separado de comida de propósito — é o que faz a pesquisa andar. A rua só acrescenta: quem faz a casa decide o que é consumido e esvazia o que gastou.
+
+Só chega o que passou pela porta do porão. Quem é pego pelo amanhecer ou cai sem vida deixa tudo na rua, e o Travessia.fim_do_dia diz qual dos três foi."
 autowrap_mode = 3
 
 [node name="Saida" type="Label" parent="Conteudo"]

@@ -39,10 +39,10 @@ A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo
 e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
 08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
-Dos cinco passos que levam à Alfa, **três estão de pé**: a mecânica de
-vasculhar (1), o zumbi (2) e o relógio do dia, a noite e a HUD (3). Faltam a
-mochila com os documentos (4) e o fechamento do ciclo com a tela de fim de jogo
-(5).
+Dos cinco passos que levam à Alfa, **quatro estão de pé**: a mecânica de
+vasculhar (1), o zumbi (2), o relógio do dia com a noite e a HUD (3) e a
+mochila com os documentos (4). Falta o passo 5 — fome, morte e a tela de fim de
+jogo.
 
 Pendentes de decisão da equipe:
 
@@ -73,6 +73,13 @@ Pendentes de decisão da equipe:
       `CUSTO_DO_VASCULHO`, `ZUMBIS_DA_NOITE`, `VISTA_A_MAIS_DE_NOITE`).
       Provisórios, e o único jeito de decidir é jogando — o que a direção
       fechou em 09/09 foi a **forma** da noite, não os números
+- [ ] **A mochila tem limite de espaço?** O one-pager declara *"mochila, com o
+      espaço já ocupado visível"*, o que supõe um teto — e teto cria viagem:
+      enche, volta, sai de novo. Não implementei porque como ele conversa com
+      o vasculho (o móvel não esvazia? sobra dentro dele?) tem várias respostas
+- [ ] **Seis documentos para dez dias.** O bairro tem 33 itens e 6 documentos, e
+      não repõe. Se a cura precisa dos seis, o mapa se esgota no terceiro ou
+      quarto dia bom. Ver a seção da mochila
 - [ ] Divisão de tarefas
 
 ## O bairro e a mecânica de vasculhar (`rua/`)
@@ -160,6 +167,8 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
   `bairro.gd`, e é o único arquivo a mexer para mudar o mapa
 - `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
   `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
+- `mochila.gd` — o que você está carregando hoje, e a regra de que **só entra
+  em casa o que passou pela porta do porão**. Ver a seção própria abaixo
 - `vasculhavel.gd` — **é a core mechanic**. `Area2D` que enche uma barra
   enquanto a ação `vasculhar` estiver segurada e o jogador estiver dentro do
   alcance. O que separa uma lata de lixo (1,5 s) de uma porta (5 s) é só a
@@ -189,8 +198,8 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
   abaixo
 - `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, o
   aviso da noite e o escurecer
-- `conferir_bairro.tscn`, `conferir_zumbi.tscn` e `conferir_relogio.tscn` —
-  **ferramentas, rodam com F6.** Ver abaixo
+- `conferir_bairro.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn` e
+  `conferir_mochila.tscn` — **ferramentas, rodam com F6.** Ver abaixo
 
 ### Duas coisas de propósito
 
@@ -414,26 +423,89 @@ Três coisas que ele ensinou, em duas rodadas:
   própria ferramenta embora: o `get_tree()` seguinte vinha nulo, o `quit()`
   nunca acontecia e o processo ficava rodando para sempre.
 
+### A mochila e o documento (`mochila.gd`)
+
+**09/09/2026.** É o passo 4, e é o que faz o vasculho ter para que servir. Até
+aqui o loot era texto no console; agora ele entra numa mochila, atravessa para
+a casa — ou fica na calçada.
+
+**A mochila do dia não é a mochila da casa**, e a diferença entre as duas é o
+preço da noite: **só entra em casa o que passou pela porta do porão.** Ser pego
+pelo amanhecer ou cair sem vida deixa tudo na rua, e a casa te diz quanto ficou
+lá. É isso que faz o aviso das 19:00 valer algo em vez de ser enfeite — antes
+disso, ficar até tarde não custava nada de concreto.
+
+#### Documento conta separado, e aparece diferente
+
+As duas recompensas do vasculho não valem o mesmo. **A comida te mantém vivo; o
+documento faz a pesquisa da cura andar** — é a moeda do eixo rua → casa, e é
+por isso que ela tem linha própria na HUD, em âmbar, acima da mochila. Mesmo
+sem a casa existir, esse contador já prova o eixo, que é exatamente o que o
+passo 4 tinha que provar.
+
+No móvel vasculhado o documento sai na cor da casa, com uma marca ao lado, e a
+comida sai apagada embaixo — o one-pager pede que ele seja *"visualmente
+distinto dos outros itens, com brilho"*, e no meio de lata de comida e pano
+sujo tem que dar para ver de longe qual móvel valeu a pena.
+
+Quem separa os dois é a mochila, e quem sabe o que é documento é o
+`bairro.gd` (`e_documento()`) — pela própria lista de documentos, para não
+existir uma segunda fonte de verdade.
+
+#### O mundo esvazia e não repõe
+
+**Móvel vasculhado ontem nasce vazio hoje.** É o que o PZ faz e o que o High
+Concept declara — *a geografia é fixa e o que muda é o estado do mundo* — e é o
+que finalmente dá peso ao relógio: **gastar o dia numa casa te custa aquela
+casa amanhã.**
+
+Vale mesmo no dia que deu errado. Se você tirou o loot do móvel, ele saiu do
+mundo, tenha você chegado em casa ou não: ser pego pelo amanhecer queima o loot
+*e* o dia.
+
+O bairro é gerado sempre igual, de semente fixa, então o índice de um móvel é o
+mesmo todo dia e serve de nome — `Travessia.moveis_vazios` guarda os índices, e
+o `cenario.gd` consulta na hora de criar cada um. O sorteio roda para todo
+móvel, inclusive os já vazios: pular um sorteio embaralharia o conteúdo dos
+outros.
+
+#### O que o bairro tem, ao todo
+
+**33 itens comuns e 6 documentos** — e como não repõe, é isso que existe no
+jogo inteiro. O `conferir_mochila.tscn` imprime essa conta.
+
+⬜ **Seis documentos para dez dias é uma pergunta em aberto**, e é do grupo: se
+a cura precisa dos seis, o bairro se esgota lá pelo terceiro ou quarto dia bom
+e os dias seguintes ficam sem para que servir. As saídas são todas de papel —
+mais documentos no mapa, a cura pedindo menos, ou o mapa mudando com os dias
+(que é o que o High Concept sugere ao dizer que a rua vai ficando mais
+apocalíptica). Não decidi nenhuma.
+
+### Mexeu na mochila, no loot ou no que atravessa o dia? Rode o `conferir_mochila.tscn` (F6)
+
+Confere cinco coisas: vasculhar enche a mochila e documento conta separado de
+comida; **só entra em casa o que passou pela porta do porão** — nos três jeitos
+de o dia acabar; o mundo esvazia e não repõe, e só o móvel vasculhado nasce
+vazio; o bairro tem documento suficiente para a história andar; e a HUD mostra
+o documento na linha dele.
+
+O segundo é o que precisa de conferência de verdade: a regra vive numa ligação
+indireta — a mochila escuta o `chegou_em_casa` do `Travessia` e lê o
+`fim_do_dia` para decidir entregar ou perder — e quebra sem dar erro em tela.
+
 ### O que ainda não tem
 
-Fome, água, mochila e morte — os passos 4 e 5. Nada disso precisa existir para
-a mecânica ser avaliada, e a ordem é essa de propósito: em qualquer corte já
-tem coisa demonstrável.
+Fome, água e morte — o passo 5. Nada disso precisa existir para a mecânica ser
+avaliada, e a ordem é essa de propósito: em qualquer corte já tem coisa
+demonstrável.
 
 A vida aparece na HUD e numa barrinha em cima da cabeça. Zerar a vida encerra o
 dia e te manda para casa — provisório, porque morte e tela de fim de jogo são o
 passo 5. O prazo se esgotar é igual: a casa mostra o texto no lugar da tela de
 derrota que o High Concept já descreveu, a paródia de final feliz.
 
-E **o aviso das 19:00 ainda não tem dente.** Ser pego pelo amanhecer já é
-registrado como um jeito diferente de o dia acabar, e a casa diz isso — mas
-como a mochila não existe, você não perde nada de concreto. Passo 4.
-
-Também não tem **estado que atravesse o dia**: ao voltar para o bairro, todo o
-loot reaparece. O PZ gera o loot no primeiro acesso e não repõe, e o nosso High
-Concept diz o mesmo — *a geografia é fixa e o que muda é o estado do mundo*.
-Guardar o que já foi vasculhado é o passo 4 — e é o que vai dar peso ao
-relógio: hoje gastar o dia numa casa não te custa aquela casa amanhã.
+A mochila **não tem limite de espaço**, e isso é decisão pendente e não
+esquecimento — ver as pendências no começo deste arquivo.
 
 Um detalhe de edição: os scripts não são `@tool`, então no editor os móveis
 aparecem só como o contorno da colisão, e o bairro só se vê rodando.
@@ -467,8 +539,10 @@ Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
 | `Travessia.dias_restantes()` | quantos sobram depois de hoje |
 | `Travessia.e_o_ultimo_dia()` | a casa consulta antes de deixar sair |
 | `Travessia.fim_do_dia` | como o dia acabou: pela porta, amanheceu na rua ou sem vida |
-| `Travessia.mochila` | o que voltou da rua — vazio até o passo 4 |
-| `Travessia.documentos` | idem |
+| `Travessia.mochila` | os itens que **chegaram em casa**, de todos os dias |
+| `Travessia.documentos` | os documentos que chegaram — contam separado |
+| `Travessia.receber()` / `perder_na_rua()` | a mochila da rua chama um dos dois quando o dia acaba |
+| `Travessia.moveis_vazios` | quais móveis já foram vasculhados; o mundo não repõe |
 | `Travessia.entrar_em_casa()` | chamado pela porta, na rua |
 | `Travessia.sair_para_a_rua()` | chamado pela casa; incrementa o dia |
 
