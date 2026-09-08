@@ -81,6 +81,12 @@ As ações estão no **Input Map** do `project.godot`, por `physical_keycode` �
 WASD fica no mesmo lugar em teclado que não seja QWERTY. Os controles são os que
 o High Concept declara.
 
+**Não escreva comentário no `project.godot`.** O editor do Godot reescreve o
+arquivo a cada save: apaga todo comentário e infla cada tecla numa linha longa.
+Já aconteceu — a explicação do `physical_keycode` e a do autoload `Travessia`
+moravam lá e sumiram no primeiro save. O que precisar ser dito sobre aquele
+arquivo se diz aqui.
+
 ### O mapa é um bairro, no estilo Project Zomboid
 
 **Refeito em 07/09/2026, ampliado em 08/09.** Antes era uma rua reta com casas
