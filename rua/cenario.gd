@@ -37,6 +37,12 @@ const COR_CERCA := Color("5a5347")
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
 
+## O relogio do dia, achado pelo grupo. E aqui que ele se liga em cada movel:
+## vasculhar gasta luz, e nem o movel nem o relogio precisam se conhecer para
+## isso. Pode ser nulo - a cena da rua tem relogio, uma cena de teste com um
+## movel solto nao precisa ter.
+var _relogio: Node
+
 ## Todo retangulo que bloqueia passagem, juntado enquanto a colisao e criada.
 ## E a partir desta lista que a navegacao do zumbi e montada: os obstaculos
 ## aqui ja sao retangulos conhecidos, entao nao ha o que descobrir depois.
@@ -44,6 +50,10 @@ var _obstaculos: Array[Rect2] = []
 
 func _ready() -> void:
 	_sorteio.seed = 20260907
+	# Antes de criar movel: e o _criar_movel que pendura o sinal nele. O grupo
+	# vem declarado no rua.tscn, entao ja existe mesmo que o _ready do relogio
+	# ainda nao tenha rodado.
+	_relogio = get_tree().get_first_node_in_group("relogio")
 
 	for construcao in Bairro.CONSTRUCOES:
 		for parede in Bairro.paredes_externas(construcao):
@@ -223,6 +233,8 @@ func _criar_movel(tipo: String, posicao: Vector2) -> void:
 	movel.solido = tipo != "lata"
 	movel.achados = _sortear_achados(tipo)
 	add_child(movel)
+	if _relogio != null:
+		movel.vasculhando.connect(_relogio.ao_vasculhar)
 	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
 	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:

@@ -39,6 +39,10 @@ A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo
 e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
 08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
+Dos cinco passos que levam à Alfa, **três estão de pé**: a mecânica de
+vasculhar (1), o zumbi (2) e o relógio do dia com a HUD (3). Faltam a mochila
+com os documentos (4) e o fechamento do ciclo com a tela de fim de jogo (5).
+
 Pendentes de decisão da equipe:
 
 - [ ] **Fechar o título e escrever a tagline** — hoje o título é de trabalho.
@@ -59,6 +63,12 @@ Pendentes de decisão da equipe:
 - [ ] **A costura entre os dois modos** — o autoload `Travessia` é proposta
       (`dia`, `mochila`, `documentos` e as duas funções de troca de cena). É a
       única decisão de arquitetura que as duas frentes tocam
+- [ ] **O prazo da cura — 10 dias** (`Travessia.PRAZO_DA_CURA`). Não é só feel:
+      é a contagem de fases que a leitura de escopo reivindica junto ao
+      professor, então essa conversa e essa decisão são a mesma
+- [ ] Os números de feel do relógio: **180 s de luz por dia** e **vasculhar
+      gastando o dobro** (`DURACAO_DO_DIA` e `CUSTO_DO_VASCULHO`). Provisórios,
+      e o único jeito de decidir é jogando
 - [ ] Divisão de tarefas
 
 ## O bairro e a mecânica de vasculhar (`rua/`)
@@ -144,8 +154,8 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
 
 - `bairro.tscn`… não existe: o layout é **dado**, não cena. Está todo em
   `bairro.gd`, e é o único arquivo a mexer para mudar o mapa
-- `rua.tscn` — a cena, e é minúscula: `Cenario`, `Jogador`, `EntradaDeCasa` e
-  `Telhados`. Tudo o mais é gerado
+- `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
+  `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
 - `vasculhavel.gd` — **é a core mechanic**. `Area2D` que enche uma barra
   enquanto a ação `vasculhar` estiver segurada e o jogador estiver dentro do
   alcance. O que separa uma lata de lixo (1,5 s) de uma porta (5 s) é só a
@@ -170,8 +180,12 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
 - `navegacao.gd` — grade A* montada dos retângulos de obstáculo que o cenário
   gerou. É o que faz o zumbi **achar o vão da porta** em vez de encalhar na
   parede
-- `conferir_bairro.tscn` e `conferir_zumbi.tscn` — **ferramentas, rodam com
-  F6.** Ver abaixo
+- `relogio.gd` — o relógio do dia: a luz que acaba, e o vasculho gastando ela
+  mais rápido. Ver a seção própria abaixo
+- `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, e o
+  escurecer do fim de tarde
+- `conferir_bairro.tscn`, `conferir_zumbi.tscn` e `conferir_relogio.tscn` —
+  **ferramentas, rodam com F6.** Ver abaixo
 
 ### Duas coisas de propósito
 
@@ -186,6 +200,11 @@ o zumbi chega, volta e termina. Com um valor alto, cada interrupção custa tudo
 o vasculho vira aposta. **É a decisão de feel mais importante do projeto e ainda
 não foi tomada** — é uma constante justamente para testar os dois antes de
 escolher.
+
+Com o relógio do passo 3 no lugar, o `0.0` **deixou de ser de graça**: voltar e
+terminar depois gasta luz do dia de novo, e luz é dia. A interrupção já custa
+algo mesmo com decaimento zero, e é isso que muda a pergunta — não é mais "o
+progresso volta ou não?", é "quanto do dia essa mordida a mais vale?".
 
 ### Mexeu no layout? Rode o `conferir_bairro.tscn` (F6)
 
@@ -265,21 +284,97 @@ em tela:
 - **No fim do caminho** ele devolvia direção zero e ficava parado até o
   recalculo, andando a menos da metade da velocidade dele.
 
+### O relógio do dia e a HUD (`relogio.gd`, `hud.gd`)
+
+**08/09/2026.** É o passo 3: a segunda pressão em cima de vasculhar, e a
+primeira que não se resolve fugindo.
+
+O dia tem **180 s de luz** — 07:00 às 19:00 na HUD — e **vasculhar gasta luz em
+dobro**: o segundo que passa mais o segundo que custa. Andar gasta 1 s de luz
+por segundo; vasculhar gasta 2. Não existe punição por anoitecer na rua: o
+custo é o dia acabar onde você estiver, e cada dia gasto encosta no prazo da
+cura. O zumbi cobra em vida; o relógio cobra em **dia**, que é a moeda que não
+volta.
+
+Os 40 móveis do bairro somam 116 s de vasculho, que dão **233 s de luz** — mais
+do que um dia inteiro, e isso sem andar um passo. É o que torna verdadeira a
+promessa do mapa lá em cima: um dia não dá para limpar o bairro, então escolher
+onde gastar o dia é o jogo.
+
+**O prazo da cura são 10 dias** (`Travessia.PRAZO_DA_CURA`). É proposta, e não é
+só número de feel: é a leitura de escopo que o High Concept reivindica junto ao
+professor — *jogo arcade que acaba no game over, cerca de 10 níveis, ondas ou
+estágios* —, e nessa leitura cada dia é uma fase. Então o prazo **é** a
+contagem de fases, e mexer nele mexe no escopo declarado. No dia 10 a casa não
+deixa mais sair.
+
+#### A HUD está nos cantos que o one-pager declarou
+
+Topo, o dia e quanto falta para o prazo; inferior esquerdo, vida/fome/água;
+inferior direito, a mochila. Não inventei layout — a peça de entrega já disse
+onde cada coisa fica, e é essa tela que vale 2 na Alfa.
+
+É **texto puro**, de propósito: o critério é a tela ser coerente com a que o
+documento declarou, não ser bonita. **Fome, água e mochila aparecem como "—"
+porque ainda não existem** (passo 4). Deixar o campo vazio na tela é melhor que
+escondê-lo: é o mapa do que falta, e quem for fazer o passo 4 acha o lugar
+pronto.
+
+O que faz o relógio ser **sentido** não é o texto, é a tela escurecendo no fim
+da tarde. Auxílio de leitura, como o cone de visão do zumbi — ninguém joga
+olhando o canto da tela. Não é a arte de fim de tarde: paleta por hora do dia é
+assunto de quem fizer arte.
+
+#### Onde cada peça mora, e por quê
+
+O relógio de **dentro** de um dia é coisa da rua, e nasce cheio cada vez que a
+cena da rua carrega. A **contagem de dias e o prazo** atravessam os dois modos
+e moram no `Travessia`, porque a casa também precisa deles.
+
+Vasculhar gastar luz passa por um sinal: o `vasculhavel.gd` emite `vasculhando`
+e não sabe que existe relógio, o `relogio.gd` não sabe que existe móvel, e
+**quem liga os dois é o `cenario.gd`** — que é quem cria o móvel. Mesmo arranjo
+do zumbi com o vasculho: a pressão chega de fora, e o arquivo da core mechanic
+continua sem conhecer ninguém.
+
+### Mexeu no relógio, na HUD ou no prazo? Rode o `conferir_relogio.tscn` (F6)
+
+Confere cinco coisas: o dia dura o que a constante diz que dura e anoitece uma
+vez só; **vasculhar gasta luz mais rápido que andar**; a HUD lê os números
+certos e não estoura sem relógio nem sem jogador; o anoitecer encerra o dia; e
+no último dia a casa não devolve para a rua. Ele também refaz a conta dos 233 s
+e reclama se o dia crescer o bastante para o bairro caber nele.
+
+Mede por chamada direta com delta fixo, e não contando quadro: em headless o
+laço roda muito mais rápido que a física, e o relógio vive no `_process`.
+
+As duas coisas que a primeira rodada ensinou eram do teste, não do jogo — e as
+duas custariam horas de caça ao bug errado:
+
+- **Lambda em GDScript captura variável local por valor.** `func(): avisou =
+  true` escreve numa cópia, então o teste nunca via o sinal `anoiteceu` sair e
+  acusava o relógio. Contador de sinal tem que ser membro.
+- **`change_scene_to_file()` arranca a cena atual da árvore na hora**, não no
+  fim do quadro. A conferência que faz a casa deixar sair levava a própria
+  ferramenta embora: o `get_tree()` seguinte vinha nulo, o `quit()` nunca
+  acontecia e o processo ficava rodando para sempre com a rua carregada.
+
 ### O que ainda não tem
 
-Prazo, fome, mochila e HUD — os passos 3 a 5. Nada disso precisa existir para a
-mecânica ser avaliada, e a ordem é essa de propósito: em qualquer corte já tem
-coisa demonstrável.
+Fome, água, mochila e morte — os passos 4 e 5. Nada disso precisa existir para
+a mecânica ser avaliada, e a ordem é essa de propósito: em qualquer corte já
+tem coisa demonstrável.
 
-A vida do jogador existe, mas **a HUD não**: aparece só como uma barrinha em
-cima da cabeça, e é o mínimo para o dano ser visível. Zerar a vida hoje encerra
-o dia e te manda para casa — provisório, porque morte e tela de fim de jogo são
-o passo 5.
+A vida aparece na HUD e numa barrinha em cima da cabeça. Zerar a vida encerra o
+dia e te manda para casa — provisório, porque morte e tela de fim de jogo são o
+passo 5. O prazo se esgotar é igual: a casa mostra o texto no lugar da tela de
+derrota que o High Concept já descreveu, a paródia de final feliz.
 
 Também não tem **estado que atravesse o dia**: ao voltar para o bairro, todo o
 loot reaparece. O PZ gera o loot no primeiro acesso e não repõe, e o nosso High
 Concept diz o mesmo — *a geografia é fixa e o que muda é o estado do mundo*.
-Guardar o que já foi vasculhado é o passo 3/4.
+Guardar o que já foi vasculhado é o passo 4 — e é o que vai dar peso ao
+relógio: hoje gastar o dia numa casa não te custa aquela casa amanhã.
 
 Um detalhe de edição: os scripts não são `@tool`, então no editor os móveis
 aparecem só como o contorno da colisão, e o bairro só se vê rodando.
@@ -309,6 +404,9 @@ Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
 | | |
 |---|---|
 | `Travessia.dia` | qual dia está correndo |
+| `Travessia.PRAZO_DA_CURA` | quantos dias existem para a cura — 10, e é proposta |
+| `Travessia.dias_restantes()` | quantos sobram depois de hoje |
+| `Travessia.e_o_ultimo_dia()` | a casa consulta antes de deixar sair |
 | `Travessia.mochila` | o que voltou da rua — vazio até o passo 4 |
 | `Travessia.documentos` | idem |
 | `Travessia.entrar_em_casa()` | chamado pela porta, na rua |

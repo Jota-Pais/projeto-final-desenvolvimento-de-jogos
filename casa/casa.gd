@@ -6,14 +6,62 @@ extends Control
 ## ao voltar da rua, para a travessia funcionar de ponta a ponta enquanto a
 ## outra metade da equipe nao comeca. Quem for fazer esta frente troca esta
 ## cena por uma de verdade e nao precisa mexer em nada da rua.
+##
+## Ela e quem segura o prazo: sair para a rua depois do ultimo dia seria depois
+## do prazo, e o prazo se esgotar e a derrota. A regra e do Travessia
+## (e_o_ultimo_dia), a tela e daqui.
+
+## Cor do texto quando o prazo esta perto, e quando ele venceu.
+const COR_APERTO := Color("d8a13c")
+const COR_DERROTA := Color("c0463c")
+
+var _acabou := false
 
 func _ready() -> void:
-	($Conteudo/Dia as Label).text = "Anoiteceu — fim do dia %d" % Travessia.dia
+	($Conteudo/Dia as Label).text = _linha_do_dia()
 	($Conteudo/Trouxe as Label).text = _o_que_voltou()
+	if Travessia.e_o_ultimo_dia():
+		var saida := $Conteudo/Saida as Label
+		saida.text = "E  —  sair para a rua no ÚLTIMO dia antes do prazo"
+		saida.add_theme_color_override("font_color", COR_APERTO)
 
 func _unhandled_input(evento: InputEvent) -> void:
-	if evento.is_action_pressed("vasculhar") or evento.is_action_pressed("ui_accept"):
-		Travessia.sair_para_a_rua()
+	if _acabou:
+		return
+	if not (evento.is_action_pressed("vasculhar") or evento.is_action_pressed("ui_accept")):
+		return
+	# O ultimo dia e o dia PRAZO_DA_CURA. Sair dele levaria para um dia que nao
+	# existe mais, e e ai que o prazo se esgota.
+	if Travessia.e_o_ultimo_dia():
+		_derrota()
+		return
+	Travessia.sair_para_a_rua()
+
+func _linha_do_dia() -> String:
+	var faltam := Travessia.dias_restantes()
+	var quanto := "hoje era o último dia"
+	if faltam == 1:
+		quanto = "falta 1 dia para o prazo"
+	elif faltam > 1:
+		quanto = "faltam %d dias para o prazo" % faltam
+	return "Anoiteceu — fim do dia %d de %d, %s" % [
+		Travessia.dia, Travessia.PRAZO_DA_CURA, quanto
+	]
+
+## Provisorio. A tela de fim de jogo e o passo 5, e o High Concept ja disse o
+## que ela mostra: a derrota apresentada em tom de parodia, como se fosse o
+## final feliz de um casal. Isto aqui e so o texto no lugar dela - o prazo
+## precisava ter consequencia para o relogio da rua querer dizer algo.
+func _derrota() -> void:
+	_acabou = true
+	var titulo := $Conteudo/Titulo as Label
+	titulo.text = "O PRAZO SE ESGOTOU"
+	titulo.add_theme_color_override("font_color", COR_DERROTA)
+	($Conteudo/Dia as Label).text = "Foram os %d dias. A cura não ficou pronta." % Travessia.PRAZO_DA_CURA
+	($Conteudo/Trouxe as Label).text = "Ela escapa do porão."
+	var saida := $Conteudo/Saida as Label
+	saida.text = "Aqui entra a tela de fim de jogo — a derrota em tom de paródia (passo 5)."
+	saida.add_theme_color_override("font_color", COR_DERROTA)
 
 func _o_que_voltou() -> String:
 	if Travessia.mochila.is_empty() and Travessia.documentos.is_empty():

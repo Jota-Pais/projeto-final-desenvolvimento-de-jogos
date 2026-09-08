@@ -19,9 +19,20 @@ signal saiu_para_a_rua
 const CENA_DA_RUA := "res://rua/rua.tscn"
 const CENA_DA_CASA := "res://casa/casa.tscn"
 
-## Qual dia esta correndo. A contagem regressiva do prazo da cura e o relogio
-## do dia sao o passo 3 e nao moram aqui - por enquanto isto so incrementa a
-## cada volta para a rua.
+## Quantos dias existem para a cura ficar pronta. **Proposta.**
+##
+## 10 e o numero que a leitura de escopo do High Concept reivindica junto ao
+## professor - "jogo arcade que acaba no game over, cerca de 10 niveis, ondas ou
+## estagios" - e nessa leitura cada dia e uma fase. Entao o prazo E a contagem
+## de fases, e mexer nele mexe no escopo declarado.
+const PRAZO_DA_CURA := 10
+
+## Qual dia esta correndo.
+##
+## O dia e o prazo atravessam os dois modos: a rua mostra na HUD quanto falta e
+## gasta o dia vasculhando, a casa e quem gasta o dia pesquisando. O relogio de
+## DENTRO de um dia - a luz que acaba - e coisa so da rua, e mora em
+## rua/relogio.gd.
 var dia := 1
 
 ## O que o jogador trouxe da rua. Fica vazio ate o passo 4 (mochila e itens):
@@ -37,7 +48,18 @@ func entrar_em_casa() -> void:
 	chegou_em_casa.emit()
 	get_tree().change_scene_to_file(CENA_DA_CASA)
 
-## Chamado pela casa quando o jogador sai para o dia seguinte.
+## Quantos dias sobram depois de hoje.
+func dias_restantes() -> int:
+	return maxi(0, PRAZO_DA_CURA - dia)
+
+## Se hoje e o ultimo dia. Quem chama e a casa, antes de deixar sair: sair de
+## novo seria depois do prazo, e o prazo se esgotar e a derrota. A regra fica
+## aqui porque o prazo mora aqui; quem mostra a tela e a casa.
+func e_o_ultimo_dia() -> bool:
+	return dia >= PRAZO_DA_CURA
+
+## Chamado pela casa quando o jogador sai para o dia seguinte. Nao confere o
+## prazo - quem confere e quem chama, por e_o_ultimo_dia().
 func sair_para_a_rua() -> void:
 	dia += 1
 	saiu_para_a_rua.emit()

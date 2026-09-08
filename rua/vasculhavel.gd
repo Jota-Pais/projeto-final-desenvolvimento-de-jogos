@@ -14,6 +14,13 @@ extends Area2D
 ## se pendura aqui.
 signal vasculhado(rotulo: String, achados: Array[String])
 
+## Emitido enquanto o vasculho avanca, com quanto ele avancou neste quadro.
+##
+## Quem escuta hoje e o relogio do dia: vasculhar gasta luz. Este arquivo
+## continua sem saber que existe relogio - quem liga os dois e o cenario, que e
+## quem cria o movel. Mesmo arranjo do zumbi: a pressao chega de fora.
+signal vasculhando(segundos: float)
+
 ## Nome no aviso que aparece em cima ("E  vasculhar Carro").
 @export var rotulo := "Caixa"
 ## Segundos de vasculho ininterrupto para esvaziar.
@@ -71,6 +78,7 @@ func _process(delta: float) -> void:
 	var antes := _progresso
 	if _jogador_dentro and Input.is_action_pressed("vasculhar"):
 		_progresso += delta
+		vasculhando.emit(delta)
 		if _progresso >= duracao:
 			_esvaziar()
 			return

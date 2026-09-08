@@ -7,9 +7,12 @@ extends Node2D
 ## dentro, nao ler de fora e escolher. Sem isso, o mapa inteiro se le da rua e
 ## vasculhar deixa de ser exploracao.
 ##
-## Precisa ser um no separado, e o ULTIMO irmao da cena: o Godot desenha na
-## ordem da arvore, e o telhado tem que vir depois do cenario, dos moveis e do
-## jogador.
+## Precisa ser um no separado, e o ULTIMO irmao que desenha no mundo: o Godot
+## desenha na ordem da arvore, e o telhado tem que vir depois do cenario, dos
+## moveis e do jogador.
+##
+## A HUD vem depois dele no rua.tscn e nao atrapalha - ela e CanvasLayer, tem
+## camada propria e nao entra nessa ordem.
 
 const Bairro := preload("res://rua/bairro.gd")
 

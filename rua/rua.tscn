@@ -1,20 +1,27 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
-[ext_resource type="Script" path="res://rua/cenario.gd" id="1_cenario"]
-[ext_resource type="PackedScene" path="res://rua/jogador.tscn" id="2_jogador"]
-[ext_resource type="PackedScene" path="res://rua/entrada_de_casa.tscn" id="3_entrada"]
-[ext_resource type="Script" path="res://rua/telhados.gd" id="4_telhados"]
+[ext_resource type="Script" path="res://rua/relogio.gd" id="1_relogio"]
+[ext_resource type="Script" path="res://rua/cenario.gd" id="2_cenario"]
+[ext_resource type="PackedScene" path="res://rua/jogador.tscn" id="3_jogador"]
+[ext_resource type="PackedScene" path="res://rua/entrada_de_casa.tscn" id="4_entrada"]
+[ext_resource type="Script" path="res://rua/telhados.gd" id="5_telhados"]
+[ext_resource type="PackedScene" path="res://rua/hud.tscn" id="6_hud"]
 
 [node name="Rua" type="Node2D"]
 
-[node name="Cenario" type="Node2D" parent="."]
-script = ExtResource("1_cenario")
+[node name="Relogio" type="Node" parent="." groups=["relogio"]]
+script = ExtResource("1_relogio")
 
-[node name="Jogador" parent="." instance=ExtResource("2_jogador")]
+[node name="Cenario" type="Node2D" parent="."]
+script = ExtResource("2_cenario")
+
+[node name="Jogador" parent="." instance=ExtResource("3_jogador")]
 position = Vector2(700, 1240)
 
-[node name="EntradaDeCasa" parent="." instance=ExtResource("3_entrada")]
+[node name="EntradaDeCasa" parent="." instance=ExtResource("4_entrada")]
 position = Vector2(390, 905)
 
 [node name="Telhados" type="Node2D" parent="."]
-script = ExtResource("4_telhados")
+script = ExtResource("5_telhados")
+
+[node name="Hud" parent="." instance=ExtResource("6_hud")]
