@@ -11,13 +11,51 @@ config_version=5
 [application]
 
 config/name="Você me amaria se eu fosse um zumbi?"
-run/main_scene="res://teste-movimento/teste.tscn"
+run/main_scene="res://rua/rua.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+; A costura entre os dois modos. Ver travessia.gd - e o unico arquivo que a rua
+; e a casa conhecem em comum.
+Travessia="*res://travessia.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+
+[input]
+
+; Teclas por physical_keycode (posicao fisica), nao por keycode: assim o WASD
+; continua no mesmo lugar em teclado que nao seja QWERTY.
+; Os controles sao os que o High Concept declara: WASD ou setas para andar,
+; E para vasculhar, Shift para correr.
+
+andar_esquerda={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":65,"script":null), Object(InputEventKey,"physical_keycode":4194319,"script":null)]
+}
+andar_direita={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":68,"script":null), Object(InputEventKey,"physical_keycode":4194321,"script":null)]
+}
+andar_cima={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":87,"script":null), Object(InputEventKey,"physical_keycode":4194320,"script":null)]
+}
+andar_baixo={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":83,"script":null), Object(InputEventKey,"physical_keycode":4194322,"script":null)]
+}
+vasculhar={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":69,"script":null)]
+}
+correr={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194325,"script":null)]
+}
 
 [rendering]
 

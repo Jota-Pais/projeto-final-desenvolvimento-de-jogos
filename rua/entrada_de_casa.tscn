@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://rua/entrada_de_casa.gd" id="1_entrada"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_deteccao"]
+size = Vector2(160, 128)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
+size = Vector2(64, 32)
+
+[node name="EntradaDeCasa" type="Area2D"]
+script = ExtResource("1_entrada")
+
+[node name="Deteccao" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_deteccao")
+
+[node name="Corpo" type="StaticBody2D" parent="."]
+
+[node name="Colisao" type="CollisionShape2D" parent="Corpo"]
+shape = SubResource("RectangleShape2D_corpo")

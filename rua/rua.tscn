@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://rua/cenario.gd" id="1_cenario"]
+[ext_resource type="PackedScene" path="res://rua/jogador.tscn" id="2_jogador"]
+[ext_resource type="PackedScene" path="res://rua/entrada_de_casa.tscn" id="3_entrada"]
+[ext_resource type="Script" path="res://rua/telhados.gd" id="4_telhados"]
+
+[node name="Rua" type="Node2D"]
+
+[node name="Cenario" type="Node2D" parent="."]
+script = ExtResource("1_cenario")
+
+[node name="Jogador" parent="." instance=ExtResource("2_jogador")]
+position = Vector2(700, 1240)
+
+[node name="EntradaDeCasa" parent="." instance=ExtResource("3_entrada")]
+position = Vector2(390, 905)
+
+[node name="Telhados" type="Node2D" parent="."]
+script = ExtResource("4_telhados")

@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://rua/jogador.gd" id="1_jogador"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
+size = Vector2(28, 40)
+
+[node name="Jogador" type="CharacterBody2D" groups=["jogador"]]
+script = ExtResource("1_jogador")
+
+[node name="Corpo" type="Polygon2D" parent="."]
+color = Color(0.85, 0.16, 0.16, 1)
+polygon = PackedVector2Array(-14, -20, 14, -20, 14, 20, -14, 20)
+
+[node name="Colisao" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_corpo")
+
+[node name="Camera" type="Camera2D" parent="."]

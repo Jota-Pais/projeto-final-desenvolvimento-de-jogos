@@ -1,0 +1,80 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://casa/casa.gd" id="1_casa"]
+
+[node name="Casa" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_casa")
+
+[node name="Fundo" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0863, 0.0667, 0.0549, 1)
+
+[node name="Conteudo" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 110.0
+offset_top = 70.0
+offset_right = -110.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Titulo" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.913725, 0.690196, 0.376471, 1)
+theme_override_font_sizes/font_size = 36
+text = "MODO CASA"
+
+[node name="Subtitulo" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65098, 0.560784, 0.470588, 1)
+theme_override_font_sizes/font_size = 15
+text = "Este espaço ainda não existe. É aqui que a outra metade da equipe começa."
+
+[node name="Dia" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.882353, 0.831373, 0.729412, 1)
+theme_override_font_sizes/font_size = 20
+text = "Anoiteceu"
+
+[node name="Trouxe" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.760784, 0.694118, 0.588235, 1)
+theme_override_font_sizes/font_size = 15
+text = "Da rua não veio nada."
+autowrap_mode = 3
+
+[node name="Separador" type="HSeparator" parent="Conteudo"]
+layout_mode = 2
+
+[node name="Nota" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.596078, 0.541176, 0.470588, 1)
+theme_override_font_sizes/font_size = 14
+text = "Aqui entra o ponto e clique: cuidar dela no porão e montar a pesquisa da cura com o que veio da rua. Arte detalhada, luz de vela e tom quente — de propósito diferente da rua, que é fria e simples.
+
+Por onde começar: trocar esta cena por uma de verdade, em casa/casa.tscn. O jogo chega aqui por Travessia.entrar_em_casa() e sai por Travessia.sair_para_a_rua(); nada na rua precisa ser tocado.
+
+O que a rua entrega está no autoload Travessia: dia, mochila e documentos. A rua só acrescenta — quem faz a casa decide o que é consumido e esvazia o que gastou."
+autowrap_mode = 3
+
+[node name="Saida" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.913725, 0.690196, 0.376471, 1)
+theme_override_font_sizes/font_size = 17
+text = "E  —  sair para a rua no dia seguinte"
