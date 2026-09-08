@@ -7,33 +7,57 @@ extends Control
 ## outra metade da equipe nao comeca. Quem for fazer esta frente troca esta
 ## cena por uma de verdade e nao precisa mexer em nada da rua.
 ##
-## Ela e quem segura o prazo: sair para a rua depois do ultimo dia seria depois
-## do prazo, e o prazo se esgotar e a derrota. A regra e do Travessia
-## (e_o_ultimo_dia), a tela e daqui.
+## **E ela quem fecha o ciclo do jogo**, dos dois lados, porque e ela quem faz
+## a pesquisa e quem segura o prazo:
+##
+##  - juntou documento bastante -> a cura fica pronta, e e a vitoria;
+##  - passou do ultimo dia sem isso -> o prazo se esgota, e e a derrota.
+##
+## As regras sao do Travessia (a_cura_esta_pronta, e_o_ultimo_dia); as telas
+## sao daqui e do fim_de_jogo.tscn.
 
-## Cor do texto quando o prazo esta perto, e quando ele venceu.
+## Cor do texto quando o prazo esta perto, e quando a cura esta pronta.
 const COR_APERTO := Color("d8a13c")
-const COR_DERROTA := Color("c0463c")
-
-var _acabou := false
+const COR_CURA := Color("8fc08a")
 
 func _ready() -> void:
 	($Conteudo/Dia as Label).text = _linha_do_dia()
 	($Conteudo/Trouxe as Label).text = _o_que_voltou()
+	_escrever_a_saida()
+
+## O que a tecla E faz agora - e sao tres coisas diferentes, na ordem em que a
+## regra decide.
+func _escrever_a_saida() -> void:
+	var saida := $Conteudo/Saida as Label
+	if Travessia.a_cura_esta_pronta():
+		saida.text = "E  —  TERMINAR A CURA (%d de %d documentos)" % [
+			Travessia.documentos.size(), Travessia.DOCUMENTOS_PARA_A_CURA
+		]
+		saida.add_theme_color_override("font_color", COR_CURA)
+		return
 	if Travessia.e_o_ultimo_dia():
-		var saida := $Conteudo/Saida as Label
-		saida.text = "E  —  sair para a rua no ÚLTIMO dia antes do prazo"
+		saida.text = "E  —  o prazo acabou (%d de %d documentos)" % [
+			Travessia.documentos.size(), Travessia.DOCUMENTOS_PARA_A_CURA
+		]
 		saida.add_theme_color_override("font_color", COR_APERTO)
+		return
+	saida.text = "E  —  sair para a rua no dia seguinte  (pesquisa: %d de %d documentos)" % [
+		Travessia.documentos.size(), Travessia.DOCUMENTOS_PARA_A_CURA
+	]
 
 func _unhandled_input(evento: InputEvent) -> void:
-	if _acabou:
-		return
 	if not (evento.is_action_pressed("vasculhar") or evento.is_action_pressed("ui_accept")):
+		return
+
+	# A vitoria vem antes do prazo: se a cura ficou pronta no ultimo dia, ela
+	# ficou pronta a tempo.
+	if Travessia.a_cura_esta_pronta():
+		Travessia.acabar_o_jogo(Travessia.Desfecho.VITORIA)
 		return
 	# O ultimo dia e o dia PRAZO_DA_CURA. Sair dele levaria para um dia que nao
 	# existe mais, e e ai que o prazo se esgota.
 	if Travessia.e_o_ultimo_dia():
-		_derrota()
+		Travessia.acabar_o_jogo(Travessia.Desfecho.PRAZO_ESGOTADO)
 		return
 	Travessia.sair_para_a_rua()
 
@@ -59,23 +83,7 @@ func _linha_do_dia() -> String:
 		como, Travessia.dia, Travessia.PRAZO_DA_CURA, quanto
 	]
 
-## Provisorio. A tela de fim de jogo e o passo 5, e o High Concept ja disse o
-## que ela mostra: a derrota apresentada em tom de parodia, como se fosse o
-## final feliz de um casal. Isto aqui e so o texto no lugar dela - o prazo
-## precisava ter consequencia para o relogio da rua querer dizer algo.
-func _derrota() -> void:
-	_acabou = true
-	var titulo := $Conteudo/Titulo as Label
-	titulo.text = "O PRAZO SE ESGOTOU"
-	titulo.add_theme_color_override("font_color", COR_DERROTA)
-	($Conteudo/Dia as Label).text = "Foram os %d dias. A cura não ficou pronta." % Travessia.PRAZO_DA_CURA
-	($Conteudo/Trouxe as Label).text = "Ela escapa do porão."
-	var saida := $Conteudo/Saida as Label
-	saida.text = "Aqui entra a tela de fim de jogo — a derrota em tom de paródia (passo 5)."
-	saida.add_theme_color_override("font_color", COR_DERROTA)
 
-## O que chegou, ou o que ficou na calcada. Sao as duas metades da mesma regra:
-## so entra em casa o que passou pela porta do porao.
 func _o_que_voltou() -> String:
 	if Travessia.fim_do_dia != Travessia.FimDoDia.PELA_PORTA:
 		var perdeu := Travessia.itens_perdidos + Travessia.documentos_perdidos

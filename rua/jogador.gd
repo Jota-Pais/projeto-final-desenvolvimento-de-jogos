@@ -56,9 +56,14 @@ func levar_dano(quanto: float, de_onde: Vector2) -> void:
 
 	if vida > 0.0:
 		return
-	# Provisorio: sem vida, o dia acaba e voce volta para casa. Morte e tela de
-	# fim de jogo sao o passo 5 - isto existe para o dano ter consequencia sem
-	# inventar interface.
+	# **Morrer custa o dia, e nao a partida.** Nao e provisorio: o High Concept
+	# declara dois desfechos, a cura a tempo e o prazo esgotado, e morrer na rua
+	# nao e nenhum dos dois. Voce acorda em casa sem nada do que carregava, e o
+	# preco e um dia do prazo - que e o recurso caro do jogo.
+	#
+	# Se a equipe quiser que morrer acabe a partida, e uma linha: trocar por
+	# Travessia.acabar_o_jogo(). Mas ai o jogo passa a ter um game over que o
+	# documento nao previu.
 	print("Sem vida - o dia acaba na forca")
 	vida = VIDA_CHEIA
 	Travessia.entrar_em_casa(Travessia.FimDoDia.SEM_VIDA)

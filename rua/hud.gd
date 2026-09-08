@@ -75,6 +75,13 @@ func _linha_do_topo(relogio: Relogio) -> String:
 
 	if relogio != null:
 		pedacos.append(relogio.hora_texto())
+
+	# O objetivo principal, no lugar mais lido da tela. Sao os documentos que
+	# JA CHEGARAM em casa - o que esta na mochila ainda nao conta, e essa
+	# diferenca e o jogo inteiro.
+	pedacos.append("cura %d/%d" % [
+		Travessia.documentos.size(), Travessia.DOCUMENTOS_PARA_A_CURA
+	])
 	return "   ·   ".join(pedacos)
 
 func _linha_da_esquerda(jogador: Node) -> String:

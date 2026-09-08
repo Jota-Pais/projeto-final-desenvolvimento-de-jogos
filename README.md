@@ -39,10 +39,10 @@ A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo
 e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
 08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
-Dos cinco passos que levam à Alfa, **quatro estão de pé**: a mecânica de
-vasculhar (1), o zumbi (2), o relógio do dia com a noite e a HUD (3) e a
-mochila com os documentos (4). Falta o passo 5 — fome, morte e a tela de fim de
-jogo.
+**Os cinco passos que levam à Alfa estão de pé**: a mecânica de vasculhar (1),
+o zumbi (2), o relógio do dia com a noite e a HUD (3), a mochila com os
+documentos (4) e o ciclo fechado, com os dois desfechos (5). O que sobrou de
+declarado e não construído é **fome e água** — ver *O que ainda não tem*.
 
 Pendentes de decisão da equipe:
 
@@ -77,9 +77,13 @@ Pendentes de decisão da equipe:
       espaço já ocupado visível"*, o que supõe um teto — e teto cria viagem:
       enche, volta, sai de novo. Não implementei porque como ele conversa com
       o vasculho (o móvel não esvazia? sobra dentro dele?) tem várias respostas
-- [ ] **Seis documentos para dez dias.** O bairro tem 33 itens e 6 documentos, e
-      não repõe. Se a cura precisa dos seis, o mapa se esgota no terceiro ou
-      quarto dia bom. Ver a seção da mochila
+- [ ] **Quantos documentos a cura pede, e o que mais ela consome.** Hoje são 4
+      dos 6 que o bairro tem, e é número provisório segurando uma decisão que é
+      do modo Casa. Ver *Quantos documentos a cura pede*
+- [ ] **Morrer devia acabar a partida?** Hoje custa o dia. O High Concept só
+      declara dois desfechos e nenhum é morrer, mas é decisão de mesa
+- [ ] **A escalada por dia** — 2 zumbis a mais por dia (`ZUMBIS_A_MAIS_POR_DIA`),
+      que leva o dia 10 a 31 de dia e 45 de noite. Provisório
 - [ ] Divisão de tarefas
 
 ## O bairro e a mecânica de vasculhar (`rua/`)
@@ -198,8 +202,9 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
   abaixo
 - `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, o
   aviso da noite e o escurecer
-- `conferir_bairro.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn` e
-  `conferir_mochila.tscn` — **ferramentas, rodam com F6.** Ver abaixo
+- `conferir_bairro.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
+  `conferir_mochila.tscn` e `conferir_fim.tscn` — **ferramentas, rodam com
+  F6.** Ver abaixo
 
 ### Duas coisas de propósito
 
@@ -493,16 +498,30 @@ O segundo é o que precisa de conferência de verdade: a regra vive numa ligaç�
 indireta — a mochila escuta o `chegou_em_casa` do `Travessia` e lê o
 `fim_do_dia` para decidir entregar ou perder — e quebra sem dar erro em tela.
 
+### A rua piora com os dias
+
+**09/09/2026, parte do passo 5.** O High Concept diz que *a rua vai ficando
+mais apocalíptica conforme os dias passam*. A metade barata disso é estética —
+o mato vai tomando o terreno, 90 tufos a mais por dia. A metade que muda o jogo
+são os zumbis: **dois a mais por dia que passa.**
+
+| | dia 1 | dia 5 | dia 10 |
+|---|---|---|---|
+| de dia | 13 | 21 | 31 |
+| na noite fechada | 27 | 35 | 45 |
+
+Eles entram pelas bocas de rua, como os da noite. O efeito é o prazo apertar de
+dois lados ao mesmo tempo: quanto menos dias sobram, mais caro fica cada dia —
+e amanhecer na rua no dia 9 não é a mesma coisa que no dia 2.
+
 ### O que ainda não tem
 
-Fome, água e morte — o passo 5. Nada disso precisa existir para a mecânica ser
-avaliada, e a ordem é essa de propósito: em qualquer corte já tem coisa
-demonstrável.
-
-A vida aparece na HUD e numa barrinha em cima da cabeça. Zerar a vida encerra o
-dia e te manda para casa — provisório, porque morte e tela de fim de jogo são o
-passo 5. O prazo se esgotar é igual: a casa mostra o texto no lugar da tela de
-derrota que o High Concept já descreveu, a paródia de final feliz.
+**Fome e água.** São os dois campos que a HUD mostra como "—", e são o que
+sobrou de declarado e não construído. Não estavam nos cinco passos: o High
+Concept as lista como *variações de pressão sobre a mesma ação*, junto com o
+tempo e a escuridão, e essas duas já existem. Fome é a terceira, e o mais
+provável é que ela apareça consumindo o que a mochila trouxe — o que amarra ela
+no modo Casa, que é quem decide o consumo.
 
 A mochila **não tem limite de espaço**, e isso é decisão pendente e não
 esquecimento — ver as pendências no começo deste arquivo.
@@ -543,6 +562,9 @@ Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
 | `Travessia.documentos` | os documentos que chegaram — contam separado |
 | `Travessia.receber()` / `perder_na_rua()` | a mochila da rua chama um dos dois quando o dia acaba |
 | `Travessia.moveis_vazios` | quais móveis já foram vasculhados; o mundo não repõe |
+| `Travessia.DOCUMENTOS_PARA_A_CURA` | quantos documentos a pesquisa pede — 4, e é provisório |
+| `Travessia.a_cura_esta_pronta()` | a casa pergunta antes de oferecer terminar |
+| `Travessia.acabar_o_jogo()` / `recomecar()` | fim de partida e partida nova |
 | `Travessia.entrar_em_casa()` | chamado pela porta, na rua |
 | `Travessia.sair_para_a_rua()` | chamado pela casa; incrementa o dia |
 
@@ -564,6 +586,76 @@ em nada da rua.**
 Ainda sem dono: **onde fica o laboratório.** Os objetivos do High Concept falam
 em *equipar a casa e o laboratório* — se é o porão junto com ela ou outro canto
 da casa, é decisão de quem fizer essa frente.
+
+## O fim do jogo (`fim_de_jogo.gd`)
+
+**09/09/2026.** É o passo 5, e é o que faz "fase = dia" ficar legível: o jogo
+passa a ter começo, meio e fim, que é o *jogo arcade que acaba no game over*
+reivindicado como escopo.
+
+São **dois desfechos, e só os dois que o High Concept declara** — a cura fica
+pronta a tempo, ou o prazo se esgota. Quem decide os dois é a casa, porque é
+ela quem faz a pesquisa e é ela quem segura o prazo; a tecla `E` na casa faz
+três coisas diferentes, na ordem em que as regras decidem:
+
+1. a cura está pronta → **terminar a cura** (vitória)
+2. é o último dia → **o prazo acabou** (derrota)
+3. o resto → sair para a rua no dia seguinte
+
+A vitória vem antes do prazo de propósito: cura pronta no último dia é cura
+pronta **a tempo**.
+
+### A derrota é o diferencial, e por isso não parece uma derrota
+
+A tela de derrota **não é uma tela de game over**: é uma paródia de final feliz
+de casal. O quadro diz *"E FORAM FELIZES PARA SEMPRE"* em âmbar grande; o corpo
+conta que o prazo acabou, ela saiu do porão e os dois seguem juntos — do mesmo
+lado da porta. A palavra "game over" aparece **embaixo, em corpo 13, como aviso
+legal**.
+
+Isso não é enfeite: é o diferencial que o High Concept vende e é material
+direto para o pitch de investimentos, que pergunta justamente por isso. O
+`conferir_fim.tscn` **defende o tom**: reprova se o título entregar o jogo
+(falar "derrota" ou "perdeu") ou se o "game over" não estiver menor que o final
+feliz. É a única coisa que essa tela não pode perder quando alguém trocar o
+texto por arte.
+
+### Quantos documentos a cura pede
+
+**Quatro** (`Travessia.DOCUMENTOS_PARA_A_CURA`) — e este número está segurando
+um buraco de papel, não uma decisão.
+
+⬜ **A pesquisa da cura é do modo Casa.** Quem fizer aquela frente decide o que
+ela consome, em que ordem, e o que mais entra na conta: remédio? ferramenta?
+tempo dentro de casa? O número existe para o ciclo fechar de ponta a ponta
+enquanto isso não for decidido.
+
+São 4 dos 6 que o bairro tem, e **a folga é de propósito**: com 6 um único dia
+perdido carregando documento deixaria a partida impossível de ganhar sem
+avisar. Com 4 dá para errar dois dias. O `conferir_fim.tscn` reprova as duas
+situações — bairro com documento de menos, e bairro sem folga nenhuma.
+
+### Morrer custa o dia, e não a partida
+
+**Não é provisório, é decisão.** O High Concept declara dois desfechos, e
+morrer na rua não é nenhum dos dois. Quem zera a vida acorda em casa sem nada
+do que carregava, e paga **um dia do prazo** — que é o recurso caro do jogo.
+
+⬜ Se a equipe quiser que morrer acabe a partida, é uma linha no `jogador.gd`
+(`Travessia.acabar_o_jogo()`). Mas aí o jogo passa a ter um game over que o
+documento não previu, e a paródia deixa de ser o único fim.
+
+### Mexeu no fim, no prazo ou na escalada? Rode o `conferir_fim.tscn` (F6)
+
+Confere seis coisas: **a partida dá para ganhar** — o bairro tem documento
+bastante, com folga; juntar os documentos leva à vitória, e ela vem antes do
+prazo; passar do último dia sem a cura leva à derrota, e a tela dela mantém a
+paródia; morrer custa o dia e não a partida; a rua piora com os dias; e
+recomeçar zera tudo, inclusive os móveis vazios — senão a segunda partida
+começaria num bairro já saqueado.
+
+A primeira é a única que pode reprovar o **desenho** e não o código: um bairro
+com documento de menos torna a partida inganhável, e nada mais avisaria.
 
 ## Combinados de Git
 

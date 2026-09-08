@@ -443,30 +443,40 @@ func _o_prazo_se_esgota() -> void:
 	if Travessia.dias_restantes() != 0:
 		_erro("no ultimo dia, dias_restantes() = %d" % Travessia.dias_restantes())
 
-	# A casa e quem obedece a regra. No ultimo dia, apertar E nao devolve para
-	# a rua: mostra a derrota e trava.
-	var casa := CENA_DA_CASA.instantiate()
-	add_child(casa)
-	var dia_antes := Travessia.dia
+	# A casa e quem obedece a regra: no ultimo dia, apertar E nao devolve para a
+	# rua. **O que acontece em vez disso e conferido no conferir_fim.tscn** -
+	# aqui interessa so que o dia nao anda, porque e o prazo que esta em jogo.
 	var evento := InputEventAction.new()
 	evento.action = "vasculhar"
 	evento.pressed = true
+
+	Travessia.desfecho = Travessia.Desfecho.VITORIA
+	var casa := CENA_DA_CASA.instantiate()
+	add_child(casa)
+	var dia_antes := Travessia.dia
+	# A ferramenta sai de "cena atual" pelo tempo da chamada: a casa vai pedir
+	# troca de cena, e a troca arranca a cena atual da arvore na hora.
+	var cena_atual := get_tree().current_scene
+	get_tree().current_scene = null
 	casa._unhandled_input(evento)
+	get_tree().current_scene = cena_atual
 
 	if Travessia.dia != dia_antes:
 		_erro("a casa deixou sair no ultimo dia - o dia virou %d" % Travessia.dia)
-	elif not (casa.get_node("Conteudo/Titulo") as Label).text.contains("PRAZO"):
-		_erro("a casa travou mas nao mostrou a derrota")
+	elif Travessia.desfecho != Travessia.Desfecho.PRAZO_ESGOTADO:
+		_erro("a casa segurou o ultimo dia mas nao acabou a partida")
 	else:
-		print("  dia %d de %d: a casa segura e mostra a derrota" % [
+		print("  dia %d de %d: a casa segura e o prazo se esgota" % [
 			Travessia.dia, Travessia.PRAZO_DA_CURA])
+	casa.free()
 
 	# E antes do ultimo dia ela deixa sair, senao a conferencia acima passaria
 	# com a casa quebrada de qualquer jeito - uma casa que nunca deixa sair
-	# tambem "segura no ultimo dia". Mesmo remendo da conferencia 4.
+	# tambem "segura no ultimo dia".
 	Travessia.dia = 2
-	casa._acabou = false
-	var cena_atual := get_tree().current_scene
+	casa = CENA_DA_CASA.instantiate()
+	add_child(casa)
+	cena_atual = get_tree().current_scene
 	get_tree().current_scene = null
 	casa._unhandled_input(evento)
 	get_tree().current_scene = cena_atual
@@ -477,5 +487,5 @@ func _o_prazo_se_esgota() -> void:
 		print("  dia 2 de %d: a casa deixa sair" % Travessia.PRAZO_DA_CURA)
 	casa.free()
 	for filho in get_tree().root.get_children():
-		if filho.name == "Rua":
+		if filho.name in ["Rua", "Casa", "FimDeJogo"]:
 			filho.free()

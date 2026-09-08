@@ -18,6 +18,20 @@ signal saiu_para_a_rua
 
 const CENA_DA_RUA := "res://rua/rua.tscn"
 const CENA_DA_CASA := "res://casa/casa.tscn"
+const CENA_DO_FIM := "res://fim_de_jogo.tscn"
+
+## Quantos documentos a pesquisa precisa para a cura ficar pronta.
+##
+## **Numero provisorio, e o que ele esta segurando e um buraco de papel.** A
+## pesquisa da cura e do modo Casa: quem fizer aquela frente decide o que ela
+## consome, em que ordem e o que mais entra na conta (remedio? ferramenta?
+## tempo dentro de casa?). Isto existe para o ciclo do jogo fechar de ponta a
+## ponta enquanto essa decisao nao for tomada.
+##
+## Sao 4 dos 6 que o bairro tem, e a folga e de proposito: com 6 um unico dia
+## perdido carregando documento deixaria a partida impossivel de ganhar sem
+## avisar. Com 4 da para errar dois dias.
+const DOCUMENTOS_PARA_A_CURA := 4
 
 ## Quantos dias existem para a cura ficar pronta. **Proposta.**
 ##
@@ -113,4 +127,36 @@ func sair_para_a_rua() -> void:
 	itens_perdidos = 0
 	documentos_perdidos = 0
 	saiu_para_a_rua.emit()
+	get_tree().change_scene_to_file(CENA_DA_RUA)
+
+## Como a PARTIDA acabou - nao confundir com FimDoDia, que e como o dia acabou.
+##
+## Sao os dois desfechos que o High Concept declara, e so eles: ou a cura fica
+## pronta a tempo, ou o prazo se esgota. **Morrer na rua nao e desfecho** - ver
+## rua/jogador.gd.
+enum Desfecho { VITORIA, PRAZO_ESGOTADO }
+
+var desfecho := Desfecho.VITORIA
+
+## Se a pesquisa juntou documento bastante. Quem pergunta e a casa, que e quem
+## faz a pesquisa.
+func a_cura_esta_pronta() -> bool:
+	return documentos.size() >= DOCUMENTOS_PARA_A_CURA
+
+## Fim de partida. Chamado pela casa nos dois casos: ela e quem sabe se a cura
+## ficou pronta e ela e quem segura o prazo.
+func acabar_o_jogo(qual: Desfecho) -> void:
+	desfecho = qual
+	get_tree().change_scene_to_file(CENA_DO_FIM)
+
+## Comeca outra partida do zero. Zera tudo o que atravessa o dia - inclusive os
+## moveis vazios, senao a segunda partida comecaria num bairro ja saqueado.
+func recomecar() -> void:
+	dia = 1
+	mochila.clear()
+	documentos.clear()
+	moveis_vazios.clear()
+	itens_perdidos = 0
+	documentos_perdidos = 0
+	fim_do_dia = FimDoDia.PELA_PORTA
 	get_tree().change_scene_to_file(CENA_DA_RUA)

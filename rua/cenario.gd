@@ -26,6 +26,18 @@ const ESPESSURA_DO_MURO := 400.0
 ## relogio.
 const ZUMBIS_DA_NOITE := 14
 
+## Quantos zumbis a mais o bairro tem por dia que passa. **Proposta.**
+##
+## E o "a rua vai ficando mais apocaliptica conforme os dias passam" do High
+## Concept, na parte que muda o jogo e nao so a foto: o dia 1 tem 13 zumbis, o
+## dia 10 tem 31 - e com a noite, 45. Amanhecer na rua no dia 9 nao e o mesmo
+## que no dia 2, e e isso que faz o prazo apertar de dois lados ao mesmo tempo.
+const ZUMBIS_A_MAIS_POR_DIA := 2
+
+## Tufos de mato a mais por dia. So estetica, e a metade barata da mesma frase:
+## o terreno vai sendo tomado.
+const MATO_A_MAIS_POR_DIA := 90
+
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado.
 const COR_GRAMA := Color("3b4438")
@@ -181,7 +193,10 @@ func _desenhar_sujeira() -> void:
 func _desenhar_mato() -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 20260908
-	for _tufo in 700:
+	# Cresce com o dia: mesma semente, mais tufos - entao o mato de ontem
+	# continua onde estava e o de hoje aparece em volta, em vez de o terreno
+	# inteiro se redesenhar.
+	for _tufo in 700 + (Travessia.dia - 1) * MATO_A_MAIS_POR_DIA:
 		var lado := sorteio.randf_range(14.0, 46.0)
 		var posicao := Vector2(
 			sorteio.randf_range(0.0, Bairro.MUNDO.size.x - lado),
@@ -237,6 +252,14 @@ func _montar_navegacao() -> void:
 func _povoar_de_zumbis() -> void:
 	for onde in Bairro.ZUMBIS:
 		_criar_zumbi(onde)
+
+	# E os que os dias trouxeram. Entram pelas bocas de rua, como os da noite:
+	# vieram de fora do bairro, e atravessar o mapa e o que da o tempo entre
+	# eles existirem e eles te acharem.
+	var bocas := _bocas_de_rua()
+	var a_mais := (Travessia.dia - 1) * ZUMBIS_A_MAIS_POR_DIA
+	for i in a_mais:
+		_criar_zumbi(bocas[i % bocas.size()])
 
 ## A noite trazendo mais zumbi. Aqui nao se sabe que horas sao - le-se o
 ## noite() do relogio, que vai de 0 a 1 entre as 19:00 e as 05:00, e nasce o
