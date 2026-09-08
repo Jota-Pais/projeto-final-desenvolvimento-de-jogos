@@ -64,22 +64,21 @@ tem relação com o que vier a ser o jogo, e some assim que a primeira cena de
 verdade existir.
 
 Abrir o `project.godot` no Godot e apertar **F5** — ela já é a cena principal.
-Setas ou WASD movem um quadrado de 64 px com a foto por um chão xadrez cinza
-com blocos espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D`
-é filha dele, então quem se mexe é o cenário. O xadrez e os blocos existem por
+Setas ou WASD movem um quadrado vermelho de 64 px por um chão xadrez cinza com
+blocos espalhados. O quadrado fica **fixo no meio da tela**: a `Camera2D` é
+filha dele, então quem se mexe é o cenário. O xadrez e os blocos existem por
 isso — num chão liso e uniforme não dá para perceber movimento nenhum.
 
-Quatro **inimigos** nascem nos cantos e andam devagar (110 contra os 420 do
-jogador) na direção dele, o tempo todo. Não atacam, não morrem e não desviam de
-nada — dá para ficar dando a volta neles à vontade.
+Quatro **inimigos** — retângulos verde-acinzentados de 44×80 — nascem nos cantos
+e andam devagar (110 contra os 420 do jogador) na direção dele, o tempo todo.
+Não atacam, não morrem e não desviam de nada.
 
-- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Sprite2D`,
+Tudo é forma geométrica de cor chapada, sem nenhuma imagem: a cena não depende
+de asset nenhum e por isso não tem o que baixar nem o que versionar em binário.
+
+- `teste.tscn` — a cena: `Chao`, `Jogador` (`CharacterBody2D` com `Polygon2D`,
   colisão e câmera) e quatro `Inimigo`
-- `jogador.png` — a foto usada de sprite. O `Sprite2D` recorta um quadrado
-  central dela por `region_rect`, para não distorcer, e reduz para 64 px
-- `inimigo.tscn` e `inimigo.png` — o inimigo, instanciado quatro vezes na cena.
-  A foto é retrato (240×432), então entra inteira, sem recorte, reduzida para
-  80 px de altura
+- `inimigo.tscn` — o inimigo, instanciado quatro vezes na cena
 - `inimigo.gd` — anda na direção do jogador e nada mais. Acha o jogador pelo
   **grupo** `jogador`, não por caminho de node, para não depender de onde ele
   está na árvore
