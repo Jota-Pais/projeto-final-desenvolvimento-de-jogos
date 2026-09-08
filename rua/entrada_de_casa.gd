@@ -60,7 +60,8 @@ func _process(delta: float) -> void:
 func _entrar() -> void:
 	_entrando = true
 	print("Entrou em casa - fim do dia %d" % Travessia.dia)
-	Travessia.entrar_em_casa()
+	# O unico jeito bom de acabar o dia, e o unico que passa por aqui.
+	Travessia.entrar_em_casa(Travessia.FimDoDia.PELA_PORTA)
 
 func _montar_formas() -> void:
 	var deteccao := RectangleShape2D.new()

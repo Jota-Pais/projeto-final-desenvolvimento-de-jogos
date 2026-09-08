@@ -43,8 +43,24 @@ var dia := 1
 var mochila: Array[String] = []
 var documentos: Array[String] = []
 
-## Chamado pela porta da sua casa, na rua.
-func entrar_em_casa() -> void:
+## Como o dia na rua acabou. Sao tres jeitos, e eles NAO valem o mesmo:
+##
+##  - PELA_PORTA - voce trancou o porao por vontade propria. E o unico bom;
+##  - AMANHECEU_NA_RUA - a noite passou por cima de voce e o dia virou a forca;
+##  - SEM_VIDA - voce nao aguentou.
+##
+## Hoje a diferenca e so o texto que a casa mostra. **Com a mochila do passo 4
+## e aqui que ela vira consequencia:** quem entra pela porta entrega o que
+## achou, quem nao entra volta de mao vazia. Por isso o motivo mora aqui, e nao
+## dentro da rua.
+enum FimDoDia { PELA_PORTA, AMANHECEU_NA_RUA, SEM_VIDA }
+
+var fim_do_dia := FimDoDia.PELA_PORTA
+
+## Chamado pela porta da sua casa, na rua - e tambem pelo relogio, quando
+## amanhece, e pelo jogador, quando a vida acaba.
+func entrar_em_casa(motivo := FimDoDia.PELA_PORTA) -> void:
+	fim_do_dia = motivo
 	chegou_em_casa.emit()
 	get_tree().change_scene_to_file(CENA_DA_CASA)
 

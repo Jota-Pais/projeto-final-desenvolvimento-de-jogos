@@ -61,7 +61,7 @@ func levar_dano(quanto: float, de_onde: Vector2) -> void:
 	# inventar interface.
 	print("Sem vida - o dia acaba na forca")
 	vida = VIDA_CHEIA
-	Travessia.entrar_em_casa()
+	Travessia.entrar_em_casa(Travessia.FimDoDia.SEM_VIDA)
 
 ## Barra de vida em cima da cabeca. Nao e a HUD (que e o passo 3): e o minimo
 ## para o dano ser visivel enquanto ela nao existe.

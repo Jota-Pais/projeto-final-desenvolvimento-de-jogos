@@ -28,6 +28,14 @@ const VELOCIDADE_PERSEGUINDO := 165.0
 const ALCANCE_DA_VISTA := 520.0
 const ABERTURA_DA_VISTA := 110.0
 
+## Quanto o alcance da vista cresce na noite fechada: 0.35 leva os 520 px a
+## 702 px as 05:00, subindo aos poucos a partir das 19:00.
+##
+## **Nao e realismo** - zumbi nao ve melhor no escuro. E a mesma razao de a rua
+## encher: a noite existe para te empurrar pra casa, e ficar invisivel andando
+## a noite toda tiraria o aperto dela. Quem le o quanto de noite e o relogio.
+const VISTA_A_MAIS_DE_NOITE := 0.35
+
 ## Quem enxerga o jogador avisa os zumbis vagando dentro deste raio. E o que
 ## faz horda se formar sem sistema de onda nenhum.
 const ALCANCE_DO_CHAMADO := 700.0
@@ -75,6 +83,9 @@ var _estado := Estado.VAGANDO
 var _olhando := Vector2.RIGHT
 var _jogador: Node2D
 var _navegacao: Node
+## O relogio, achado pelo grupo igual a navegacao. Pode ser nulo: numa cena de
+## teste sem relogio ele so nao enxerga melhor, e nada mais muda.
+var _relogio: Node
 
 var _ultima_posicao := Vector2.ZERO
 var _sem_progresso := 0.0
@@ -108,8 +119,9 @@ func _physics_process(delta: float) -> void:
 	if _navegacao == null:
 		_navegacao = get_tree().get_first_node_in_group("navegacao")
 	if _ignorados.is_empty():
-		# Preenchido aqui e nao no _ready: no _ready do primeiro zumbi os
-		# outros ainda nao existem.
+		# Preenchido aqui e nao no _ready por dois motivos: no _ready do
+		# primeiro zumbi os outros ainda nao existem, e a noite traz mais - o
+		# cenario zera esta lista a cada um que chega.
 		_ignorados.append(get_rid())
 		for outro in get_tree().get_nodes_in_group("zumbi"):
 			if outro != self:
@@ -169,9 +181,22 @@ func _desistir() -> void:
 
 ## Ve num cone, e **parede corta**. E o que faz entrar numa casa quebrar a
 ## perseguicao - e o que faz ficar dentro dela com ele nao quebrar.
+## Ate onde ele ve agora, contando a noite.
+##
+## O relogio e procurado aqui, e nao no _physics_process, porque isto e
+## publico: a ferramenta de conferencia pergunta antes de o primeiro quadro de
+## fisica rodar, e antes desta mudanca a resposta vinha como se fosse dia. Foi
+## a unica falha de verdade que a conferencia da noite achou.
+func alcance_da_vista() -> float:
+	if _relogio == null:
+		_relogio = get_tree().get_first_node_in_group("relogio")
+	if _relogio == null:
+		return ALCANCE_DA_VISTA
+	return ALCANCE_DA_VISTA * (1.0 + VISTA_A_MAIS_DE_NOITE * _relogio.noite())
+
 func _ve_o_jogador() -> bool:
 	var para := _jogador.global_position - global_position
-	if para.length() > ALCANCE_DA_VISTA:
+	if para.length() > alcance_da_vista():
 		return false
 	if absf(rad_to_deg(para.angle_to(_olhando))) > ABERTURA_DA_VISTA / 2.0:
 		return false
@@ -192,6 +217,11 @@ func _chamar_a_horda() -> void:
 		if global_position.distance_to((outro as Node2D).global_position) > ALCANCE_DO_CHAMADO:
 			continue
 		outro.foi_chamado(_jogador.global_position)
+
+## Chamado pelo cenario quando nasce zumbi novo - a noite traz mais. A lista se
+## refaz no proximo quadro de fisica.
+func esquecer_quem_ignorar() -> void:
+	_ignorados.clear()
 
 ## Chamado por outro zumbi que enxergou o jogador.
 func foi_chamado(onde: Vector2) -> void:
@@ -271,5 +301,5 @@ func _desenhar_o_cone() -> void:
 	var pontos := PackedVector2Array([Vector2.ZERO])
 	for i in 13:
 		var angulo := meio - metade + (metade * 2.0) * (float(i) / 12.0)
-		pontos.append(Vector2.from_angle(angulo) * ALCANCE_DA_VISTA)
+		pontos.append(Vector2.from_angle(angulo) * alcance_da_vista())
 	draw_colored_polygon(pontos, COR_DA_VISTA)

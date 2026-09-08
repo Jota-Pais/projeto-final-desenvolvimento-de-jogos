@@ -37,6 +37,9 @@ func _unhandled_input(evento: InputEvent) -> void:
 		return
 	Travessia.sair_para_a_rua()
 
+## Os tres jeitos de o dia ter acabado nao valem o mesmo, e a tela tem que
+## dizer qual foi. Hoje a diferenca e so o texto; com a mochila do passo 4,
+## quem nao entrou pela porta volta de mao vazia.
 func _linha_do_dia() -> String:
 	var faltam := Travessia.dias_restantes()
 	var quanto := "hoje era o último dia"
@@ -44,8 +47,16 @@ func _linha_do_dia() -> String:
 		quanto = "falta 1 dia para o prazo"
 	elif faltam > 1:
 		quanto = "faltam %d dias para o prazo" % faltam
-	return "Anoiteceu — fim do dia %d de %d, %s" % [
-		Travessia.dia, Travessia.PRAZO_DA_CURA, quanto
+
+	var como := "Você trancou o porão"
+	match Travessia.fim_do_dia:
+		Travessia.FimDoDia.AMANHECEU_NA_RUA:
+			como = "Amanheceu com você na rua"
+		Travessia.FimDoDia.SEM_VIDA:
+			como = "Você não aguentou o dia"
+
+	return "%s — dia %d de %d, %s" % [
+		como, Travessia.dia, Travessia.PRAZO_DA_CURA, quanto
 	]
 
 ## Provisorio. A tela de fim de jogo e o passo 5, e o High Concept ja disse o
@@ -65,7 +76,10 @@ func _derrota() -> void:
 
 func _o_que_voltou() -> String:
 	if Travessia.mochila.is_empty() and Travessia.documentos.is_empty():
-		return "Da rua não veio nada — a mochila só passa a ser preenchida no passo 4."
+		if Travessia.fim_do_dia == Travessia.FimDoDia.PELA_PORTA:
+			return "Da rua não veio nada — a mochila só passa a ser preenchida no passo 4."
+		return ("Não veio nada da rua. Quando a mochila existir (passo 4), é aqui "
+			+ "que não voltar pela porta do porão vai custar o que você achou.")
 
 	var linhas := []
 	if not Travessia.mochila.is_empty():

@@ -18,6 +18,14 @@ const Navegacao := preload("res://rua/navegacao.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
+## Quantos zumbis a noite traz, ao todo, das 19:00 as 05:00. **Proposta.**
+##
+## Em cima dos 13 do povoamento, a rua mais que dobra ao longo da noite - e e
+## isso que faz voltar pra casa ser uma travessia em vez de uma caminhada. Nao
+## e sistema de onda: e o povoamento continuando a acontecer, no ritmo do
+## relogio.
+const ZUMBIS_DA_NOITE := 14
+
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado.
 const COR_GRAMA := Color("3b4438")
@@ -42,6 +50,9 @@ var _moveis_gerados := 0
 ## isso. Pode ser nulo - a cena da rua tem relogio, uma cena de teste com um
 ## movel solto nao precisa ter.
 var _relogio: Node
+
+## Quantos zumbis a noite ja trouxe hoje.
+var _zumbis_da_noite := 0
 
 ## Todo retangulo que bloqueia passagem, juntado enquanto a colisao e criada.
 ## E a partir desta lista que a navegacao do zumbi e montada: os obstaculos
@@ -216,9 +227,47 @@ func _montar_navegacao() -> void:
 
 func _povoar_de_zumbis() -> void:
 	for onde in Bairro.ZUMBIS:
-		var zumbi := CENA_DO_ZUMBI.instantiate()
-		zumbi.position = onde
-		add_child(zumbi)
+		_criar_zumbi(onde)
+
+## A noite trazendo mais zumbi. Aqui nao se sabe que horas sao - le-se o
+## noite() do relogio, que vai de 0 a 1 entre as 19:00 e as 05:00, e nasce o
+## que ainda falta nascer.
+func _process(_delta: float) -> void:
+	if _relogio == null:
+		return
+	var devidos := int(floor(_relogio.noite() * float(ZUMBIS_DA_NOITE)))
+	var bocas := _bocas_de_rua()
+	while _zumbis_da_noite < devidos:
+		_criar_zumbi(bocas[_zumbis_da_noite % bocas.size()])
+		_zumbis_da_noite += 1
+
+## As bocas das duas ruas, nas bordas do mundo.
+##
+## Duas razoes para nascer ali e nao perto do jogador: e asfalto, entao nunca
+## cai dentro de parede; e obriga o zumbi a atravessar o bairro, o que da o
+## tempo entre ele aparecer e ele te achar. Zumbi brotando do seu lado nao e
+## aperto, e sorteio.
+func _bocas_de_rua() -> Array[Vector2]:
+	var na_principal := Bairro.RUA_PRINCIPAL.get_center().y
+	var na_transversal := Bairro.RUA_TRANSVERSAL.get_center().x
+	return [
+		Vector2(80.0, na_principal),
+		Vector2(Bairro.MUNDO.end.x - 80.0, na_principal),
+		Vector2(na_transversal, 80.0),
+		Vector2(na_transversal, Bairro.MUNDO.end.y - 80.0),
+	]
+
+func _criar_zumbi(onde: Vector2) -> void:
+	var zumbi := CENA_DO_ZUMBI.instantiate()
+	zumbi.position = onde
+	add_child(zumbi)
+	# Cada zumbi guarda a lista de corpos que a linha de visao dele ignora, e
+	# ela tem os outros zumbis dentro. Chegou um novo, todas as listas estao
+	# velhas - e um zumbi fora da lista corta a visao de quem esta atras dele,
+	# que e justamente a horda parando de funcionar quando se junta.
+	for outro in get_tree().get_nodes_in_group("zumbi"):
+		if outro != zumbi:
+			outro.esquecer_quem_ignorar()
 
 func _criar_movel(tipo: String, posicao: Vector2) -> void:
 	var ficha: Dictionary = Bairro.MOVEIS[tipo]

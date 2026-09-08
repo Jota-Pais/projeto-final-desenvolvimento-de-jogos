@@ -19,18 +19,32 @@ extends CanvasLayer
 
 const Relogio := preload("res://rua/relogio.gd")
 
-## O escurecer do fim de tarde. Comeca quando sobra menos de COMECA_A_ESCURECER
-## da luz e chega a ESCURO_MAXIMO de opacidade no anoitecer.
+## O escurecer da tarde e da noite. **Contido de proposito** (decisao de
+## direcao, 09/09/2026): a rua tem que ficar noturna sem virar tela preta - da
+## para continuar lendo o bairro e achar o caminho de casa. O que aperta a
+## noite e a rua encher, nao voce nao ver.
 ##
-## Auxilio de leitura, como o cone de visao do zumbi: sem isso o relogio existe
-## so no texto da HUD, e ninguem joga olhando o canto da tela. Nao e a arte de
-## fim de tarde - a paleta por hora do dia e assunto de quem fizer arte.
+## COMECA_A_ESCURECER e a fracao de luz em que a tarde comeca a cair.
 const COMECA_A_ESCURECER := 0.45
-const ESCURO_MAXIMO := 0.55
+const ESCURO_AO_ANOITECER := 0.30
+const ESCURO_NA_NOITE_FECHADA := 0.60
 
+## Em que ponto da noite ela para de escurecer. Depois disso o escuro fica
+## parado - o resto do aperto vem dos zumbis.
+const NOITE_MAIS_ESCURA := 0.7
+
+## O aviso da noite, que foi pedido junto com ela: o jogo tem que **dizer** que
+## e hora de voltar, e nao so ficar dificil e esperar voce descobrir.
+const AVISO_DE_ANOITECER := "Anoiteceu — melhor voltar pra casa"
+const AVISO_DE_RUA_CHEIA := "A rua está enchendo — volte pra casa"
+const AVISO_DE_NOITE_FECHADA := "Você não vai aguentar a noite"
+
+const COR_DO_AVISO := Color("d8a13c")
+const COR_DO_AVISO_GRAVE := Color("c0463c")
 
 @onready var _anoitecer := $Anoitecer as ColorRect
 @onready var _topo := $Topo as Label
+@onready var _aviso := $Aviso as Label
 @onready var _esquerda := $Esquerda as Label
 @onready var _direita := $Direita as Label
 
@@ -42,8 +56,9 @@ func _process(_delta: float) -> void:
 	_esquerda.text = _linha_da_esquerda(jogador)
 	_direita.text = _linha_da_direita()
 	_anoitecer.color.a = _quanto_escuro(relogio)
+	_avisar(relogio)
 
-## "Dia 3 de 10  ·  faltam 7 dias  ·  13:42"
+## "Dia 3 de 10  ·  faltam 7 dias  ·  21:30"
 func _linha_do_topo(relogio: Relogio) -> String:
 	var pedacos := ["Dia %d de %d" % [Travessia.dia, Travessia.PRAZO_DA_CURA]]
 
@@ -72,10 +87,33 @@ func _linha_da_direita() -> String:
 		return "mochila   vazia"
 	return "mochila   %d" % quanto
 
+## O aviso vai piorando com a noite, e e ele que responde "e agora, o que eu
+## faco?". Sem isso a noite so fica dificil e o jogador nao sabe por que.
+func _avisar(relogio: Relogio) -> void:
+	if relogio == null or not relogio.e_noite():
+		_aviso.text = ""
+		return
+
+	var quanto := relogio.noite()
+	if quanto < 0.35:
+		_aviso.text = AVISO_DE_ANOITECER
+		_aviso.add_theme_color_override("font_color", COR_DO_AVISO)
+	elif quanto < NOITE_MAIS_ESCURA:
+		_aviso.text = AVISO_DE_RUA_CHEIA
+		_aviso.add_theme_color_override("font_color", COR_DO_AVISO)
+	else:
+		_aviso.text = AVISO_DE_NOITE_FECHADA
+		_aviso.add_theme_color_override("font_color", COR_DO_AVISO_GRAVE)
+
 func _quanto_escuro(relogio: Relogio) -> float:
 	if relogio == null:
 		return 0.0
-	var fracao: float = relogio.fracao_de_luz()
+
+	if relogio.e_noite():
+		var quanto := minf(1.0, relogio.noite() / NOITE_MAIS_ESCURA)
+		return lerpf(ESCURO_AO_ANOITECER, ESCURO_NA_NOITE_FECHADA, quanto)
+
+	var fracao := relogio.fracao_de_luz()
 	if fracao >= COMECA_A_ESCURECER:
 		return 0.0
-	return (1.0 - fracao / COMECA_A_ESCURECER) * ESCURO_MAXIMO
+	return (1.0 - fracao / COMECA_A_ESCURECER) * ESCURO_AO_ANOITECER
