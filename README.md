@@ -312,6 +312,8 @@ móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
 - `conferir_mapa.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
   `conferir_mochila.tscn`, `conferir_arma.tscn` e `conferir_fim.tscn` —
   **ferramentas, rodam com F6.** Ver abaixo
+- `retratar_mapa.tscn` e `legenda_do_mapa.gd` — **gera a imagem do mapa** em
+  `design/mapa.png`, legendada. Roda com F6, e a figura sempre bate com o jogo
 
 ### Duas coisas de propósito
 
@@ -331,6 +333,28 @@ Com o relógio do passo 3 no lugar, o `0.0` **deixou de ser de graça**: voltar 
 terminar depois gasta luz do dia de novo, e luz é dia. A interrupção já custa
 algo mesmo com decaimento zero, e é isso que muda a pergunta — não é mais "o
 progresso volta ou não?", é "quanto do dia essa mordida a mais vale?".
+
+### Quer ver o mapa? Rode o `retratar_mapa.tscn` (F6)
+
+Ele monta a rua de verdade, afasta a câmera até o mundo caber na tela, escreve o
+nome e a distância de cada lugar em cima dele e salva **`design/mapa.png`**.
+
+Não é um desenho à parte que precisa ser mantido em sincronia: **é o mapa que
+está no jogo, retratado.** Mexeu no `mapa.gd`, roda de novo e a figura está
+atualizada — mapa desenhado à mão mente na primeira mudança.
+
+Serve para três coisas, e a terceira é a que paga:
+
+- ver de uma vez o que só se vê andando 1,4 km;
+- conferir a olho o que o `conferir_mapa.tscn` confere por número;
+- **o GDD.** O critério de maior peso dele — 4 de 10 — é *"tem ilustrações,
+  diagramas, desenhos, tabelas, rabiscos e recursos visuais que ajudam a
+  explicar e a consultar"*. Um mapa legendado é exatamente isso, e sai daqui de
+  graça.
+
+O zoom sai de uma conta com o tamanho da janela, e não de um número escrito na
+mão: mudar o mundo ou a resolução não quebra a figura. **Não roda em headless** —
+capturar a tela precisa de renderizador de verdade; no editor é F6 e pronto.
 
 ### Mexeu no mapa? Rode o `conferir_mapa.tscn` (F6)
 

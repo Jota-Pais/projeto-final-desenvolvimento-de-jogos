@@ -68,7 +68,7 @@ const LUGARES := [
 	{ "nome": "mercado", "tipo": "mercado", "rect": Rect2(29000.0, 17500.0, 5600.0, 3800.0) },
 	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(6400.0, 0.0, 30000.0, 11400.0) },
 	{ "nome": "mata central", "tipo": "floresta", "rect": Rect2(20000.0, 22400.0, 17000.0, 12000.0) },
-	{ "nome": "mansao murada", "tipo": "mansao", "rect": Rect2(45000.0, 9000.0, 8600.0, 7000.0) },
+	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(45000.0, 9000.0, 8600.0, 7000.0) },
 	{ "nome": "mata do leste", "tipo": "floresta", "rect": Rect2(41600.0, 19600.0, 15600.0, 15000.0) },
 ]
 
