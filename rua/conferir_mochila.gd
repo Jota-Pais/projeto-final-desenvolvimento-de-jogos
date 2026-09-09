@@ -126,10 +126,9 @@ func _vasculhar_enche_a_mochila() -> void:
 		print("  %s: %d item(ns) e %d documento(s), separados"
 			% [com_documento.rotulo, esperados_itens, esperados_documentos])
 
-	# Um movel comum nao pode virar documento no caminho.
-	var antes := mochila.documentos.size()
+	# Um movel comum nao pode virar documento no caminho, e vice-versa.
 	for movel in _moveis_de(rua):
-		if movel == com_documento or movel._vazio:
+		if movel._vazio or mochila.esta_cheia():
 			continue
 		movel._esvaziar()
 	for achado in mochila.itens:
@@ -140,11 +139,75 @@ func _vasculhar_enche_a_mochila() -> void:
 		if not Construcao.e_documento(achado):
 			_erro("\"%s\" entrou como documento" % achado)
 			break
-	print("  o bairro inteiro na mochila: %d itens e %d documentos"
-		% [mochila.itens.size(), mochila.documentos.size()])
-	if mochila.documentos.size() <= antes:
-		_erro("vasculhar o resto do bairro nao trouxe mais nenhum documento")
 
+	# A capacidade, que e a quarta pressao sobre vasculhar.
+	if mochila.quantos() > mochila.CAPACIDADE:
+		_erro("a mochila passou da capacidade: %d de %d"
+			% [mochila.quantos(), mochila.CAPACIDADE])
+	elif not mochila.esta_cheia():
+		_erro("vasculhar o bairro inteiro nao enchia a mochila de %d - o teto"
+			% mochila.CAPACIDADE + " nao esta pressionando nada")
+	else:
+		print("  a mochila encheu em %d/%d vasculhando o bairro"
+			% [mochila.quantos(), mochila.CAPACIDADE])
+
+	# **O que nao cabe fica no movel.** E a regra que evita travar a core
+	# mechanic com a mochila cheia: da para voltar, e voltar gasta dia.
+	#
+	# Vasculha um movel com conteudo COM a mochila ja cheia, e confere que o
+	# conteudo continua nele. Nao serve olhar os moveis do laco acima: eles
+	# foram esvaziados enquanto ainda havia vaga.
+	var com_sobra: Node = null
+	for movel in _moveis_de(rua):
+		if not movel._vazio and not movel.achados.is_empty():
+			com_sobra = movel
+			break
+	if com_sobra == null:
+		_erro("nao achei movel cheio para conferir a sobra")
+	else:
+		var tinha: int = com_sobra.achados.size()
+		com_sobra._esvaziar()
+		if mochila.quantos() > mochila.CAPACIDADE:
+			_erro("a mochila cheia aceitou mais coisa")
+		elif com_sobra.achados.size() != tinha:
+			_erro("o movel perdeu %d coisa(s) que nao couberam na mochila"
+				% (tinha - com_sobra.achados.size()))
+		else:
+			print("  de mochila cheia, as %d coisa(s) do %s ficaram nele"
+				% [tinha, com_sobra.rotulo])
+
+	rua.free()
+	_o_documento_entra_primeiro()
+
+## Com uma vaga so na mochila e um movel com comida E documento, a vaga tem que
+## ir para o documento. E a recompensa que importa, e ninguem quer descobrir que
+## deixou o documento para tras porque uma lata de comida entrou na frente.
+func _o_documento_entra_primeiro() -> void:
+	_limpar_o_autoload()
+	var rua := _uma_rua()
+	var mochila := rua.get_node("Mochila") as Mochila
+	var com_documento := _um_movel_com_documento(rua)
+	if com_documento == null:
+		_erro("nenhum movel do mapa tem documento")
+		rua.free()
+		return
+
+	# Enche a mochila deixando uma vaga, e poe comida na frente do documento.
+	for i in mochila.CAPACIDADE - 1:
+		mochila.itens.append("lata de comida")
+	com_documento.achados = ["comida estragada", "pilha", "documento: teste"] as Array[String]
+	for achado in Construcao.DOCUMENTOS:
+		com_documento.achados[2] = achado
+		break
+	com_documento._esvaziar()
+
+	if mochila.documentos.size() != 1:
+		_erro("a ultima vaga nao foi para o documento: %d documento(s) na mochila"
+			% mochila.documentos.size())
+	elif com_documento.achados.size() != 2:
+		_erro("sobraram %d itens no movel, esperado 2" % com_documento.achados.size())
+	else:
+		print("  com uma vaga so, a vaga foi para o documento e a comida ficou")
 	rua.free()
 
 # --- 2. so entra o que passou pela porta ------------------------------------
@@ -314,7 +377,7 @@ func _a_hud_mostra_o_documento() -> void:
 	add_child(hud)
 
 	hud._process(0.0)
-	if not (hud.get_node("Direita") as Label).text.contains("vazia"):
+	if not (hud.get_node("Direita") as Label).text.contains("0/"):
 		_erro("com a mochila vazia a HUD diz \"%s\"" % (hud.get_node("Direita") as Label).text)
 	if not (hud.get_node("Documentos") as Label).text.is_empty():
 		_erro("sem documento a linha de documento nao esta vazia")

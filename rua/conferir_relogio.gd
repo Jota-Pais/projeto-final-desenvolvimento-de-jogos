@@ -428,7 +428,7 @@ func _a_hud_le_os_numeros() -> void:
 		_erro("na metade do dia o topo da HUD diz \"%s\"" % topo)
 	if not esquerda.contains("60%"):
 		_erro("com 60 de vida a HUD diz \"%s\"" % esquerda.replace("\n", " / "))
-	if not direita.contains("vazia"):
+	if not direita.contains("0/"):
 		_erro("com a mochila vazia a HUD diz \"%s\"" % direita)
 
 	print("  na rua: \"%s\" | %s | %s" % [topo, esquerda.replace("\n", " / "), direita])

@@ -93,15 +93,17 @@ func _linha_da_esquerda(jogador: Node) -> String:
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
 ## Some tudo se voce nao voltar pela porta do porao.
+## "mochila 7/12" - o **espaco ja ocupado visivel** que o one-pager declara. O
+## numero conta documento junto, porque documento ocupa espaco igual: e nisso
+## que a escolha existe.
 func _linha_da_direita(mochila: Node) -> String:
 	if mochila == null:
 		return "mochila   —"
-	var quantos: int = mochila.itens.size()
-	if quantos == 0:
-		return "mochila   vazia"
-	if quantos == 1:
-		return "mochila   1 item"
-	return "mochila   %d itens" % quantos
+	var quantos: int = mochila.quantos()
+	var cabe: int = mochila.CAPACIDADE
+	if quantos >= cabe:
+		return "mochila   %d/%d   CHEIA" % [quantos, cabe]
+	return "mochila   %d/%d" % [quantos, cabe]
 
 ## O documento tem linha propria, acima da mochila e na cor dele. E o que o
 ## one-pager pede - "conta separado" - e o que prova o eixo rua -> casa mesmo

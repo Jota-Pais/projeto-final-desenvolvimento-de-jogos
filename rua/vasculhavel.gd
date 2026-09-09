@@ -147,7 +147,9 @@ func _desenhar_o_saldo(fonte: Font, esquerda: float, topo: float) -> void:
 		draw_rect(marca.grow(4.0), Color(COR_DO_DOCUMENTO, 0.22))
 		draw_rect(marca, COR_DO_DOCUMENTO)
 
-	var saldo := "vazio" if comuns.is_empty() else ", ".join(comuns)
+	# "ficou" e nao "achou": o que esta escrito aqui e o que a mochila NAO
+	# levou, porque nao caberia. Da para voltar - e voltar gasta dia.
+	var saldo := "vazio" if comuns.is_empty() else "ficou: " + ", ".join(comuns)
 	draw_string(fonte, Vector2(esquerda, topo - 8.0), saldo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
 
