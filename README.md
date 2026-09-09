@@ -39,6 +39,11 @@ A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo
 e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
 08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
+**O mapa foi refeito em 09/09/2026** e passou de uma quadra e meia (144 × 90 m)
+para **1,44 km × 900 m**, com seis lugares de tipos diferentes, rio e ponte —
+ver *O mapa tem 1,44 km × 900 m*. O dia subiu de 180 para 420 s por causa disso:
+até o carro existir, o mapa tem que ser andável a pé.
+
 **Os cinco passos que levam à Alfa estão de pé**: a mecânica de vasculhar (1),
 o zumbi (2), o relógio do dia com a noite e a HUD (3), a mochila com os
 documentos (4) e o ciclo fechado, com os dois desfechos (5). O que sobrou de
@@ -93,23 +98,29 @@ Pendentes de decisão da equipe:
 - [ ] **A escalada por dia** — um zumbi a mais a cada dois dias
       (`UM_ZUMBI_A_MAIS_A_CADA`), que leva o dia 30 a 27 de dia e 41 de noite.
       Provisório, e calibrado no prazo: se o prazo mudar, este muda junto
+- [ ] **O carro.** O mapa foi feito para exigir um — a mansão está a 1.070 m, e
+      ida e volta são 306 s de um dia de 420. Enquanto ele não existe, o dia
+      está em 420 s para o mapa ser andável; **quando existir, o dia volta a
+      cair**. A bomba de combustível do posto já está no mapa esperando
+- [ ] **Streaming por célula.** O mundo inteiro tem colisão e móvel criados no
+      `_ready`. Aguenta este tamanho; se o mapa crescer de novo, é o que vem —
+      é a resposta completa do PZ, que só mantém na memória as células perto de
+      você
 - [ ] Divisão de tarefas
 
-## O bairro e a mecânica de vasculhar (`rua/`)
+## O mapa e a mecânica de vasculhar (`rua/`)
 
-**07/09/2026.** A primeira cena de verdade, e o que roda no F5. É o passo 1 dos
-cinco que levam à Alfa: **a core mechanic sozinha**, sem zumbi, sem prazo e sem
-arte, só para descobrir como o vasculho tem que se sentir.
+**07/09/2026, e o mapa refeito em 09/09.** É o que roda no F5.
 
-Encoste num móvel — geladeira, armário, cômoda, estante, caixa, carro
-abandonado, lata de lixo — e **segure `E`** até a barra encher. O que sair
-aparece em cima do móvel e no console.
+Encoste num móvel — geladeira, armário, cômoda, estante, caixa, prateleira,
+arquivo, armário de armas, bomba de combustível, carro abandonado, lata de
+lixo — e **segure `E`** até a barra encher.
 
 | Tecla | O que faz |
 |---|---|
 | `WASD` ou setas | andar |
 | `Shift` | correr |
-| `E` | vasculhar (segurar) |
+| `E` | vasculhar (segurar), entrar em casa, e as escolhas da casa |
 
 As ações estão no **Input Map** do `project.godot`, por `physical_keycode` — o
 WASD fica no mesmo lugar em teclado que não seja QWERTY. Os controles são os que
@@ -121,15 +132,54 @@ Já aconteceu — a explicação do `physical_keycode` e a do autoload `Travessi
 moravam lá e sumiram no primeiro save. O que precisar ser dito sobre aquele
 arquivo se diz aqui.
 
-### O mapa é um bairro, no estilo Project Zomboid
+### O mapa tem 1,44 km × 900 m, e a forma é a do Project Zomboid
 
-**Refeito em 07/09/2026, ampliado em 08/09.** Antes era uma rua reta com casas
-maciças. Agora são **duas ruas se cruzando** e quatro quadras, com lote,
-quintal, entrada de carro, cerca de divisa e galpão no fundo. Nove casas, um
-mercadinho de esquina e três galpões — 40 móveis, mais do que dá para vasculhar
-num dia, que é o ponto.
+**Refeito em 09/09/2026.** Até então o mundo era o bairro sozinho: 5.760 × 3.600
+px, ou **144 × 90 m** — uma quadra e meia, atravessável em 20 segundos. Agora
+são **57.600 × 36.000 px: 1,44 km × 900 m**, cem vezes a área. O bairro inteiro
+de antes cabe num canto.
 
-Três coisas foram copiadas do PZ, e são as que mudam a mecânica:
+Referência de escala: **40 px = 1 metro**, porque o jogador tem 40 px de altura
+e é ele a régua de tudo (`rua/construcao.gd` traz a tabela em corpos).
+
+A forma **não é uma grade de quadras** — é o que o PZ faz: uma **rodovia
+leste-oeste** com um punhado de lugares pendurados nela e mata no meio.
+Muldraugh é exatamente isso, esticada ao longo da US-31W. O que faz distância
+existir é o vazio entre os lugares, não o tamanho do retângulo.
+
+De oeste para leste, com a distância a pé desde a porta do seu porão:
+
+| Lugar | Distância | A pé | O que tem |
+|---|---|---|---|
+| **bairro** | 56 m | 8 s | sua casa, 9 casas, mercadinho de esquina, 3 galpões — 41 móveis |
+| **florestinha** | 208 m | 30 s | mata fechada; a única em que não se vê o outro lado |
+| **posto** | 280 m | 40 s | pista aberta, 4 bombas de combustível, loja de conveniência |
+| **delegacia** | 460 m | 66 s | pátio, 3 salas, e a **armaria** no fundo — o móvel mais caro do mapa |
+| **mercado** | 631 m | 90 s | salão com fileira de prateleira e geladeira, estacionamento |
+| **mansão murada** | 1.070 m | 153 s | condomínio abandonado com **um portão só**, do outro lado do rio |
+
+Mais quatro matas de borda, o **rio** cortando o mapa de cima a baixo e a
+**ponte** onde a rodovia o cruza — o único atravessadouro. A mansão fica atrás
+dele, e é o lugar mais longe: ida e volta são 306 s de um dia de 420.
+
+Onde cada coisa fica está no **`mapa.gd`**; do que cada lugar é feito está no
+**`lugares.gd`**; como uma construção qualquer se desenha por dentro está no
+**`construcao.gd`** (que era o `bairro.gd` até 09/09, quando era o mapa todo).
+
+### Um documento por lugar, e é isso que faz o mapa grande valer algo
+
+Cada um dos seis lugares com prédio guarda **um documento**, sempre no quarto
+mais fundo. Não é sorteio — os seis que existem estão em seis prédios
+declarados: dois no bairro e quatro exigindo viagem.
+
+Antes era um documento a cada seis móveis. Num mapa com 73 móveis isso daria
+documento repetido, e documento repetido como moeda de progressão não quer dizer
+nada. Mais importante: **o bairro sozinho não fecha a cura** — a cura pede 4 e o
+bairro tem 2. O `conferir_mapa.tscn` reprova se isso deixar de ser verdade,
+porque se o bairro bastasse, o posto, a delegacia, o mercado, a ponte e a mansão
+seriam cenário bonito sem função nenhuma.
+
+### Três coisas copiadas do PZ, e são as que mudam a mecânica
 
 1. **Toda construção se entra, e o interior está na mesma cena** — sem tela de
    carregamento. Isso responde uma pergunta que estava aberta aqui: interior é
@@ -139,29 +189,54 @@ Três coisas foram copiadas do PZ, e são as que mudam a mecânica:
    marca da porta aparece. A planta, os móveis e o que tem dentro só se veem
    entrando. Sem isso o mapa inteiro se lê da calçada e vasculhar deixa de ser
    exploração.
-3. **O loot está em móvel dentro de quarto**, e o conteúdo combina com o móvel —
-   geladeira dá comida, cômoda dá roupa e remédio, estante dá livro e pilha.
-   Não é item solto na calçada.
+3. **O loot está em móvel dentro de quarto**, e a tabela é **por tipo de
+   prédio** — geladeira dá comida, arquivo de delegacia dá papelada, bomba dá
+   gasolina, armaria dá algema e munição. É isso que faz um lugar pagar melhor
+   que outro, e é o que faz valer a pena ir longe.
 
 **O que não foi copiado é a câmera.** PZ é isométrico; o nosso High Concept
-declara top-down. Foi copiada a planta do bairro, não a projeção.
+declara top-down. Foi copiada a planta, não a projeção.
+
+### O que não escala, e como está resolvido
+
+Três coisas funcionavam no bairro e **não sobrevivem a 100x a área**. Nenhuma
+delas dava erro — todas simplesmente parariam de funcionar:
+
+- **A navegação do zumbi.** Uma grade A* de 32 px sobre o mundo teria **2
+  milhões de células**. Agora ela cobre só uma **janela de 8.000 px em volta do
+  jogador**, remontada quando ele sai dela: 62 mil células, e o custo passou a
+  depender do alcance do zumbi e não do tamanho do mapa. Fora da janela não há
+  caminho — e não precisa, porque fora dela não há zumbi.
+- **Os zumbis.** Densidade constante num mapa 100x maior seriam centenas de
+  zumbis fazendo raycast. Agora **zumbi só existe num raio de 7.000 px** (175 m,
+  umas cinco telas e meia) em volta de você: são os mesmos ~14 de sempre, só que
+  agora são os 14 que estão perto. É o que o PZ faz. O preço é que ir longe e
+  voltar repovoa o lugar.
+- **Árvore e mato.** Orçamento fixo, repartido pelos bosques por **área vezes
+  densidade** — e a densidade não é detalhe: sem ela, uma mata de borda de 200
+  milhões de px² levava quase todas as árvores e a florestinha ficava
+  indistinguível de campo aberto. Mata que não se vê não é mata, é cor de fundo.
+
+**Streaming por célula, que é a resposta completa do PZ, não foi feito** — o
+mundo inteiro ainda tem colisão e móvel criados no `_ready`. Aguenta este
+tamanho (uns 2 mil corpos); se o mapa crescer de novo, é isso que vem.
 
 ### A escala tem uma referência: o corpo do jogador
 
-**28 x 40 px** (`rua/jogador.tscn`). Toda medida do `bairro.gd` existe em
-relação a ele, e o cabeçalho do arquivo traz a tabela de conversão.
+**28 x 40 px** (`rua/jogador.tscn`). Toda medida existe em relação a ele, e o
+cabeçalho do `construcao.gd` traz a tabela de conversão.
 
-O bairro **foi ampliado em 08/09/2026** porque, no zoom de jogo, tudo ficava em
-cima do personagem — quarto de 3,6 corpos de altura, beco de 1,4 corpo de
-largura. A arquitetura cresceu ~1,8x e **o jogador ficou do mesmo tamanho**, que
-é o que dá a sensação de escala.
+A arquitetura **foi ampliada em 08/09/2026** porque, no zoom de jogo, tudo
+ficava em cima do personagem — quarto de 3,6 corpos de altura, beco de 1,4
+corpo. Ela cresceu ~1,8x e **o jogador ficou do mesmo tamanho**, que é o que dá
+a sensação de escala.
 
 | O que | Antes | Agora |
 |---|---|---|
 | quarto do fundo | 5,4 x 3,6 corpos | 9,8 x 6,6 |
 | beco entre duas casas | 1,4 corpo | 3,9 |
 | vão de porta | 2,5 corpos | 3,6 |
-| largura da rua principal | 5,5 corpos | 10 |
+| largura da rodovia | 5,5 corpos | 10 |
 
 Duas coisas **não** cresceram 1,8x, de propósito:
 
@@ -171,13 +246,20 @@ Duas coisas **não** cresceram 1,8x, de propósito:
 - **A velocidade subiu ~1,3x** (280 andando, 460 correndo). Parte do ponto é o
   mundo passar a parecer grande; se ficar arrastado, é esse o número a mexer.
 
-Se for ampliar ou reduzir de novo: são números do `bairro.gd`, mais o tamanho do
-móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
+Se for ampliar ou reduzir de novo: são números do `lugares.gd`, mais o tamanho do
+móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
 
 ### Os arquivos
 
-- `bairro.tscn`… não existe: o layout é **dado**, não cena. Está todo em
-  `bairro.gd`, e é o único arquivo a mexer para mudar o mapa
+- `mapa.tscn`… não existe: o layout é **dado**, não cena. Está em `mapa.gd`
+  (onde) e `lugares.gd` (do que), e são os dois arquivos a mexer para mudar o
+  mapa
+- `mapa.gd` — o mundo: tamanho, rodovia, rio, ponte, vias de acesso e a lista
+  de lugares. **Fonte única do mapa**
+- `lugares.gd` — um gerador por tipo de lugar. É onde a variedade mora, e onde
+  se acrescenta lugar novo
+- `construcao.gd` — as regras de uma construção qualquer (parede, vão de porta,
+  divisória, quarto) e as tabelas de loot. Era o `bairro.gd`
 - `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
   `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
 - `mochila.gd` — o que você está carregando hoje, e a regra de que **só entra
@@ -192,11 +274,9 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
   cena sem tocar no jogador
 - `entrada_de_casa.gd` — a porta do **porão**, dentro da sua casa. Segure `E`
   por 1,2 s e o dia na rua encerra. Ver a seção da travessia abaixo
-- `bairro.gd` — **os dados do mapa**: ruas, construções, quartos, cercas,
-  bosques, móveis e as tabelas de loot, mais a geometria que calcula parede,
-  divisória, quarto e vão de porta. Fonte única
+
 - `cenario.gd` — desenha o chão no `_draw()` e gera no `_ready()` a colisão, os
-  móveis e as árvores a partir do `bairro.gd`. Retângulo de cor chapada, sem
+  móveis e as árvores a partir do `mapa.gd`. Retângulo de cor chapada, sem
   imagem nenhuma
 - `telhados.gd` — desenha os telhados por cima de tudo e esconde o da
   construção onde o jogador está. Tem que ser o **último irmão** da cena: o
@@ -211,7 +291,7 @@ móvel e a velocidade — e **rode o `conferir_bairro.tscn` depois**.
   abaixo
 - `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, o
   aviso da noite e o escurecer
-- `conferir_bairro.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
+- `conferir_mapa.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
   `conferir_mochila.tscn` e `conferir_fim.tscn` — **ferramentas, rodam com
   F6.** Ver abaixo
 
@@ -234,11 +314,22 @@ terminar depois gasta luz do dia de novo, e luz é dia. A interrupção já cust
 algo mesmo com decaimento zero, e é isso que muda a pergunta — não é mais "o
 progresso volta ou não?", é "quanto do dia essa mordida a mais vale?".
 
-### Mexeu no layout? Rode o `conferir_bairro.tscn` (F6)
+### Mexeu no mapa? Rode o `conferir_mapa.tscn` (F6)
 
-Ele varre o mundo com o corpo do jogador numa grade, faz flood fill de onde
-você nasce e confere se dá para **chegar a pé em todo móvel e em todo quarto de
-toda construção**. Imprime o resultado e sai.
+Ele varre o mundo com o corpo do jogador numa grade, faz flood fill e confere
+que o mapa é **um lugar só**: que dá para chegar a pé, da sua casa, em todo
+lugar do mapa, e dentro de cada lugar em todo móvel e todo quarto. Imprime as
+distâncias de cada lugar e sai.
+
+São **duas grades**, porque varrer 1,3 km² com célula de 20 px seriam 5,2
+milhões de consultas de física: uma **grossa** (120 px) no mundo inteiro, para
+"dá para ir de lá até cá", e uma **fina** (24 px) dentro de cada lugar com
+prédio, que é onde vão de porta de 100 px precisa de precisão.
+
+Ele também confere que **o rio barra e a ponte passa** — sem isso o mapa
+estaria partido em dois e ninguém notaria, porque o outro lado simplesmente
+nunca seria visitado — e que os seis documentos estão em seis prédios com o
+bairro sozinho não fechando a cura.
 
 Não é zelo: na primeira vez que rodou, **38 dos 41 móveis estavam
 inalcançáveis** e nada disso aparecia lendo o código nem jogando dois minutos.
@@ -469,7 +560,7 @@ distinto dos outros itens, com brilho"*, e no meio de lata de comida e pano
 sujo tem que dar para ver de longe qual móvel valeu a pena.
 
 Quem separa os dois é a mochila, e quem sabe o que é documento é o
-`bairro.gd` (`e_documento()`) — pela própria lista de documentos, para não
+`construcao.gd` (`e_documento()`) — pela própria lista de documentos, para não
 existir uma segunda fonte de verdade.
 
 #### O mundo esvazia e não repõe

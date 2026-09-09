@@ -14,7 +14,8 @@ extends Node2D
 ## A HUD vem depois dele no rua.tscn e nao atrapalha - ela e CanvasLayer, tem
 ## camada propria e nao entra nessa ordem.
 
-const Bairro := preload("res://rua/bairro.gd")
+const Mapa := preload("res://rua/mapa.gd")
+const Construcao := preload("res://rua/construcao.gd")
 
 const COR_TELHADO := Color("2a2e31")
 const COR_TELHADO_SEU := Color("3a2f26")
@@ -37,17 +38,17 @@ func _conferir() -> void:
 	var jogador := get_tree().get_first_node_in_group("jogador") as Node2D
 	if jogador == null:
 		return
-	var onde := Bairro.construcao_em(jogador.global_position)
+	var onde := Mapa.construcao_em(jogador.global_position)
 	if onde == _dentro_de:
 		return
 	_dentro_de = onde
 	queue_redraw()
 
 func _draw() -> void:
-	for i in Bairro.CONSTRUCOES.size():
+	for i in Mapa.mundo()["construcoes"].size():
 		if i == _dentro_de:
 			continue
-		_desenhar(Bairro.CONSTRUCOES[i])
+		_desenhar(Mapa.mundo()["construcoes"][i])
 
 func _desenhar(construcao: Dictionary) -> void:
 	var r: Rect2 = construcao["rect"]
@@ -62,8 +63,8 @@ func _desenhar(construcao: Dictionary) -> void:
 
 	# A marca da porta fica POR CIMA do telhado: de fora nao se ve nada da
 	# planta, mas tem que dar para achar por onde entrar.
-	var porta := Bairro.porta_de(construcao)
-	var marca := Rect2(porta.x - Bairro.VAO / 2.0, porta.y - 7.0, Bairro.VAO, 14.0)
+	var porta := Construcao.porta_de(construcao)
+	var marca := Rect2(porta.x - Construcao.VAO / 2.0, porta.y - 7.0, Construcao.VAO, 14.0)
 	draw_rect(marca, COR_DA_PORTA_SUA if sua else COR_DA_PORTA)
 
 	if sua:

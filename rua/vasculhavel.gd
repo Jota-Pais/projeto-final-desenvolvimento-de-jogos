@@ -11,7 +11,7 @@ extends Area2D
 ## Alfa cobra como "aplicabilidade da core mechanic".
 
 ## Le so a tabela de documentos, para saber qual achado desenhar com destaque.
-const Bairro := preload("res://rua/bairro.gd")
+const Construcao := preload("res://rua/construcao.gd")
 
 ## Emitido quando o vasculho termina. Quem escuta e a mochila da rua, e e ela
 ## quem separa documento de comida.
@@ -133,7 +133,7 @@ func _desenhar_o_saldo(fonte: Font, esquerda: float, topo: float) -> void:
 	var comuns: Array[String] = []
 	var achou_documento := false
 	for achado in achados:
-		if Bairro.e_documento(achado):
+		if Construcao.e_documento(achado):
 			achou_documento = true
 			draw_string(fonte, Vector2(esquerda + 16.0, topo - 26.0), achado,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_DOCUMENTO)

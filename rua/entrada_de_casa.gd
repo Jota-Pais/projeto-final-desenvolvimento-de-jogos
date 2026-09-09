@@ -19,7 +19,7 @@ const DURACAO := 1.2
 ## zona ao mesmo tempo.
 const ALCANCE := 60.0
 
-## Na escala do vao de porta do bairro (Bairro.VAO).
+## Na escala do vao de porta do bairro (Construcao.VAO).
 const TAMANHO := Vector2(100.0, 40.0)
 
 # Tom quente, que e a cor do modo Casa na direcao de arte. Numa rua inteira

@@ -18,9 +18,13 @@ extends Node
 ## O item 1 e o unico que pode reprovar o DESENHO e nao o codigo: se o bairro
 ## nao tiver documento bastante, a partida e inganhavel e nada aqui avisaria.
 
-const Bairro := preload("res://rua/bairro.gd")
+const Construcao := preload("res://rua/construcao.gd")
 const Cenario := preload("res://rua/cenario.gd")
 const Relogio := preload("res://rua/relogio.gd")
+
+## Velocidade de caminhada, para traduzir distancia em segundos de dia. Tem que
+## bater com a VELOCIDADE do rua/jogador.gd.
+const VELOCIDADE := 280.0
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_CASA := preload("res://casa/casa.tscn")
 const CENA_DO_FIM := preload("res://fim_de_jogo.tscn")
@@ -100,27 +104,36 @@ func _a_partida_da_para_ganhar() -> void:
 	var rua := CENA_DA_RUA.instantiate()
 	add_child(rua)
 
-	var no_bairro := 0
-	# Luz gasta ate juntar o que a cura pede, varrendo o bairro na ordem em que
-	# ele e gerado. Nao e a ordem em que alguem joga, mas e deterministica e
-	# ignora o caminho a pe - entao e um piso, e o dia de verdade e pior.
-	var luz_ate_a_cura := 0.0
-	var quando_fecha := 0
+	# Onde estao os documentos, e quanto custa buscar cada um.
+	#
+	# Ate o mapa grande a conta era so a luz do vasculho, varrendo os moveis na
+	# ordem de geracao. **Num mapa de 1,44 km o caminho a pe e o custo, nao o
+	# vasculho** - o documento da mansao esta a 1.070 m de casa. Entao a conta e
+	# por viagem: ida e volta ate o documento, mais a luz de esvaziar o movel.
+	var no_mapa := 0
+	var custos: Array[float] = []
+	var casa := (rua.get_node("EntradaDeCasa") as Node2D).position
 	for filho in rua.get_node("Cenario").get_children():
 		if not (filho is Area2D and "achados" in filho):
 			continue
-		if quando_fecha == 0:
-			luz_ate_a_cura += filho.duracao * (1.0 + Relogio.CUSTO_DO_VASCULHO)
 		for achado in filho.achados:
-			if not Bairro.e_documento(achado):
+			if not Construcao.e_documento(achado):
 				continue
-			no_bairro += 1
-			if no_bairro == Travessia.DOCUMENTOS_PARA_A_CURA:
-				quando_fecha = no_bairro
+			no_mapa += 1
+			var ida_e_volta: float = casa.distance_to((filho as Node2D).position) * 2.0 / VELOCIDADE
+			custos.append(ida_e_volta + filho.duracao * (1.0 + Relogio.CUSTO_DO_VASCULHO))
+	custos.sort()
 	rua.free()
 
+	# Os mais baratos primeiro: e um piso, e quem joga bem faz melhor que isso
+	# juntando dois documentos na mesma viagem.
+	var luz_ate_a_cura := 0.0
+	for i in mini(Travessia.DOCUMENTOS_PARA_A_CURA, custos.size()):
+		luz_ate_a_cura += custos[i]
+
 	var precisa := Travessia.DOCUMENTOS_PARA_A_CURA
-	print("  a cura pede %d documentos e o bairro tem %d" % [precisa, no_bairro])
+	var no_bairro := no_mapa
+	print("  a cura pede %d documentos e o mapa tem %d" % [precisa, no_mapa])
 	if no_bairro < precisa:
 		_erro("a partida e inganhavel: faltam %d documentos no mapa" % (precisa - no_bairro))
 	elif no_bairro == precisa:
@@ -146,7 +159,7 @@ func _o_prazo_cobra_algo(luz_ate_a_cura: float) -> void:
 	if luz_ate_a_cura <= 0.0:
 		return
 	var dias := luz_ate_a_cura / Relogio.DURACAO_DO_DIA
-	print("  no piso, a cura fecha em %.1f dia(s) de vasculho - o prazo sao %d"
+	print("  no piso, a cura fecha em %.1f dia(s) - viagem mais vasculho - e o prazo sao %d"
 		% [dias, Travessia.PRAZO_DA_CURA])
 	# Metade do prazo e a fronteira: com a cura fechando depois disso, os
 	# ultimos dias ainda estao em jogo.
@@ -163,7 +176,7 @@ func _a_cura_e_a_vitoria() -> void:
 
 	# Um documento a menos do que a cura pede: ainda nao.
 	for i in Travessia.DOCUMENTOS_PARA_A_CURA - 1:
-		Travessia.documentos.append(Bairro.DOCUMENTOS[i])
+		Travessia.documentos.append(Construcao.DOCUMENTOS[i])
 	if Travessia.a_cura_esta_pronta():
 		_erro("a cura ficou pronta com %d de %d documentos"
 			% [Travessia.documentos.size(), Travessia.DOCUMENTOS_PARA_A_CURA])
@@ -175,7 +188,7 @@ func _a_cura_e_a_vitoria() -> void:
 	casa.free()
 
 	# O que falta.
-	Travessia.documentos.append(Bairro.DOCUMENTOS[Travessia.DOCUMENTOS_PARA_A_CURA - 1])
+	Travessia.documentos.append(Construcao.DOCUMENTOS[Travessia.DOCUMENTOS_PARA_A_CURA - 1])
 	if not Travessia.a_cura_esta_pronta():
 		_erro("a cura nao ficou pronta com os %d documentos" % Travessia.documentos.size())
 
@@ -321,7 +334,7 @@ func _recomecar_zera_tudo() -> void:
 	print("\n6. recomecar zera tudo")
 	Travessia.dia = 7
 	Travessia.mochila.append("lata de comida")
-	Travessia.documentos.append(Bairro.DOCUMENTOS[0])
+	Travessia.documentos.append(Construcao.DOCUMENTOS[0])
 	Travessia.moveis_vazios[3] = true
 	Travessia.itens_perdidos = 5
 	Travessia.fim_do_dia = Travessia.FimDoDia.SEM_VIDA

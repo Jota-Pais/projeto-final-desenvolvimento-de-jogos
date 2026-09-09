@@ -26,7 +26,8 @@ extends Node
 ## Conta quadro de FISICA, nao de laco: em headless o laco roda muito mais
 ## rapido que a fisica, e orcamento em quadro de laco nao quer dizer nada.
 
-const Bairro := preload("res://rua/bairro.gd")
+const Mapa := preload("res://rua/mapa.gd")
+const Construcao := preload("res://rua/construcao.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 
 # Os estados do zumbi, na ordem do enum dele.
@@ -52,6 +53,10 @@ func _ready() -> void:
 	add_child(_bairro)
 	_jogador = _bairro.get_node("Jogador")
 	_nav = _bairro.get_node("Cenario/Navegacao")
+	# Desliga o povoamento por proximidade: esta ferramenta teleporta o jogador
+	# para montar cada cena, e o cenario liberaria justamente os zumbis que ela
+	# esta medindo. Os que nasceram no _ready ficam.
+	_bairro.get_node("Cenario").povoa_por_proximidade = false
 	for filho in _bairro.get_node("Cenario").get_children():
 		if filho.is_in_group("zumbi"):
 			_zumbis.append(filho)
@@ -75,6 +80,20 @@ func _physics_process(_delta: float) -> void:
 		9:
 			print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 			get_tree().quit(0 if _falhas == 0 else 1)
+
+## A primeira construcao do tipo pedido, e nao a de um indice fixo.
+##
+## Ate 09/09/2026 estas conferencias apontavam para CONSTRUCOES[1], [6] e [10],
+## que eram a segunda casa, o mercadinho e um galpao do bairro. Com o mapa
+## grande a lista mudou de tamanho e de ordem, e indice fixo passou a apontar
+## para outro predio - buscar por tipo nao quebra quando o mapa cresce.
+##
+## Pula a sua casa: ela nao se vasculha e nao tem movel.
+func _uma_construcao(tipo: String) -> Dictionary:
+	for construcao in Mapa.mundo()["construcoes"]:
+		if construcao["tipo"] == tipo and not construcao.get("sua", false):
+			return construcao
+	return {}
 
 func _passar() -> void:
 	_fase += 1
@@ -105,7 +124,7 @@ func _spawn() -> void:
 	consulta.exclude = fora
 
 	var ruins := 0
-	for onde in Bairro.ZUMBIS:
+	for onde in Mapa.mundo()["zumbis"]:
 		consulta.transform = Transform2D(0.0, onde)
 		if not espaco.intersect_shape(consulta, 1).is_empty():
 			_erro("zumbi nasce em cima de colisao, em %s" % onde)
@@ -117,13 +136,17 @@ func _spawn() -> void:
 
 func _navegacao() -> void:
 	print("\n2. navegacao")
-	var casa: Dictionary = Bairro.CONSTRUCOES[1]
-	var rua := Bairro.porta_de(casa) + Vector2(0.0, 300.0)
+	var casa := _uma_construcao("casa")
+	var rua := Construcao.porta_de(casa) + Vector2(0.0, 300.0)
+	# A grade cobre so uma janela em volta do jogador e e remontada quando ele
+	# anda. Pedir a janela aqui, em vez de contar com o _process ja ter rodado,
+	# e o que faz esta conferencia medir a navegacao e nao o relogio de quadros.
+	_nav.remontar_em(rua)
 	var alvos := {
-		"sala": Bairro.quartos_de(casa)[0].get_center(),
-		"quarto do fundo": Bairro.quartos_de(casa)[1].get_center(),
-		"galpao do quintal": Bairro.quartos_de(Bairro.CONSTRUCOES[10])[0].get_center(),
-		"mercadinho": Bairro.quartos_de(Bairro.CONSTRUCOES[6])[0].get_center(),
+		"sala": Construcao.quartos_de(casa)[0].get_center(),
+		"quarto do fundo": Construcao.quartos_de(casa)[1].get_center(),
+		"galpao do quintal": Construcao.quartos_de(_uma_construcao("galpao"))[0].get_center(),
+		"mercadinho": Construcao.quartos_de(_uma_construcao("comercio"))[0].get_center(),
 	}
 	for nome in alvos:
 		var caminho: PackedVector2Array = _nav.caminho(rua, alvos[nome])
@@ -136,11 +159,21 @@ func _navegacao() -> void:
 			continue
 		print("  rua -> %-18s %3d pontos, %.0f px" % [nome, caminho.size(), _tamanho(caminho)])
 
-	var longe: PackedVector2Array = _nav.caminho(Vector2(5400.0, 3150.0), Vector2(390.0, 960.0))
+	# De uma ponta a outra do bairro. Eram coordenadas do bairro pequeno ate
+	# 09/09/2026, e com o mapa novo elas cairam na mata do oeste - fora da
+	# janela, e o teste passou a medir nada. Agora saem do proprio bairro.
+	var porao := (_bairro.get_node("EntradaDeCasa") as Node2D).position
+	var bairro := Mapa.lugar("bairro")["rect"] as Rect2
+	var canto := bairro.end - Vector2(400.0, 400.0)
+	_nav.remontar_em(bairro.get_center())
+	var longe: PackedVector2Array = _nav.caminho(canto, porao)
 	if longe.is_empty():
-		_erro("sem caminho do canto sudeste ate o porao")
+		_erro("sem caminho do canto sudeste do bairro ate o porao")
 	else:
-		print("  canto sudeste -> porao    %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
+		print("  canto do bairro -> porao  %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
+	# Devolve a janela para onde o jogador esta, senao as fases seguintes medem
+	# perseguicao com a grade montada no lugar errado.
+	_nav.remontar_em(_jogador.global_position)
 
 func _tamanho(caminho: PackedVector2Array) -> float:
 	var total := 0.0
@@ -159,9 +192,9 @@ func _linha_de_visao() -> void:
 	if _caso_da_visao == 0 and _quadros == 1:
 		print("\n3. linha de visao")
 
-	var casa: Dictionary = Bairro.CONSTRUCOES[1]
+	var casa := _uma_construcao("casa")
 	var zumbi = _zumbis[0]
-	var porta := Bairro.porta_de(casa)
+	var porta := Construcao.porta_de(casa)
 
 	if _quadros == 1:
 		zumbi.set_physics_process(false)
@@ -169,7 +202,7 @@ func _linha_de_visao() -> void:
 		zumbi.global_position = porta + Vector2(0.0, 260.0)
 		zumbi._olhando = Vector2.UP
 		match _caso_da_visao:
-			0: _jogador.global_position = Bairro.quartos_de(casa)[1].get_center()
+			0: _jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
 			1: _jogador.global_position = porta + Vector2(0.0, 90.0)
 			2:
 				_jogador.global_position = porta + Vector2(0.0, 90.0)
@@ -205,10 +238,18 @@ var _chegou_a_perseguir := false
 
 func _preparar_perseguicao() -> void:
 	print("\n4. perseguicao, toque e interrupcao do vasculho")
+	# O carro mais PERTO de onde o jogador nasce, e nao o primeiro da lista: com
+	# o mapa grande ha carro abandonado no posto, no patio da delegacia e no
+	# estacionamento do mercado, e o primeiro da lista podia estar a 600 m de
+	# qualquer zumbi que esta ferramenta tem em mao.
+	var perto := INF
 	for filho in _bairro.get_node("Cenario").get_children():
-		if filho is Area2D and filho.rotulo == "Carro abandonado":
+		if not (filho is Area2D and filho.rotulo == "Carro abandonado"):
+			continue
+		var d: float = (filho as Node2D).position.distance_to(_jogador.global_position)
+		if d < perto:
+			perto = d
 			_movel = filho
-			break
 	_jogador.global_position = _movel.position + Vector2(0.0, _movel.tamanho.y / 2.0 + 34.0)
 	_jogador.vida = 100.0
 	_longe_do_teste(1)
@@ -269,11 +310,11 @@ func _conferir_perseguicao() -> void:
 
 func _preparar_dentro_de_casa() -> void:
 	print("\n5. o zumbi entra na casa atras de voce")
-	var casa: Dictionary = Bairro.CONSTRUCOES[1]
-	_jogador.global_position = Bairro.quartos_de(casa)[1].get_center()
+	var casa := _uma_construcao("casa")
+	_jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
 	_jogador.vida = 100.0
 	var zumbi = _zumbis[0]
-	zumbi.global_position = Bairro.porta_de(casa) + Vector2(0.0, 240.0)
+	zumbi.global_position = Construcao.porta_de(casa) + Vector2(0.0, 240.0)
 	# Zerar antes: foi_chamado() recusa quem ja esta perseguindo, e com razao -
 	# quem esta em cima de voce nao troca de alvo por causa de um grito.
 	zumbi._estado = VAGANDO
@@ -282,7 +323,7 @@ func _preparar_dentro_de_casa() -> void:
 
 func _conferir_dentro_de_casa() -> void:
 	var zumbi = _zumbis[0]
-	var casa: Rect2 = Bairro.CONSTRUCOES[1]["rect"]
+	var casa: Rect2 = _uma_construcao("casa")["rect"]
 	if casa.has_point(zumbi.global_position):
 		print("  entrou pelo vao da porta em %d quadros de fisica, ate %s" % [
 			_quadros, zumbi.global_position.round()])

@@ -30,23 +30,25 @@ signal amanheceu
 ## Segundos reais de luz num dia - 07:00 as 19:00. **Numero de feel, e
 ## proposta.**
 ##
-## O bairro tem 40 moveis, que somam 116 s de vasculho - 233 s de luz com o
-## custo abaixo. Com 180 s, **um dia nao da para limpar o bairro nem que voce
-## nao ande um passo**, e isso antes de contar o caminho a pe. E de proposito:
-## se um dia bastasse, nao haveria o que escolher, e escolher onde gastar o dia
-## e o jogo.
+## **420 s desde 09/09/2026, e o motivo e o mapa.** Eram 180 quando o mundo era
+## o bairro sozinho: 144 x 90 m, atravessavel em 20 s. Agora o mundo tem 1,44 km
+## de ponta a ponta, que a pe sao 206 s - mais do que o dia inteiro tinha.
 ##
-## O conferir_relogio.tscn refaz essa conta e reclama se o dia crescer o
-## bastante para o bairro caber nele. Se ficar apertado ou frouxo, e este
+## Um mapa que nao da para atravessar num dia nao e mapa grande, e mapa
+## inacessivel. **Quando o carro existir este numero volta a cair**: o ponto de
+## ter carro e justamente o dia nao precisar ser tao longo.
+##
+## O conferir_relogio.tscn refaz a conta do vasculho e reclama se o dia crescer
+## o bastante para o mapa todo caber nele. Se ficar apertado ou frouxo, e este
 ## numero que se mexe primeiro.
-const DURACAO_DO_DIA := 180.0
+const DURACAO_DO_DIA := 420.0
 
 ## Segundos reais de noite - 19:00 as 05:00. **Proposta.**
 ##
 ## E o tempo que voce tem para atravessar o bairro de volta com a rua enchendo,
 ## e o teto de quem nao voltar. Menos que isso e a noite nao chega a apertar;
 ## muito mais e ficar fora vira uma segunda partida, e nao um erro.
-const DURACAO_DA_NOITE := 150.0
+const DURACAO_DA_NOITE := 350.0
 
 ## Quanto de luz EXTRA cada segundo de vasculho gasta. 1.0 = vasculhar gasta o
 ## dia em dobro: o segundo que passa mais o segundo que custa.

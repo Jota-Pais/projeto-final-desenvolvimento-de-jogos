@@ -99,7 +99,11 @@ func _duracao_do_dia_e_da_noite() -> void:
 	relogio.anoiteceu.connect(_contar_anoitecer)
 	relogio.amanheceu.connect(_contar_amanhecer)
 
-	var quadros_do_dia := int(ceil(Relogio.DURACAO_DO_DIA / PASSO))
+	# Um quadro a mais do que a conta pede: somar 1/60 vinte e cinco mil vezes
+	# nao da exatamente 420, e com o dia em 420 s a soma caiu do lado de baixo -
+	# o anoitecer acontecia no quadro seguinte e este teste acusava o relogio.
+	# Era erro de ponto flutuante no teste, e apareceu so quando o dia cresceu.
+	var quadros_do_dia := int(ceil(Relogio.DURACAO_DO_DIA / PASSO)) + 1
 	for _quadro in quadros_do_dia:
 		relogio.gastar(PASSO)
 
@@ -287,7 +291,7 @@ func _a_noite_aperta() -> void:
 	print("  escuro no fim da noite: %.0f%%, e o limite combinado e %.0f%%"
 		% [escuro_antes * 100.0, Hud.ESCURO_NA_NOITE_FECHADA * 100.0])
 
-	_onde_a_noite_faz_nascer(rua, cenario)
+	_onde_a_noite_faz_nascer(rua)
 	_ninguem_ficou_de_fora_da_linha_de_visao()
 
 	hud.free()
@@ -299,7 +303,7 @@ func _um_zumbi() -> Zumbi:
 ## Zumbi que nasce dentro de parede fica preso e nao pressiona ninguem - foi a
 ## primeira falha que o conferir_zumbi achou no povoamento, e a noite faz
 ## nascer mais 14 sem ninguem olhar.
-func _onde_a_noite_faz_nascer(rua: Node, cenario: Cenario) -> void:
+func _onde_a_noite_faz_nascer(rua: Node) -> void:
 	var espaco := get_viewport().find_world_2d().direct_space_state
 	var forma := RectangleShape2D.new()
 	forma.size = Vector2(30.0, 44.0)
@@ -310,15 +314,23 @@ func _onde_a_noite_faz_nascer(rua: Node, cenario: Cenario) -> void:
 		fora.append((z as CollisionObject2D).get_rid())
 	consulta.exclude = fora
 
-	var bocas := cenario._bocas_de_rua()
-	var ruins := 0
-	for onde in bocas:
+	# Ate 09/09/2026 os zumbis da noite nasciam nas quatro bocas de rua do
+	# mapa, que eram quatro pontos fixos e davam para conferir um a um. Num mapa
+	# de 1,44 km a borda esta a quilometros e zumbi que nasce la nunca chega:
+	# agora eles nascem num anel em volta do jogador, e o que se confere e que
+	# **nenhum deles ficou preso dentro de parede** - zumbi preso nao pressiona
+	# ninguem, so gasta quadro.
+	var presos := 0
+	var conferidos := 0
+	for z in get_tree().get_nodes_in_group("zumbi"):
+		conferidos += 1
+		var onde := (z as Node2D).global_position
 		consulta.transform = Transform2D(0.0, onde)
 		if not espaco.intersect_shape(consulta, 1).is_empty():
-			_erro("a noite faz zumbi nascer em cima de colisao, em %s" % onde)
-			ruins += 1
-	if ruins == 0:
-		print("  as %d bocas de rua estao livres" % bocas.size())
+			_erro("zumbi preso dentro de colisao, em %s" % onde)
+			presos += 1
+	if presos == 0:
+		print("  os %d zumbis da noite estao todos em lugar livre" % conferidos)
 
 ## Cada zumbi ignora os outros na linha de visao, senao um na frente do outro
 ## corta a visao de quem esta atras e a horda para de funcionar justamente

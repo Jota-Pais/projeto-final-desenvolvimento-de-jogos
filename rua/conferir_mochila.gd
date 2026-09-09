@@ -17,7 +17,7 @@ extends Node
 ## ligacao indireta (a mochila escuta o `chegou_em_casa` do Travessia e le o
 ## `fim_do_dia` para decidir), e quebra sem dar erro em tela.
 
-const Bairro := preload("res://rua/bairro.gd")
+const Construcao := preload("res://rua/construcao.gd")
 const Mochila := preload("res://rua/mochila.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
@@ -83,7 +83,7 @@ func _moveis_de(rua: Node) -> Array[Node]:
 func _um_movel_com_documento(rua: Node) -> Node:
 	for movel in _moveis_de(rua):
 		for achado in movel.achados:
-			if Bairro.e_documento(achado):
+			if Construcao.e_documento(achado):
 				return movel
 	return null
 
@@ -109,7 +109,7 @@ func _vasculhar_enche_a_mochila() -> void:
 	var esperados_documentos := 0
 	var esperados_itens := 0
 	for achado in com_documento.achados:
-		if Bairro.e_documento(achado):
+		if Construcao.e_documento(achado):
 			esperados_documentos += 1
 		else:
 			esperados_itens += 1
@@ -133,11 +133,11 @@ func _vasculhar_enche_a_mochila() -> void:
 			continue
 		movel._esvaziar()
 	for achado in mochila.itens:
-		if Bairro.e_documento(achado):
+		if Construcao.e_documento(achado):
 			_erro("\"%s\" entrou como item comum" % achado)
 			break
 	for achado in mochila.documentos:
-		if not Bairro.e_documento(achado):
+		if not Construcao.e_documento(achado):
 			_erro("\"%s\" entrou como documento" % achado)
 			break
 	print("  o bairro inteiro na mochila: %d itens e %d documentos"
@@ -290,18 +290,18 @@ func _quanto_loot_o_bairro_tem() -> void:
 	var documentos := 0
 	for movel in _moveis_de(rua):
 		for achado in movel.achados:
-			if Bairro.e_documento(achado):
+			if Construcao.e_documento(achado):
 				documentos += 1
 			else:
 				itens += 1
 
 	print("  %d itens comuns e %d documentos, em %d moveis"
 		% [itens, documentos, _moveis_de(rua).size()])
-	print("  1 documento a cada %d moveis, e o prazo sao %d dias"
-		% [Bairro.CADA_QUANTOS_MOVEIS_UM_DOCUMENTO, Travessia.PRAZO_DA_CURA])
+	print("  %d documentos declarados no mapa, e o prazo sao %d dias"
+		% [documentos, Travessia.PRAZO_DA_CURA])
 
 	if documentos == 0:
-		_erro("o bairro nao tem documento nenhum - a historia nao anda")
+		_erro("o mapa nao tem documento nenhum - a historia nao anda")
 	rua.free()
 
 # --- 5. a HUD mostra o documento --------------------------------------------

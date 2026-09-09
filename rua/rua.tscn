@@ -20,10 +20,10 @@ script = ExtResource("7_mochila")
 script = ExtResource("2_cenario")
 
 [node name="Jogador" parent="." instance=ExtResource("3_jogador")]
-position = Vector2(700, 1240)
+position = Vector2(6700, 16720)
 
 [node name="EntradaDeCasa" parent="." instance=ExtResource("4_entrada")]
-position = Vector2(390, 905)
+position = Vector2(6390, 16385)
 
 [node name="Telhados" type="Node2D" parent="."]
 script = ExtResource("5_telhados")

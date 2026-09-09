@@ -12,7 +12,7 @@ extends Node
 ##
 ## Esta no grupo "mochila", que e como a HUD a acha.
 
-const Bairro := preload("res://rua/bairro.gd")
+const Construcao := preload("res://rua/construcao.gd")
 
 ## Emitido a cada achado que entra. A HUD nao precisa disto - le direto -, mas
 ## o som e o "+1" na tela sao passo 5 e se penduram aqui.
@@ -30,7 +30,7 @@ func _ready() -> void:
 ## Ligado pelo cenario no sinal `vasculhado` de cada movel.
 func ao_vasculhar(_rotulo: String, achados: Array[String]) -> void:
 	for achado in achados:
-		var documento := Bairro.e_documento(achado)
+		var documento := Construcao.e_documento(achado)
 		if documento:
 			documentos.append(achado)
 		else:
