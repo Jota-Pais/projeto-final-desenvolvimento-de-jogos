@@ -26,17 +26,23 @@ const ESPESSURA_DO_MURO := 400.0
 ## relogio.
 const ZUMBIS_DA_NOITE := 14
 
-## Quantos zumbis a mais o bairro tem por dia que passa. **Proposta.**
+## De quantos em quantos dias o bairro ganha um zumbi a mais. **Proposta.**
 ##
 ## E o "a rua vai ficando mais apocaliptica conforme os dias passam" do High
 ## Concept, na parte que muda o jogo e nao so a foto: o dia 1 tem 13 zumbis, o
-## dia 10 tem 31 - e com a noite, 45. Amanhecer na rua no dia 9 nao e o mesmo
+## dia 30 tem 27 - e com a noite, 41. Amanhecer na rua no dia 28 nao e o mesmo
 ## que no dia 2, e e isso que faz o prazo apertar de dois lados ao mesmo tempo.
-const ZUMBIS_A_MAIS_POR_DIA := 2
+##
+## Era um zumbi a mais POR DIA quando o prazo era de 10 dias. Com 30, o mesmo
+## ritmo levaria o ultimo dia a 71 zumbis - um numero que nao e dificuldade, e
+## sopa de zumbi. Este e calibrado no PRAZO_DA_CURA: se o prazo mudar de novo,
+## este muda junto.
+const UM_ZUMBI_A_MAIS_A_CADA := 2
 
 ## Tufos de mato a mais por dia. So estetica, e a metade barata da mesma frase:
-## o terreno vai sendo tomado.
-const MATO_A_MAIS_POR_DIA := 90
+## o terreno vai sendo tomado. Tambem caiu com o prazo maior - 90 por dia em 30
+## dias enterrava o bairro.
+const MATO_A_MAIS_POR_DIA := 30
 
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado.
@@ -257,7 +263,7 @@ func _povoar_de_zumbis() -> void:
 	# vieram de fora do bairro, e atravessar o mapa e o que da o tempo entre
 	# eles existirem e eles te acharem.
 	var bocas := _bocas_de_rua()
-	var a_mais := (Travessia.dia - 1) * ZUMBIS_A_MAIS_POR_DIA
+	var a_mais := (Travessia.dia - 1) / UM_ZUMBI_A_MAIS_A_CADA
 	for i in a_mais:
 		_criar_zumbi(bocas[i % bocas.size()])
 

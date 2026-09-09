@@ -33,13 +33,22 @@ const CENA_DO_FIM := "res://fim_de_jogo.tscn"
 ## avisar. Com 4 da para errar dois dias.
 const DOCUMENTOS_PARA_A_CURA := 4
 
-## Quantos dias existem para a cura ficar pronta. **Proposta.**
+## Quantos dias existem para a cura ficar pronta.
 ##
-## 10 e o numero que a leitura de escopo do High Concept reivindica junto ao
-## professor - "jogo arcade que acaba no game over, cerca de 10 niveis, ondas ou
-## estagios" - e nessa leitura cada dia e uma fase. Entao o prazo E a contagem
-## de fases, e mexer nele mexe no escopo declarado.
-const PRAZO_DA_CURA := 10
+## **30, decidido em 09/09/2026.** Antes eram 10, que era o numero da leitura de
+## escopo do High Concept - "cerca de 10 niveis, ondas ou estagios", com cada
+## dia sendo uma fase. Com 30 essa conta muda, e e assunto para a conversa de
+## calibragem com o professor: ou "fase" deixa de ser o dia, ou a leitura passa
+## a ser outra.
+##
+## Duas coisas sao calibradas em cima deste numero e mudaram junto: a escalada
+## de zumbis por dia (rua/cenario.gd) e o mato tomando o terreno.
+##
+## Uma nao mudou, e e a que importa: **quantos documentos a cura pede.** O
+## bairro tem 6 e nao repoe, entao com 30 dias o prazo sobra - da para fechar a
+## cura na primeira semana e os outros 23 dias nao cobram nada. O
+## conferir_fim.tscn mede isso e avisa.
+const PRAZO_DA_CURA := 30
 
 ## Qual dia esta correndo.
 ##

@@ -64,9 +64,17 @@ Pendentes de decisão da equipe:
 - [ ] **A costura entre os dois modos** — o autoload `Travessia` é proposta
       (`dia`, `mochila`, `documentos` e as duas funções de troca de cena). É a
       única decisão de arquitetura que as duas frentes tocam
-- [ ] **O prazo da cura — 10 dias** (`Travessia.PRAZO_DA_CURA`). Não é só feel:
-      é a contagem de fases que a leitura de escopo reivindica junto ao
-      professor, então essa conversa e essa decisão são a mesma
+- [ ] **O prazo virou 30 dias em 09/09/2026, e isso reabre a leitura de
+      escopo.** O argumento levado ao professor era *cada dia é uma fase* + a
+      terceira opção dele, *cerca de 10 níveis, ondas ou estágios* — com 30 dias
+      essa conta não fecha mais. Ou "fase" deixa de ser o dia, ou a leitura
+      passa a ser outra. É conversa de mesa, e é a mesma conversa da calibragem
+      de escopo
+- [ ] **Com 30 dias o prazo sobra.** A cura pede 4 documentos e o bairro tem 6 —
+      dá para fechar na primeira semana, e os outros 23 dias não cobram nada. Um
+      prazo que ninguém alcança não é pressão, é enfeite. As três saídas estão
+      em *Quantos documentos a cura pede*, e o `conferir_fim.tscn` mede isso e
+      avisa a cada rodada
 - [ ] Os números de feel do relógio e da noite: **180 s de luz**, **150 s de
       noite**, **vasculhar gastando o dobro**, **+14 zumbis pela noite** e
       **+35% de vista** (`DURACAO_DO_DIA`, `DURACAO_DA_NOITE`,
@@ -82,8 +90,9 @@ Pendentes de decisão da equipe:
       do modo Casa. Ver *Quantos documentos a cura pede*
 - [ ] **Morrer devia acabar a partida?** Hoje custa o dia. O High Concept só
       declara dois desfechos e nenhum é morrer, mas é decisão de mesa
-- [ ] **A escalada por dia** — 2 zumbis a mais por dia (`ZUMBIS_A_MAIS_POR_DIA`),
-      que leva o dia 10 a 31 de dia e 45 de noite. Provisório
+- [ ] **A escalada por dia** — um zumbi a mais a cada dois dias
+      (`UM_ZUMBI_A_MAIS_A_CADA`), que leva o dia 30 a 27 de dia e 41 de noite.
+      Provisório, e calibrado no prazo: se o prazo mudar, este muda junto
 - [ ] Divisão de tarefas
 
 ## O bairro e a mecânica de vasculhar (`rua/`)
@@ -322,12 +331,18 @@ do que um dia inteiro, e isso sem andar um passo. É o que torna verdadeira a
 promessa do mapa lá em cima: um dia não dá para limpar o bairro, então escolher
 onde gastar o dia é o jogo.
 
-**O prazo da cura são 10 dias** (`Travessia.PRAZO_DA_CURA`). É proposta, e não é
-só número de feel: é a leitura de escopo que o High Concept reivindica junto ao
+**O prazo da cura são 30 dias** (`Travessia.PRAZO_DA_CURA`), decididos em
+09/09/2026. No dia 30 a casa não deixa mais sair.
+
+Eram 10 até então, e o número não era só feel: era a leitura de escopo levada ao
 professor — *jogo arcade que acaba no game over, cerca de 10 níveis, ondas ou
-estágios* —, e nessa leitura cada dia é uma fase. Então o prazo **é** a
-contagem de fases, e mexer nele mexe no escopo declarado. No dia 10 a casa não
-deixa mais sair.
+estágios*, com cada dia sendo uma fase. **Com 30 dias essa conta não fecha
+mais**, e isso está anotado nas pendências: ou "fase" deixa de ser o dia, ou a
+leitura passa a ser outra.
+
+Duas coisas eram calibradas em cima do prazo e mudaram junto: a escalada de
+zumbis por dia e o mato tomando o terreno. Uma não mudou e é a que importa —
+**quantos documentos a cura pede**, ver a seção do fim do jogo.
 
 #### Às 19:00 a noite não te tira da rua — ela aperta
 
@@ -479,12 +494,10 @@ outros.
 **33 itens comuns e 6 documentos** — e como não repõe, é isso que existe no
 jogo inteiro. O `conferir_mochila.tscn` imprime essa conta.
 
-⬜ **Seis documentos para dez dias é uma pergunta em aberto**, e é do grupo: se
-a cura precisa dos seis, o bairro se esgota lá pelo terceiro ou quarto dia bom
-e os dias seguintes ficam sem para que servir. As saídas são todas de papel —
-mais documentos no mapa, a cura pedindo menos, ou o mapa mudando com os dias
-(que é o que o High Concept sugere ao dizer que a rua vai ficando mais
-apocalíptica). Não decidi nenhuma.
+⬜ **Seis documentos para trinta dias não fecha**, e é a pergunta mais aberta do
+projeto. O bairro não repõe, então esses 6 são tudo o que existe na partida: a
+cura pede 4 e dá para fechar na primeira semana. Ver *Quantos documentos a cura
+pede*, na seção do fim do jogo, e as pendências no começo deste arquivo.
 
 ### Mexeu na mochila, no loot ou no que atravessa o dia? Rode o `conferir_mochila.tscn` (F6)
 
@@ -502,17 +515,21 @@ indireta — a mochila escuta o `chegou_em_casa` do `Travessia` e lê o
 
 **09/09/2026, parte do passo 5.** O High Concept diz que *a rua vai ficando
 mais apocalíptica conforme os dias passam*. A metade barata disso é estética —
-o mato vai tomando o terreno, 90 tufos a mais por dia. A metade que muda o jogo
-são os zumbis: **dois a mais por dia que passa.**
+o mato vai tomando o terreno, 30 tufos a mais por dia. A metade que muda o jogo
+são os zumbis: **um a mais a cada dois dias.**
 
-| | dia 1 | dia 5 | dia 10 |
-|---|---|---|---|
-| de dia | 13 | 21 | 31 |
-| na noite fechada | 27 | 35 | 45 |
+| | dia 1 | dia 5 | dia 15 | dia 30 |
+|---|---|---|---|---|
+| de dia | 13 | 15 | 20 | 27 |
+| na noite fechada | 27 | 29 | 34 | 41 |
 
 Eles entram pelas bocas de rua, como os da noite. O efeito é o prazo apertar de
 dois lados ao mesmo tempo: quanto menos dias sobram, mais caro fica cada dia —
-e amanhecer na rua no dia 9 não é a mesma coisa que no dia 2.
+e amanhecer na rua no dia 28 não é a mesma coisa que no dia 2.
+
+O ritmo **é calibrado no prazo**. Era um zumbi a mais por dia quando o prazo era
+de 10 dias; com 30, o mesmo ritmo levaria o último dia a 71 zumbis, que não é
+dificuldade, é sopa de zumbi. Se o prazo mudar de novo, este número muda junto.
 
 ### O que ainda não tem
 
@@ -635,6 +652,32 @@ perdido carregando documento deixaria a partida impossível de ganhar sem
 avisar. Com 4 dá para errar dois dias. O `conferir_fim.tscn` reprova as duas
 situações — bairro com documento de menos, e bairro sem folga nenhuma.
 
+#### E com 30 dias esse número deixou de fechar
+
+Com o prazo em 10 dias, 4 documentos era apertado o bastante. **Com 30, o prazo
+sobra:** o `conferir_fim.tscn` mede que a cura fecha em **0,9 dia de vasculho**
+— 3% do prazo —, e os outros 29 dias não cobram nada. Um prazo que ninguém
+alcança não é pressão; é enfeite, e o relógio, a noite e a escalada passam a
+empurrar o jogador para um lugar onde não tem ninguém esperando.
+
+A ferramenta avisa isso a cada rodada, como **ATENÇÃO** e não como falha: o
+código está certo, o desenho é que tem o buraco. E as três saídas são todas de
+mesa, nenhuma minha:
+
+1. **A cura pede mais** — mas o bairro só tem 6, então isso só funciona junto
+   com a saída 2 ou 3.
+2. **O bairro dá mais documento** — mais móveis, ou um documento a cada menos
+   móveis (`Bairro.CADA_QUANTOS_MOVEIS_UM_DOCUMENTO`). Custa escrever mais
+   documentos, que é conteúdo de narrativa: hoje são 6 nomes, e repetir
+   documento como moeda de progressão é esquisito.
+3. **O mapa muda com os dias** — é o que o High Concept sugere ao dizer que a
+   rua vai ficando mais apocalíptica. É a mais caro das três e a mais
+   interessante: novos lugares reabrindo dá para que servir aos 30 dias sem
+   inventar documento nem apertar a cura.
+
+Enquanto nenhuma for decidida, **os 30 dias são um teto e não um aperto** — o
+jogo funciona de ponta a ponta, e a partida acaba quando você quer que acabe.
+
 ### Morrer custa o dia, e não a partida
 
 **Não é provisório, é decisão.** O High Concept declara dois desfechos, e
@@ -654,8 +697,12 @@ paródia; morrer custa o dia e não a partida; a rua piora com os dias; e
 recomeçar zera tudo, inclusive os móveis vazios — senão a segunda partida
 começaria num bairro já saqueado.
 
-A primeira é a única que pode reprovar o **desenho** e não o código: um bairro
-com documento de menos torna a partida inganhável, e nada mais avisaria.
+A primeira é a única que fala do **desenho** e não do código, e por isso tem
+categoria própria: além de reprovar bairro com documento de menos (que torna a
+partida inganhável), ela mede em quantos dias a cura fecha no piso e levanta um
+**ATENÇÃO** se isso for menos da metade do prazo. ATENÇÃO não reprova a rodada —
+o código está certo —, mas aparece no fim, porque é o tipo de coisa que ninguém
+descobre jogando dois minutos.
 
 ## Combinados de Git
 

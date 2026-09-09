@@ -20,11 +20,18 @@ extends Node
 
 const Bairro := preload("res://rua/bairro.gd")
 const Cenario := preload("res://rua/cenario.gd")
+const Relogio := preload("res://rua/relogio.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_CASA := preload("res://casa/casa.tscn")
 const CENA_DO_FIM := preload("res://fim_de_jogo.tscn")
 
 var _falhas := 0
+
+## Problema de DESENHO, nao de codigo. Nao reprova a rodada - o codigo esta
+## certo -, mas aparece no fim em corpo proprio, porque e o tipo de coisa que
+## ninguem descobre jogando dois minutos.
+var _atencoes := 0
+
 var _rodou := false
 
 func _process(_delta: float) -> void:
@@ -41,11 +48,17 @@ func _process(_delta: float) -> void:
 
 	_limpar()
 	print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
+	if _atencoes > 0:
+		print("%d ponto(s) de ATENCAO - desenho, nao codigo" % _atencoes)
 	get_tree().quit(0 if _falhas == 0 else 1)
 
 func _erro(texto: String) -> void:
 	_falhas += 1
 	print("  FALHA: " + texto)
+
+func _atencao(texto: String) -> void:
+	_atencoes += 1
+	print("  ATENCAO: " + texto)
 
 func _limpar() -> void:
 	Travessia.dia = 1
@@ -88,12 +101,22 @@ func _a_partida_da_para_ganhar() -> void:
 	add_child(rua)
 
 	var no_bairro := 0
+	# Luz gasta ate juntar o que a cura pede, varrendo o bairro na ordem em que
+	# ele e gerado. Nao e a ordem em que alguem joga, mas e deterministica e
+	# ignora o caminho a pe - entao e um piso, e o dia de verdade e pior.
+	var luz_ate_a_cura := 0.0
+	var quando_fecha := 0
 	for filho in rua.get_node("Cenario").get_children():
 		if not (filho is Area2D and "achados" in filho):
 			continue
+		if quando_fecha == 0:
+			luz_ate_a_cura += filho.duracao * (1.0 + Relogio.CUSTO_DO_VASCULHO)
 		for achado in filho.achados:
-			if Bairro.e_documento(achado):
-				no_bairro += 1
+			if not Bairro.e_documento(achado):
+				continue
+			no_bairro += 1
+			if no_bairro == Travessia.DOCUMENTOS_PARA_A_CURA:
+				quando_fecha = no_bairro
 	rua.free()
 
 	var precisa := Travessia.DOCUMENTOS_PARA_A_CURA
@@ -106,6 +129,31 @@ func _a_partida_da_para_ganhar() -> void:
 	else:
 		print("  folga de %d documento(s) - da para errar %d dia(s) carregando documento"
 			% [no_bairro - precisa, no_bairro - precisa])
+
+	_o_prazo_cobra_algo(luz_ate_a_cura)
+
+## Em quantos dias, no piso, a cura pode fechar - e como isso se compara com o
+## prazo.
+##
+## **Prazo que ninguem alcanca nao e pressao, e enfeite.** Se a cura fecha na
+## primeira semana de um prazo de 30 dias, os outros 23 nao cobram nada, e o
+## relogio, a noite e a escalada estao empurrando o jogador para um lugar onde
+## nao ha ninguem esperando.
+##
+## Nao e FALHA: o codigo esta certo. E ATENCAO, que e o que se usa quando o
+## problema e de desenho - e desenho e decisao de mesa.
+func _o_prazo_cobra_algo(luz_ate_a_cura: float) -> void:
+	if luz_ate_a_cura <= 0.0:
+		return
+	var dias := luz_ate_a_cura / Relogio.DURACAO_DO_DIA
+	print("  no piso, a cura fecha em %.1f dia(s) de vasculho - o prazo sao %d"
+		% [dias, Travessia.PRAZO_DA_CURA])
+	# Metade do prazo e a fronteira: com a cura fechando depois disso, os
+	# ultimos dias ainda estao em jogo.
+	if dias * 2.0 < float(Travessia.PRAZO_DA_CURA):
+		_atencao("o prazo sobra - a cura fecha em ~%.0f%% dele, e o resto nao cobra nada."
+			% (dias / float(Travessia.PRAZO_DA_CURA) * 100.0)
+			+ " Ou a cura pede mais, ou o bairro da menos, ou o prazo e menor")
 
 # --- 2. a cura e a vitoria --------------------------------------------------
 
