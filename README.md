@@ -86,6 +86,9 @@ Pendentes de decisão da equipe:
       `CUSTO_DO_VASCULHO`, `ZUMBIS_DA_NOITE`, `VISTA_A_MAIS_DE_NOITE`).
       Provisórios, e o único jeito de decidir é jogando — o que a direção
       fechou em 09/09 foi a **forma** da noite, não os números
+- [ ] ⚠️ **Desligar o `Travessia.COMECA_ARMADO`** antes de entregar. Hoje o jogo
+      começa com pistola e 18 balas, o que é facilidade de teste e contradiz a
+      progressão. O `conferir_arma.tscn` avisa em toda rodada
 - [ ] **O mouse entrou nos controles** com a pistola (mira e botão esquerdo), e
       o one-pager declara teclado só. A linha de controles da peça precisa
       ganhar o mouse
@@ -674,6 +677,7 @@ ela:
 1. **Você não começa com ela.** A pistola está na **armaria da delegacia** — o
    quarto mais fundo do lugar mais povoado do mapa, a 479 m de casa. É uma só, e
    achar a arma é recompensa de vasculhar.
+   ⚠️ **Hoje isso está desligado por uma facilidade de teste** — ver abaixo.
 2. **A munição vem do vasculho.** Sai da armaria, das caixas e das cômodas — 6
    balas por achado, em 4 móveis do mapa. Atirar gasta o que você vasculhou.
 3. **O tiro chama a horda**, num raio de 1.800 px contra os 700 do chamado de um
@@ -694,6 +698,22 @@ sem aviso.
 O zumbi baleado **não renasce hoje**. Sem isso, o povoamento por proximidade
 reporia o que você acabou de matar dois segundos depois, para sempre — e atirar
 não serviria de nada.
+
+#### ⚠️ `COMECA_ARMADO` está ligado
+
+O jogo hoje **começa com a pistola e 18 balas** (`Travessia.COMECA_ARMADO`).
+Isso é facilidade de teste e nada mais: andar meio quilômetro até a delegacia
+toda vez que se quer testar o tiro não é teste, é paciência.
+
+**Desligar antes de entregar.** Com isso ligado o jogo contradiz a própria
+progressão — a arma deixa de ser recompensa de vasculhar —, e *"coerente com o
+High Concept"* vale 2 dos 10 pontos da Alfa. Uma linha:
+`const COMECA_ARMADO := false`.
+
+O `conferir_arma.tscn` **avisa em toda rodada** enquanto estiver ligado, como
+ATENÇÃO e não como falha: o código está certo, a decisão é que é provisória.
+Atalho de teste que embarca calado é o tipo de coisa que ninguém lembra na
+véspera.
 
 ### Mexeu na pistola, na munição ou no loot da delegacia? Rode o `conferir_arma.tscn` (F6)
 

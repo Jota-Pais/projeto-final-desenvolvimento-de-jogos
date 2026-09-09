@@ -26,6 +26,12 @@ const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
 
 var _falhas := 0
+
+## Problema de DESENHO, nao de codigo - mesma categoria do conferir_fim. Nao
+## reprova a rodada, mas aparece no fim, porque e o tipo de coisa que embarca
+## calada.
+var _atencoes := 0
+
 var _quadros := 0
 var _feito := false
 
@@ -82,6 +88,8 @@ func _physics_process(_delta: float) -> void:
 			_feito = true
 			_limpar()
 			print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
+			if _atencoes > 0:
+				print("%d ponto(s) de ATENCAO - desenho, nao codigo" % _atencoes)
 			get_tree().quit(0 if _falhas == 0 else 1)
 	if _fase in [2, 3, 6, 7]:
 		_passar()
@@ -92,6 +100,10 @@ func _passar() -> void:
 func _erro(texto: String) -> void:
 	_falhas += 1
 	print("  FALHA: " + texto)
+
+func _atencao(texto: String) -> void:
+	_atencoes += 1
+	print("  ATENCAO: " + texto)
 
 func _limpar() -> void:
 	Travessia.tem_pistola = false
@@ -112,8 +124,13 @@ func _moveis() -> Array[Node]:
 
 func _nao_se_comeca_com_ela() -> void:
 	print("\n1. onde esta a pistola")
-	if Travessia.tem_pistola:
-		_erro("o jogo comeca com a pistola na mao")
+	# O `_limpar()` do _ready ja zerou o equipamento, entao aqui se pergunta a
+	# CONSTANTE e nao o estado: e a facilidade de teste que precisa ser vista.
+	if Travessia.COMECA_ARMADO:
+		_atencao("COMECA_ARMADO esta ligado: o jogo comeca com a pistola e %d balas."
+			% Travessia.BALAS_DE_COMECO
+			+ " E facilidade de teste, contradiz a progressao e tem que ser"
+			+ " desligada antes de entregar (Travessia.COMECA_ARMADO = false)")
 
 	var onde: Array[String] = []
 	var quantas := 0

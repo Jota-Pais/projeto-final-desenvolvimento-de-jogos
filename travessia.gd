@@ -82,6 +82,28 @@ var documentos: Array[String] = []
 var tem_pistola := false
 var municao := 0
 
+## **Facilidade de teste, e nada mais: comecar armado.**
+##
+## O desenho e o outro: a pistola esta na armaria da delegacia, a 479 m de casa,
+## e achar a arma e recompensa de vasculhar. Isto existe porque andar meio
+## quilometro toda vez que se quer testar o tiro nao e teste, e paciencia.
+##
+## **Desligar antes de entregar.** Com isto ligado o jogo contradiz a propria
+## progressao, e "coerente com o High Concept" vale 2 dos 10 pontos da Alfa. O
+## conferir_arma.tscn avisa em toda rodada enquanto estiver ligado - de
+## proposito, para ninguem esquecer.
+const COMECA_ARMADO := true
+const BALAS_DE_COMECO := 18
+
+func _ready() -> void:
+	_armar_para_teste()
+
+func _armar_para_teste() -> void:
+	if not COMECA_ARMADO:
+		return
+	tem_pistola = true
+	municao = BALAS_DE_COMECO
+
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
 ## voltado com a mochila vazia.
@@ -177,6 +199,7 @@ func recomecar() -> void:
 	dia = 1
 	tem_pistola = false
 	municao = 0
+	_armar_para_teste()
 	mochila.clear()
 	documentos.clear()
 	moveis_vazios.clear()
