@@ -204,7 +204,7 @@ static func _delegacia(lugar: Dictionary, pecas: Dictionary) -> void:
 
 	var predio := Rect2(r.position.x + 900.0, r.position.y, 3600.0, 2600.0)
 	pecas["construcoes"].append({
-		"rect": predio, "porta": "sul", "tipo": "delegacia", "documento": true,
+		"rect": predio, "porta": "sul", "tipo": "delegacia", "documento": true, "arma": true,
 	})
 
 	# Estacionamento entre o predio e a rodovia.

@@ -218,6 +218,17 @@ func _chamar_a_horda() -> void:
 			continue
 		outro.foi_chamado(_jogador.global_position)
 
+## Emitido ao levar um tiro. O cenario escuta para nao fazer nascer outro no
+## mesmo lugar hoje - senao atirar seria inutil.
+signal morreu
+
+## Levou um tiro. **Nao existe estado de ferido**: o tiro derruba de uma vez, e
+## o recurso caro e a municao. Um zumbi que aguentasse tres tiros so
+## multiplicaria o estrondo, que e o custo de verdade de atirar.
+func levar_tiro() -> void:
+	morreu.emit()
+	queue_free()
+
 ## Chamado pelo cenario quando nasce zumbi novo - a noite traz mais. A lista se
 ## refaz no proximo quadro de fisica.
 func esquecer_quem_ignorar() -> void:

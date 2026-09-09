@@ -69,6 +69,19 @@ var dia := 1
 var mochila: Array[String] = []
 var documentos: Array[String] = []
 
+## A pistola e a municao. **Arma nao e loot, e equipamento** - e essa distincao
+## nao e detalhe:
+##
+##  - nao ocupam vaga na mochila, porque estao no cinto e nao no saco;
+##  - **nao se perdem no dia que deu errado.** Todo o resto se perde, e e o que
+##    faz a noite cobrar - mas o mapa nao repoe, e a pistola e uma so, na
+##    armaria da delegacia. Perde-la seria beco sem saida sem aviso.
+##
+## Ver rua/pistola.gd para as tres regras que a mantem servindo o vasculho em
+## vez de virar um jogo de tiro.
+var tem_pistola := false
+var municao := 0
+
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
 ## voltado com a mochila vazia.
@@ -162,6 +175,8 @@ func acabar_o_jogo(qual: Desfecho) -> void:
 ## moveis vazios, senao a segunda partida comecaria num bairro ja saqueado.
 func recomecar() -> void:
 	dia = 1
+	tem_pistola = false
+	municao = 0
 	mochila.clear()
 	documentos.clear()
 	moveis_vazios.clear()

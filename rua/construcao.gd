@@ -91,6 +91,18 @@ const MOVEIS := {
 	"armario_de_armas": { "rotulo": "Armário de armas", "duracao": 5.5, "tamanho": Vector2(108.0, 50.0), "cor": Color("4e5a55") },
 }
 
+## Os dois achados que sao **equipamento e nao loot**: nao ocupam vaga na
+## mochila e nao se perdem no dia que deu errado. Ver rua/mochila.gd.
+##
+## A pistola nao esta em tabela nenhuma: ela e colocada em UM movel declarado -
+## a armaria da delegacia -, do mesmo jeito que o documento. Arma sorteada nao
+## serve: ou o jogador acha na primeira gaveta, ou nao acha nunca.
+const PISTOLA := "pistola"
+const MUNICAO := "munição"
+
+## Quantas balas vem em cada achado de municao. E uma caixinha, nao uma bala.
+const MUNICAO_POR_ACHADO := 6
+
 ## O que sai de cada movel. PZ tira o loot de uma tabela por tipo de movel, e o
 ## conteudo combina com o quarto - mesma ideia aqui. Continua sendo texto solto:
 ## item com peso, uso e valor e assunto de quem fizer o modo Casa, que e quem
@@ -98,16 +110,18 @@ const MOVEIS := {
 const CONTEUDO := {
 	"geladeira": ["lata de comida", "garrafa de água", "comida estragada"],
 	"armario": ["lata de comida", "fósforos", "pano limpo"],
-	"comoda": ["roupa", "remédio", "chave velha"],
+	"comoda": ["roupa", "remédio", "chave velha", MUNICAO],
 	"estante": ["livro de química", "pilha", "fita isolante"],
-	"caixa": ["ferramenta", "prego", "corda"],
+	"caixa": ["ferramenta", "prego", "corda", MUNICAO],
 	"carro": ["chave de roda", "fita isolante", "gasolina"],
 	"lata": ["pano sujo", "garrafa vazia"],
 	"prateleira": ["lata de comida", "garrafa de água", "biscoito", "sabão"],
 	"bomba": ["gasolina", "mangueira", "galão vazio"],
 	"arquivo": ["papelada", "pasta com fichas", "grampeador"],
-	"armario_de_armas": ["algemas", "colete", "cassetete", "munição"],
+	"armario_de_armas": ["algemas", "colete", "cassetete", MUNICAO],
 }
+
+
 
 ## Os documentos - o item que destrava a historia dentro de casa.
 ##

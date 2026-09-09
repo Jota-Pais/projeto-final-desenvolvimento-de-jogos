@@ -86,10 +86,15 @@ Pendentes de decisão da equipe:
       `CUSTO_DO_VASCULHO`, `ZUMBIS_DA_NOITE`, `VISTA_A_MAIS_DE_NOITE`).
       Provisórios, e o único jeito de decidir é jogando — o que a direção
       fechou em 09/09 foi a **forma** da noite, não os números
-- [ ] **A mochila tem limite de espaço?** O one-pager declara *"mochila, com o
-      espaço já ocupado visível"*, o que supõe um teto — e teto cria viagem:
-      enche, volta, sai de novo. Não implementei porque como ele conversa com
-      o vasculho (o móvel não esvazia? sobra dentro dele?) tem várias respostas
+- [ ] **O mouse entrou nos controles** com a pistola (mira e botão esquerdo), e
+      o one-pager declara teclado só. A linha de controles da peça precisa
+      ganhar o mouse
+- [ ] **Os export templates do Godot** (~1 GB) não estão instalados, e sem eles
+      não há build para o professor rodar. São **2 dos 10 pontos da Alfa**
+      ("funcional e jogável"), e é download e não código
+- [ ] **A fase hipotética "ajudando no entendimento"** é parte dos 5 pontos da
+      Alfa. Um mapa de 1,44 km pode atrapalhar aqui: quem abre o jogo e anda
+      30 s em grama não vê a mecânica. Vale decidir como a Alfa se apresenta
 - [ ] **Quantos documentos a cura pede, e o que mais ela consome.** Hoje são 4
       dos 6 que o bairro tem, e é número provisório segurando uma decisão que é
       do modo Casa. Ver *Quantos documentos a cura pede*
@@ -121,6 +126,13 @@ lixo — e **segure `E`** até a barra encher.
 | `WASD` ou setas | andar |
 | `Shift` | correr |
 | `E` | vasculhar (segurar), entrar em casa, e as escolhas da casa |
+| mouse | mirar a pistola |
+| botão esquerdo | atirar |
+
+⬜ **O mouse é novo, e o High Concept não o declara.** Os controles da peça são
+`WASD`/setas, `E` e `Shift` — teclado só. A pistola de 09/09/2026 acrescentou
+mira no mouse, porque atirar em top-down sem mira livre é ruim de um jeito que
+não vale defender. **A linha de controles do one-pager precisa ganhar o mouse.**
 
 As ações estão no **Input Map** do `project.godot`, por `physical_keycode` — o
 WASD fica no mesmo lugar em teclado que não seja QWERTY. Os controles são os que
@@ -262,8 +274,11 @@ móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
   divisória, quarto) e as tabelas de loot. Era o `bairro.gd`
 - `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
   `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
-- `mochila.gd` — o que você está carregando hoje, e a regra de que **só entra
-  em casa o que passou pela porta do porão**. Ver a seção própria abaixo
+- `mochila.gd` — o que você está carregando hoje, as 12 vagas, e a regra de que
+  **só entra em casa o que passou pela porta do porão**. Ver a seção própria
+  abaixo
+- `pistola.gd` — a arma. Achada na armaria da delegacia, munição vinda do
+  vasculho, e o tiro chamando a horda. Ver a seção própria abaixo
 - `vasculhavel.gd` — **é a core mechanic**. `Area2D` que enche uma barra
   enquanto a ação `vasculhar` estiver segurada e o jogador estiver dentro do
   alcance. O que separa uma lata de lixo (1,5 s) de uma porta (5 s) é só a
@@ -292,8 +307,8 @@ móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
 - `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, o
   aviso da noite e o escurecer
 - `conferir_mapa.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
-  `conferir_mochila.tscn` e `conferir_fim.tscn` — **ferramentas, rodam com
-  F6.** Ver abaixo
+  `conferir_mochila.tscn`, `conferir_arma.tscn` e `conferir_fim.tscn` —
+  **ferramentas, rodam com F6.** Ver abaixo
 
 ### Duas coisas de propósito
 
@@ -622,17 +637,92 @@ O ritmo **é calibrado no prazo**. Era um zumbi a mais por dia quando o prazo er
 de 10 dias; com 30, o mesmo ritmo levaria o último dia a 71 zumbis, que não é
 dificuldade, é sopa de zumbi. Se o prazo mudar de novo, este número muda junto.
 
+### A mochila enche, e é a quarta pressão
+
+**09/09/2026.** São **12 vagas**, e documento ocupa vaga igual — é nisso que a
+escolha existe. As outras três pressões cobram em vida (zumbi), em dia
+(relógio) e em prazo; esta cobra em **escolha**: com o espaço acabando,
+vasculhar deixa de ser "pego tudo" e passa a ser "levo o quê?".
+
+É o campo que o one-pager sempre declarou — *"mochila, com o espaço já ocupado
+visível"* — e aparece na HUD como `mochila 7/12`.
+
+**Com a mochila cheia, o que não couber fica no móvel** e aparece escrito em
+cima dele como "ficou:". Dá para voltar, e voltar gasta dia. A alternativa —
+não deixar vasculhar de mochila cheia — travaria justamente o verbo que vale 5
+pontos na Alfa, e essa foi a razão de descartá-la.
+
+**Documento entra primeiro, sempre.** São duas passadas na lista: ninguém quer
+descobrir que deixou o documento para trás porque uma lata de comida entrou na
+frente.
+
+A mochila **tira da lista o que levou**, e a lista é o próprio `achados` do
+móvel — o mesmo objeto, não uma cópia. É assim que a regra acontece sem o móvel
+saber que existe mochila, e sem inventar uma tela de troca (que fica para a
+Beta, se a equipe quiser).
+
+### A pistola (`pistola.gd`)
+
+**09/09/2026.** O High Concept declara que *"o jogador luta ou esquiva dos
+zumbis"* — esta é a parte da luta. A esquiva não é mecânica: é andar evitando,
+que sempre deu para fazer porque o zumbi é mais lento que você.
+
+**Ela existe para comprar tempo para o vasculho**, e não para virar um jogo de
+tiro. Três regras a mantêm dentro da core mechanic em vez de competindo com
+ela:
+
+1. **Você não começa com ela.** A pistola está na **armaria da delegacia** — o
+   quarto mais fundo do lugar mais povoado do mapa, a 479 m de casa. É uma só, e
+   achar a arma é recompensa de vasculhar.
+2. **A munição vem do vasculho.** Sai da armaria, das caixas e das cômodas — 6
+   balas por achado, em 4 móveis do mapa. Atirar gasta o que você vasculhou.
+3. **O tiro chama a horda**, num raio de 1.800 px contra os 700 do chamado de um
+   zumbi que te enxergou. **O tiro resolve um problema e cria um maior** — é a
+   regra do PZ, e é o que faz a arma continuar sendo pressão sobre a mesma ação.
+   Errar o tiro é o pior resultado possível: gastou munição e chamou todo mundo.
+
+Ela mata de um tiro, e **parede corta o tiro** (é raycast). Não existe estado de
+ferido: o recurso caro é a munição, e um zumbi que aguentasse três tiros só
+multiplicaria o estrondo.
+
+**Arma não é loot, é equipamento** — e essa distinção não é detalhe. Pistola e
+munição não ocupam vaga na mochila (estão no cinto, não no saco) e **não se
+perdem no dia que deu errado**, ao contrário de todo o resto. O motivo é
+concreto: o mapa não repõe, e a pistola é uma só. Perdê-la seria beco sem saída
+sem aviso.
+
+O zumbi baleado **não renasce hoje**. Sem isso, o povoamento por proximidade
+reporia o que você acabou de matar dois segundos depois, para sempre — e atirar
+não serviria de nada.
+
+### Mexeu na pistola, na munição ou no loot da delegacia? Rode o `conferir_arma.tscn` (F6)
+
+Confere as seis coisas acima. Três delas quebrariam **sem dar erro nenhum**: o
+zumbi baleado renascendo, a arma sumindo no dia que deu errado, e o estrondo
+alcançando menos que o chamado de um zumbi — que tornaria a arma pura vantagem.
+
+Ele ensinou três coisas, e as três eram do teste:
+
+- **`queue_free()` não libera na hora.** Dentro do mesmo quadro o zumbi morto
+  continua `is_instance_valid`, e o teste acusava a pistola de não matar quando
+  ela matava. O certo é `is_queued_for_deletion()`.
+- **Zumbi criado e baleado no mesmo quadro não existe para a física.** O
+  servidor só conhece a posição nova no passo seguinte, então o teste posiciona
+  num quadro e atira três depois — o mesmo motivo do `conferir_zumbi`.
+- **A guarda da munição vivia só em quem chamava.** O teste chamou `_atirar()`
+  direto e a munição foi para negativo. Regra que vive só no chamador é regra
+  que um chamador novo esquece — agora ela mora dentro do `_atirar()`.
+
 ### O que ainda não tem
 
-**Fome e água.** São os dois campos que a HUD mostra como "—", e são o que
+**Fome e água** — só isso. São os dois campos que a HUD mostra como "—", e são o que
 sobrou de declarado e não construído. Não estavam nos cinco passos: o High
 Concept as lista como *variações de pressão sobre a mesma ação*, junto com o
 tempo e a escuridão, e essas duas já existem. Fome é a terceira, e o mais
 provável é que ela apareça consumindo o que a mochila trouxe — o que amarra ela
 no modo Casa, que é quem decide o consumo.
 
-A mochila **não tem limite de espaço**, e isso é decisão pendente e não
-esquecimento — ver as pendências no começo deste arquivo.
+
 
 Um detalhe de edição: os scripts não são `@tool`, então no editor os móveis
 aparecem só como o contorno da colisão, e o bairro só se vê rodando.
@@ -673,6 +763,7 @@ Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
 | `Travessia.DOCUMENTOS_PARA_A_CURA` | quantos documentos a pesquisa pede — 4, e é provisório |
 | `Travessia.a_cura_esta_pronta()` | a casa pergunta antes de oferecer terminar |
 | `Travessia.acabar_o_jogo()` / `recomecar()` | fim de partida e partida nova |
+| `Travessia.tem_pistola` / `municao` | equipamento: não ocupa vaga e não se perde |
 | `Travessia.entrar_em_casa()` | chamado pela porta, na rua |
 | `Travessia.sair_para_a_rua()` | chamado pela casa; incrementa o dia |
 

@@ -118,6 +118,10 @@ var _obstaculos: Array[Rect2] = []
 ## Os pontos de povoamento que ainda nao tem zumbi na arvore, e os que tem.
 var _pontos_de_zumbi: Array[Vector2] = []
 var _zumbis_vivos := {}
+## Os pontos cujo zumbi levou tiro hoje. Sem isto, o povoamento por
+## proximidade faria nascer outro no mesmo lugar dois segundos depois e atirar
+## nao serviria para nada. Zera com o dia, porque a cena da rua recarrega.
+var _pontos_limpos := {}
 
 var _navegacao: Node
 var _jogador: Node2D
@@ -325,6 +329,11 @@ func _povoar(construcao: Dictionary) -> void:
 	var quarto_do_documento := -1
 	if construcao.get("documento", false):
 		quarto_do_documento = mini(quartos.size(), vagas.size()) - 1
+	# A pistola vai no mesmo lugar, pelo mesmo motivo: e a armaria da delegacia,
+	# e ela guarda o prontuario e a arma.
+	var quarto_da_arma := -1
+	if construcao.get("arma", false):
+		quarto_da_arma = mini(quartos.size(), vagas.size()) - 1
 
 	for i in quartos.size():
 		if i >= vagas.size():
@@ -345,8 +354,9 @@ func _povoar(construcao: Dictionary) -> void:
 			# passagem a 78% da largura, entao movel nenhum passa de 50%.
 			var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
 			var com_documento := i == quarto_do_documento and j == 0
+			var com_arma := i == quarto_da_arma and j == 0
 			_criar_movel(tipos[j], Vector2(quarto.position.x + quarto.size.x * fracao, y),
-				com_documento)
+				com_documento, com_arma)
 
 ## A navegacao do zumbi, montada da lista de obstaculos. Fica num no proprio,
 ## no grupo "navegacao", que e como o zumbi acha ela.
@@ -392,8 +402,10 @@ func _povoar_em_volta() -> void:
 		var distancia := onde.distance_to(ponto)
 		var vivo: bool = _zumbis_vivos.has(i) and is_instance_valid(_zumbis_vivos[i])
 
+		if _pontos_limpos.has(i):
+			continue
 		if distancia <= RAIO_VIVO and not vivo:
-			_zumbis_vivos[i] = _criar_zumbi(ponto)
+			_zumbis_vivos[i] = _criar_zumbi(ponto, i)
 		elif distancia > RAIO_MORTO and vivo:
 			(_zumbis_vivos[i] as Node).queue_free()
 			_zumbis_vivos.erase(i)
@@ -437,10 +449,14 @@ func _um_lugar_livre_no_anel() -> Vector2:
 			return ultimo
 	return ultimo
 
-func _criar_zumbi(onde: Vector2) -> Node:
+## O indice e o ponto de povoamento de onde ele saiu, ou -1 para quem a noite
+## trouxe. E o que permite anotar que aquele ponto foi limpo a tiro.
+func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 	var zumbi := CENA_DO_ZUMBI.instantiate()
 	zumbi.position = onde
 	add_child(zumbi)
+	if indice >= 0:
+		zumbi.morreu.connect(_anotar_ponto_limpo.bind(indice))
 	# Cada zumbi guarda a lista de corpos que a linha de visao dele ignora, e
 	# ela tem os outros zumbis dentro. Chegou um novo, todas as listas estao
 	# velhas - e um zumbi fora da lista corta a visao de quem esta atras dele,
@@ -450,7 +466,8 @@ func _criar_zumbi(onde: Vector2) -> Node:
 			outro.esquecer_quem_ignorar()
 	return zumbi
 
-func _criar_movel(tipo: String, posicao: Vector2, com_documento := false) -> void:
+func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
+		com_arma := false) -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
 	var movel := CENA_DO_MOVEL.instantiate()
 	# Antes do add_child: o _ready() do vasculhavel monta as formas de colisao
@@ -465,7 +482,7 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false) -> voi
 	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
 	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
 	# outros. O indice tambem sai daqui, e e o nome do movel entre os dias.
-	movel.achados = _sortear_achados(tipo, com_documento)
+	movel.achados = _sortear_achados(tipo, com_documento, com_arma)
 	var indice := _moveis_gerados
 	movel.nasce_vazio = Travessia.moveis_vazios.has(indice)
 	if movel.nasce_vazio:
@@ -485,16 +502,24 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false) -> voi
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - ficha["tamanho"] / 2.0, ficha["tamanho"]))
 
+func _anotar_ponto_limpo(indice: int) -> void:
+	_pontos_limpos[indice] = true
+	_zumbis_vivos.erase(indice)
+
 func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], indice: int) -> void:
 	Travessia.moveis_vazios[indice] = true
 
 ## O que sai do movel. Cada tipo tem a sua tabela, e o documento entra so onde o
 ## mapa declarou que ha um.
-func _sortear_achados(tipo: String, com_documento: bool) -> Array[String]:
+func _sortear_achados(tipo: String, com_documento: bool, com_arma := false) -> Array[String]:
 	var achados: Array[String] = []
 	var tabela: Array = Construcao.CONTEUDO[tipo]
 
 	_moveis_gerados += 1
+	if com_arma:
+		# A unica pistola do mapa. Nao e sorteio: ou o jogador acha na armaria,
+		# ou nao acha nunca.
+		achados.append(Construcao.PISTOLA)
 	if com_documento:
 		# Qual documento, pela ordem em que os lugares aparecem no mapa: os seis
 		# sao seis, e cada um sai uma vez so.

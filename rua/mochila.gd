@@ -50,8 +50,30 @@ func _ready() -> void:
 ## quer descobrir que deixou o documento para tras porque uma lata de comida
 ## entrou na frente.
 func ao_vasculhar(_rotulo: String, achados: Array[String]) -> void:
+	_pegar_o_equipamento(achados)
 	_guardar_o_que_couber(achados, true)
 	_guardar_o_que_couber(achados, false)
+
+## Pistola e municao saem da lista antes de tudo e **nao vao para a mochila**:
+## sao equipamento, ficam no cinto, nao ocupam vaga e nao se perdem no dia que
+## deu errado. Ver o Travessia.tem_pistola.
+##
+## Passam por aqui e nao pelo cenario porque este e o arquivo que ja separa o
+## que e o que: quem sabe distinguir documento de comida sabe distinguir arma.
+func _pegar_o_equipamento(achados: Array[String]) -> void:
+	var i := 0
+	while i < achados.size():
+		match achados[i]:
+			Construcao.PISTOLA:
+				Travessia.tem_pistola = true
+				achados.remove_at(i)
+				guardou.emit(Construcao.PISTOLA, false)
+			Construcao.MUNICAO:
+				Travessia.municao += Construcao.MUNICAO_POR_ACHADO
+				achados.remove_at(i)
+				guardou.emit(Construcao.MUNICAO, false)
+			_:
+				i += 1
 
 func _guardar_o_que_couber(achados: Array[String], documentos_agora: bool) -> void:
 	var i := 0

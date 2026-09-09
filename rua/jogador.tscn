@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://rua/jogador.gd" id="1_jogador"]
+[ext_resource type="Script" path="res://rua/pistola.gd" id="2_pistola"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
 size = Vector2(28, 40)
@@ -16,3 +17,6 @@ polygon = PackedVector2Array(-14, -20, 14, -20, 14, 20, -14, 20)
 shape = SubResource("RectangleShape2D_corpo")
 
 [node name="Camera" type="Camera2D" parent="."]
+
+[node name="Pistola" type="Node2D" parent="."]
+script = ExtResource("2_pistola")

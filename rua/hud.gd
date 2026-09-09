@@ -89,7 +89,14 @@ func _linha_da_esquerda(jogador: Node) -> String:
 	if jogador != null and "vida" in jogador:
 		vida = "%d%%" % roundi(jogador.get("vida"))
 	# Alinhado com espaco em vez de tabulacao: fonte de fallback nao tem tab.
-	return "vida    %s\nfome    —\nágua    —" % vida
+	# A pistola so aparece depois de achada, na armaria da delegacia. Antes
+	# disso a linha nao existe, porque ela nao existe.
+	var arma := ""
+	if Travessia.tem_pistola:
+		arma = "\npistola %d" % Travessia.municao
+		if Travessia.municao == 0:
+			arma = "\npistola sem munição"
+	return "vida    %s\nfome    —\nágua    —%s" % [vida, arma]
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
 ## Some tudo se voce nao voltar pela porta do porao.
