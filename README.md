@@ -170,21 +170,51 @@ A figura está em **`design/mapa.png`**, e se regenera com F6 — ver
 | Lugar | Distância | A pé | O que tem |
 |---|---|---|---|
 | **bairro** | 56 m | 8 s | sua casa, 9 casas, mercadinho de esquina, 3 galpões — 41 móveis |
-| **sítio do norte** | 205 m | 29 s | casa de campo e galpão, no fim de uma estrada de terra |
-| **florestinha** | 213 m | 30 s | mata fechada; a única em que não se vê o outro lado |
-| **cidade** | 313 m | 45 s | **8 quadras, 46 prédios, 198 móveis** — a delegacia e o mercado estão dentro dela |
+| **sítio do norte** | 207 m | 30 s | casa de campo e galpão, no fim de uma estrada de terra |
+| **cidade** | 323 m | 46 s | **8 quadras, 54 prédios, 234 móveis** — a delegacia e o mercado estão dentro dela |
 | **lavoura** | 359 m | 51 s | seis talhões de terra arada e um galpão de fazenda |
-| **posto** | 521 m | 74 s | pista aberta, 2 bombas de combustível, loja de conveniência |
+| **posto** | 526 m | 75 s | pista aberta, 2 bombas de combustível, loja de conveniência |
 | **sítio do leste** | 579 m | 83 s | outra casa de campo, do outro lado da mata |
 | **mansão murada** | 757 m | 108 s | condomínio abandonado com **um portão só**, do outro lado do rio |
 
-Mais quatro matas de borda, o **rio** cortando o mapa de cima a baixo e a
-**ponte** onde a rodovia o cruza — o único atravessadouro.
+Mais quatro matas de borda — e a **mata do sul** é a fechada, a única em que não
+se vê o outro lado. Era um lugar próprio chamado "florestinha" até 09/09 à
+noite, e virou redundante quando o mapa ganhou quatro matas: agora é uma
+densidade, não um lugar.
+
+E o **rio** cortando o mapa de cima a baixo, com a **ponte** onde a rodovia o
+cruza — o único atravessadouro.
+
+#### As estradas são tortas, e isso saiu de graça
+
+Até 09/09 à noite **o mapa inteiro passava por uma linha reta só**, de ponta a
+ponta — e cidade não é assim. Estrada de verdade contorna, sobe e desce.
+
+Dava para consertar barato por uma razão: **estrada não tem colisão.** É chão
+pintado, então o custo de fazer curva é desenho, e não física nem navegação. Uma
+polilinha vira uma fila de quadrados sobrepostos (`Mapa._faixa`), com 55% de
+sobreposição para a faixa ficar contínua em qualquer ângulo, sem serrilha e sem
+buraco na curva.
+
+O que ficou:
+
+- **o trecho reto continua reto**, e é onde ficam o bairro e a cidade — cidade
+  nasce em trecho reto de estrada, e a grade tem que se alinhar com ele;
+- a rodovia **chega do noroeste em curva**, e depois do posto faz uma lombada
+  até a ponte e sobe para o nordeste do outro lado;
+- o que eram dois acessos verticais em linha reta virou **uma estrada de terra
+  que serpenteia o norte inteiro**, ligando os dois sítios — e é ela que faz o
+  norte deixar de ser campo com nada;
+- as **quadras da cidade têm larguras diferentes** (65, 85, 55 e 75 m). Grade
+  com quadra do mesmo tamanho em toda parte lê como planilha; e o número de
+  lotes por quadra sai da largura dela, então mexer numa largura não quebra
+  nada.
 
 #### A cidade é uma grade, e a grade é uma regra
 
-Oito quadras de 65 × 60 m, com rua de 10 m entre elas e prédio virado para a rua
-em cada vaga de lote. **A rua do meio da grade é a própria rodovia.**
+Oito quadras de 60 m de altura e largura variando de 55 a 85 m, com rua de 10 m
+entre elas e prédio virado para a rua em cada vaga de lote. **A rua do meio da
+grade é a própria rodovia.**
 
 A grade sai de constantes e não de retângulo escrito à mão: acrescentar uma
 coluna de quadra é mudar um número, e todo prédio nasce virado para a rua certa
@@ -193,8 +223,11 @@ só: **a fileira que dá na rodovia é comércio, o resto é casa.** É regra, n
 lista — continua valendo se a cidade crescer.
 
 A **delegacia** e o **mercado** moram dentro da cidade, e não soltos no campo.
-Os dois são mais largos que uma vaga, então comem a vaga seguinte — é por isso
-que a cidade tem 46 prédios e não 48.
+Os dois são mais largos que uma vaga, então comem a vaga seguinte.
+
+Os prédios especiais são endereçados pelo **x da quadra**, e não pelo índice da
+coluna: com índice, mexer na largura de uma quadra movia o prédio especial para
+outra sem avisar.
 
 #### Os tamanhos são de gente
 

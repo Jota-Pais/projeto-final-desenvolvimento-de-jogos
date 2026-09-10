@@ -150,26 +150,37 @@ static func montar(lugar: Dictionary) -> Dictionary:
 ## Largura de rua da cidade: 10 m. Bate com a rodovia de proposito, porque a rua
 ## do meio da grade **e** a rodovia.
 const CIDADE_RUA := 400.0
-## Uma quadra: 65 x 60 m.
+## A altura de uma quadra: 60 m. A largura varia por coluna - ver
+## CIDADE_LARGURAS.
 const CIDADE_QUADRA := Vector2(2600.0, 2400.0)
-const CIDADE_COLUNAS := 4
+
+## A largura de cada coluna de quadra. **Nao sao iguais de proposito:** grade
+## com quadra do mesmo tamanho em toda parte le como planilha, e nao como
+## cidade. Rosewood tem quadra curta no centro e comprida na borda, e o numero
+## de lotes por quadra sai da largura dela.
+const CIDADE_LARGURAS := [2600.0, 3400.0, 2200.0, 3000.0]
 const CIDADE_LINHAS := 2
-## Vagas de lote por fileira, e o passo entre elas. Com predio de 520 e passo de
-## 800 sobram 7 m entre um lote e outro, que e o que faz parecer lote.
-const CIDADE_VAGAS := 3
+## O passo entre uma vaga de lote e a seguinte. Com predio de 520 e passo de 800
+## sobram 7 m entre um lote e outro, que e o que faz parecer lote. Quantas vagas
+## cabem sai da largura da quadra.
 const CIDADE_PASSO := 800.0
 ## Recuo da rua ate a fachada. E o que sobra de quintal na frente.
 const CIDADE_RECUO := 220.0
 
-## Os predios que nao sao casa nem loja, em (coluna, fileira, linha, vaga).
+## Os predios que nao sao casa nem loja, na chave `x da quadra, linha, fileira,
+## vaga`.
+##
+## A chave usa o **x da quadra** e nao o indice da coluna porque as quadras tem
+## larguras diferentes: com indice, mexer numa largura movia o predio especial
+## para outra quadra sem avisar.
 ##
 ## A delegacia e o mercado moram **dentro da cidade**, e nao soltos no campo:
-## era o que a referencia mostrava e o que o mapa nao tinha. Os dois sao mais
-## largos que uma vaga, entao comem a vaga seguinte - e por isso a cidade tem
-## 46 predios e nao 48.
+## era o que a referencia mostrava e o que o mapa nao tinha. A delegacia fica na
+## quadra mais larga, virada para a rodovia; o mercado na fileira comercial da
+## quadra seguinte. Os dois sao mais largos que uma vaga e comem a seguinte.
 const CIDADE_ESPECIAIS := {
-	"1,1,0,0": "delegacia",
-	"2,0,1,0": "mercado",
+	"14600,1,0,0": "delegacia",
+	"18400,0,1,0": "mercado",
 }
 
 static func _somar(construcao: Dictionary, origem: Vector2) -> Dictionary:
@@ -190,7 +201,10 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 	for cerca in BAIRRO_CERCAS:
 		pecas["cercas"].append(Rect2((cerca as Rect2).position + origem, (cerca as Rect2).size))
 	for bosque in BAIRRO_BOSQUES:
-		pecas["bosques"].append({ "rect": Rect2((bosque as Rect2).position + origem, (bosque as Rect2).size), "densidade": 0.35 })
+		pecas["bosques"].append({
+			"rect": Rect2((bosque as Rect2).position + origem, (bosque as Rect2).size),
+			"densidade": 0.35,
+		})
 	for movel in BAIRRO_MOVEIS_DE_RUA:
 		pecas["moveis_de_rua"].append({ "tipo": movel["tipo"], "pos": movel["pos"] + origem })
 	for onde in BAIRRO_ZUMBIS:
@@ -209,61 +223,64 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 ## continua valendo se a cidade crescer.
 static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	var r: Rect2 = lugar["rect"]
-	var passo := CIDADE_QUADRA + Vector2.ONE * CIDADE_RUA
 
-	# As ruas: uma a mais que o numero de quadras em cada eixo, porque ha rua
-	# nas duas bordas tambem. A do meio coincide com a rodovia, e desenhar duas
-	# vezes o mesmo asfalto nao custa nada.
-	for coluna in CIDADE_COLUNAS + 1:
-		pecas["ruas"].append(Rect2(
-			r.position.x + float(coluna) * passo.x, r.position.y,
-			CIDADE_RUA, r.size.y))
+	# As ruas verticais: uma a mais que o numero de quadras, porque ha rua nas
+	# duas bordas tambem. A posicao de cada uma sai da soma das larguras a
+	# esquerda dela - e por isso que quadra de largura diferente nao quebra nada.
+	var x := r.position.x
+	for coluna in CIDADE_LARGURAS.size() + 1:
+		pecas["ruas"].append(Rect2(x, r.position.y, CIDADE_RUA, r.size.y))
+		if coluna < CIDADE_LARGURAS.size():
+			x += CIDADE_RUA + CIDADE_LARGURAS[coluna]
+
 	for linha in CIDADE_LINHAS + 1:
 		pecas["ruas"].append(Rect2(
-			r.position.x, r.position.y + float(linha) * passo.y,
+			r.position.x, r.position.y + float(linha) * (CIDADE_QUADRA.y + CIDADE_RUA),
 			r.size.x, CIDADE_RUA))
 
-	for coluna in CIDADE_COLUNAS:
+	x = r.position.x + CIDADE_RUA
+	for coluna in CIDADE_LARGURAS.size():
+		var largura: float = CIDADE_LARGURAS[coluna]
 		for linha in CIDADE_LINHAS:
-			_uma_quadra(r, coluna, linha, pecas)
-
-	# Zumbi na rua, nas esquinas do meio: a cidade e o lugar mais povoado do
-	# mapa depois da delegacia, e e onde o chamado de horda acha vizinho.
-	for coluna in CIDADE_COLUNAS:
-		var x := r.position.x + CIDADE_RUA + float(coluna) * passo.x + CIDADE_QUADRA.x * 0.5
-		pecas["zumbis"].append(Vector2(x, r.position.y + CIDADE_RUA * 0.5))
-		pecas["zumbis"].append(Vector2(x, r.end.y - CIDADE_RUA * 0.5))
+			_uma_quadra(r, x, largura, linha, pecas)
+		# Zumbi na rua, nas esquinas de cima e de baixo da quadra.
+		pecas["zumbis"].append(Vector2(x + largura * 0.5, r.position.y + CIDADE_RUA * 0.5))
+		pecas["zumbis"].append(Vector2(x + largura * 0.5, r.end.y - CIDADE_RUA * 0.5))
+		x += largura + CIDADE_RUA
 
 ## Uma quadra: duas fileiras de lote, uma virada para a rua de cima e outra para
 ## a de baixo, com o quintal se encontrando no meio.
-static func _uma_quadra(cidade: Rect2, coluna: int, linha: int, pecas: Dictionary) -> void:
-	var passo := CIDADE_QUADRA + Vector2.ONE * CIDADE_RUA
-	var canto := cidade.position + Vector2.ONE * CIDADE_RUA + Vector2(
-		float(coluna) * passo.x, float(linha) * passo.y)
+##
+## **Quantos lotes cabem sai da largura da quadra**, e nao de uma constante: a
+## quadra de 3.400 tem quatro e a de 2.200 tem tres. E o que faz a grade nao
+## parecer planilha.
+static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
+		linha: int, pecas: Dictionary) -> void:
+	var canto := Vector2(esquerda,
+		cidade.position.y + CIDADE_RUA + float(linha) * (CIDADE_QUADRA.y + CIDADE_RUA))
+	var casa: Vector2 = Construcao.TAMANHOS["casa"]
+	var vagas := maxi(1, int(floor((largura - casa.x) / CIDADE_PASSO)) + 1)
 
 	# Qual fileira da na rodovia: a de baixo da primeira linha de quadras, e a
 	# de cima da segunda. E nelas que fica o comercio.
 	var fileira_da_rodovia := 1 if linha == 0 else 0
 
 	var vaga := 0
-	while vaga < CIDADE_VAGAS:
+	while vaga < vagas:
 		for fileira in 2:
-			var chave := "%d,%d,%d,%d" % [coluna, linha, fileira, vaga]
+			var chave := "%d,%d,%d,%d" % [int(esquerda), linha, fileira, vaga]
 			var tipo: String = CIDADE_ESPECIAIS.get(chave,
 				"comercio" if fileira == fileira_da_rodovia else "casa")
 			var tamanho: Vector2 = Construcao.TAMANHOS[tipo]
 
-			# Centrado na vaga, para predio largo nao encostar no vizinho.
-			var largura_das_vagas := float(CIDADE_VAGAS - 1) * CIDADE_PASSO
-			var margem := (CIDADE_QUADRA.x - largura_das_vagas
-				- Construcao.TAMANHOS["casa"].x) * 0.5
-			var x := canto.x + margem + float(vaga) * CIDADE_PASSO
-			var y := canto.y + CIDADE_RECUO
+			var margem := (largura - float(vagas - 1) * CIDADE_PASSO - casa.x) * 0.5
+			var px := canto.x + margem + float(vaga) * CIDADE_PASSO
+			var py := canto.y + CIDADE_RECUO
 			if fileira == 1:
-				y = canto.y + CIDADE_QUADRA.y - CIDADE_RECUO - tamanho.y
+				py = canto.y + CIDADE_QUADRA.y - CIDADE_RECUO - tamanho.y
 
 			var predio := {
-				"rect": Rect2(x, y, tamanho.x, tamanho.y),
+				"rect": Rect2(px, py, tamanho.x, tamanho.y),
 				"porta": "norte" if fileira == 0 else "sul",
 				"tipo": tipo,
 			}
@@ -281,13 +298,15 @@ static func _uma_quadra(cidade: Rect2, coluna: int, linha: int, pecas: Dictionar
 		# Predio mais largo que uma vaga come a vaga seguinte.
 		var mais_largo := 1
 		for fileira in 2:
-			var chave := "%d,%d,%d,%d" % [coluna, linha, fileira, vaga]
+			var chave := "%d,%d,%d,%d" % [int(esquerda), linha, fileira, vaga]
 			if CIDADE_ESPECIAIS.has(chave):
 				var tamanho: Vector2 = Construcao.TAMANHOS[CIDADE_ESPECIAIS[chave]]
 				mais_largo = maxi(mais_largo, int(ceil(tamanho.x / CIDADE_PASSO)))
 		vaga += mais_largo
 
-	pecas["zumbis"].append(canto + CIDADE_QUADRA * 0.5)
+	pecas["zumbis"].append(canto + Vector2(largura, CIDADE_QUADRA.y) * 0.5)
+
+
 
 ## O que cada tipo de predio traz junto: patio, carro na frente, lata na
 ## calcada. E o que separa "predio numa grade" de lugar.

@@ -88,7 +88,12 @@ func _salvar() -> void:
 	var imagem := get_viewport().get_texture().get_image()
 	var erro := imagem.save_png(ARQUIVO)
 	if erro != OK:
-		push_error("nao deu para salvar %s (erro %d)" % [ARQUIVO, erro])
+		# Uma segunda tentativa: rodando o retrato logo depois de outra rodada
+		# do Godot, o arquivo as vezes ainda esta preso pelo processo anterior e
+		# o save falha com "Can't save PNG at path". Na segunda vez passa.
+		erro = imagem.save_png(ARQUIVO)
+	if erro != OK:
+		push_error("nao deu para salvar %s (erro %d) - tente de novo" % [ARQUIVO, erro])
 	else:
 		print("mapa salvo em %s" % ProjectSettings.globalize_path(ARQUIVO))
 		print("%d x %d px, para um mundo de %.2f km x %.2f km" % [

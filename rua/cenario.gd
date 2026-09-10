@@ -90,6 +90,9 @@ const COR_CONCRETO := Color("53565a")
 ## Terra arada. E o marrom dos talhoes que no PZ faz o campo em volta da cidade
 ## parecer campo de alguem, e nao grama infinita.
 const COR_LAVOURA := Color("4a3f31")
+## Estrada de terra: mais clara e mais amarelada que o asfalto, para se
+## distinguir dele de longe no retrato do mapa.
+const COR_TERRA := Color("55503f")
 
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
@@ -224,6 +227,12 @@ func _draw() -> void:
 	for piso in mundo["piso"]:
 		draw_rect(piso, COR_CONCRETO)
 
+	# As estradas de terra por baixo do asfalto: onde uma cruza a outra, quem
+	# manda e o asfalto.
+	for terra in mundo["terra"]:
+		draw_rect(terra, COR_TERRA)
+	for estrada in mundo["estradas"]:
+		draw_rect(estrada, COR_ASFALTO)
 	for rua in mundo["ruas"]:
 		draw_rect(rua, COR_ASFALTO)
 	_desenhar_sujeira()
@@ -643,6 +652,14 @@ func _e_terreno(area: Rect2) -> bool:
 	var mundo := Mapa.mundo()
 	for rua in mundo["ruas"]:
 		if (rua as Rect2).grow(Mapa.CALCADA).intersects(area):
+			return false
+	# Estrada torta tambem: arvore no meio dela fecha o unico caminho para o
+	# sitio, e ninguem descobre sem rodar o conferir_mapa.
+	for estrada in mundo["estradas"]:
+		if (estrada as Rect2).intersects(area):
+			return false
+	for terra in mundo["terra"]:
+		if (terra as Rect2).intersects(area):
 			return false
 	for piso in mundo["piso"]:
 		if (piso as Rect2).intersects(area):
