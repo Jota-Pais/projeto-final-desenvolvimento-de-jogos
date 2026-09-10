@@ -42,6 +42,37 @@ const VAO := 100.0
 const ENTRADA_DE_CARRO := 180.0
 const ENTRADA_DE_CARRO_COMPRIMENTO := 220.0
 
+## O tamanho de cada tipo de predio, **em metros de gente** (40 px = 1 m).
+##
+## Existe desde 09/09/2026 a noite, porque os predios grandes estavam absurdos:
+## o mercado tinha 105 x 55 m e a delegacia 90 x 65 m - um hipermercado e um
+## forum, e nao um mercadinho e uma delegacia de cidade pequena. Cada um era um
+## numero escrito na mao dentro do gerador do lugar, sem ninguem comparando.
+##
+## | tipo | px | metros |
+## |---|---|---|
+## | casa | 520 x 420 | 13 x 10,5 |
+## | comercio | 560 x 440 | 14 x 11 |
+## | galpao | 420 x 340 | 10,5 x 8,5 |
+## | posto | 720 x 480 | 18 x 12 |
+## | mercado | 1360 x 660 | 34 x 16,5 |
+## | delegacia | 1040 x 700 | 26 x 17,5 |
+## | mansao | 880 x 640 | 22 x 16 |
+## | garagem | 460 x 380 | 11,5 x 9,5 |
+##
+## As casas do bairro nao saem daqui: sao as de 650 x 520 tunadas a mao em
+## 08/09, e mexer nelas seria re-errar o que o conferir ja validou.
+const TAMANHOS := {
+	"casa": Vector2(520.0, 420.0),
+	"comercio": Vector2(560.0, 440.0),
+	"galpao": Vector2(420.0, 340.0),
+	"posto": Vector2(720.0, 480.0),
+	"mercado": Vector2(1360.0, 660.0),
+	"delegacia": Vector2(1040.0, 700.0),
+	"mansao": Vector2(880.0, 640.0),
+	"garagem": Vector2(460.0, 380.0),
+}
+
 ## Quantos quartos cada tipo de construcao tem. Tres quartos ganham divisoria
 ## interna; um quarto e salao unico.
 const QUARTOS_POR_TIPO := {

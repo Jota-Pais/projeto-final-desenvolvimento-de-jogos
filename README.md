@@ -147,39 +147,66 @@ Já aconteceu — a explicação do `physical_keycode` e a do autoload `Travessi
 moravam lá e sumiram no primeiro save. O que precisar ser dito sobre aquele
 arquivo se diz aqui.
 
-### O mapa tem 1,44 km × 900 m, e a forma é a do Project Zomboid
+### O mapa tem 1 km × 550 m, e a forma é a de Rosewood
 
-**Refeito em 09/09/2026.** Até então o mundo era o bairro sozinho: 5.760 × 3.600
-px, ou **144 × 90 m** — uma quadra e meia, atravessável em 20 segundos. Agora
-são **57.600 × 36.000 px: 1,44 km × 900 m**, cem vezes a área. O bairro inteiro
-de antes cabe num canto.
+**Refeito duas vezes em 09/09/2026.** Era o bairro sozinho — 144 × 90 m, uma
+quadra e meia. Virou 1,44 km × 900 m de manhã, e **encolheu para 1 km × 550 m à
+noite**, quando ficou claro que o problema não era tamanho: era campo vazio
+demais para caminhada demais. **Mapa grande não é mapa bom** — o que faz
+distância valer algo é ter coisa nas duas pontas.
 
 Referência de escala: **40 px = 1 metro**, porque o jogador tem 40 px de altura
 e é ele a régua de tudo (`rua/construcao.gd` traz a tabela em corpos).
 
-A forma **não é uma grade de quadras** — é o que o PZ faz: uma **rodovia
-leste-oeste** com um punhado de lugares pendurados nela e mata no meio.
-Muldraugh é exatamente isso, esticada ao longo da US-31W. O que faz distância
-existir é o vazio entre os lugares, não o tamanho do retângulo.
+A forma é a de **Rosewood, no Project Zomboid**: uma **rodovia leste-oeste** com
+um **núcleo denso de quadras** no meio, casas de campo penduradas em estrada de
+terra em volta, lavoura ao sul e mata nas bordas. O que a referência mostrou e
+que estava faltando aqui era exatamente a densidade — dezenas de prédios
+pequenos encostados na calçada, e não lugares isolados soltos no campo.
 
-De oeste para leste, com a distância a pé desde a porta do seu porão:
+A figura está em **`design/mapa.png`**, e se regenera com F6 — ver
+*Quer ver o mapa?* abaixo.
 
 | Lugar | Distância | A pé | O que tem |
 |---|---|---|---|
 | **bairro** | 56 m | 8 s | sua casa, 9 casas, mercadinho de esquina, 3 galpões — 41 móveis |
-| **florestinha** | 208 m | 30 s | mata fechada; a única em que não se vê o outro lado |
-| **posto** | 280 m | 40 s | pista aberta, 4 bombas de combustível, loja de conveniência |
-| **delegacia** | 460 m | 66 s | pátio, 3 salas, e a **armaria** no fundo — o móvel mais caro do mapa |
-| **mercado** | 631 m | 90 s | salão com fileira de prateleira e geladeira, estacionamento |
-| **mansão murada** | 1.070 m | 153 s | condomínio abandonado com **um portão só**, do outro lado do rio |
+| **sítio do norte** | 205 m | 29 s | casa de campo e galpão, no fim de uma estrada de terra |
+| **florestinha** | 213 m | 30 s | mata fechada; a única em que não se vê o outro lado |
+| **cidade** | 313 m | 45 s | **8 quadras, 46 prédios, 198 móveis** — a delegacia e o mercado estão dentro dela |
+| **lavoura** | 359 m | 51 s | seis talhões de terra arada e um galpão de fazenda |
+| **posto** | 521 m | 74 s | pista aberta, 2 bombas de combustível, loja de conveniência |
+| **sítio do leste** | 579 m | 83 s | outra casa de campo, do outro lado da mata |
+| **mansão murada** | 757 m | 108 s | condomínio abandonado com **um portão só**, do outro lado do rio |
 
 Mais quatro matas de borda, o **rio** cortando o mapa de cima a baixo e a
-**ponte** onde a rodovia o cruza — o único atravessadouro. A mansão fica atrás
-dele, e é o lugar mais longe: ida e volta são 306 s de um dia de 420.
+**ponte** onde a rodovia o cruza — o único atravessadouro.
 
-Onde cada coisa fica está no **`mapa.gd`**; do que cada lugar é feito está no
-**`lugares.gd`**; como uma construção qualquer se desenha por dentro está no
-**`construcao.gd`** (que era o `bairro.gd` até 09/09, quando era o mapa todo).
+#### A cidade é uma grade, e a grade é uma regra
+
+Oito quadras de 65 × 60 m, com rua de 10 m entre elas e prédio virado para a rua
+em cada vaga de lote. **A rua do meio da grade é a própria rodovia.**
+
+A grade sai de constantes e não de retângulo escrito à mão: acrescentar uma
+coluna de quadra é mudar um número, e todo prédio nasce virado para a rua certa
+com recuo de calçada. E a regra que dá o desenho de rua principal do PZ é uma
+só: **a fileira que dá na rodovia é comércio, o resto é casa.** É regra, não
+lista — continua valendo se a cidade crescer.
+
+A **delegacia** e o **mercado** moram dentro da cidade, e não soltos no campo.
+Os dois são mais largos que uma vaga, então comem a vaga seguinte — é por isso
+que a cidade tem 46 prédios e não 48.
+
+#### Os tamanhos são de gente
+
+Os prédios grandes estavam absurdos: **o mercado tinha 105 × 55 m e a delegacia
+90 × 65 m** — um hipermercado e um fórum, não um mercadinho e uma delegacia de
+cidade pequena. Cada um era um número escrito à mão dentro do gerador do lugar,
+sem ninguém comparando.
+
+Agora saem da tabela `TAMANHOS` do `construcao.gd`, em metros de gente: casa
+13 × 10,5, comércio 14 × 11, delegacia 26 × 17,5, mercado 34 × 16,5, posto
+18 × 12, mansão 22 × 16. As casas do bairro não saem daí — são as de 08/09,
+tunadas à mão, e mexer nelas seria re-errar o que o conferir já validou.
 
 ### Um documento por lugar, e é isso que faz o mapa grande valer algo
 
@@ -211,6 +238,29 @@ seriam cenário bonito sem função nenhuma.
 
 **O que não foi copiado é a câmera.** PZ é isométrico; o nosso High Concept
 declara top-down. Foi copiada a planta, não a projeção.
+
+### Três coisas que a densidade quebrou, e nenhuma dava erro
+
+O mapa denso de 09/09 à noite acusou três problemas que já existiam e nunca
+tinham aparecido:
+
+- **O jogador nascia fora da própria casa.** A posição dele e da porta do porão
+  estavam escritas à mão no `rua.tscn`; quando o bairro mudou de lugar no mapa,
+  ele passou a acordar no meio do campo, a 89 m de casa. Não dá erro nenhum — só
+  aparece no lugar errado. Agora saem do `Mapa.onde_o_jogador_nasce()`, e é o
+  cenário que os posiciona.
+- **Os móveis se empilhavam em salão sem divisória.** A conta de posição era a
+  mesma dos prédios de três quartos, e no mercado punha **seis móveis com 66 px
+  entre os centros, com prateleira de 156 de largura** — um dentro do outro. O
+  `conferir_mapa` não pegava, porque móvel dentro de móvel continua alcançável
+  de fora. Salão agora espalha pela largura toda, com folga.
+- **A delegacia fazia zumbi nascer dentro da parede.** O zumbi ia para o centro
+  geométrico do prédio, e num prédio de três quartos a divisória interna passa
+  quase no meio. Agora vai para o centro da sala.
+
+E duas conferências mediam coordenada do bairro pequeno: a da horda punha o
+jogador dentro da mata do oeste, onde árvore corta a linha de visão, e acusava o
+zumbi de não ver. Coordenada escrita à mão em teste envelhece igual à do jogo.
 
 ### O que não escala, e como está resolvido
 
@@ -271,8 +321,9 @@ móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
   mapa
 - `mapa.gd` — o mundo: tamanho, rodovia, rio, ponte, vias de acesso e a lista
   de lugares. **Fonte única do mapa**
-- `lugares.gd` — um gerador por tipo de lugar. É onde a variedade mora, e onde
-  se acrescenta lugar novo
+- `lugares.gd` — um gerador por tipo de lugar: bairro, cidade, posto, mansão,
+  sítio, lavoura e floresta. É onde a variedade mora, e onde se acrescenta
+  lugar novo
 - `construcao.gd` — as regras de uma construção qualquer (parede, vão de porta,
   divisória, quarto) e as tabelas de loot. Era o `bairro.gd`
 - `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,

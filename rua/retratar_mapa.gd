@@ -22,6 +22,11 @@ const CENA_DA_RUA := preload("res://rua/rua.tscn")
 
 ## Onde o PNG e salvo, dentro do projeto. Fica junto dos outros documentos de
 ## design de proposito - e um deles.
+##
+## O `design/` tem um **`.gdignore`**, e ele nao e opcional: sem isso o Godot
+## importa o PNG como textura, cria um `.import` do lado, e a partir da **o
+## proximo save falha** com "Can't save PNG at path". Nada na pasta design e
+## usado pelo jogo, entao ignorar a pasta inteira e o certo de qualquer jeito.
 const ARQUIVO := "res://design/mapa.png"
 
 ## Folga em volta do mundo na moldura, para o mapa nao ficar encostado na borda.

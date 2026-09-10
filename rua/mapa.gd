@@ -7,79 +7,93 @@
 ## ## A escala, e por que ela e essa
 ##
 ## **40 px = 1 metro** - o jogador tem 40 px de altura. O mundo tem
-## 57.600 x 36.000 px, ou seja **1,44 km x 900 m**.
+## 40.000 x 26.000 px, ou seja **1 km x 650 m**.
 ##
-## Ate 09/09/2026 o mapa era o bairro sozinho: 5.760 x 3.600, ou 144 x 90 m -
-## uma quadra e meia, atravessavel em 20 segundos. Agora o bairro e 1/100 da
-## area, e atravessar o mapa a pe leva 206 s, mais do que um dia inteiro de luz
-## tinha. **Foi por isso que o dia subiu de 180 para 420 s**: ate o carro
-## existir, o mapa tem que ser andavel.
+## Ele ja foi de 144 x 90 m (o bairro sozinho, ate 09/09/2026) e de 1,44 km x
+## 900 m (a primeira versao do mapa grande, no mesmo dia). **Encolheu para 1 km
+## x 650 m em 09/09 a noite**, e por um motivo: era campo vazio demais para
+## caminhada demais. Mapa grande nao e mapa bom - o que faz distancia valer algo
+## e ter coisa nas duas pontas.
 ##
-## ## A forma do mapa e a do Project Zomboid
+## ## A forma e a de Rosewood, no Project Zomboid
 ##
-## Nao e uma grade de quadras: e uma **rodovia leste-oeste** com um punhado de
-## lugares pendurados nela, e mata no meio. Muldraugh e exatamente isso, esticada
-## ao longo da US-31W. O que faz distancia existir e o vazio entre os lugares.
+## O que a referencia mostra e o que faltava aqui: **um nucleo denso com grade de
+## ruas**, com dezenas de predios pequenos encostados na calcada, e campo em
+## volta. Nao lugares isolados pendurados numa rodovia.
 ##
-## De oeste para leste: mata, o **bairro** (onde fica a sua casa), o **posto**,
-## a **delegacia** afastada da pista, o **mercado**, a mata central, o **rio** -
-## que corta o mapa de cima a baixo e so se cruza pela **ponte** - e, do outro
-## lado, a **mansao murada**. Mais mata nas bordas.
+## De oeste para leste: mata, o **bairro** (onde fica a sua casa), a **cidade** -
+## oito quadras, a delegacia e o mercado dentro dela -, o **posto** na beira da
+## pista, a **lavoura**, o **rio** que corta o mapa e so se cruza pela **ponte**,
+## e a **mansao murada** do outro lado. Mata nas bordas.
 ##
-## O rio e de proposito: ele parte o mapa em dois e a ponte e o unico
-## atravessadouro. A mansao fica atras dele, e e o lugar mais longe do mapa.
+## ## Os tamanhos sao de gente
+##
+## Em 09/09 a noite todo predio grande foi remedido, porque estavam absurdos: o
+## mercado tinha 105 x 55 m e a delegacia 90 x 65 m - um hipermercado e um forum,
+## nao um mercadinho e uma delegacia de cidade pequena. Agora saem da tabela
+## TAMANHOS do construcao.gd, em metros de gente.
 ##
 ## ## Um documento por lugar
 ##
-## Cada um dos seis lugares com predio guarda **um documento**, sempre no quarto
-## mais fundo. Nao e sorteio: os seis documentos que existem estao em seis
-## lugares diferentes, dois deles no bairro e quatro exigindo viagem. E o que
-## faz a variedade do mapa valer algo mecanicamente, e nao so visualmente.
+## Os seis documentos que existem estao em seis predios declarados - dois no
+## bairro, dois na cidade, um no posto e um na mansao. Nao e sorteio, e e o que
+## faz a variedade do mapa valer algo mecanicamente e nao so visualmente.
 
 const Lugares := preload("res://rua/lugares.gd")
 
-const MUNDO := Rect2(0.0, 0.0, 57600.0, 36000.0)
+const MUNDO := Rect2(0.0, 0.0, 40000.0, 22000.0)
 
-## A rodovia leste-oeste, que e a espinha do mapa. Tem a mesma largura da rua
-## principal que o bairro sempre teve, e no trecho do bairro **e** ela.
-const RODOVIA := Rect2(0.0, 17100.0, 57600.0, 400.0)
+## A rodovia leste-oeste, que e a espinha do mapa. No trecho do bairro e a rua
+## principal dele, e no trecho da cidade e a rua do meio da grade.
+const RODOVIA := Rect2(0.0, 10200.0, 40000.0, 400.0)
 
 ## O rio, de cima a baixo. Agua e solida aqui - nao se nada.
-const RIO := Rect2(38400.0, 0.0, 2400.0, 36000.0)
+const RIO := Rect2(30000.0, 0.0, 1600.0, 22000.0)
 
 ## A ponte, onde a rodovia cruza o rio. Um pouco mais alta que o asfalto, para
 ## sobrar guarda-corpo dos dois lados.
-const PONTE := Rect2(38400.0, 16800.0, 2400.0, 1000.0)
+const PONTE := Rect2(30000.0, 9980.0, 1600.0, 840.0)
 
-## Onde cada lugar fica. A ordem nao importa; os retangulos nao se encostam de
-## proposito - o que sobra entre eles e grama, e e ela que faz a caminhada.
+## Onde cada lugar fica.
+##
+## A cidade e alinhada com a rodovia de proposito: a rua do meio da grade **e** a
+## rodovia (7.400 + 400 de rua + 2.400 de quadra = 10.200). Mexer na altura da
+## cidade sem mexer nisso descola a grade da estrada, e o conferir_mapa acusa.
 const LUGARES := [
-	{ "nome": "mata do oeste", "tipo": "floresta", "rect": Rect2(0.0, 0.0, 5600.0, 36000.0) },
-	# A florestinha: pequena e **fechada**, entre o bairro e o posto, do lado sul
-	# da rodovia. As outras matas sao campo com arvore espalhada; esta e a unica
-	# em que nao se ve o outro lado, e e o que faz atalho pela mata ser aposta.
+	{ "nome": "mata do oeste", "tipo": "floresta", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0) },
+	{ "nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 8580.0, 5760.0, 3600.0) },
+	# A florestinha: pequena e **fechada**. As outras matas sao campo com arvore
+	# espalhada; esta e a unica em que nao se ve o outro lado.
 	{
 		"nome": "florestinha", "tipo": "floresta", "densidade": 1.0,
-		"rect": Rect2(12200.0, 19400.0, 3400.0, 2900.0),
+		"rect": Rect2(9600.0, 14780.0, 2600.0, 2200.0),
 	},
-	{ "nome": "bairro", "tipo": "bairro", "rect": Rect2(6000.0, 15480.0, 5760.0, 3600.0) },
-	{ "nome": "posto", "tipo": "posto", "rect": Rect2(15600.0, 17500.0, 4200.0, 2600.0) },
-	{ "nome": "delegacia", "tipo": "delegacia", "rect": Rect2(22000.0, 12600.0, 6000.0, 4300.0) },
-	{ "nome": "mercado", "tipo": "mercado", "rect": Rect2(29000.0, 17500.0, 5600.0, 3800.0) },
-	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(6400.0, 0.0, 30000.0, 11400.0) },
-	{ "nome": "mata central", "tipo": "floresta", "rect": Rect2(20000.0, 22400.0, 17000.0, 12000.0) },
-	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(45000.0, 9000.0, 8600.0, 7000.0) },
-	{ "nome": "mata do leste", "tipo": "floresta", "rect": Rect2(41600.0, 19600.0, 15600.0, 15000.0) },
+	{ "nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 7400.0, 12400.0, 6000.0) },
+	{ "nome": "posto", "tipo": "posto", "rect": Rect2(24600.0, 10600.0, 2200.0, 1500.0) },
+	{ "nome": "lavoura", "tipo": "lavoura", "rect": Rect2(13000.0, 14380.0, 9000.0, 4600.0) },
+	# Os dois sitios existem porque o norte e o nordeste eram campo com nada -
+	# e campo com nada nao e mapa, e caminhada. No PZ o que enche o entorno da
+	# cidade sao exatamente casas de campo penduradas em estrada de terra.
+	{ "nome": "sítio do norte", "tipo": "sitio", "rect": Rect2(8200.0, 2000.0, 2400.0, 1900.0) },
+	{ "nome": "sítio do leste", "tipo": "sitio", "rect": Rect2(26200.0, 3400.0, 2400.0, 1900.0) },
+	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(4200.0, 0.0, 24000.0, 6900.0) },
+	{ "nome": "mata do sul", "tipo": "floresta", "rect": Rect2(23200.0, 14200.0, 5800.0, 7000.0) },
+	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(32800.0, 5780.0, 4600.0, 4200.0) },
+	{ "nome": "mata do leste", "tipo": "floresta", "rect": Rect2(32000.0, 12380.0, 7800.0, 9400.0) },
 ]
 
-## As vias que ligam cada lugar afastado a rodovia. Sem elas o lugar existe mas
-## nao se chega nele por asfalto - e no PZ e a via de acesso que diz "aqui tem
-## algo", muito antes de voce ver o predio.
+## As vias que ligam a rodovia aos lugares que nao encostam nela. No PZ e a via
+## de acesso que diz "aqui tem algo" muito antes de voce ver o predio.
 const ACESSOS := [
-	# Da rodovia ate o patio da delegacia.
-	Rect2(24700.0, 16900.0, 300.0, 300.0),
 	# Da rodovia ate o portao da mansao, do outro lado do rio.
-	Rect2(49150.0, 16000.0, 300.0, 1200.0),
+	Rect2(34950.0, 9980.0, 300.0, 260.0),
+	# Da rua de baixo da cidade ate a lavoura.
+	Rect2(17000.0, 13400.0, 300.0, 1000.0),
+	# Estrada de terra da rodovia ate o sitio do norte, cortando a mata. E ela
+	# que faz o norte deixar de ser campo com nada.
+	Rect2(9250.0, 3900.0, 300.0, 6300.0),
+	# E a do sitio do leste, saindo da rodovia depois do posto.
+	Rect2(27250.0, 5300.0, 300.0, 4900.0),
 ]
 
 const CALCADA := 120.0
@@ -87,8 +101,8 @@ const CALCADA := 120.0
 static var _montado: Dictionary = {}
 
 ## O mundo montado, em coordenada de mundo. Montado uma vez e guardado: o
-## cenario, os telhados e as ferramentas leem todos daqui, e todos tem que ver
-## o mesmo mapa.
+## cenario, os telhados e as ferramentas leem todos daqui, e todos tem que ver o
+## mesmo mapa.
 static func mundo() -> Dictionary:
 	if _montado.is_empty():
 		_montado = _montar()
@@ -104,6 +118,8 @@ static func _montar() -> Dictionary:
 		"ruas": [RODOVIA],
 		"piso": [PONTE],
 		"agua": [RIO],
+		# Terra arada: so chao pintado, sem colisao. E a textura de campo do PZ.
+		"lavoura": [],
 		# Solido mas nao desenhado: o desenho e a agua, a colisao e isto.
 		"solidos": [],
 	}
@@ -113,7 +129,8 @@ static func _montar() -> Dictionary:
 
 	# O rio e solido dos dois lados da ponte. Nao ha como nadar, e nao ha outro
 	# atravessadouro - e o que faz a mansao ser longe de verdade.
-	tudo["solidos"].append(Rect2(RIO.position, Vector2(RIO.size.x, PONTE.position.y - RIO.position.y)))
+	tudo["solidos"].append(Rect2(RIO.position,
+		Vector2(RIO.size.x, PONTE.position.y - RIO.position.y)))
 	tudo["solidos"].append(Rect2(Vector2(RIO.position.x, PONTE.end.y),
 		Vector2(RIO.size.x, RIO.end.y - PONTE.end.y)))
 
@@ -166,9 +183,19 @@ static func lugar(nome: String) -> Dictionary:
 			return qual
 	return {}
 
-## Onde o jogador nasce: a porta do porao da sua casa, no bairro.
 static func onde_o_bairro_comeca() -> Vector2:
 	for lugar in LUGARES:
 		if lugar["tipo"] == "bairro":
 			return (lugar["rect"] as Rect2).position
 	return Vector2.ZERO
+
+## Onde o jogador nasce, dentro da sua casa. **O cenario posiciona ele por aqui**
+## em vez de a posicao estar escrita no rua.tscn: quando o bairro mudou de lugar
+## no mapa, a posicao escrita a mao deixou o jogador nascendo no meio do campo, a
+## 89 m da propria casa - e isso nao da erro nenhum, so aparece no lugar errado.
+static func onde_o_jogador_nasce() -> Vector2:
+	return onde_o_bairro_comeca() + Lugares.BAIRRO_JOGADOR
+
+## A porta do porao, que e por onde o dia acaba.
+static func onde_fica_a_porta_do_porao() -> Vector2:
+	return onde_o_bairro_comeca() + Lugares.BAIRRO_PORTA_DO_PORAO

@@ -103,10 +103,13 @@ func _erro(texto: String) -> void:
 	_falhas += 1
 	print("  FALHA: " + texto)
 
-## Tira do caminho os zumbis que a fase atual nao esta medindo.
+## Tira do caminho os zumbis que a fase atual nao esta medindo. Vao para o canto
+## noroeste do mundo, que sai do mapa e nao de uma coordenada escrita a mao -
+## quando o mundo mudou de tamanho, a coordenada antiga virou o meio da mata.
 func _longe_do_teste(menos: int) -> void:
+	var canto := Mapa.MUNDO.position + Vector2(300.0, 300.0)
 	for i in range(menos, _zumbis.size()):
-		_zumbis[i].global_position = Vector2(5650.0, 60.0 + i * 40.0)
+		_zumbis[i].global_position = canto + Vector2(0.0, 60.0 * i)
 		_zumbis[i]._estado = VAGANDO
 
 # --- 1. nenhum zumbi nasce dentro de parede ---------------------------------
@@ -340,7 +343,13 @@ func _preparar_horda() -> void:
 	print("\n6. chamado da horda")
 	# Um que vai enxergar o jogador, e tres vagando dentro do alcance do
 	# chamado.
-	_jogador.global_position = Vector2(2900.0, 1300.0)
+	# Num trecho aberto da rodovia, entre o bairro e a cidade: linha de visao
+	# limpa e sem arvore no meio.
+	#
+	# Era Vector2(2900, 1300), coordenada do bairro pequeno - que no mapa de
+	# 09/09 caiu dentro da mata do oeste, onde a arvore corta a visao. O teste
+	# passou a medir a mata em vez da horda, e acusou o zumbi de nao ver.
+	_jogador.global_position = Vector2(10500.0, Mapa.RODOVIA.get_center().y)
 	_jogador.vida = 100.0
 	_longe_do_teste(4)
 	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 300.0)

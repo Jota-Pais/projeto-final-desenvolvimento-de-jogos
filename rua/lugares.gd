@@ -27,6 +27,16 @@ const Construcao := preload("res://rua/construcao.gd")
 
 const BAIRRO_TAMANHO := Vector2(5760.0, 3600.0)
 
+## Onde o jogador nasce e onde fica a porta do porao, em coordenada LOCAL do
+## bairro. Sao a sala e o quarto do fundo da sua casa.
+##
+## **Estavam escritas na mao no rua.tscn** ate 09/09/2026 a noite, e quando o
+## bairro mudou de lugar no mapa o jogador passou a nascer no meio do campo, a
+## 89 m da propria casa. Nao dava erro nenhum: ele so aparecia no lugar errado.
+## Agora saem daqui, somadas a origem do bairro.
+const BAIRRO_JOGADOR := Vector2(700.0, 1240.0)
+const BAIRRO_PORTA_DO_PORAO := Vector2(390.0, 905.0)
+
 ## A rua principal do bairro local. O mapa alinha ela com a rodovia: e o mesmo
 ## asfalto, como Muldraugh esticada ao longo da US-31W.
 const BAIRRO_RUA_PRINCIPAL := Rect2(0.0, 1620.0, 5760.0, 400.0)
@@ -114,15 +124,53 @@ static func montar(lugar: Dictionary) -> Dictionary:
 		"zumbis": [],
 		"ruas": [],
 		"piso": [],
+		"lavoura": [],
 	}
 	match lugar["tipo"]:
 		"bairro": _bairro(lugar, pecas)
+		"cidade": _cidade(lugar, pecas)
 		"posto": _posto(lugar, pecas)
-		"delegacia": _delegacia(lugar, pecas)
-		"mercado": _mercado(lugar, pecas)
 		"mansao": _mansao(lugar, pecas)
+		"sitio": _sitio(lugar, pecas)
+		"lavoura": _lavoura(lugar, pecas)
 		"floresta": _floresta(lugar, pecas)
 	return pecas
+
+# ---------------------------------------------------------------- a cidade
+#
+# **O nucleo denso, e o que faltava no mapa.** Antes o mundo era um punhado de
+# lugares isolados pendurados na rodovia, com campo vazio no meio - e campo vazio
+# nao e mapa, e caminhada. Rosewood, no PZ, e o contrario: dezenas de predios
+# pequenos numa grade de ruas, encostados na calcada, e o campo em volta.
+#
+# A grade sai destas constantes, e nao de retangulo escrito a mao: acrescentar
+# uma coluna de quadra e mudar um numero, e todo predio nasce virado para a rua
+# certa com recuo de calcada.
+
+## Largura de rua da cidade: 10 m. Bate com a rodovia de proposito, porque a rua
+## do meio da grade **e** a rodovia.
+const CIDADE_RUA := 400.0
+## Uma quadra: 65 x 60 m.
+const CIDADE_QUADRA := Vector2(2600.0, 2400.0)
+const CIDADE_COLUNAS := 4
+const CIDADE_LINHAS := 2
+## Vagas de lote por fileira, e o passo entre elas. Com predio de 520 e passo de
+## 800 sobram 7 m entre um lote e outro, que e o que faz parecer lote.
+const CIDADE_VAGAS := 3
+const CIDADE_PASSO := 800.0
+## Recuo da rua ate a fachada. E o que sobra de quintal na frente.
+const CIDADE_RECUO := 220.0
+
+## Os predios que nao sao casa nem loja, em (coluna, fileira, linha, vaga).
+##
+## A delegacia e o mercado moram **dentro da cidade**, e nao soltos no campo:
+## era o que a referencia mostrava e o que o mapa nao tinha. Os dois sao mais
+## largos que uma vaga, entao comem a vaga seguinte - e por isso a cidade tem
+## 46 predios e nao 48.
+const CIDADE_ESPECIAIS := {
+	"1,1,0,0": "delegacia",
+	"2,0,1,0": "mercado",
+}
 
 static func _somar(construcao: Dictionary, origem: Vector2) -> Dictionary:
 	var copia := construcao.duplicate()
@@ -152,6 +200,200 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["ruas"].append(Rect2(BAIRRO_RUA_TRANSVERSAL.position + origem,
 		BAIRRO_RUA_TRANSVERSAL.size))
 
+# --- a cidade ---------------------------------------------------------------
+
+## A grade de ruas e as quadras, com predio virado para a rua em cada vaga.
+##
+## A regra que da o desenho de rua principal do PZ e uma so: **a fileira que da
+## na rodovia e comercio, o resto e casa.** Nao e lista - e regra, entao ela
+## continua valendo se a cidade crescer.
+static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
+	var r: Rect2 = lugar["rect"]
+	var passo := CIDADE_QUADRA + Vector2.ONE * CIDADE_RUA
+
+	# As ruas: uma a mais que o numero de quadras em cada eixo, porque ha rua
+	# nas duas bordas tambem. A do meio coincide com a rodovia, e desenhar duas
+	# vezes o mesmo asfalto nao custa nada.
+	for coluna in CIDADE_COLUNAS + 1:
+		pecas["ruas"].append(Rect2(
+			r.position.x + float(coluna) * passo.x, r.position.y,
+			CIDADE_RUA, r.size.y))
+	for linha in CIDADE_LINHAS + 1:
+		pecas["ruas"].append(Rect2(
+			r.position.x, r.position.y + float(linha) * passo.y,
+			r.size.x, CIDADE_RUA))
+
+	for coluna in CIDADE_COLUNAS:
+		for linha in CIDADE_LINHAS:
+			_uma_quadra(r, coluna, linha, pecas)
+
+	# Zumbi na rua, nas esquinas do meio: a cidade e o lugar mais povoado do
+	# mapa depois da delegacia, e e onde o chamado de horda acha vizinho.
+	for coluna in CIDADE_COLUNAS:
+		var x := r.position.x + CIDADE_RUA + float(coluna) * passo.x + CIDADE_QUADRA.x * 0.5
+		pecas["zumbis"].append(Vector2(x, r.position.y + CIDADE_RUA * 0.5))
+		pecas["zumbis"].append(Vector2(x, r.end.y - CIDADE_RUA * 0.5))
+
+## Uma quadra: duas fileiras de lote, uma virada para a rua de cima e outra para
+## a de baixo, com o quintal se encontrando no meio.
+static func _uma_quadra(cidade: Rect2, coluna: int, linha: int, pecas: Dictionary) -> void:
+	var passo := CIDADE_QUADRA + Vector2.ONE * CIDADE_RUA
+	var canto := cidade.position + Vector2.ONE * CIDADE_RUA + Vector2(
+		float(coluna) * passo.x, float(linha) * passo.y)
+
+	# Qual fileira da na rodovia: a de baixo da primeira linha de quadras, e a
+	# de cima da segunda. E nelas que fica o comercio.
+	var fileira_da_rodovia := 1 if linha == 0 else 0
+
+	var vaga := 0
+	while vaga < CIDADE_VAGAS:
+		for fileira in 2:
+			var chave := "%d,%d,%d,%d" % [coluna, linha, fileira, vaga]
+			var tipo: String = CIDADE_ESPECIAIS.get(chave,
+				"comercio" if fileira == fileira_da_rodovia else "casa")
+			var tamanho: Vector2 = Construcao.TAMANHOS[tipo]
+
+			# Centrado na vaga, para predio largo nao encostar no vizinho.
+			var largura_das_vagas := float(CIDADE_VAGAS - 1) * CIDADE_PASSO
+			var margem := (CIDADE_QUADRA.x - largura_das_vagas
+				- Construcao.TAMANHOS["casa"].x) * 0.5
+			var x := canto.x + margem + float(vaga) * CIDADE_PASSO
+			var y := canto.y + CIDADE_RECUO
+			if fileira == 1:
+				y = canto.y + CIDADE_QUADRA.y - CIDADE_RECUO - tamanho.y
+
+			var predio := {
+				"rect": Rect2(x, y, tamanho.x, tamanho.y),
+				"porta": "norte" if fileira == 0 else "sul",
+				"tipo": tipo,
+			}
+			# Ha uma delegacia e um mercado so na cidade, e cada um guarda um
+			# documento no quarto mais fundo. A pistola fica na armaria, que e o
+			# quarto mais fundo da delegacia.
+			if tipo == "delegacia":
+				predio["documento"] = true
+				predio["arma"] = true
+			elif tipo == "mercado":
+				predio["documento"] = true
+			pecas["construcoes"].append(predio)
+			_o_que_vem_com_o_predio(predio, pecas)
+
+		# Predio mais largo que uma vaga come a vaga seguinte.
+		var mais_largo := 1
+		for fileira in 2:
+			var chave := "%d,%d,%d,%d" % [coluna, linha, fileira, vaga]
+			if CIDADE_ESPECIAIS.has(chave):
+				var tamanho: Vector2 = Construcao.TAMANHOS[CIDADE_ESPECIAIS[chave]]
+				mais_largo = maxi(mais_largo, int(ceil(tamanho.x / CIDADE_PASSO)))
+		vaga += mais_largo
+
+	pecas["zumbis"].append(canto + CIDADE_QUADRA * 0.5)
+
+## O que cada tipo de predio traz junto: patio, carro na frente, lata na
+## calcada. E o que separa "predio numa grade" de lugar.
+static func _o_que_vem_com_o_predio(predio: Dictionary, pecas: Dictionary) -> void:
+	var tipo: String = predio["tipo"]
+	var onde: Rect2 = predio["rect"]
+	# O centro do predio NAO serve para pôr zumbi: num predio de tres quartos a
+	# divisoria interna passa quase no meio, e o zumbi nascia dentro da parede.
+	# O centro da sala serve. O conferir_zumbi pegou.
+	var sala: Vector2 = Construcao.quartos_de(predio)[0].get_center()
+	match tipo:
+		"delegacia":
+			# Patio de concreto entre a fachada e a rua, com viatura.
+			pecas["piso"].append(Rect2(onde.position.x - 80.0, onde.end.y,
+				onde.size.x + 160.0, CIDADE_RECUO))
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Vector2(onde.get_center().x - 300.0, onde.end.y + 110.0),
+			})
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Vector2(onde.get_center().x + 300.0, onde.end.y + 110.0),
+			})
+			pecas["zumbis"].append(sala)
+			pecas["zumbis"].append(Vector2(onde.get_center().x, onde.end.y + 120.0))
+		"mercado":
+			pecas["piso"].append(Rect2(onde.position.x - 100.0,
+				onde.position.y - CIDADE_RECUO, onde.size.x + 200.0, CIDADE_RECUO))
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Vector2(onde.get_center().x - 420.0,
+					onde.position.y - 110.0),
+			})
+			pecas["zumbis"].append(sala)
+		"comercio":
+			pecas["moveis_de_rua"].append({
+				"tipo": "lata", "pos": Vector2(onde.position.x - 90.0, onde.get_center().y),
+			})
+
+# --- o sitio ----------------------------------------------------------------
+
+## Casa de campo com galpao, na beira de uma estrada de terra.
+##
+## Existe para o entorno da cidade ter algo. Uma casa sozinha no meio do campo e
+## uma decisao de verdade - vale a caminhada de 200 m por tres gavetas? - e e
+## isso que o PZ tem espalhado por toda a volta de Rosewood.
+static func _sitio(lugar: Dictionary, pecas: Dictionary) -> void:
+	var r: Rect2 = lugar["rect"]
+	var casa: Vector2 = Construcao.TAMANHOS["casa"]
+	var galpao: Vector2 = Construcao.TAMANHOS["galpao"]
+
+	# A casa virada para a estrada, que vem de baixo.
+	pecas["construcoes"].append({
+		"rect": Rect2(r.position.x + 200.0, r.position.y + 300.0, casa.x, casa.y),
+		"porta": "sul", "tipo": "casa",
+	})
+	# O galpao no fundo do terreno, virado para a casa.
+	pecas["construcoes"].append({
+		"rect": Rect2(r.end.x - galpao.x - 300.0, r.position.y + 260.0, galpao.x, galpao.y),
+		"porta": "sul", "tipo": "galpao",
+	})
+
+	# Cerca de frente com o vao onde a estrada entra.
+	var vao := 400.0
+	var entrada := r.position.x + 480.0
+	pecas["cercas"].append(Rect2(r.position.x, r.end.y - 16.0,
+		entrada - vao * 0.5 - r.position.x, 16.0))
+	pecas["cercas"].append(Rect2(entrada + vao * 0.5, r.end.y - 16.0,
+		r.end.x - entrada - vao * 0.5, 16.0))
+
+	pecas["moveis_de_rua"].append({
+		"tipo": "carro", "pos": Vector2(r.position.x + 340.0, r.end.y - 300.0),
+	})
+	pecas["moveis_de_rua"].append({
+		"tipo": "lata", "pos": Vector2(r.end.x - 220.0, r.end.y - 260.0),
+	})
+	pecas["zumbis"].append(Vector2(r.get_center().x, r.end.y - 500.0))
+
+# --- a lavoura --------------------------------------------------------------
+
+## Terra arada, em talhoes. Nao tem loot e nao tem colisao: e chao pintado.
+##
+## Existe porque o campo em volta da cidade precisava parecer campo de alguem,
+## e nao grama infinita - no PZ os talhoes marrons ao sul da cidade sao metade
+## do que faz o mapa parecer um lugar habitado antes do apocalipse.
+static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
+	var r: Rect2 = lugar["rect"]
+	var colunas := 3
+	var linhas := 2
+	var carreador := 240.0
+	var talhao := Vector2(
+		(r.size.x - carreador * float(colunas + 1)) / float(colunas),
+		(r.size.y - carreador * float(linhas + 1)) / float(linhas))
+
+	for coluna in colunas:
+		for linha in linhas:
+			pecas["lavoura"].append(Rect2(
+				r.position.x + carreador + float(coluna) * (talhao.x + carreador),
+				r.position.y + carreador + float(linha) * (talhao.y + carreador),
+				talhao.x, talhao.y))
+
+	# Um galpao de fazenda no canto, que e o unico loot daqui.
+	var galpao := Construcao.TAMANHOS["galpao"]
+	pecas["construcoes"].append({
+		"rect": Rect2(r.end.x - galpao.x - 300.0, r.position.y + 300.0, galpao.x, galpao.y),
+		"porta": "norte", "tipo": "galpao",
+	})
+	pecas["zumbis"].append(r.get_center())
+
 # --- o posto de gasolina ----------------------------------------------------
 
 ## Posto na beira da rodovia: pista de concreto encostada no asfalto, quatro
@@ -166,99 +408,32 @@ static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 	# A pista toda de concreto, encostada na rodovia (que fica em cima).
 	pecas["piso"].append(r)
 
-	# A loja no fundo, virada para a rodovia.
-	var loja := Rect2(r.position.x + r.size.x * 0.5, r.end.y - 640.0, 900.0, 560.0)
+	# A loja no fundo, virada para a rodovia. 18 x 12 m - tamanho de loja de
+	# conveniencia, e nao os 22 x 14 escritos na mao que tinha antes.
+	var tamanho: Vector2 = Construcao.TAMANHOS["posto"]
+	var loja := Rect2(r.end.x - tamanho.x - 260.0, r.end.y - tamanho.y - 120.0,
+		tamanho.x, tamanho.y)
 	pecas["construcoes"].append({
 		"rect": loja, "porta": "norte", "tipo": "posto", "documento": true,
 	})
 
-	# Quatro bombas em duas ilhas, entre a rodovia e a loja.
-	var y := r.position.y + 380.0
-	for i in 4:
-		var x := r.position.x + 420.0 + float(i) * 520.0
-		pecas["moveis_de_rua"].append({ "tipo": "bomba", "pos": Vector2(x, y) })
+	# Duas bombas em ilha, entre a rodovia e a loja. A pista aberta e o oposto de
+	# uma casa: nao ha onde se esconder, e voce ve o zumbi vindo de longe.
+	for i in 2:
+		pecas["moveis_de_rua"].append({
+			"tipo": "bomba",
+			"pos": Vector2(r.position.x + 420.0 + float(i) * 460.0, r.position.y + 380.0),
+		})
 
 	pecas["moveis_de_rua"].append({
-		"tipo": "carro", "pos": Vector2(r.position.x + 340.0, r.end.y - 320.0),
+		"tipo": "carro", "pos": Vector2(r.position.x + 300.0, r.end.y - 260.0),
 	})
 	pecas["moveis_de_rua"].append({
-		"tipo": "lata", "pos": Vector2(loja.position.x - 140.0, loja.position.y - 120.0),
+		"tipo": "lata", "pos": Vector2(loja.position.x - 120.0, loja.position.y + 90.0),
 	})
 
 	pecas["zumbis"].append(Vector2(r.position.x + 700.0, r.position.y + 700.0))
-	# Na pista, na frente da loja - e nao no r.end.y - 260, que caia em cima da
-	# parede oeste dela. O conferir_zumbi pegou.
-	pecas["zumbis"].append(Vector2(loja.get_center().x, loja.position.y - 260.0))
-	pecas["zumbis"].append(loja.get_center() + Vector2(0.0, 120.0))
-
-# --- a delegacia ------------------------------------------------------------
-
-## Predio publico afastado da rodovia, com estacionamento na frente e uma via
-## de acesso ligando os dois.
-##
-## E o lugar mais caro de vasculhar do mapa: tres quartos, e o do fundo e a
-## armaria - o movel de maior duracao que existe. Tambem e o mais povoado, que
-## e como o PZ paga o melhor loot: com mais zumbi, e nao com porta trancada.
-static func _delegacia(lugar: Dictionary, pecas: Dictionary) -> void:
-	var r: Rect2 = lugar["rect"]
-
-	var predio := Rect2(r.position.x + 900.0, r.position.y, 3600.0, 2600.0)
-	pecas["construcoes"].append({
-		"rect": predio, "porta": "sul", "tipo": "delegacia", "documento": true, "arma": true,
-	})
-
-	# Estacionamento entre o predio e a rodovia.
-	var patio := Rect2(r.position.x, predio.end.y, r.size.x, r.end.y - predio.end.y)
-	pecas["piso"].append(patio)
-
-	# Muro dos fundos e das laterais, com o patio aberto para a via de acesso:
-	# predio publico e cercado, mas nao e prisao.
-	pecas["cercas"].append(Rect2(r.position.x, r.position.y - 20.0, r.size.x, 20.0))
-	pecas["cercas"].append(Rect2(r.position.x - 20.0, r.position.y, 20.0, r.size.y * 0.72))
-	pecas["cercas"].append(Rect2(r.end.x, r.position.y, 20.0, r.size.y * 0.72))
-
-	for i in 3:
-		pecas["moveis_de_rua"].append({
-			"tipo": "carro",
-			"pos": Vector2(patio.position.x + 460.0 + float(i) * 620.0, patio.get_center().y),
-		})
-	pecas["moveis_de_rua"].append({
-		"tipo": "lata", "pos": Vector2(predio.position.x - 160.0, predio.end.y - 200.0),
-	})
-
-	pecas["zumbis"].append(patio.get_center() + Vector2(-800.0, 200.0))
-	pecas["zumbis"].append(patio.get_center() + Vector2(900.0, -140.0))
-	pecas["zumbis"].append(Vector2(predio.get_center().x, predio.end.y - 300.0))
-	pecas["zumbis"].append(predio.get_center())
-	pecas["zumbis"].append(Vector2(predio.get_center().x + 700.0, predio.position.y + 500.0))
-
-# --- o mercado --------------------------------------------------------------
-
-## Mercado de beira de estrada: um salao grande com fileira de prateleira e
-## geladeira, mais estacionamento. E o mercadinho de esquina do bairro em outra
-## escala - muito loot comum, quase nenhum documento.
-static func _mercado(lugar: Dictionary, pecas: Dictionary) -> void:
-	var r: Rect2 = lugar["rect"]
-
-	var salao := Rect2(r.position.x + 500.0, r.position.y + 900.0, 4200.0, 2200.0)
-	pecas["construcoes"].append({
-		"rect": salao, "porta": "norte", "tipo": "mercado", "documento": true,
-	})
-
-	# Estacionamento entre a rodovia e a porta.
-	pecas["piso"].append(Rect2(r.position.x, r.position.y, r.size.x, 900.0))
-
-	for i in 4:
-		pecas["moveis_de_rua"].append({
-			"tipo": "carro",
-			"pos": Vector2(r.position.x + 500.0 + float(i) * 700.0, r.position.y + 450.0),
-		})
-	pecas["moveis_de_rua"].append({
-		"tipo": "lata", "pos": Vector2(salao.position.x - 180.0, salao.position.y + 300.0),
-	})
-	pecas["zumbis"].append(Vector2(r.position.x + 900.0, r.position.y + 460.0))
-	pecas["zumbis"].append(salao.get_center())
-	pecas["zumbis"].append(salao.get_center() + Vector2(1200.0, 400.0))
+	pecas["zumbis"].append(loja.get_center())
 
 # --- a mansao murada --------------------------------------------------------
 
@@ -284,42 +459,45 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["cercas"].append(Rect2(portao_x + meio_portao, r.end.y - muro,
 		r.end.x - portao_x - meio_portao, muro))
 
-	# A casa grande no fundo do terreno, virada para o portao.
-	var casa := Rect2(r.position.x + r.size.x * 0.28, r.position.y + 700.0, 3400.0, 2400.0)
+	# A casa no fundo do terreno, virada para o portao. 22 x 16 m - casa grande
+	# de verdade, e nao os 85 x 60 m escritos na mao que tinha antes, que eram
+	# um quarteirao.
+	var tamanho: Vector2 = Construcao.TAMANHOS["mansao"]
+	var casa := Rect2(portao_x - tamanho.x * 0.5, r.position.y + 700.0,
+		tamanho.x, tamanho.y)
 	pecas["construcoes"].append({
 		"rect": casa, "porta": "sul", "tipo": "mansao", "documento": true,
 	})
 
 	# Garagem separada, do lado.
+	var garagem: Vector2 = Construcao.TAMANHOS["garagem"]
 	pecas["construcoes"].append({
-		"rect": Rect2(casa.end.x + 600.0, casa.position.y + 400.0, 1100.0, 900.0),
+		"rect": Rect2(casa.end.x + 500.0, casa.position.y + 200.0, garagem.x, garagem.y),
 		"porta": "sul", "tipo": "garagem",
 	})
 
 	# Alameda de concreto do portao ate a porta da casa.
-	pecas["piso"].append(Rect2(portao_x - 220.0, casa.end.y, 440.0, r.end.y - casa.end.y))
+	pecas["piso"].append(Rect2(portao_x - 200.0, casa.end.y, 400.0, r.end.y - casa.end.y))
 
-	# Jardim tomado: bosque nos cantos que sobram, longe da alameda.
 	# Jardim abandonado: mata fechada, que e o que faz o terreno parecer largado
 	# e nao apenas vazio.
 	pecas["bosques"].append({
 		"rect": Rect2(r.position.x + muro, r.position.y + muro,
-			r.size.x * 0.24, r.size.y - muro * 2.0),
+			r.size.x * 0.22, r.size.y - muro * 2.0),
 		"densidade": 0.8,
 	})
 	pecas["bosques"].append({
-		"rect": Rect2(r.end.x - r.size.x * 0.2 - muro, r.end.y - 1900.0,
-			r.size.x * 0.2, 1700.0),
+		"rect": Rect2(r.end.x - r.size.x * 0.22 - muro, r.position.y + muro,
+			r.size.x * 0.22, r.size.y - muro * 2.0),
 		"densidade": 0.8,
 	})
 
 	pecas["moveis_de_rua"].append({
-		"tipo": "carro", "pos": Vector2(portao_x + 700.0, r.end.y - 500.0),
+		"tipo": "carro", "pos": Vector2(portao_x + 620.0, r.end.y - 420.0),
 	})
-	pecas["zumbis"].append(Vector2(portao_x, r.end.y - 700.0))
+	pecas["zumbis"].append(Vector2(portao_x, r.end.y - 600.0))
 	pecas["zumbis"].append(casa.get_center())
-	pecas["zumbis"].append(casa.get_center() + Vector2(-900.0, 500.0))
-	pecas["zumbis"].append(Vector2(r.position.x + r.size.x * 0.8, r.position.y + 900.0))
+	pecas["zumbis"].append(Vector2(casa.position.x - 500.0, casa.end.y + 400.0))
 
 # --- floresta ---------------------------------------------------------------
 

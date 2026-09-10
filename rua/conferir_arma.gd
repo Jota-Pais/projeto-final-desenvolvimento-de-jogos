@@ -186,10 +186,16 @@ func _e_equipamento_nao_loot() -> void:
 		print("  a pistola foi para o cinto, e a mochila continua em %d/%d"
 			% [_mochila.quantos(), _mochila.CAPACIDADE])
 
-	# A mochila pode ter recebido o documento da armaria, que ocupa vaga - o que
-	# nao pode e a pistola ou a municao ocuparem.
-	if _mochila.quantos() > vagas_antes + 1:
-		_erro("a armaria ocupou %d vagas na mochila" % (_mochila.quantos() - vagas_antes))
+	# A armaria da documento e loot comum, e esses ocupam vaga. **O que nao pode
+	# e a pistola ou a municao ocuparem** - e so isso que se confere aqui. A
+	# versao anterior contava vagas e reprovava quando a armaria sorteou dois
+	# itens, o que era certo do jogo e errado do teste.
+	if _mochila.itens.has(Construcao.MUNICAO) or _mochila.documentos.has(Construcao.PISTOLA):
+		_erro("pistola ou municao foram para a mochila em vez do cinto")
+	elif Travessia.municao <= 0:
+		_erro("a armaria nao deu municao junto com a pistola")
+	else:
+		print("  a armaria deu %d balas, e elas nao ocuparam vaga" % Travessia.municao)
 
 	# E o dia que deu errado nao tira a arma.
 	Travessia.municao = 12

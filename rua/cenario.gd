@@ -87,6 +87,9 @@ const COR_CERCA := Color("5a5347")
 const COR_AGUA := Color("2b3a44")
 const COR_MARGEM := Color("3a4038")
 const COR_CONCRETO := Color("53565a")
+## Terra arada. E o marrom dos talhoes que no PZ faz o campo em volta da cidade
+## parecer campo de alguem, e nao grama infinita.
+const COR_LAVOURA := Color("4a3f31")
 
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
@@ -145,6 +148,11 @@ func _ready() -> void:
 
 	var mundo := Mapa.mundo()
 
+	# Antes de qualquer coisa: o jogador e a porta do porao vao para onde o mapa
+	# diz, e nao para onde o rua.tscn tinha escrito na mao. Tem que ser antes do
+	# povoamento, que depende de onde o jogador esta.
+	_por_no_lugar()
+
 	for construcao in mundo["construcoes"]:
 		for parede in Construcao.paredes_externas(construcao):
 			_criar_corpo(parede)
@@ -177,6 +185,16 @@ func _ready() -> void:
 	# arvore, por isso o deferido.
 	_limitar_camera.call_deferred()
 
+## O jogador e a porta do porao, no lugar que o mapa diz. Sao irmaos do cenario
+## na cena, e e o cenario que sabe ler o mapa.
+func _por_no_lugar() -> void:
+	var jogador := get_tree().get_first_node_in_group("jogador") as Node2D
+	if jogador != null:
+		jogador.global_position = Mapa.onde_o_jogador_nasce()
+	var porta := get_parent().get_node_or_null("EntradaDeCasa") as Node2D
+	if porta != null:
+		porta.global_position = Mapa.onde_fica_a_porta_do_porao()
+
 # ------------------------------------------------------------------- desenho
 
 func _draw() -> void:
@@ -196,6 +214,10 @@ func _draw() -> void:
 
 	for construcao in mundo["construcoes"]:
 		draw_rect(Construcao.entrada_de_carro(construcao), COR_ENTRADA_DE_CARRO)
+
+	# Terra arada, por baixo do concreto e do asfalto: e chao, nao construcao.
+	for talhao in mundo["lavoura"]:
+		draw_rect(talhao, COR_LAVOURA)
 
 	# Piso de concreto: pista de posto, patio de delegacia, estacionamento de
 	# mercado, alameda da mansao e a ponte.
@@ -324,6 +346,7 @@ func _povoar(construcao: Dictionary) -> void:
 	var vagas: Array = Construcao.MOVEIS_POR_QUARTO[construcao["tipo"]]
 
 	var ao_sul: bool = Construcao.e_da_frente_ao_sul(construcao)
+	var um_quarto_so: bool = Construcao.QUARTOS_POR_TIPO[construcao["tipo"]] < 3
 	# O documento do lugar fica no **ultimo** quarto, que e o mais fundo: o que
 	# custa mais para chegar paga o que vale mais.
 	var quarto_do_documento := -1
@@ -350,13 +373,27 @@ func _povoar(construcao: Dictionary) -> void:
 			if ao_sul:
 				y = quarto.position.y + tamanho.y / 2.0 + 8.0
 
-			# E na METADE da parede longe do vao: a divisoria interna abre a
-			# passagem a 78% da largura, entao movel nenhum passa de 50%.
-			var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
+			var x: float
+			if um_quarto_so:
+				# Salao sem divisoria: da para espalhar pela largura toda, com
+				# folga entre um movel e outro.
+				#
+				# A conta antiga - a mesma dos tres quartos - **empilhava**: o
+				# mercado tinha seis moveis com 66 px entre os centros e
+				# prateleira de 156 de largura, ou seja um dentro do outro. Nao
+				# dava erro e o conferir nao pegava, porque movel dentro de movel
+				# continua alcancavel de fora.
+				var vao := (quarto.size.x - 160.0) / float(tipos.size())
+				x = quarto.position.x + 80.0 + vao * (float(j) + 0.5)
+			else:
+				# Na METADE da parede longe do vao: a divisoria interna abre a
+				# passagem a 78% da largura, entao movel nenhum passa de 50%.
+				var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
+				x = quarto.position.x + quarto.size.x * fracao
+
 			var com_documento := i == quarto_do_documento and j == 0
 			var com_arma := i == quarto_da_arma and j == 0
-			_criar_movel(tipos[j], Vector2(quarto.position.x + quarto.size.x * fracao, y),
-				com_documento, com_arma)
+			_criar_movel(tipos[j], Vector2(x, y), com_documento, com_arma)
 
 ## A navegacao do zumbi, montada da lista de obstaculos. Fica num no proprio,
 ## no grupo "navegacao", que e como o zumbi acha ela.
@@ -520,6 +557,10 @@ func _sortear_achados(tipo: String, com_documento: bool, com_arma := false) -> A
 		# A unica pistola do mapa. Nao e sorteio: ou o jogador acha na armaria,
 		# ou nao acha nunca.
 		achados.append(Construcao.PISTOLA)
+		# E balas junto, tambem sem sorteio. Achar a unica arma do mapa sem uma
+		# bala dentro seria uma recompensa que nao recompensa nada - e a
+		# municao das outras tabelas e sorteada, entao podia nao vir nenhuma.
+		achados.append(Construcao.MUNICAO)
 	if com_documento:
 		# Qual documento, pela ordem em que os lugares aparecem no mapa: os seis
 		# sao seis, e cada um sai uma vez so.
