@@ -92,7 +92,7 @@ var municao := 0
 ## progressao, e "coerente com o High Concept" vale 2 dos 10 pontos da Alfa. O
 ## conferir_arma.tscn avisa em toda rodada enquanto estiver ligado - de
 ## proposito, para ninguem esquecer.
-const COMECA_ARMADO := true
+const COMECA_ARMADO := false
 const BALAS_DE_COMECO := 18
 
 func _ready() -> void:
