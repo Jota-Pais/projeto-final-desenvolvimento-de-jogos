@@ -114,15 +114,114 @@ e o conceito de arte de cada fase na seção de estética.
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
 | 5 | Classificação etária | 14 anos — decidido pela equipe em 03/09/2026: tem sangue, mas não é jogo violento |
-| 6 | Resumo da história | ✅ — a *Premissa* acima |
-| 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários redigidos no brief — *proposta* |
-| 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles redigidos no brief — *proposta* |
-| 9 | Diferenciais e concorrentes | ✅ — diferenciais escritos e benchmarking levantado no SteamSpy em 03/09/2026 (*Darkwood*, *60 Seconds!*, *Vampire Survivors*, *Papers, Please* como concorrentes de porte; *Project Zomboid*, *This War of Mine* e *Inscryption* como referência). Tabelas no brief |
-| 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Rafael, 24) estão no brief |
+| 6 | Resumo da história | ✅ — a *Premissa* acima. A história em si (elenco, lore, fluxo narrativo) é mantida em [`narrativa.md`](narrativa.md), que é a fonte da seção 2 do GDD |
+| 7 | Objetivo principal e secundários | Principal: **completar a cura antes do prazo**. Secundários logo abaixo, em *Os tópicos que pedem mais que uma linha* — *proposta* |
+| 8 | Modos de jogabilidade e controles | Os dois modos estão definidos e a separação é proposital. Controles logo abaixo — *proposta* |
+| 9 | Diferenciais e concorrentes | ✅ — diferenciais escritos e benchmarking levantado no SteamSpy em 03/09/2026 (*Darkwood*, *60 Seconds!*, *Vampire Survivors*, *Papers, Please* como concorrentes de porte; *Project Zomboid*, *This War of Mine* e *Inscryption* como referência). Tabelas abaixo |
+| 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Rafael, 24) estão abaixo |
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
 | 12 | Equipe e funções | ✅ — fechado em 09/09/2026. Quatro pessoas: **dois na rua** (Renan Floriano, João Otávio Benedet Zanette), **uma na casa** (Lorraini Vieira Costa) e a programação atravessando as duas (João Carlos Pais). Ver *Equipe e funções* |
 | 13 | Orçamento | **R$ 3.600** — 12 encontros (09/09 a 25/11) × 3h × R$ 100/hora. Simulado, pela fórmula literal do modelo |
-| 14 | Protótipo | A alfa é outra entrega. O **desenho de uma tela de gameplay** está descrito em detalhe no brief, para o agente de design executar |
+| 14 | Protótipo | A alfa é outra entrega. O **desenho de uma tela de gameplay** está descrito abaixo, e foi entregue dentro da peça |
+
+## Os tópicos que pedem mais que uma linha
+
+Estavam no brief do one-pager, que foi apagado em 16/09/2026 depois que a peça
+foi entregue. Vieram para cá para o High Concept ficar de pé sozinho.
+
+### 7 · Objetivos
+
+**Principal** — completar a cura antes do prazo.
+
+**Secundários:**
+
+- ⬜ *(a decidir)* — o que os documentos da rua contam ainda é conversa de
+  equipe; até lá não há objetivo secundário escrito em cima deles
+- Manter ela estável: quanto pior o estado dela, menos tempo sobra
+- Equipar a casa e o laboratório para acelerar as tentativas de cura
+- Sobreviver mais um dia com menos dano do que no anterior
+
+### 8 · Controles
+
+- **Rua:** `WASD` ou setas para andar · mouse para mirar e interagir · `E` para
+  vasculhar · `Shift` para correr.
+- **Casa:** mouse, só. Clique para andar, examinar e combinar itens.
+
+### 9 · Diferenciais e benchmarking
+
+1. **Dois jogos em um** — ação top-down e aventura ponto e clique se alternando
+   a cada dia, com arte e ritmo propositalmente diferentes.
+2. **O game over vestido de final feliz** — a derrota é apresentada em paródia,
+   como o desfecho romântico de um casal.
+3. **Risco compra história** — o quanto se arrisca na rua é literalmente quanta
+   narrativa se destrava em casa.
+
+Dados do SteamSpy em 03/09/2026; preços em dólar na data, donos estimados.
+
+**Concorrentes — porte comparável, time pequeno**
+
+| Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
+|---|---|---|---|---|---|
+| *Darkwood* | Acid Wizard Studio | 2017 | US$ 3,99 | 1–2 mi | 94% |
+| *60 Seconds!* | Robot Gentleman | 2015 | US$ 8,99 | 0,5–1 mi | 84% |
+| *Vampire Survivors* | poncle | 2022 | US$ 3,74 | 5–10 mi | 98% |
+| *Papers, Please* | Lucas Pope | 2013 | US$ 9,99 | 2–5 mi | 97% |
+
+**Referências de estrutura e público — escopo maior**
+
+| Jogo | Estúdio | Ano | Preço | Donos (est.) | Nota |
+|---|---|---|---|---|---|
+| *Project Zomboid* | The Indie Stone | 2013 | US$ 16,74 | 10–20 mi | 94% |
+| *This War of Mine* | 11 bit studios | 2014 | US$ 19,99 | 2–5 mi | 92% |
+| *Inscryption* | Daniel Mullins Games | 2021 | US$ 19,99 | 2–5 mi | 96% |
+
+A leitura desses números:
+
+- A estrutura de dois modos é fórmula testada de time pequeno — a própria Steam
+  descreve o *Darkwood* como *"scavenge and explore by day, then hunker down in
+  your hideout"*. Feito por três pessoas, 94% de aprovação, mais de um milhão de
+  donos.
+- Escopo pequeno não limita alcance: *Vampire Survivors* foi feito
+  essencialmente por uma pessoa e tem de 5 a 10 milhões de donos.
+- O público continua comprando: *Project Zomboid* saiu em 2013 e tem de 10 a 20
+  milhões de donos.
+- Faixa de preço dos comparáveis: **US$ 4 a US$ 10**.
+
+### 10 · Público-alvo
+
+**Demografia** — 18 a 30 anos, maioria masculina mas sem recorte rígido de sexo,
+renda média, brasileiro e internacional. Joga em PC e compra na Steam; não
+precisa de máquina forte.
+
+**Psicografia** — perfil **explorador**: joga para entender o sistema, não para
+vencer os outros. Gosta de descobrir a regra escondida, testar o limite da
+mecânica e otimizar — mas o que faz terminar o jogo é a história. **Não é
+try-hard:** não liga para ranking, dificuldade máxima nem platinar.
+
+**Proto-persona**
+
+> **Rafael, 24 anos, estudante de design e estagiário.**
+> Joga de 4 a 6 horas por semana, quase sempre à noite, sozinho, no notebook. A
+> biblioteca dele é quase toda indie, e o último jogo que comprou foi na
+> promoção, depois de ver um vídeo-ensaio no YouTube.
+>
+> **Como aprende:** lendo a mecânica jogando. Odeia tutorial longo — prefere
+> descobrir errando.
+> **Como joga:** sessões de 45 min a 1h30. Jogo ideal termina em 8 a 12 horas.
+> **O que ele quer:** um sistema que dê para entender e otimizar, dentro de uma
+> história que tenha algo a dizer. Adorou *Inscryption* exatamente por isso.
+> **O que o afasta:** grind, tutorial arrastado e jogo que promete história e
+> entrega só sistema — ou o contrário.
+> **Onde descobre jogo:** YouTube, Steam Next Fest e indicação de amigo.
+
+### 14 · O desenho da tela de gameplay
+
+Entregue dentro da peça de 09/09/2026. É uma tela do modo Rua num dia
+intermediário: vista top-down com o protagonista no centro, três ou quatro
+zumbis chegando de distâncias diferentes, uma casa com a porta destacada, um
+documento no chão com brilho, itens comuns espalhados, a HUD nos cantos e
+legendas com seta apontando cada elemento — porque a barra do professor é
+*explicar* o jogo, não impressionar.
 
 ## O que ficou resolvido
 
