@@ -13,8 +13,8 @@ extends CanvasLayer
 ##
 ## **Nao existe pausa aqui, e e a decisao de desenho desta tela.** O relogio do
 ## dia corre, o zumbi anda, a noite chega. O jogador fica parado enquanto
-## escolhe - nao anda, nao vascula, nao atira - e levar dano fecha a tela na
-## hora, igual ao vasculho que se interrompe.
+## escolhe - nao anda, nao vascula, nao atira - e o toque do zumbi fecha a tela
+## na hora, igual ao vasculho que se interrompe.
 ##
 ## Com pausa, largar sairia de graca: abrir, esvaziar o saco no chao, fechar, e
 ## a mochila de 12 vagas nunca mais custaria nada a ninguem. A pressao nao esta
@@ -108,7 +108,7 @@ func _fechar() -> void:
 	aberta = false
 	_painel.visible = false
 
-func _ao_ser_atingido(_dano: float) -> void:
+func _ao_ser_atingido() -> void:
 	if aberta:
 		_fechar()
 

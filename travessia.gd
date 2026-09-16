@@ -62,7 +62,7 @@ var dia := 1
 ##
 ## Nao e o que ele carrega: isso e a mochila da rua (rua/mochila.gd), e so vira
 ## isto aqui quando o dia acaba pela porta de casa. Quem for pego pelo
-## amanhecer ou cair sem vida chega de mao vazia.
+## amanhecer na rua chega de mao vazia.
 ##
 ## A rua so acrescenta. **Quem constroi a casa decide o que e consumido** e
 ## esvazia o que gastou - por isso nada aqui se limpa sozinho.
@@ -132,22 +132,23 @@ func perder_na_rua(quantos_itens: int, quantos_documentos: int) -> void:
 	itens_perdidos = quantos_itens
 	documentos_perdidos = quantos_documentos
 
-## Como o dia na rua acabou. Sao tres jeitos, e eles NAO valem o mesmo:
+## Como o dia na rua acabou. Sao dois jeitos, e eles NAO valem o mesmo:
 ##
-##  - PELA_PORTA - voce trancou o porao por vontade propria. E o unico bom;
-##  - AMANHECEU_NA_RUA - a noite passou por cima de voce e o dia virou a forca;
-##  - SEM_VIDA - voce nao aguentou.
+##  - PELA_PORTA - voce trancou a porta por vontade propria. E o unico bom;
+##  - AMANHECEU_NA_RUA - a noite passou por cima de voce e o dia virou a forca.
 ##
-## Hoje a diferenca e so o texto que a casa mostra. **Com a mochila do passo 4
-## e aqui que ela vira consequencia:** quem entra pela porta entrega o que
+## **Havia um terceiro, SEM_VIDA, e ele saiu em 16/09/2026** junto com a vida do
+## jogador: nao ha mais como cair na rua. O que o zumbi cobra agora e tempo.
+##
+## A diferenca vira consequencia na mochila: quem entra pela porta entrega o que
 ## achou, quem nao entra volta de mao vazia. Por isso o motivo mora aqui, e nao
 ## dentro da rua.
-enum FimDoDia { PELA_PORTA, AMANHECEU_NA_RUA, SEM_VIDA }
+enum FimDoDia { PELA_PORTA, AMANHECEU_NA_RUA }
 
 var fim_do_dia := FimDoDia.PELA_PORTA
 
-## Chamado pela porta da sua casa, na rua - e tambem pelo relogio, quando
-## amanhece, e pelo jogador, quando a vida acaba.
+## Chamado pela porta da sua casa, na rua - e tambem pelo relogio, quando o dia
+## acaba na forca, ao amanhecer.
 func entrar_em_casa(motivo := FimDoDia.PELA_PORTA) -> void:
 	fim_do_dia = motivo
 	chegou_em_casa.emit()
@@ -176,8 +177,8 @@ func sair_para_a_rua() -> void:
 ## Como a PARTIDA acabou - nao confundir com FimDoDia, que e como o dia acabou.
 ##
 ## Sao os dois desfechos que o High Concept declara, e so eles: ou a cura fica
-## pronta a tempo, ou o prazo se esgota. **Morrer na rua nao e desfecho** - ver
-## rua/jogador.gd.
+## pronta a tempo, ou o prazo se esgota. Nao ha terceiro: desde 16/09/2026 nao
+## ha como cair na rua - ver rua/jogador.gd.
 enum Desfecho { VITORIA, PRAZO_ESGOTADO }
 
 var desfecho := Desfecho.VITORIA

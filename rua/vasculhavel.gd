@@ -3,7 +3,7 @@ extends Area2D
 ##
 ## Este arquivo e a core mechanic do jogo - "vasculhar sob pressao". Tudo o que
 ## vai pressionar o jogador mais adiante (o zumbi chegando, o prazo do dia, a
-## fome, a escuridao) pressiona esta mesma acao, e nada disso precisa aparecer
+## a escuridao) pressiona esta mesma acao, e nada disso precisa aparecer
 ## aqui: quem interrompe chama interromper().
 ##
 ## O que diferencia uma lata de lixo de uma porta de casa e so a "duracao" e o
@@ -230,7 +230,7 @@ func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = true
-	# Enquanto ele estiver aqui, levar dano interrompe o vasculho. Este arquivo
+	# Enquanto ele estiver aqui, o toque do zumbi interrompe o vasculho. Este arquivo
 	# nao sabe que zumbi existe: escuta o jogador, que e quem apanha.
 	if corpo.has_signal("atingido") and not corpo.atingido.is_connected(_ao_ser_atingido):
 		corpo.atingido.connect(_ao_ser_atingido)
@@ -244,7 +244,7 @@ func _ao_sair(corpo: Node2D) -> void:
 		corpo.atingido.disconnect(_ao_ser_atingido)
 	queue_redraw()
 
-func _ao_ser_atingido(_dano: float) -> void:
+func _ao_ser_atingido() -> void:
 	interromper()
 
 func _draw() -> void:

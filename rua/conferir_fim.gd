@@ -2,7 +2,7 @@ extends Node
 ## Ferramenta. **Rode esta cena (F6) depois de mexer no fim de jogo, no prazo,
 ## na condicao de vitoria ou na escalada dos dias.**
 ##
-## Confere as seis coisas que fazem o ciclo fechar:
+## Confere as cinco coisas que fazem o ciclo fechar:
 ##
 ##  1. **a partida da para ganhar** - o bairro tem documento bastante, com folga
 ##     para dias perdidos;
@@ -10,10 +10,14 @@ extends Node
 ##     pronta no ultimo dia e vitoria, nao derrota);
 ##  3. passar do ultimo dia sem a cura leva a derrota, e a tela dela e a parodia
 ##     de final feliz - com o game over so na letra miuda;
-##  4. **morrer custa o dia e nao a partida** - nao existe terceiro desfecho;
-##  5. **a rua piora com os dias**: mais zumbi a cada dia que passa;
-##  6. recomecar zera tudo, inclusive os moveis vazios - senao a segunda
+##  4. **a rua piora com os dias**: mais zumbi a cada dia que passa;
+##  5. recomecar zera tudo, inclusive os moveis vazios - senao a segunda
 ##     partida comeca num bairro ja saqueado.
+##
+## **Eram seis ate 16/09/2026.** A que saiu conferia que morrer custava o dia e
+## nao a partida - e nao ha mais como morrer: a vida do jogador saiu do jogo.
+## Os dois desfechos que o High Concept declara continuam sendo os dois unicos,
+## agora sem terceiro jeito de o dia acabar.
 ##
 ## O item 1 e o unico que pode reprovar o DESENHO e nao o codigo: se o bairro
 ## nao tiver documento bastante, a partida e inganhavel e nada aqui avisaria.
@@ -46,7 +50,6 @@ func _process(_delta: float) -> void:
 	_a_partida_da_para_ganhar()
 	_a_cura_e_a_vitoria()
 	_o_prazo_e_a_derrota()
-	_morrer_custa_o_dia()
 	_a_rua_piora_com_os_dias()
 	_recomecar_zera_tudo()
 
@@ -268,49 +271,10 @@ func _a_tela_do_fim(no_titulo: String, no_rodape: String) -> Node:
 		print("  \"%s\" / %s / \"%s\"" % [titulo, numeros, rodape])
 	return fim
 
-# --- 4. morrer custa o dia, e nao a partida ---------------------------------
-
-## O High Concept declara dois desfechos, e morrer na rua nao e nenhum deles.
-## Quem morre acorda em casa sem nada do que carregava, e paga um dia do prazo.
-func _morrer_custa_o_dia() -> void:
-	print("\n4. morrer custa o dia")
-	_limpar()
-	Travessia.dia = 4
-	var rua := CENA_DA_RUA.instantiate()
-	add_child(rua)
-	var jogador := rua.get_node("Jogador") as Node2D
-	var mochila := rua.get_node("Mochila")
-
-	# Enche a mochila e mata.
-	for filho in rua.get_node("Cenario").get_children():
-		if filho is Area2D and "achados" in filho and not filho._vazio:
-			filho._esvaziar()
-			if mochila.quantos() > 0:
-				break
-	var carregava: int = mochila.quantos()
-
-	var cena_atual := get_tree().current_scene
-	get_tree().current_scene = null
-	jogador.levar_dano(999.0, Vector2.UP)
-	get_tree().current_scene = cena_atual
-	_limpar_a_raiz()
-
-	if Travessia.fim_do_dia != Travessia.FimDoDia.SEM_VIDA:
-		_erro("morrer nao registrou SEM_VIDA")
-	elif Travessia.mochila.size() + Travessia.documentos.size() != 0:
-		_erro("morrer entregou coisa em casa")
-	elif Travessia.itens_perdidos + Travessia.documentos_perdidos != carregava:
-		_erro("morrer perdeu %d de %d coisas"
-			% [Travessia.itens_perdidos + Travessia.documentos_perdidos, carregava])
-	else:
-		print("  morreu carregando %d coisa(s): perdeu tudo e o dia continua %d"
-			% [carregava, Travessia.dia])
-	rua.free()
-
-# --- 5. a rua piora com os dias ---------------------------------------------
+# --- 4. a rua piora com os dias ---------------------------------------------
 
 func _a_rua_piora_com_os_dias() -> void:
-	print("\n5. a rua piora com os dias")
+	print("\n4. a rua piora com os dias")
 	_limpar()
 	var antes := 0
 	for dia in [1, 5, Travessia.PRAZO_DA_CURA]:
@@ -328,16 +292,16 @@ func _a_rua_piora_com_os_dias() -> void:
 				% [dia, quantos, quantos + Cenario.ZUMBIS_DA_NOITE])
 		antes = quantos
 
-# --- 6. recomecar zera tudo -------------------------------------------------
+# --- 5. recomecar zera tudo -------------------------------------------------
 
 func _recomecar_zera_tudo() -> void:
-	print("\n6. recomecar zera tudo")
+	print("\n5. recomecar zera tudo")
 	Travessia.dia = 7
 	Travessia.mochila.append("lata de comida")
 	Travessia.documentos.append(Construcao.DOCUMENTOS[0])
 	Travessia.moveis_vazios[3] = true
 	Travessia.itens_perdidos = 5
-	Travessia.fim_do_dia = Travessia.FimDoDia.SEM_VIDA
+	Travessia.fim_do_dia = Travessia.FimDoDia.AMANHECEU_NA_RUA
 
 	var cena_atual := get_tree().current_scene
 	get_tree().current_scene = null

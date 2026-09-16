@@ -50,16 +50,19 @@ precisa de 4 documentos e o prazo é de 30 dias.
 - **Cada dia é uma fase.** A partida acaba na vitória (a cura fica pronta) ou na
   derrota (o prazo se esgota) — ver `fim_de_jogo.gd`.
 - **A core mechanic é vasculhar sob pressão**, e a pressão vem de quatro lugares
-  em cima da mesma ação: o zumbi cobra vida, o relógio cobra luz, o prazo cobra
+  em cima da mesma ação: o zumbi cobra tempo, o relógio cobra luz, o prazo cobra
   dia e as 12 vagas da mochila cobram escolha.
+- **Não há vida, fome nem água.** A camada de sobrevivência saiu do jogo em
+  16/09/2026, por decisão de mesa, e volta — se voltar — depois de as regras da
+  rua e da casa fecharem. O toque do zumbi continua existindo: ele empurra e
+  interrompe o vasculho, e o que se perde é o tempo que faltava para terminá-lo.
 - **O mundo esvazia e não repõe.** Móvel vasculhado ontem nasce vazio hoje.
 - **A porta da fachada é a única entrada da sua casa.** Ela é sólida e fecha o
   vão inteiro: não se atravessa a pé. O único jeito de entrar é segurar `E`
   nela — e o que se entra é a cena da casa, não o interior do prédio. É por isso
   que o jogador nasce na calçada, e é a única construção do mapa assim.
-- **Só entra em casa o que passou por essa porta.** Amanhecer na rua ou
-  ficar sem vida deixa a mochila na calçada e custa o dia.
-- **Morrer custa o dia, não a partida.**
+- **Só entra em casa o que passou por essa porta.** Amanhecer na rua deixa a
+  mochila na calçada e custa o dia — são os dois únicos jeitos de um dia acabar.
 - **A arma não é loot, é equipamento**: não ocupa vaga e não se perde. Está na
   armaria da delegacia, e o tiro chama a horda.
 - **Os documentos são placeholders numerados.** Existem seis no mapa, a cura pede
@@ -107,7 +110,7 @@ jogando dois minutos.
 | `rua/conferir_relogio.tscn` | a luz do dia, o vasculho gastando em dobro, a noite e o aviso |
 | `rua/conferir_mochila.tscn` | as vagas, o que atravessa o fim do dia, o mundo não repondo, o loot total e a HUD |
 | `rua/conferir_arma.tscn` | a pistola, a munição, o tiro chamando a horda |
-| `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota, morrer custando o dia e a escalada de zumbis |
+| `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` |
 
 Dá para rodar sem abrir o editor:

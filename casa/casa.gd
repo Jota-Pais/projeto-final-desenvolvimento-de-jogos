@@ -72,12 +72,9 @@ func _linha_do_dia() -> String:
 	elif faltam > 1:
 		quanto = "faltam %d dias para o prazo" % faltam
 
-	var como := "Você trancou o porão"
-	match Travessia.fim_do_dia:
-		Travessia.FimDoDia.AMANHECEU_NA_RUA:
-			como = "Amanheceu com você na rua"
-		Travessia.FimDoDia.SEM_VIDA:
-			como = "Você não aguentou o dia"
+	var como := "Você trancou a porta"
+	if Travessia.fim_do_dia == Travessia.FimDoDia.AMANHECEU_NA_RUA:
+		como = "Amanheceu com você na rua"
 
 	return "%s — dia %d de %d, %s" % [
 		como, Travessia.dia, Travessia.PRAZO_DA_CURA, quanto

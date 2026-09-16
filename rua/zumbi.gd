@@ -9,8 +9,8 @@ extends CharacterBody2D
 ##    dentro dela com ele tambem te encurrala;
 ##  - **horda** - quem enxerga voce chama quem esta perto. Um zumbi nao e
 ##    ameaca, tres sao;
-##  - **pressao sobre a mesma acao** - o toque dele interrompe o vasculho e
-##    tira vida. Nao existe atacar de volta; a resposta e sair de perto.
+##  - **pressao sobre a mesma acao** - o toque dele interrompe o vasculho e te
+##    empurra. Nao existe atacar de volta; a resposta e sair de perto.
 ##
 ## Ele e **mais lento que voce andando** (165 contra 280, e 460 correndo). Da
 ## para sempre fugir, de proposito: o que ele tira nao e vida, e o tempo que
@@ -59,7 +59,9 @@ const SEGUNDOS_SEM_PROGRESSO := 3.0
 const PASSO_MINIMO := 24.0
 
 const DISTANCIA_DO_TOQUE := 48.0
-const DANO := 12.0
+## A espera continua existindo depois que a vida saiu (16/09/2026): sem ela o
+## toque interromperia o vasculho todo quadro, e ficar encostado num zumbi seria
+## indistinguivel de ficar longe dele - nos dois casos a barra nunca anda.
 const ESPERA_ENTRE_TOQUES := 1.1
 
 const SEGUNDOS_ENTRE_RECALCULOS := 0.4
@@ -282,7 +284,7 @@ func _seguir(delta: float, destino: Vector2) -> Vector2:
 
 # --------------------------------------------------------------------- toque
 
-## Nao existe atacar de volta. O toque interrompe o vasculho e tira vida, e a
+## Nao existe atacar de volta. O toque empurra e interrompe o vasculho, e a
 ## resposta e sair de perto.
 func _tocar_no_jogador() -> void:
 	if _espera_do_toque > 0.0:
@@ -290,7 +292,7 @@ func _tocar_no_jogador() -> void:
 	if global_position.distance_to(_jogador.global_position) > DISTANCIA_DO_TOQUE:
 		return
 	_espera_do_toque = ESPERA_ENTRE_TOQUES
-	_jogador.levar_dano(DANO, global_position.direction_to(_jogador.global_position))
+	_jogador.foi_tocado(global_position.direction_to(_jogador.global_position))
 
 # -------------------------------------------------------------------- desenho
 

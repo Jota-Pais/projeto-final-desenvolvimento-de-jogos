@@ -3,7 +3,7 @@ extends Node
 ##
 ## Nao e a mochila que a casa le, e a diferenca entre as duas e o preco da
 ## noite: **so entra em casa o que passou pela porta de casa.** Ser pego pelo
-## amanhecer ou cair sem vida deixa tudo na calcada - e e isso que faz o aviso
+## amanhecer na rua deixa tudo na calcada - e e isso que faz o aviso
 ## das 19:00 valer algo em vez de ser enfeite.
 ##
 ## Ela nao sabe quem a enche: o movel emite `vasculhado`, e quem liga os dois e
@@ -17,9 +17,10 @@ const Construcao := preload("res://rua/construcao.gd")
 ## Quantas coisas cabem. **Proposta.**
 ##
 ## E a QUARTA pressao sobre vasculhar, e a que o one-pager sempre declarou -
-## "mochila, com o espaco ja ocupado visivel". As outras tres cobram em vida
-## (zumbi), em dia (relogio) e em prazo; esta cobra em **escolha**: com o espaco
-## acabando, vasculhar deixa de ser "pego tudo" e passa a ser "levo o que?".
+## "mochila, com o espaco ja ocupado visivel". As outras tres cobram em tempo
+## (zumbi), em luz (relogio) e em dia (prazo); esta cobra em **escolha**: com o
+## espaco acabando, vasculhar deixa de ser "pego tudo" e passa a ser "levo o
+## que?".
 ##
 ## 12 e pouco de proposito. Um movel da de 0 a 3 coisas, entao a mochila enche
 ## em umas seis gavetas - e voltar pra casa entregar passa a ser parte do dia, e
@@ -38,8 +39,8 @@ signal guardou(achado: String, documento: bool)
 signal largou(achado: String, documento: bool)
 
 ## O que entrou hoje. **Documento conta separado** porque e a moeda do eixo
-## rua -> casa: a comida te mantem vivo, o documento avanca a pesquisa da cura.
-## Sao as duas recompensas do vasculho, e elas nao valem o mesmo.
+## rua -> casa: o documento avanca a pesquisa da cura, e o resto ainda espera o
+## modo Casa decidir o que consome. Sao as duas recompensas, e nao valem o mesmo.
 var itens: Array[String] = []
 var documentos: Array[String] = []
 

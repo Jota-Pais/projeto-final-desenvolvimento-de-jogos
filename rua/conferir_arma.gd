@@ -201,14 +201,14 @@ func _e_equipamento_nao_loot() -> void:
 	Travessia.municao = 12
 	var cena_atual := get_tree().current_scene
 	get_tree().current_scene = null
-	Travessia.entrar_em_casa(Travessia.FimDoDia.SEM_VIDA)
+	Travessia.entrar_em_casa(Travessia.FimDoDia.AMANHECEU_NA_RUA)
 	get_tree().current_scene = cena_atual
 	for filho in get_tree().root.get_children():
 		if filho.name == "Casa":
 			filho.free()
 
 	if not Travessia.tem_pistola or Travessia.municao != 12:
-		_erro("morrer na rua tirou a arma - o mapa nao repoe, isso e beco sem saida")
+		_erro("o dia que deu errado tirou a arma - o mapa nao repoe, isso e beco sem saida")
 	else:
 		print("  morrer na rua perdeu a mochila e **nao** a arma")
 

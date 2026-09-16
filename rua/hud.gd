@@ -1,20 +1,18 @@
 extends CanvasLayer
 ## A HUD da rua, nos tres cantos que o one-pager do High Concept declara:
-## topo = o dia e quanto falta para o prazo da cura; inferior esquerdo = vida,
-## fome e agua; inferior direito = a mochila. Nao inventei layout - a peca de
-## entrega ja disse onde cada coisa fica.
+## topo = o dia e quanto falta para o prazo da cura; inferior esquerdo = o que
+## voce leva no corpo; inferior direito = a mochila. Nao inventei layout - a
+## peca de entrega ja disse onde cada coisa fica.
+##
+## ⬜ **O canto inferior esquerdo divergiu da peca em 16/09/2026.** Ela declara
+## vida, fome e agua ali, e as tres sairam do jogo - hoje so a pistola aparece.
+## E divergencia conhecida, e quem retomar a camada de sobrevivencia acha o
+## lugar dela aqui.
 ##
 ## E texto puro, e e de proposito. O que a Alfa cobra e a tela ser coerente com
-## a que o documento declarou; barra, icone e moldura sao polimento e ficam para
-## o passo 5. A vida tem barra em cima da cabeca do jogador, que e onde ela
-## importa na hora do aperto.
+## a que o documento declarou; barra, icone e moldura sao polimento.
 ##
-## **Fome e agua aparecem como "—" porque ainda nao existem.** Deixar o campo
-## vazio na tela e melhor que esconder: e o mapa do que falta, e quem for fazer
-## acha o lugar pronto. As duas ficaram para o modo Casa, que e quem decide o
-## consumo do que a mochila trouxe.
-##
-## Ela nao guarda estado: le o relogio, o jogador e o Travessia todo quadro. Se
+## Ela nao guarda estado: le o relogio, a mochila e o Travessia todo quadro. Se
 ## algum deles nao estiver na cena, o campo apaga em vez de estourar - assim a
 ## HUD pode entrar em qualquer cena de teste sem arrastar o resto.
 
@@ -52,11 +50,10 @@ const COR_DO_AVISO_GRAVE := Color("c0463c")
 
 func _process(_delta: float) -> void:
 	var relogio := get_tree().get_first_node_in_group("relogio") as Relogio
-	var jogador := get_tree().get_first_node_in_group("jogador")
 	var mochila := get_tree().get_first_node_in_group("mochila")
 
 	_topo.text = _linha_do_topo(relogio)
-	_esquerda.text = _linha_da_esquerda(jogador)
+	_esquerda.text = _linha_da_esquerda()
 	_direita.text = _linha_da_direita(mochila)
 	_documentos.text = _linha_dos_documentos(mochila)
 	_anoitecer.color.a = _quanto_escuro(relogio)
@@ -85,19 +82,21 @@ func _linha_do_topo(relogio: Relogio) -> String:
 	])
 	return "   ·   ".join(pedacos)
 
-func _linha_da_esquerda(jogador: Node) -> String:
-	var vida := "—"
-	if jogador != null and "vida" in jogador:
-		vida = "%d%%" % roundi(jogador.get("vida"))
-	# Alinhado com espaco em vez de tabulacao: fonte de fallback nao tem tab.
-	# A pistola so aparece depois de achada, na armaria da delegacia. Antes
-	# disso a linha nao existe, porque ela nao existe.
-	var arma := ""
-	if Travessia.tem_pistola:
-		arma = "\npistola %d" % Travessia.municao
-		if Travessia.municao == 0:
-			arma = "\npistola sem munição"
-	return "vida    %s\nfome    —\nágua    —%s" % [vida, arma]
+## O canto inferior esquerdo. **Vida, fome e agua sairam em 16/09/2026** - as
+## tres eram a camada de sobrevivencia, e ela saiu do jogo por decisao de mesa.
+##
+## As duas ultimas nunca passaram de "—" na tela, e o campo vazio existia como
+## mapa do que faltava. Nao falta mais: campo de regra que nao existe e pior que
+## campo nenhum, porque promete ao jogador uma coisa que o jogo nao cobra.
+##
+## Sobrou a pistola, que so aparece depois de achada na armaria da delegacia.
+## Antes disso a linha nao existe, porque ela nao existe.
+func _linha_da_esquerda() -> String:
+	if not Travessia.tem_pistola:
+		return ""
+	if Travessia.municao == 0:
+		return "pistola sem munição"
+	return "pistola %d" % Travessia.municao
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
 ## Some tudo se voce nao voltar pela porta de casa.

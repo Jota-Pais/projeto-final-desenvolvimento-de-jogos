@@ -398,16 +398,16 @@ func _a_hud_le_os_numeros() -> void:
 	var hud := CENA_DA_HUD.instantiate()
 	add_child(hud)
 
-	# Primeiro sem relogio e sem jogador na cena: ela tem que se desenhar
-	# igual, so com os campos apagados. E o caso de entrar numa cena de teste.
+	# Primeiro sem relogio e sem mochila na cena: ela tem que se desenhar igual,
+	# so com os campos apagados. E o caso de entrar numa cena de teste.
 	hud._process(0.0)
 	var topo: String = (hud.get_node("Topo") as Label).text
 	if not topo.begins_with("Dia %d de %d" % [Travessia.dia, Travessia.PRAZO_DA_CURA]):
 		_erro("sem relogio na cena, o topo da HUD diz \"%s\"" % topo)
-	elif not (hud.get_node("Esquerda") as Label).text.contains("vida    —"):
-		_erro("sem jogador na cena, a vida na HUD nao apagou")
+	elif not (hud.get_node("Direita") as Label).text.contains("—"):
+		_erro("sem mochila na cena, o campo dela na HUD nao apagou")
 	else:
-		print("  sem relogio nem jogador: \"%s\"" % topo)
+		print("  sem relogio nem mochila: \"%s\"" % topo)
 
 	# Agora com a cena da rua de pe, que e o caso de verdade.
 	var rua := CENA_DA_RUA.instantiate()
@@ -416,8 +416,10 @@ func _a_hud_le_os_numeros() -> void:
 	relogio.encerra_o_dia = false
 	relogio.set_process(false)
 	relogio.gastar(Relogio.DURACAO_DO_DIA / 2.0)
-	var jogador := rua.get_node("Jogador") as Node2D
-	jogador.vida = 60.0
+	# A pistola e o que sobrou no canto inferior esquerdo depois de vida, fome e
+	# agua sairem em 16/09/2026.
+	Travessia.tem_pistola = true
+	Travessia.municao = 7
 
 	hud._process(0.0)
 	topo = (hud.get_node("Topo") as Label).text
@@ -426,12 +428,15 @@ func _a_hud_le_os_numeros() -> void:
 
 	if not topo.contains("13:00"):
 		_erro("na metade do dia o topo da HUD diz \"%s\"" % topo)
-	if not esquerda.contains("60%"):
-		_erro("com 60 de vida a HUD diz \"%s\"" % esquerda.replace("\n", " / "))
+	if not esquerda.contains("pistola 7"):
+		_erro("com 7 balas a HUD diz \"%s\"" % esquerda.replace("\n", " / "))
 	if not direita.contains("0/"):
 		_erro("com a mochila vazia a HUD diz \"%s\"" % direita)
 
 	print("  na rua: \"%s\" | %s | %s" % [topo, esquerda.replace("\n", " / "), direita])
+	# Teste nao deixa sujeira: o autoload sobrevive a esta cena.
+	Travessia.tem_pistola = false
+	Travessia.municao = 0
 	hud.free()
 	rua.free()
 

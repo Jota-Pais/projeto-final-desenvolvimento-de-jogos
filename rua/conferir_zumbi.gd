@@ -48,6 +48,12 @@ var _falhas := 0
 ## posicionam no quadro 1 passavam por vazio.
 var _partida := 0
 
+## Se o zumbi encostou. **Vem do sinal, e nao da vida**: desde 16/09/2026 o
+## jogador nao tem vida, e o toque nao deixa marca nenhuma em variavel - o que
+## ele faz e empurrar e emitir `atingido`. Era por "a vida caiu de 100" que esta
+## ferramenta sabia que o toque tinha acontecido.
+var _foi_tocado := false
+
 func _ready() -> void:
 	_bairro = CENA_DA_RUA.instantiate()
 	add_child(_bairro)
@@ -98,6 +104,9 @@ func _uma_construcao(tipo: String) -> Dictionary:
 func _passar() -> void:
 	_fase += 1
 	_quadros = 0
+
+func _ao_ser_tocado() -> void:
+	_foi_tocado = true
 
 func _erro(texto: String) -> void:
 	_falhas += 1
@@ -257,7 +266,9 @@ func _preparar_perseguicao() -> void:
 			perto = d
 			_movel = filho
 	_jogador.global_position = _movel.position + Vector2(0.0, _movel.tamanho.y / 2.0 + 34.0)
-	_jogador.vida = 100.0
+	_foi_tocado = false
+	if not _jogador.atingido.is_connected(_ao_ser_tocado):
+		_jogador.atingido.connect(_ao_ser_tocado)
 	_longe_do_teste(1)
 
 	var zumbi = _zumbis[0]
@@ -284,13 +295,12 @@ func _conferir_perseguicao() -> void:
 		else:
 			print("  vasculho em andamento: %.2f s" % _progresso_antes)
 
-	if _jogador.vida < 100.0:
+	if _foi_tocado:
 		if _chegou_a_perseguir:
 			print("  enxergou e passou a perseguir")
 		else:
 			_erro("chegou em voce sem nunca enxergar (nao passou por PERSEGUINDO)")
-		print("  tocou: vida %.0f, aproximou %.0f px em %d quadros de fisica" % [
-			_jogador.vida,
+		print("  tocou: aproximou %.0f px em %d quadros de fisica" % [
 			_distancia_inicial - zumbi.global_position.distance_to(_jogador.global_position),
 			_quadros])
 		# Nao tem que ser zero: o jogador continua com o E segurado, entao o
@@ -318,7 +328,6 @@ func _preparar_dentro_de_casa() -> void:
 	print("\n5. o zumbi entra na casa atras de voce")
 	var casa := _uma_construcao("casa")
 	_jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
-	_jogador.vida = 100.0
 	var zumbi = _zumbis[0]
 	zumbi.global_position = Construcao.porta_de(casa) + Vector2(0.0, 240.0)
 	# Zerar antes: foi_chamado() recusa quem ja esta perseguindo, e com razao -
@@ -353,7 +362,6 @@ func _preparar_horda() -> void:
 	# 09/09 caiu dentro da mata do oeste, onde a arvore corta a visao. O teste
 	# passou a medir a mata em vez da horda, e acusou o zumbi de nao ver.
 	_jogador.global_position = Vector2(10500.0, Mapa.RODOVIA.get_center().y)
-	_jogador.vida = 100.0
 	_longe_do_teste(4)
 	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 300.0)
 	_zumbis[0]._estado = VAGANDO

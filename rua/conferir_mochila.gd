@@ -6,7 +6,7 @@ extends Node
 ##
 ##  1. vasculhar enche a mochila, e **documento conta separado** de comida;
 ##  2. **so entra em casa o que passou pela porta de casa** - amanhecer na rua
-##     e cair sem vida deixam tudo na calcada, e a casa mostra o prejuizo;
+##     deixa tudo na calcada, e a casa mostra o prejuizo;
 ##  3. **o mundo esvazia e nao repoe**: movel vasculhado ontem nasce vazio hoje,
 ##     e so ele;
 ##  4. o bairro inteiro tem loot suficiente para o prazo - e a leitura de escopo
@@ -228,7 +228,7 @@ func _so_entra_o_que_passou_pela_porta() -> void:
 	for caso in [
 		Travessia.FimDoDia.PELA_PORTA,
 		Travessia.FimDoDia.AMANHECEU_NA_RUA,
-		Travessia.FimDoDia.SEM_VIDA,
+
 	]:
 		_um_fim_de_dia(caso)
 
@@ -266,7 +266,7 @@ func _um_fim_de_dia(motivo: int) -> void:
 	get_tree().current_scene = cena_atual
 
 	var entregou := Travessia.mochila.size() + Travessia.documentos.size()
-	var nome: String = ["pela porta", "amanheceu na rua", "sem vida"][motivo]
+	var nome: String = ["pela porta", "amanheceu na rua"][motivo]
 
 	if motivo == Travessia.FimDoDia.PELA_PORTA:
 		if Travessia.documentos.size() != carregava_documentos:
