@@ -1,1155 +1,136 @@
-# Projeto Final — Desenvolvimento de Jogos
+# Você me amaria se eu fosse um zumbi?
 
 MVP de um jogo digital em **Godot 4**, feito em equipe para a disciplina de
 Desenvolvimento de Jogos — Engenharia de Software, SATC 2026.2.
 Prof. Me. Fabiano Naspolini de Oliveira.
 
-O professor recomendou o Construct 2, mas deixou a ferramenta livre. A escolha
-pelo Godot 4 é por não ter teto de eventos na versão gratuita, ter 2D e editor
-de tilemap nativos, GDScript próximo do Python e export para web — que é como as
-versões alfa, beta e gold vão ser entregues para o professor rodar.
+Apocalipse zumbi. A namorada do protagonista foi mordida e está trancada no
+porão; ele tem um prazo em dias para desenvolver a cura. O jogo alterna dois
+modos a cada dia — a **rua**, top-down, onde está o gameplay, e a **casa**,
+ponto e clique, onde está a narrativa.
 
-## Como abrir
+## Como rodar
 
-**Godot 4.7.2 stable**, build padrão (não a .NET/C# — o projeto é em GDScript).
-O editor é portátil, não tem instalador: baixar em
-<https://godotengine.org/download>, extrair e abrir o `project.godot` desta pasta.
+1. Baixe o **Godot 4.7.2 stable**, build padrão (não a .NET/C# — o projeto é em
+   GDScript): <https://godotengine.org/download>. É portátil, não tem instalador.
+2. Abra o `project.godot` desta pasta.
+3. **F5** roda o jogo. **F6** roda a cena aberta.
 
-O código se escreve **no editor de script do próprio Godot** (02/09/2026) — é lá
-que a cena, o node e o debugger já estão. Quem preferir VS Code pode ligar o
-editor externo com a extensão `godot-tools`, mas cena continua sendo editada no
-Godot.
+O código se escreve no editor de script do próprio Godot. Quem preferir VS Code
+pode ligar o editor externo com a extensão `godot-tools`, mas cena continua
+sendo editada no Godot.
 
-## Estado
+## Como se joga
 
-**A premissa e a estrutura do jogo já foram decididas** pela equipe e estão em
-[`design/high-concept.md`](design/high-concept.md): apocalipse zumbi, dois modos
-que se alternam a cada dia — rua top-down para o gameplay, casa ponto e clique
-para a narrativa — e um prazo em dias para desenvolver a cura.
-
-O conteúdo e o layout da **peça de entrega** — o one-pager visual que o professor
-exige no lugar de um documento de texto — estão em
-[`design/high-concept-one-pager.md`](design/high-concept-one-pager.md), pronto
-para entregar a quem for diagramar.
-
-> ⬜ **Os dois `.md` de design valem mais que o `.pdf` e o `.html` ao lado
-> deles**, que são a peça entregue em 09/09/2026 e ficam congelados nela. A
-> diferença conhecida é uma só, corrigida em 15/09/2026: a peça entregue diz que
-> os **documentos da rua** revelam a origem do apocalipse e dão pistas da cura, e
-> **isso nunca foi decidido pela equipe**. No jogo eles são placeholders
-> numerados; o que eles são, o que contam e onde ficam continua em aberto, e é
-> assunto dos narrative designers.
-
-O título de trabalho é **Você me amaria se eu fosse um zumbi?**. O grupo foi
-consultado em 03/09/2026 e pode propor outro — a tagline ainda não existe.
-
-A primeira cena de verdade existe desde 07/09/2026: é a `rua/`, descrita abaixo,
-e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
-08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
-
-**O mapa foi refeito em 09/09/2026** e passou de uma quadra e meia (144 × 90 m)
-para **1 km × 550 m**, com seis lugares de tipos diferentes, rio e ponte —
-ver *O mapa tem 1 km × 550 m*. O dia subiu de 180 para 420 s por causa disso:
-até o carro existir, o mapa tem que ser andável a pé.
-
-**Os cinco passos que levam à Alfa estão de pé**: a mecânica de vasculhar (1),
-o zumbi (2), o relógio do dia com a noite e a HUD (3), a mochila com os
-documentos (4) e o ciclo fechado, com os dois desfechos (5). O que sobrou de
-declarado e não construído é **fome e água** — ver *O que ainda não tem*.
-
-**Duas mudanças em 15/09/2026**, as duas na rua e as duas com conferência nova
-no `conferir_mochila.tscn`:
-
-- **A porta de casa saiu do quarto do fundo e foi para a fachada.** Voltar da
-  rua deixou de cobrar a travessia da sala e do corredor — ver *Ela saiu do
-  quarto do fundo*;
-- **a mochila virou uma tela**, com `Tab`: dá para ver o que se carrega e
-  **largar no chão** o que não vale a vaga, e o que cai dá para pegar de volta.
-  No caminho apareceu um furo antigo — *o que não cabe fica no móvel, e dá para
-  voltar* estava escrito em todo lugar e não era verdade. Agora é.
-
-Pendentes de decisão da equipe:
-
-- [ ] **Fechar o título e escrever a tagline** — hoje o título é de trabalho.
-      Quando fechar, o repositório pode ser renomeado (`projeto-final-...` →
-      um slug do título) e o `config/name` do `project.godot` acompanha. O
-      GitHub mantém redirect da URL antiga, ninguém reclona
-- [ ] Aprovar ou trocar o que foi proposto no High Concept sem passar pelo grupo:
-      gênero, plataformas, nº de jogadores, classificação etária, objetivos
-      secundários, controles e público-alvo
-- [ ] Quem fica na rua e quem fica na casa — a divisão é metade da equipe em
-      cada frente, mas os nomes não estão amarrados
-- [ ] **Estrutura de pastas** — `rua/` e `casa/` nasceram como pasta por
-      frente, e são provisórias. Renomear é barato enquanto cada frente couber
-      numa pasta
-- [ ] Convenções de código e de cena — inclusive **em que idioma** nomear node,
-      variável e arquivo. Está tudo em português, seguindo o que já existia,
-      **inclusive os nomes das ações do Input Map**; não é decisão tomada
-- [ ] **A costura entre os dois modos** — o autoload `Travessia` é proposta
-      (`dia`, `mochila`, `documentos` e as duas funções de troca de cena). É a
-      única decisão de arquitetura que as duas frentes tocam
-- [ ] **O prazo virou 30 dias em 09/09/2026, e isso reabre a leitura de
-      escopo.** O argumento levado ao professor era *cada dia é uma fase* + a
-      terceira opção dele, *cerca de 10 níveis, ondas ou estágios* — com 30 dias
-      essa conta não fecha mais. Ou "fase" deixa de ser o dia, ou a leitura
-      passa a ser outra. É conversa de mesa, e é a mesma conversa da calibragem
-      de escopo
-- [ ] **Com 30 dias o prazo sobra.** A cura pede 4 documentos e o bairro tem 6 —
-      dá para fechar na primeira semana, e os outros 23 dias não cobram nada. Um
-      prazo que ninguém alcança não é pressão, é enfeite. As três saídas estão
-      em *Quantos documentos a cura pede*, e o `conferir_fim.tscn` mede isso e
-      avisa a cada rodada
-- [ ] Os números de feel do relógio e da noite: **180 s de luz**, **150 s de
-      noite**, **vasculhar gastando o dobro**, **+14 zumbis pela noite** e
-      **+35% de vista** (`DURACAO_DO_DIA`, `DURACAO_DA_NOITE`,
-      `CUSTO_DO_VASCULHO`, `ZUMBIS_DA_NOITE`, `VISTA_A_MAIS_DE_NOITE`).
-      Provisórios, e o único jeito de decidir é jogando — o que a direção
-      fechou em 09/09 foi a **forma** da noite, não os números
-- [x] ⚠️ **Desligar o `Travessia.COMECA_ARMADO`** — feito em 09/09/2026. A
-      constante existe e está em `false`; ligá-la de novo para testar o tiro faz
-      o `conferir_arma.tscn` avisar em toda rodada, de propósito
-- [ ] **Os controles mudaram duas vezes e o one-pager não sabe.** A peça declara
-      teclado só, e hoje há **mouse** (mira e botão esquerdo da pistola) e
-      **`Tab`** (a tela da mochila). A linha de controles precisa das duas
-- [ ] **`Tab` para a mochila é proposta**, como o resto do teclado. E a tela em
-      si é versão beta: texto puro, sem ícone e sem mouse — ver *A tela da
-      mochila*
-- [ ] **Os export templates do Godot** (~1 GB) não estão instalados, e sem eles
-      não há build para o professor rodar. São **2 dos 10 pontos da Alfa**
-      ("funcional e jogável"), e é download e não código
-- [ ] **A fase hipotética "ajudando no entendimento"** é parte dos 5 pontos da
-      Alfa. Um mapa de 1 km pode atrapalhar aqui: quem abre o jogo e anda
-      30 s em grama não vê a mecânica. Vale decidir como a Alfa se apresenta
-- [ ] **Quantos documentos a cura pede, e o que mais ela consome.** Hoje são 4
-      dos 6 que o bairro tem, e é número provisório segurando uma decisão que é
-      do modo Casa. Ver *Quantos documentos a cura pede*
-- [ ] **Morrer devia acabar a partida?** Hoje custa o dia. O High Concept só
-      declara dois desfechos e nenhum é morrer, mas é decisão de mesa
-- [ ] **A escalada por dia** — um zumbi a mais a cada dois dias
-      (`UM_ZUMBI_A_MAIS_A_CADA`), que leva o dia 30 a 27 de dia e 41 de noite.
-      Provisório, e calibrado no prazo: se o prazo mudar, este muda junto
-- [ ] **O carro.** O mapa foi feito para exigir um — a mansão está a 1.070 m, e
-      ida e volta são 306 s de um dia de 420. Enquanto ele não existe, o dia
-      está em 420 s para o mapa ser andável; **quando existir, o dia volta a
-      cair**. A bomba de combustível do posto já está no mapa esperando
-- [ ] **Streaming por célula.** O mundo inteiro tem colisão e móvel criados no
-      `_ready`. Aguenta este tamanho; se o mapa crescer de novo, é o que vem —
-      é a resposta completa do PZ, que só mantém na memória as células perto de
-      você
-- [ ] Divisão de tarefas
-
-## O mapa e a mecânica de vasculhar (`rua/`)
-
-**07/09/2026, e o mapa refeito em 09/09.** É o que roda no F5.
-
-Encoste num móvel — geladeira, armário, cômoda, estante, caixa, prateleira,
-arquivo, armário de armas, bomba de combustível, carro abandonado, lata de
-lixo — e **segure `E`** até a barra encher.
-
-| Tecla | O que faz |
+| tecla | o quê |
 |---|---|
-| `WASD` ou setas | andar |
+| `WASD` / setas | andar |
 | `Shift` | correr |
-| `E` | vasculhar (segurar), entrar em casa, e as escolhas da casa |
-| mouse | mirar a pistola |
+| `E` (segurar) | vasculhar um móvel, entrar em casa |
+| mouse | mirar |
 | botão esquerdo | atirar |
-
-⬜ **O mouse é novo, e o High Concept não o declara.** Os controles da peça são
-`WASD`/setas, `E` e `Shift` — teclado só. A pistola de 09/09/2026 acrescentou
-mira no mouse, porque atirar em top-down sem mira livre é ruim de um jeito que
-não vale defender. **A linha de controles do one-pager precisa ganhar o mouse.**
-
-As ações estão no **Input Map** do `project.godot`, por `physical_keycode` — o
-WASD fica no mesmo lugar em teclado que não seja QWERTY. Os controles são os que
-o High Concept declara.
-
-**Não escreva comentário no `project.godot`.** O editor do Godot reescreve o
-arquivo a cada save: apaga todo comentário e infla cada tecla numa linha longa.
-Já aconteceu — a explicação do `physical_keycode` e a do autoload `Travessia`
-moravam lá e sumiram no primeiro save. O que precisar ser dito sobre aquele
-arquivo se diz aqui.
-
-### O mapa tem 1 km × 550 m, e a forma é a de Rosewood
-
-**Refeito duas vezes em 09/09/2026.** Era o bairro sozinho — 144 × 90 m, uma
-quadra e meia. Virou 1,44 km × 900 m de manhã, e **encolheu para 1 km × 550 m à
-noite**, quando ficou claro que o problema não era tamanho: era campo vazio
-demais para caminhada demais. **Mapa grande não é mapa bom** — o que faz
-distância valer algo é ter coisa nas duas pontas.
-
-Referência de escala: **40 px = 1 metro**, porque o jogador tem 40 px de altura
-e é ele a régua de tudo (`rua/construcao.gd` traz a tabela em corpos).
-
-A forma é a de **Rosewood, no Project Zomboid**: uma **rodovia leste-oeste** com
-um **núcleo denso de quadras** no meio, casas de campo penduradas em estrada de
-terra em volta, lavoura ao sul e mata nas bordas. O que a referência mostrou e
-que estava faltando aqui era exatamente a densidade — dezenas de prédios
-pequenos encostados na calçada, e não lugares isolados soltos no campo.
-
-A figura está em **`design/mapa.png`**, e se regenera com F6 — ver
-*Quer ver o mapa?* abaixo.
-
-| Lugar | Distância | A pé | O que tem |
-|---|---|---|---|
-| **bairro** | 56 m | 8 s | sua casa, 9 casas, mercadinho de esquina, 3 galpões — 41 móveis |
-| **sítio do norte** | 207 m | 30 s | casa de campo e galpão, no fim de uma estrada de terra |
-| **cidade** | 323 m | 46 s | **8 quadras, 54 prédios, 234 móveis** — a delegacia e o mercado estão dentro dela |
-| **lavoura** | 359 m | 51 s | seis talhões de terra arada e um galpão de fazenda |
-| **posto** | 526 m | 75 s | pista aberta, 2 bombas de combustível, loja de conveniência |
-| **sítio do leste** | 579 m | 83 s | outra casa de campo, do outro lado da mata |
-| **mansão murada** | 757 m | 108 s | condomínio abandonado com **um portão só**, do outro lado do rio |
-
-Mais quatro matas de borda — e a **mata do sul** é a fechada, a única em que não
-se vê o outro lado. Era um lugar próprio chamado "florestinha" até 09/09 à
-noite, e virou redundante quando o mapa ganhou quatro matas: agora é uma
-densidade, não um lugar.
-
-E o **rio** cortando o mapa de cima a baixo, com a **ponte** onde a rodovia o
-cruza — o único atravessadouro.
-
-#### As estradas são tortas, e isso saiu de graça
-
-Até 09/09 à noite **o mapa inteiro passava por uma linha reta só**, de ponta a
-ponta — e cidade não é assim. Estrada de verdade contorna, sobe e desce.
-
-Dava para consertar barato por uma razão: **estrada não tem colisão.** É chão
-pintado, então o custo de fazer curva é desenho, e não física nem navegação. Uma
-polilinha vira uma fila de quadrados sobrepostos (`Mapa._faixa`), com 55% de
-sobreposição para a faixa ficar contínua em qualquer ângulo, sem serrilha e sem
-buraco na curva.
-
-O que ficou:
-
-- **o trecho reto continua reto**, e é onde ficam o bairro e a cidade — cidade
-  nasce em trecho reto de estrada, e a grade tem que se alinhar com ele;
-- a rodovia **chega do noroeste em curva**, e depois do posto faz uma lombada
-  até a ponte e sobe para o nordeste do outro lado;
-- o que eram dois acessos verticais em linha reta virou **uma estrada de terra
-  que serpenteia o norte inteiro**, ligando os dois sítios — e é ela que faz o
-  norte deixar de ser campo com nada;
-- as **quadras da cidade têm larguras diferentes** (65, 85, 55 e 75 m). Grade
-  com quadra do mesmo tamanho em toda parte lê como planilha; e o número de
-  lotes por quadra sai da largura dela, então mexer numa largura não quebra
-  nada.
-
-#### A cidade é uma grade, e a grade é uma regra
-
-Oito quadras de 60 m de altura e largura variando de 55 a 85 m, com rua de 10 m
-entre elas e prédio virado para a rua em cada vaga de lote. **A rua do meio da
-grade é a própria rodovia.**
-
-A grade sai de constantes e não de retângulo escrito à mão: acrescentar uma
-coluna de quadra é mudar um número, e todo prédio nasce virado para a rua certa
-com recuo de calçada. E a regra que dá o desenho de rua principal do PZ é uma
-só: **a fileira que dá na rodovia é comércio, o resto é casa.** É regra, não
-lista — continua valendo se a cidade crescer.
-
-A **delegacia** e o **mercado** moram dentro da cidade, e não soltos no campo.
-Os dois são mais largos que uma vaga, então comem a vaga seguinte.
-
-Os prédios especiais são endereçados pelo **x da quadra**, e não pelo índice da
-coluna: com índice, mexer na largura de uma quadra movia o prédio especial para
-outra sem avisar.
-
-#### Os tamanhos são de gente
-
-Os prédios grandes estavam absurdos: **o mercado tinha 105 × 55 m e a delegacia
-90 × 65 m** — um hipermercado e um fórum, não um mercadinho e uma delegacia de
-cidade pequena. Cada um era um número escrito à mão dentro do gerador do lugar,
-sem ninguém comparando.
-
-Agora saem da tabela `TAMANHOS` do `construcao.gd`, em metros de gente: casa
-13 × 10,5, comércio 14 × 11, delegacia 26 × 17,5, mercado 34 × 16,5, posto
-18 × 12, mansão 22 × 16. As casas do bairro não saem daí — são as de 08/09,
-tunadas à mão, e mexer nelas seria re-errar o que o conferir já validou.
-
-### Um documento por lugar, e é isso que faz o mapa grande valer algo
-
-> ⬜ **Os documentos são placeholders.** Nome, conteúdo e que lugar guarda qual
-> não foram decididos pela equipe — o que está descrito aqui é a distribuição
-> provisória que faz a partida ter como ser ganha, e nada além disso.
-
-Cada um dos seis lugares com prédio guarda **um documento**, sempre no quarto
-mais fundo. Não é sorteio — os seis estão em seis prédios declarados: dois no
-bairro e quatro exigindo viagem.
-
-Antes era um documento a cada seis móveis. Num mapa com 73 móveis isso daria
-documento repetido, e documento repetido como moeda de progressão não quer dizer
-nada. Mais importante: **o bairro sozinho não fecha a cura** — a cura pede 4 e o
-bairro tem 2. O `conferir_mapa.tscn` reprova se isso deixar de ser verdade,
-porque se o bairro bastasse, o posto, a delegacia, o mercado, a ponte e a mansão
-seriam cenário bonito sem função nenhuma.
-
-### Três coisas copiadas do PZ, e são as que mudam a mecânica
-
-1. **Toda construção se entra, e o interior está na mesma cena** — sem tela de
-   carregamento. Isso responde uma pergunta que estava aberta aqui: interior é
-   cena própria ou a mesma? É a mesma. Entrar te fecha num lugar de onde não dá
-   para fugir em linha reta, e é isso que faz vasculhar custar algo.
-2. **O telhado sai quando você entra.** De fora, a construção é opaca: só a
-   marca da porta aparece. A planta, os móveis e o que tem dentro só se veem
-   entrando. Sem isso o mapa inteiro se lê da calçada e vasculhar deixa de ser
-   exploração.
-3. **O loot está em móvel dentro de quarto**, e a tabela é **por tipo de
-   prédio** — geladeira dá comida, arquivo de delegacia dá papelada, bomba dá
-   gasolina, armaria dá algema e munição. É isso que faz um lugar pagar melhor
-   que outro, e é o que faz valer a pena ir longe.
-
-**O que não foi copiado é a câmera.** PZ é isométrico; o nosso High Concept
-declara top-down. Foi copiada a planta, não a projeção.
-
-### Três coisas que a densidade quebrou, e nenhuma dava erro
-
-O mapa denso de 09/09 à noite acusou três problemas que já existiam e nunca
-tinham aparecido:
-
-- **O jogador nascia fora da própria casa.** A posição dele e da porta de casa
-  estavam escritas à mão no `rua.tscn`; quando o bairro mudou de lugar no mapa,
-  ele passou a acordar no meio do campo, a 89 m de casa. Não dá erro nenhum — só
-  aparece no lugar errado. Agora saem do `Mapa.onde_o_jogador_nasce()`, e é o
-  cenário que os posiciona.
-- **Os móveis se empilhavam em salão sem divisória.** A conta de posição era a
-  mesma dos prédios de três quartos, e no mercado punha **seis móveis com 66 px
-  entre os centros, com prateleira de 156 de largura** — um dentro do outro. O
-  `conferir_mapa` não pegava, porque móvel dentro de móvel continua alcançável
-  de fora. Salão agora espalha pela largura toda, com folga.
-- **A delegacia fazia zumbi nascer dentro da parede.** O zumbi ia para o centro
-  geométrico do prédio, e num prédio de três quartos a divisória interna passa
-  quase no meio. Agora vai para o centro da sala.
-
-E duas conferências mediam coordenada do bairro pequeno: a da horda punha o
-jogador dentro da mata do oeste, onde árvore corta a linha de visão, e acusava o
-zumbi de não ver. Coordenada escrita à mão em teste envelhece igual à do jogo.
-
-### O que não escala, e como está resolvido
-
-Três coisas funcionavam no bairro e **não sobrevivem a 100x a área**. Nenhuma
-delas dava erro — todas simplesmente parariam de funcionar:
-
-- **A navegação do zumbi.** Uma grade A* de 32 px sobre o mundo teria **2
-  milhões de células**. Agora ela cobre só uma **janela de 8.000 px em volta do
-  jogador**, remontada quando ele sai dela: 62 mil células, e o custo passou a
-  depender do alcance do zumbi e não do tamanho do mapa. Fora da janela não há
-  caminho — e não precisa, porque fora dela não há zumbi.
-- **Os zumbis.** Densidade constante num mapa 100x maior seriam centenas de
-  zumbis fazendo raycast. Agora **zumbi só existe num raio de 7.000 px** (175 m,
-  umas cinco telas e meia) em volta de você: são os mesmos ~14 de sempre, só que
-  agora são os 14 que estão perto. É o que o PZ faz. O preço é que ir longe e
-  voltar repovoa o lugar.
-- **Árvore e mato.** Orçamento fixo, repartido pelos bosques por **área vezes
-  densidade** — e a densidade não é detalhe: sem ela, uma mata de borda de 200
-  milhões de px² levava quase todas as árvores e a florestinha ficava
-  indistinguível de campo aberto. Mata que não se vê não é mata, é cor de fundo.
-
-**Streaming por célula, que é a resposta completa do PZ, não foi feito** — o
-mundo inteiro ainda tem colisão e móvel criados no `_ready`. Aguenta este
-tamanho (uns 2 mil corpos); se o mapa crescer de novo, é isso que vem.
-
-### A escala tem uma referência: o corpo do jogador
-
-**28 x 40 px** (`rua/jogador.tscn`). Toda medida existe em relação a ele, e o
-cabeçalho do `construcao.gd` traz a tabela de conversão.
-
-A arquitetura **foi ampliada em 08/09/2026** porque, no zoom de jogo, tudo
-ficava em cima do personagem — quarto de 3,6 corpos de altura, beco de 1,4
-corpo. Ela cresceu ~1,8x e **o jogador ficou do mesmo tamanho**, que é o que dá
-a sensação de escala.
-
-| O que | Antes | Agora |
-|---|---|---|
-| quarto do fundo | 5,4 x 3,6 corpos | 9,8 x 6,6 |
-| beco entre duas casas | 1,4 corpo | 3,9 |
-| vão de porta | 2,5 corpos | 3,6 |
-| largura da rodovia | 5,5 corpos | 10 |
-
-Duas coisas **não** cresceram 1,8x, de propósito:
-
-- **O móvel cresceu ~1,35x.** Crescendo junto com o quarto, o quarto
-  continuaria igualmente cheio — o que se queria era sobrar cômodo. O carro é a
-  exceção e cresceu junto, porque carro do lado de uma pessoa é grande mesmo.
-- **A velocidade subiu ~1,3x** (280 andando, 460 correndo). Parte do ponto é o
-  mundo passar a parecer grande; se ficar arrastado, é esse o número a mexer.
-
-Se for ampliar ou reduzir de novo: são números do `lugares.gd`, mais o tamanho do
-móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
-
-### Os arquivos
-
-- `mapa.tscn`… não existe: o layout é **dado**, não cena. Está em `mapa.gd`
-  (onde) e `lugares.gd` (do que), e são os dois arquivos a mexer para mudar o
-  mapa
-- `mapa.gd` — o mundo: tamanho, rodovia, rio, ponte, vias de acesso e a lista
-  de lugares. **Fonte única do mapa**
-- `lugares.gd` — um gerador por tipo de lugar: bairro, cidade, posto, mansão,
-  sítio, lavoura e floresta. É onde a variedade mora, e onde se acrescenta
-  lugar novo
-- `construcao.gd` — as regras de uma construção qualquer (parede, vão de porta,
-  divisória, quarto) e as tabelas de loot. Era o `bairro.gd`
-- `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
-  `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
-- `mochila.gd` — o que você está carregando hoje, as 12 vagas, e a regra de que
-  **só entra em casa o que passou pela porta de casa**. Ver a seção própria
-  abaixo
-- `pistola.gd` — a arma. Achada na armaria da delegacia, munição vinda do
-  vasculho, e o tiro chamando a horda. Ver a seção própria abaixo
-- `vasculhavel.gd` — **é a core mechanic**. `Area2D` que enche uma barra
-  enquanto a ação `vasculhar` estiver segurada e o jogador estiver dentro do
-  alcance. O que separa uma lata de lixo (1,5 s) de uma porta (5 s) é só a
-  `duracao` e o que tem dentro: mesmo verbo, custos diferentes — que é o que a
-  Alfa cobra como *aplicabilidade da core mechanic*
-- `jogador.gd` — andar e correr, e nada mais. Ele não sabe vasculhar: quem lê a
-  tecla é o próprio vasculhável, então dá para espalhar coisa vasculhável pela
-  cena sem tocar no jogador
-- `entrada_de_casa.gd` — a porta do **porão**, dentro da sua casa. Segure `E`
-  por 1,2 s e o dia na rua encerra. Ver a seção da travessia abaixo
-
-- `cenario.gd` — desenha o chão no `_draw()` e gera no `_ready()` a colisão, os
-  móveis e as árvores a partir do `mapa.gd`. Retângulo de cor chapada, sem
-  imagem nenhuma
-- `telhados.gd` — desenha os telhados por cima de tudo e esconde o da
-  construção onde o jogador está. Tem que ser o **último irmão** da cena: o
-  Godot desenha na ordem da árvore
-- `zumbi.gd` — o zumbi. Campo de visão com parede cortando, chamado de horda e
-  toque que interrompe o vasculho. Ver a seção própria abaixo
-- `navegacao.gd` — grade A* montada dos retângulos de obstáculo que o cenário
-  gerou. É o que faz o zumbi **achar o vão da porta** em vez de encalhar na
-  parede
-- `relogio.gd` — o relógio: a luz que acaba, o vasculho gastando ela mais
-  rápido, e o `noite()` que todo mundo lê para apertar. Ver a seção própria
-  abaixo
-- `hud.gd` e `hud.tscn` — a HUD nos três cantos que o one-pager declarou, o
-  aviso da noite e o escurecer
-- `conferir_mapa.tscn`, `conferir_zumbi.tscn`, `conferir_relogio.tscn`,
-  `conferir_mochila.tscn`, `conferir_arma.tscn` e `conferir_fim.tscn` —
-  **ferramentas, rodam com F6.** Ver abaixo
-- `retratar_mapa.tscn` e `legenda_do_mapa.gd` — **gera a imagem do mapa** em
-  `design/mapa.png`, legendada. Roda com F6, e a figura sempre bate com o jogo
-
-### Duas coisas de propósito
-
-**A zona de alcance é que obriga a ficar parado.** Sair de perto interrompe o
-vasculho, e isso não é regra escrita em lugar nenhum — é consequência de o
-`Area2D` deixar de detectar o jogador. É de graça, e é onde a pressão vai
-morder.
-
-**O progresso parcial fica onde parou** (`DECAIMENTO = 0.0` no
-`vasculhavel.gd`). Dá para vasculhar em mordidas: avança um pouco, recua quando
-o zumbi chega, volta e termina. Com um valor alto, cada interrupção custa tudo e
-o vasculho vira aposta. **É a decisão de feel mais importante do projeto e ainda
-não foi tomada** — é uma constante justamente para testar os dois antes de
-escolher.
-
-Com o relógio do passo 3 no lugar, o `0.0` **deixou de ser de graça**: voltar e
-terminar depois gasta luz do dia de novo, e luz é dia. A interrupção já custa
-algo mesmo com decaimento zero, e é isso que muda a pergunta — não é mais "o
-progresso volta ou não?", é "quanto do dia essa mordida a mais vale?".
-
-### Quer ver o mapa? Rode o `retratar_mapa.tscn` (F6)
-
-Ele monta a rua de verdade, afasta a câmera até o mundo caber na tela, escreve o
-nome e a distância de cada lugar em cima dele e salva **`design/mapa.png`**.
-
-Não é um desenho à parte que precisa ser mantido em sincronia: **é o mapa que
-está no jogo, retratado.** Mexeu no `mapa.gd`, roda de novo e a figura está
-atualizada — mapa desenhado à mão mente na primeira mudança.
-
-Serve para três coisas, e a terceira é a que paga:
-
-- ver de uma vez o que só se vê andando 1,4 km;
-- conferir a olho o que o `conferir_mapa.tscn` confere por número;
-- **o GDD.** O critério de maior peso dele — 4 de 10 — é *"tem ilustrações,
-  diagramas, desenhos, tabelas, rabiscos e recursos visuais que ajudam a
-  explicar e a consultar"*. Um mapa legendado é exatamente isso, e sai daqui de
-  graça.
-
-O zoom sai de uma conta com o tamanho da janela, e não de um número escrito na
-mão: mudar o mundo ou a resolução não quebra a figura. **Não roda em headless** —
-capturar a tela precisa de renderizador de verdade; no editor é F6 e pronto.
-
-### Mexeu no mapa? Rode o `conferir_mapa.tscn` (F6)
-
-Ele varre o mundo com o corpo do jogador numa grade, faz flood fill e confere
-que o mapa é **um lugar só**: que dá para chegar a pé, da sua casa, em todo
-lugar do mapa, e dentro de cada lugar em todo móvel e todo quarto. Imprime as
-distâncias de cada lugar e sai.
-
-São **duas grades**, porque varrer 1,3 km² com célula de 20 px seriam 5,2
-milhões de consultas de física: uma **grossa** (120 px) no mundo inteiro, para
-"dá para ir de lá até cá", e uma **fina** (24 px) dentro de cada lugar com
-prédio, que é onde vão de porta de 100 px precisa de precisão.
-
-Ele também confere que **o rio barra e a ponte passa** — sem isso o mapa
-estaria partido em dois e ninguém notaria, porque o outro lado simplesmente
-nunca seria visitado — e que os seis documentos estão em seis prédios com o
-bairro sozinho não fechando a cura.
-
-Não é zelo: na primeira vez que rodou, **38 dos 41 móveis estavam
-inalcançáveis** e nada disso aparecia lendo o código nem jogando dois minutos.
-
-- Móvel encostado sempre na parede de cima — em casa de fachada ao norte isso
-  punha a geladeira em cima do vão da porta e trancava o quarto
-- Árvore sólida sorteada no mundo inteiro, tapando o beco entre duas casas e a
-  porta do galpão. Por isso árvore agora só nasce nos `BOSQUES` declarados
-- Cerca de fundo a 40 px da porta do galpão — o jogador tem 40 de altura e não
-  cabia na frente dela
-
-Layout de greybox se mexe por número, e número errado fecha caminho sem avisar.
-Rodar isso custa dois segundos.
-
-### O zumbi (`zumbi.gd`)
-
-**08/09/2026.** Escrito do zero para servir a core mechanic: ele **existe para
-atrapalhar o vasculho**, não para ser um combate. Nada foi reaproveitado do
-`inimigo.gd` da cena de teste, que perseguia em linha reta de qualquer distância
-e atravessava o mapa.
-
-São treze de dia, espalhados pelo bairro — alguns na rua, alguns no quintal e
-**dois dentro de construção**, que é o que faz entrar numa casa não ser abrigo
-garantido. Não há sistema de onda; é povoamento, como no PZ.
-
-**À noite chegam mais catorze**, e a vista dele cresce de 520 px para 702. Quem
-manda nisso é o relógio, e está na seção da noite abaixo — aqui o zumbi só lê
-um número.
-
-Os três comportamentos vêm direto do High Concept:
-
-1. **Campo de visão.** Ele não sabe onde você está: vê num cone de 110° até
-   520 px, e **parede corta a linha de visão**. Entrar numa casa quebra a
-   perseguição — e ficar dentro dela com ele te encurrala.
-2. **Horda.** Quem enxerga você chama quem está vagando num raio de 700 px. Um
-   zumbi não é ameaça, três são. O *ritmo de horda* que o High Concept pede sai
-   daí, não da quantidade.
-3. **Pressão sobre a mesma ação.** O toque interrompe o vasculho e tira vida.
-   Não existe atacar de volta: a resposta é sair de perto.
-
-**Ele é mais lento que você andando** — 165 contra 280, e 460 correndo. Dá para
-sempre fugir, de propósito: o que ele tira não é vida, é o tempo que você
-precisava para terminar de vasculhar.
-
-O `interromper()` do vasculhável, que estava sem cliente desde 07/09, agora tem
-um. E a ligação é indireta: o zumbi chama `levar_dano()` no jogador, o jogador
-emite `atingido`, e é o **vasculhável** que escuta esse sinal. O zumbi não sabe
-que móvel existe e o móvel não sabe que zumbi existe.
-
-Ele acha o caminho por uma **grade A*** (`navegacao.gd`), montada dos retângulos
-de obstáculo que o cenário acabou de gerar. A malha de navegação do Godot foi a
-primeira tentativa e não serviu: `bake_navigation_polygon()` sobre este bairro
-(umas 250 colisões num mundo de 5760 × 3600) travou o processo, cinco minutos
-sem sair uma linha.
-
-O cone de visão aparece desenhado na tela (`MOSTRAR_A_VISTA` no `zumbi.gd`).
-É **auxílio de protótipo**, não decisão de design: sem ver o cone não dá para
-entender por que ele te viu ou não.
-
-### Mexeu no zumbi? Rode o `conferir_zumbi.tscn` (F6)
-
-Confere seis coisas: ninguém nasce dentro de parede, a navegação acha caminho
-para dentro de casa, parede corta a visão, ele persegue e o toque interrompe o
-vasculho, ele entra na casa atrás de você, e o chamado da horda funciona.
-
-Achou três bugs na primeira rodada, todos de comportamento — nenhum dava erro
-em tela:
-
-- **Desistência por tempo fixo** (4 s) fazia ele parar no meio do caminho:
-  atravessar a casa da calçada até o quarto do fundo dá 1085 px, que a 165 px/s
-  leva 6,6 s. Entrar em casa virava abrigo garantido.
-- **Desistência por distância em linha reta** era pior: contornando a casa para
-  chegar na porta a linha reta *aumenta*, e ele desistia justamente quando
-  estava fazendo a coisa certa. Hoje é por distância andada.
-- **No fim do caminho** ele devolvia direção zero e ficava parado até o
-  recalculo, andando a menos da metade da velocidade dele.
-
-### O relógio, a noite e a HUD (`relogio.gd`, `hud.gd`)
-
-**08/09/2026, e a noite refeita em 09/09.** É o passo 3: a segunda pressão em
-cima de vasculhar, e a primeira que não se resolve fugindo.
-
-O dia tem **180 s de luz** — 07:00 às 19:00 na HUD — e **vasculhar gasta luz em
-dobro**: o segundo que passa mais o segundo que custa. Andar gasta 1 s de dia
-por segundo; vasculhar gasta 2. O zumbi cobra em vida; o relógio cobra em
-**dia**, que é a moeda que não volta, porque o prazo da cura não espera.
-
-Os 40 móveis do bairro somam 116 s de vasculho, que dão **233 s de luz** — mais
-do que um dia inteiro, e isso sem andar um passo. É o que torna verdadeira a
-promessa do mapa lá em cima: um dia não dá para limpar o bairro, então escolher
-onde gastar o dia é o jogo.
-
-**O prazo da cura são 30 dias** (`Travessia.PRAZO_DA_CURA`), decididos em
-09/09/2026. No dia 30 a casa não deixa mais sair.
-
-Eram 10 até então, e o número não era só feel: era a leitura de escopo levada ao
-professor — *jogo arcade que acaba no game over, cerca de 10 níveis, ondas ou
-estágios*, com cada dia sendo uma fase. **Com 30 dias essa conta não fecha
-mais**, e isso está anotado nas pendências: ou "fase" deixa de ser o dia, ou a
-leitura passa a ser outra.
-
-Duas coisas eram calibradas em cima do prazo e mudaram junto: a escalada de
-zumbis por dia e o mato tomando o terreno. Uma não mudou e é a que importa —
-**quantos documentos a cura pede**, ver a seção do fim do jogo.
-
-#### Às 19:00 a noite não te tira da rua — ela aperta
-
-**Decisão de direção, 09/09/2026.** A primeira versão fazia o dia acabar às
-19:00: a tela trocava e você aparecia em casa. Estava errado, e o motivo é
-simples — **o jogo te resgatava**. Ficar até tarde não custava a volta pra
-casa, custava um corte de cena. Voltar tem que ser uma travessia, não um botão.
-
-Agora anoitecer não muda de cena. O que muda é a rua:
-
-- **A rua enche.** Mais 14 zumbis ao longo da noite, chegando **pelas quatro
-  bocas de rua nas bordas do mundo** — de fora do bairro, e não brotando do seu
-  lado. São 13 no começo do dia e 27 às 05:00: mais que o dobro. Nascer longe é
-  de propósito, e é o que dá o tempo entre um aparecer e ele te achar; zumbi
-  que brota do seu lado não é aperto, é sorteio.
-- **Eles enxergam mais longe** — de 520 px para 702 na noite fechada. Não é
-  realismo, zumbi não vê melhor no escuro: é que ficar invisível andando a
-  noite toda tiraria o aperto dela.
-- **A tela escurece, mas sem virar tela preta.** O escuro para em 60% e fica
-  lá — dá para continuar lendo o bairro e achar o caminho de casa. Isso foi
-  pedido explicitamente: o que aperta a noite é a rua encher, não você não ver.
-
-E **o jogo avisa**, em vez de só ficar difícil e esperar que você descubra: um
-aviso aparece embaixo do relógio às 19:00 e vai piorando — *"Anoiteceu — melhor
-voltar pra casa"*, *"A rua está enchendo — volte pra casa"*, *"Você não vai
-aguentar a noite"*.
-
-**Às 05:00 amanhece, e aí sim o dia vira à força.** É o teto: dá para aguentar
-a noite inteira e perder o dia sem morrer. Mas os três jeitos de o dia acabar
-não valem o mesmo, e a casa diz qual foi — `Travessia.fim_do_dia`:
-
-| | |
+| `Tab` | abrir a mochila |
+
+O dia tem 420 s de luz (07:00 às 19:00) e **vasculhar gasta luz em dobro**. Volte
+à porta do porão antes de anoitecer: só entra em casa o que passou por ela. A
+cura precisa de 4 documentos e o prazo é de 30 dias.
+
+## O que existe hoje
+
+- **A rua** é jogável de ponta a ponta: mapa de 1 km × 550 m, vasculhar, zumbi,
+  relógio, mochila, pistola, e o dia fechando pela porta do porão.
+- **A casa** (`casa/casa.tscn`) é um **lugar reservado** — uma tela de texto que
+  fecha o ciclo enquanto a outra frente da equipe não começa. Quem for fazer essa
+  frente troca a cena e não precisa tocar em nada da rua.
+- **Sem arte e sem áudio**: tudo é retângulo de cor chapada.
+
+## As regras que o código implementa
+
+- **Cada dia é uma fase.** A partida acaba na vitória (a cura fica pronta) ou na
+  derrota (o prazo se esgota) — ver `fim_de_jogo.gd`.
+- **A core mechanic é vasculhar sob pressão**, e a pressão vem de quatro lugares
+  em cima da mesma ação: o zumbi cobra vida, o relógio cobra luz, o prazo cobra
+  dia e as 12 vagas da mochila cobram escolha.
+- **O mundo esvazia e não repõe.** Móvel vasculhado ontem nasce vazio hoje.
+- **Só entra em casa o que passou pela porta do porão.** Amanhecer na rua ou
+  ficar sem vida deixa a mochila na calçada e custa o dia.
+- **Morrer custa o dia, não a partida.**
+- **A arma não é loot, é equipamento**: não ocupa vaga e não se perde. Está na
+  armaria da delegacia, e o tiro chama a horda.
+- **Os documentos são placeholders numerados.** Existem seis no mapa, a cura pede
+  quatro, e é o que fecha a partida. ⬜ O que eles são, o que contam e onde ficam
+  **não foi decidido pela equipe** — ver `design/narrativa.md`.
+
+## Os arquivos
+
+O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
+
+| arquivo | o quê |
 |---|---|
-| `PELA_PORTA` | você trancou o porão. O único bom |
-| `AMANHECEU_NA_RUA` | a noite passou por cima de você |
-| `SEM_VIDA` | você não aguentou |
-
-Hoje a diferença é só o texto na tela da casa. **É no passo 4 que ela vira
-consequência:** com a mochila existindo, quem não entra pela porta volta de mão
-vazia — e é isso que faz o aviso das 19:00 valer algo.
-
-#### A HUD está nos cantos que o one-pager declarou
-
-Topo, o dia e quanto falta para o prazo, mais a hora; inferior esquerdo,
-vida/fome/água; inferior direito, a mochila. Não inventei layout — a peça de
-entrega já disse onde cada coisa fica, e é essa tela que vale 2 na Alfa.
-
-É **texto puro**, de propósito: o critério é a tela ser coerente com a que o
-documento declarou, não ser bonita. **Fome, água e mochila aparecem como "—"
-porque ainda não existem** (passo 4). Deixar o campo vazio na tela é melhor que
-escondê-lo: é o mapa do que falta, e quem for fazer o passo 4 acha o lugar
-pronto.
-
-#### Onde cada peça mora, e por quê
-
-**Não existe "sistema de noite".** A noite é um número — `relogio.noite()`, de
-0 a 1 entre as 19:00 e as 05:00 — e cada um lê e reage por conta: o cenário
-traz mais zumbi, o zumbi enxerga mais longe, a HUD avisa e escurece a tela. Um
-lugar só decide que horas são, e ninguém precisa combinar com ninguém. Mexer no
-aperto da noite é mexer numa constante de quem sente o aperto.
-
-O relógio de **dentro** de um dia é coisa da rua, e nasce cheio cada vez que a
-cena da rua carrega. A **contagem de dias, o prazo e como o dia acabou**
-atravessam os dois modos e moram no `Travessia`, porque a casa também precisa
-deles.
-
-Vasculhar gastar luz passa por um sinal: o `vasculhavel.gd` emite `vasculhando`
-e não sabe que existe relógio, o `relogio.gd` não sabe que existe móvel, e
-**quem liga os dois é o `cenario.gd`** — que é quem cria o móvel. Mesmo arranjo
-do zumbi com o vasculho: a pressão chega de fora, e o arquivo da core mechanic
-continua sem conhecer ninguém.
-
-### Mexeu no relógio, na noite, na HUD ou no prazo? Rode o `conferir_relogio.tscn` (F6)
-
-Confere seis coisas: o dia e a noite duram o que as constantes dizem e cada
-virada avisa uma vez só; **vasculhar gasta luz mais rápido que andar**; **a
-noite aperta** — o zumbi enxerga mais longe, a rua enche, a HUD avisa e o
-escuro para onde foi combinado parar; anoitecer *não* te tira da rua e
-amanhecer tira, dizendo que foi na força; a HUD lê os números certos e não
-estoura sem relógio nem sem jogador; e no último dia a casa não devolve para a
-rua. Ele também refaz a conta dos 233 s e reclama se o dia crescer o bastante
-para o bairro caber nele.
-
-Mede por chamada direta com delta fixo, e não contando quadro: em headless o
-laço roda muito mais rápido que a física, e o relógio vive no `_process`.
-
-Três coisas que ele ensinou, em duas rodadas:
-
-- **O zumbi só procurava o relógio no quadro de física.** Como
-  `alcance_da_vista()` é pública, quem perguntasse antes do primeiro quadro
-  recebia a resposta de dia — e a noite não crescia. Foi a única falha de
-  verdade, e agora a busca mora dentro da função.
-- **Lambda em GDScript captura variável local por valor.** `func(): avisou =
-  true` escreve numa cópia, então o teste nunca via o sinal `anoiteceu` sair e
-  acusava o relógio. Contador de sinal tem que ser membro.
-- **`change_scene_to_file()` arranca a cena atual da árvore na hora**, não no
-  fim do quadro. As conferências que trocam de cena de verdade levavam a
-  própria ferramenta embora: o `get_tree()` seguinte vinha nulo, o `quit()`
-  nunca acontecia e o processo ficava rodando para sempre.
-
-### A mochila e o documento (`mochila.gd`)
-
-**09/09/2026.** É o passo 4, e é o que faz o vasculho ter para que servir. Até
-aqui o loot era texto no console; agora ele entra numa mochila, atravessa para
-a casa — ou fica na calçada.
-
-**A mochila do dia não é a mochila da casa**, e a diferença entre as duas é o
-preço da noite: **só entra em casa o que passou pela porta de casa.** Ser pego
-pelo amanhecer ou cair sem vida deixa tudo na rua, e a casa te diz quanto ficou
-lá. É isso que faz o aviso das 19:00 valer algo em vez de ser enfeite — antes
-disso, ficar até tarde não custava nada de concreto.
-
-#### Documento conta separado, e aparece diferente
-
-As duas recompensas do vasculho não valem o mesmo. **A comida te mantém vivo; o
-documento é o que a cura conta** — e é por isso que ele tem linha própria na
-HUD, em âmbar, acima da mochila. Mesmo sem a casa existir, esse contador já
-prova o eixo rua → casa, que é exatamente o que o passo 4 tinha que provar. O
-item em si continua sendo placeholder: o que ele é, e o que diz, é decisão da
-equipe e não está tomada.
-
-No móvel vasculhado o documento sai na cor da casa, com uma marca ao lado, e a
-comida sai apagada embaixo — o one-pager pede que ele seja *"visualmente
-distinto dos outros itens, com brilho"*, e no meio de lata de comida e pano
-sujo tem que dar para ver de longe qual móvel valeu a pena.
-
-Quem separa os dois é a mochila, e quem sabe o que é documento é o
-`construcao.gd` (`e_documento()`) — pela própria lista de documentos, para não
-existir uma segunda fonte de verdade.
-
-#### O mundo esvazia e não repõe
-
-**Móvel vasculhado ontem nasce vazio hoje.** É o que o PZ faz e o que o High
-Concept declara — *a geografia é fixa e o que muda é o estado do mundo* — e é o
-que finalmente dá peso ao relógio: **gastar o dia numa casa te custa aquela
-casa amanhã.**
-
-Vale mesmo no dia que deu errado. Se você tirou o loot do móvel, ele saiu do
-mundo, tenha você chegado em casa ou não: ser pego pelo amanhecer queima o loot
-*e* o dia.
-
-O bairro é gerado sempre igual, de semente fixa, então o índice de um móvel é o
-mesmo todo dia e serve de nome — `Travessia.moveis_vazios` guarda os índices, e
-o `cenario.gd` consulta na hora de criar cada um. O sorteio roda para todo
-móvel, inclusive os já vazios: pular um sorteio embaralharia o conteúdo dos
-outros.
-
-#### O que o bairro tem, ao todo
-
-**33 itens comuns e 6 documentos** — e como não repõe, é isso que existe no
-jogo inteiro. O `conferir_mochila.tscn` imprime essa conta.
-
-⬜ **Seis documentos para trinta dias não fecha**, e é a pergunta mais aberta do
-projeto. O bairro não repõe, então esses 6 são tudo o que existe na partida: a
-cura pede 4 e dá para fechar na primeira semana. Ver *Quantos documentos a cura
-pede*, na seção do fim do jogo, e as pendências no começo deste arquivo.
-
-### Mexeu na mochila, no loot ou no que atravessa o dia? Rode o `conferir_mochila.tscn` (F6)
-
-Confere sete coisas: vasculhar enche a mochila e documento conta separado de
-comida; **só entra em casa o que passou pela porta de casa** — nos três jeitos
-de o dia acabar; o mundo esvazia e não repõe, e só o móvel vasculhado nasce
-vazio; o bairro tem documento suficiente para a história andar; a HUD mostra
-o documento na linha dele; **a tela da mochila** — o que sai dela cai no chão e
-o chão devolve; e **o que não coube dá para pegar depois**, no mesmo dia.
-
-O segundo é o que precisa de conferência de verdade: a regra vive numa ligação
-indireta — a mochila escuta o `chegou_em_casa` do `Travessia` e lê o
-`fim_do_dia` para decidir entregar ou perder — e quebra sem dar erro em tela.
-
-Os dois últimos são de 15/09/2026, e o sétimo nasceu do furo da sobra: o
-caminho que ele confere passa por três arquivos que não se conhecem (tela →
-mochila → cenário) e quebra sem dar erro em tela, igual.
-
-### A rua piora com os dias
-
-**09/09/2026, parte do passo 5.** O High Concept diz que *a rua vai ficando
-mais apocalíptica conforme os dias passam*. A metade barata disso é estética —
-o mato vai tomando o terreno, 30 tufos a mais por dia. A metade que muda o jogo
-são os zumbis: **um a mais a cada dois dias.**
-
-| | dia 1 | dia 5 | dia 15 | dia 30 |
-|---|---|---|---|---|
-| de dia | 13 | 15 | 20 | 27 |
-| na noite fechada | 27 | 29 | 34 | 41 |
-
-Eles entram pelas bocas de rua, como os da noite. O efeito é o prazo apertar de
-dois lados ao mesmo tempo: quanto menos dias sobram, mais caro fica cada dia —
-e amanhecer na rua no dia 28 não é a mesma coisa que no dia 2.
-
-O ritmo **é calibrado no prazo**. Era um zumbi a mais por dia quando o prazo era
-de 10 dias; com 30, o mesmo ritmo levaria o último dia a 71 zumbis, que não é
-dificuldade, é sopa de zumbi. Se o prazo mudar de novo, este número muda junto.
-
-### A mochila enche, e é a quarta pressão
-
-**09/09/2026.** São **12 vagas**, e documento ocupa vaga igual — é nisso que a
-escolha existe. As outras três pressões cobram em vida (zumbi), em dia
-(relógio) e em prazo; esta cobra em **escolha**: com o espaço acabando,
-vasculhar deixa de ser "pego tudo" e passa a ser "levo o quê?".
-
-É o campo que o one-pager sempre declarou — *"mochila, com o espaço já ocupado
-visível"* — e aparece na HUD como `mochila 7/12`.
-
-**Com a mochila cheia, o que não couber fica no móvel** e aparece escrito em
-cima dele como "ficou:". A alternativa — não deixar vasculhar de mochila cheia
-— travaria justamente o verbo que vale 5 pontos na Alfa, e essa foi a razão de
-descartá-la.
-
-**Documento entra primeiro, sempre.** São duas passadas na lista: ninguém quer
-descobrir que deixou o documento para trás porque uma lata de comida entrou na
-frente.
-
-A mochila **tira da lista o que levou**, e a lista é o próprio `achados` do
-móvel — o mesmo objeto, não uma cópia. É assim que a regra acontece sem o móvel
-saber que existe mochila.
-
-#### O que ficou no móvel dá para pegar depois — e até 15/09 não dava
-
-**Era um furo, e estava escrito como se não fosse.** O README, o `COMO-JOGAR` e
-a própria ferramenta de conferência diziam *"o que não cabe fica no móvel, e dá
-para voltar"*. Ficava e aparecia na tela — mas o móvel virava vazio no mesmo
-instante e **nunca mais aceitava vasculho**. A sobra era decoração.
-
-Agora o móvel só é "vazio" quando não sobra nada. Com sobra dentro ele muda de
-cor, o aviso vira *"E pegar o que ficou"* e **o segundo vasculho custa 0,8 s**
-(`DURACAO_DA_SOBRA`) em vez da duração cheia — a gaveta já está aberta, e
-cobrar os 5,5 s do armário de armas de novo transformaria "dá para voltar" em
-"não vale a pena voltar".
-
-**Sobra é coisa de hoje.** Para o dia seguinte o móvel continua contando como
-vasculhado, porque o mundo não repõe — deixar para amanhã é perder.
-
-### A tela da mochila (`tela_da_mochila.gd`)
-
-**15/09/2026. `Tab` abre e fecha; `W`/`S` escolhem a linha; `E` larga no
-chão.** Era o que a seção acima chamava de *tela de troca, que fica para a
-Beta* — é esta.
-
-Sem ela a mochila era um **teto**: 12 vagas, e com elas cheias o que você
-achasse ficava para trás e acabou. A quarta pressão é a que cobra **escolha**,
-e escolha que não se desfaz não é escolha. A tela é o que faz a vaga virar
-moeda — largo a comida estragada e levo o remédio, ou não.
-
-Documento aparece em cima e em âmbar, o resto embaixo; o rodapé mostra o que
-está no cinto (pistola e munição **não ocupam vaga**), as teclas, e o que caiu
-no chão por último.
-
-**O que sai da mochila cai no chão, aos seus pés, e dá para pegar de volta.**
-A pilha do chão é um vasculhável como outro qualquer — mesmo `E`, mesma barra,
-mesma mochila do outro lado —, custa 0,8 s e junta tudo o que você largar no
-mesmo lugar. Largar não destrói: quem larga a lata para caber o remédio tem que
-poder voltar na lata se o remédio não valer a viagem.
-
-Ela **não sobrevive ao dia**: a rua é montada de novo todo dia, e o que ficou na
-calçada fica na calçada. E não entra na conta dos móveis gerados — o índice do
-móvel sai de semente fixa, e enfiar uma pilha no meio embaralharia o conteúdo
-do mapa inteiro.
-
-**Largar documento é permitido.** A tentação é proibir, já que é o que ganha a
-partida — mas são 12 vagas para 6 documentos no mapa, então não existe mochila
-travada de documento, e o que cai dá para pegar de volta. Proibir seria proteger
-o jogador de uma escolha que o jogo inteiro é feito de cobrar.
-
-#### O mundo não para, e é a decisão de desenho desta tela
-
-**Não há pausa.** O relógio corre, o zumbi anda, a noite chega. O jogador fica
-parado enquanto escolhe — não anda, não vascula, não atira — e **levar dano
-fecha a tela na hora**, igual ao vasculho que se interrompe.
-
-Com pausa, largar sairia de graça: abrir, esvaziar o saco no chão, fechar, e as
-12 vagas nunca mais custariam nada. A pressão não está no limite de 12; está em
-decidir com o dia correndo.
-
-Quem precisa saber que ela está aberta são três — o jogador (para não andar), o
-vasculhável (para o mesmo `E` não vasculhar junto) e a pistola (para não atirar)
-—, e os três leem um `static var aberta` da classe. Nenhum deles precisa
-conhecer esta cena, e ninguém procura node em grupo a cada quadro.
-
-⬜ **É versão beta**: funciona de ponta a ponta e ainda é texto puro, como o
-resto da rua. Ícone, arrastar com o mouse e ordenar por tipo são polimento — e
-polimento depois de a equipe jogar isto e dizer se a escolha está no lugar
-certo. A tecla `Tab` também é proposta.
-
-### A pistola (`pistola.gd`)
-
-**09/09/2026.** O High Concept declara que *"o jogador luta ou esquiva dos
-zumbis"* — esta é a parte da luta. A esquiva não é mecânica: é andar evitando,
-que sempre deu para fazer porque o zumbi é mais lento que você.
-
-**Ela existe para comprar tempo para o vasculho**, e não para virar um jogo de
-tiro. Três regras a mantêm dentro da core mechanic em vez de competindo com
-ela:
-
-1. **Você não começa com ela.** A pistola está na **armaria da delegacia** — o
-   quarto mais fundo do lugar mais povoado do mapa, a 479 m de casa. É uma só, e
-   achar a arma é recompensa de vasculhar.
-   ⚠️ **Hoje isso está desligado por uma facilidade de teste** — ver abaixo.
-2. **A munição vem do vasculho.** Sai da armaria, das caixas e das cômodas — 6
-   balas por achado, em 4 móveis do mapa. Atirar gasta o que você vasculhou.
-3. **O tiro chama a horda**, num raio de 1.800 px contra os 700 do chamado de um
-   zumbi que te enxergou. **O tiro resolve um problema e cria um maior** — é a
-   regra do PZ, e é o que faz a arma continuar sendo pressão sobre a mesma ação.
-   Errar o tiro é o pior resultado possível: gastou munição e chamou todo mundo.
-
-Ela mata de um tiro, e **parede corta o tiro** (é raycast). Não existe estado de
-ferido: o recurso caro é a munição, e um zumbi que aguentasse três tiros só
-multiplicaria o estrondo.
-
-**Arma não é loot, é equipamento** — e essa distinção não é detalhe. Pistola e
-munição não ocupam vaga na mochila (estão no cinto, não no saco) e **não se
-perdem no dia que deu errado**, ao contrário de todo o resto. O motivo é
-concreto: o mapa não repõe, e a pistola é uma só. Perdê-la seria beco sem saída
-sem aviso.
-
-O zumbi baleado **não renasce hoje**. Sem isso, o povoamento por proximidade
-reporia o que você acabou de matar dois segundos depois, para sempre — e atirar
-não serviria de nada.
-
-#### ⚠️ `COMECA_ARMADO` está ligado
-
-O jogo hoje **começa com a pistola e 18 balas** (`Travessia.COMECA_ARMADO`).
-Isso é facilidade de teste e nada mais: andar meio quilômetro até a delegacia
-toda vez que se quer testar o tiro não é teste, é paciência.
-
-**Desligar antes de entregar.** Com isso ligado o jogo contradiz a própria
-progressão — a arma deixa de ser recompensa de vasculhar —, e *"coerente com o
-High Concept"* vale 2 dos 10 pontos da Alfa. Uma linha:
-`const COMECA_ARMADO := false`.
-
-O `conferir_arma.tscn` **avisa em toda rodada** enquanto estiver ligado, como
-ATENÇÃO e não como falha: o código está certo, a decisão é que é provisória.
-Atalho de teste que embarca calado é o tipo de coisa que ninguém lembra na
-véspera.
-
-### Mexeu na pistola, na munição ou no loot da delegacia? Rode o `conferir_arma.tscn` (F6)
-
-Confere as seis coisas acima. Três delas quebrariam **sem dar erro nenhum**: o
-zumbi baleado renascendo, a arma sumindo no dia que deu errado, e o estrondo
-alcançando menos que o chamado de um zumbi — que tornaria a arma pura vantagem.
-
-Ele ensinou três coisas, e as três eram do teste:
-
-- **`queue_free()` não libera na hora.** Dentro do mesmo quadro o zumbi morto
-  continua `is_instance_valid`, e o teste acusava a pistola de não matar quando
-  ela matava. O certo é `is_queued_for_deletion()`.
-- **Zumbi criado e baleado no mesmo quadro não existe para a física.** O
-  servidor só conhece a posição nova no passo seguinte, então o teste posiciona
-  num quadro e atira três depois — o mesmo motivo do `conferir_zumbi`.
-- **A guarda da munição vivia só em quem chamava.** O teste chamou `_atirar()`
-  direto e a munição foi para negativo. Regra que vive só no chamador é regra
-  que um chamador novo esquece — agora ela mora dentro do `_atirar()`.
-
-### O que ainda não tem
-
-**Fome e água** — só isso. São os dois campos que a HUD mostra como "—", e são o que
-sobrou de declarado e não construído. Não estavam nos cinco passos: o High
-Concept as lista como *variações de pressão sobre a mesma ação*, junto com o
-tempo e a escuridão, e essas duas já existem. Fome é a terceira, e o mais
-provável é que ela apareça consumindo o que a mochila trouxe — o que amarra ela
-no modo Casa, que é quem decide o consumo.
-
-
-
-Um detalhe de edição: os scripts não são `@tool`, então no editor os móveis
-aparecem só como o contorno da colisão, e o bairro só se vê rodando.
-
-## A travessia e o modo Casa (`travessia.gd`, `casa/`)
-
-**07/09/2026.** O jogador **nasce dentro da sua própria casa**, que é a primeira
-do lado norte e a única desenhada em tom quente — seguindo a separação por
-temperatura da direção de arte: rua fria, casa quente. Como toda construção do
-bairro, ela se entra: o telhado dela já está fora quando o jogo começa.
-
-A porta fica **na fachada** — é o vão da frente da sua casa, o mesmo que todo
-prédio do mapa tem, só que nesta se entra em vez de se vasculhar. Encoste e
-segure `E` por 1,2 s: o dia na rua encerra e o jogo troca para a cena da casa.
-Lá, `E` sai para a rua no dia seguinte.
-
-É **casa, não bunker** — o High Concept fechou em 03/09 que ela está trancada no
-**porão** de casa. A sua casa é a única construção do mapa que não se vasculha.
-
-#### Ela saiu do quarto do fundo em 15/09/2026
-
-Até essa data a porta era a **porta do porão**, e ficava num dos quartos de trás:
-para chegar nela você entrava em casa, atravessava a sala e o corredor. A
-fantasia era boa e o ritmo era ruim — **chegar em casa é o alívio do ciclo**, e a
-travessia de cômodo só adiava o alívio. Com zumbi atrás, adiava dentro de casa,
-que é o pior lugar para descobrir que a porta ainda está longe.
-
-O porão continua onde estava na história: ele é do modo Casa, e é o que você vê
-do outro lado. O que mudou foi onde o jogador encosta.
-
-Duas consequências de implementação, e as duas importam para quem mexer nisso:
-
-- **A porta não é sólida.** Quando morava no meio de um quarto podia ser um
-  bloco; na fachada, um bloco sólido tapa o único vão da casa e tranca você
-  dentro dela. O que evita entrar sem querer é a duração do `E`, não a colisão.
-- **Ela desenha por cima do telhado**, e é a única coisa que vem depois dos
-  `Telhados` no `rua.tscn`. É uma coisa que se opera de fora: telhado por cima
-  esconderia a barra e o aviso justamente de quem está chegando da rua.
-
-A posição sai do próprio prédio, pelo mesmo `Construcao.porta_de()` que abre o
-vão de qualquer fachada — antes era uma constante escrita à mão. Se a sua casa
-mudar de lugar ou de tamanho, a porta vai junto.
-
-Segurar em vez de apertar é de propósito: é a chave na fechadura com zumbi
-chegando, e de graça evita entrar em casa sem querer ao passar pela porta.
-
-### O que as duas frentes compartilham
-
-Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
-
-| | |
+| `travessia.gd` | autoload. O dia, o prazo, o que chegou em casa — o **único** lugar onde a rua e a casa se encontram |
+| `rua/mapa.gd` | **onde** fica cada coisa: mundo, rodovia, rio, ponte, lista de lugares |
+| `rua/lugares.gd` | **do que** cada lugar é feito — um gerador por tipo (bairro, cidade, posto, mansão, sítio, lavoura, floresta) |
+| `rua/construcao.gd` | as regras de uma construção qualquer (parede, vão de porta, quarto) e as tabelas de loot |
+| `rua/cenario.gd` | desenha o chão e gera colisão, móveis e árvores a partir do mapa |
+| `rua/vasculhavel.gd` | **a core mechanic**: barra que enche enquanto `E` estiver segurado |
+| `rua/jogador.gd` | andar e correr, e nada mais — quem lê a tecla de vasculhar é o próprio móvel |
+| `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe |
+| `rua/navegacao.gd` | grade A* — é o que faz o zumbi achar o vão da porta |
+| `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
+| `rua/mochila.gd` | as 12 vagas e o que atravessa o fim do dia |
+| `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
+| `rua/pistola.gd` | a arma, a munição e o tiro chamando a horda |
+| `rua/hud.gd` | a HUD nos três cantos |
+| `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
+| `rua/entrada_de_casa.gd` | a porta do porão: segure `E` e o dia encerra |
+| `casa/casa.gd` | o lugar reservado do modo Casa |
+| `fim_de_jogo.gd` | as duas telas de fim de partida |
+
+Mudar o mapa = mexer em `mapa.gd` e `lugares.gd`. Mudar o que sai dos móveis =
+`construcao.gd`.
+
+## As ferramentas (F6)
+
+Cenas que não são o jogo: rodam, imprimem um relatório e saem. **Rode a que
+corresponde ao que você mexeu** — elas pegam a classe de bug que não aparece
+jogando dois minutos.
+
+| cena | confere |
 |---|---|
-| `Travessia.dia` | qual dia está correndo |
-| `Travessia.PRAZO_DA_CURA` | quantos dias existem para a cura — 30, e é proposta |
-| `Travessia.dias_restantes()` | quantos sobram depois de hoje |
-| `Travessia.e_o_ultimo_dia()` | a casa consulta antes de deixar sair |
-| `Travessia.fim_do_dia` | como o dia acabou: pela porta, amanheceu na rua ou sem vida |
-| `Travessia.mochila` | os itens que **chegaram em casa**, de todos os dias |
-| `Travessia.documentos` | os documentos que chegaram — contam separado |
-| `Travessia.receber()` / `perder_na_rua()` | a mochila da rua chama um dos dois quando o dia acaba |
-| `Travessia.moveis_vazios` | quais móveis já foram vasculhados; o mundo não repõe |
-| `Travessia.DOCUMENTOS_PARA_A_CURA` | quantos documentos a pesquisa pede — 4, e é provisório |
-| `Travessia.a_cura_esta_pronta()` | a casa pergunta antes de oferecer terminar |
-| `Travessia.acabar_o_jogo()` / `recomecar()` | fim de partida e partida nova |
-| `Travessia.tem_pistola` / `municao` | equipamento: não ocupa vaga e não se perde |
-| `Travessia.entrar_em_casa()` | chamado pela porta, na rua |
-| `Travessia.sair_para_a_rua()` | chamado pela casa; incrementa o dia |
+| `rua/conferir_mapa.tscn` | dá para chegar a pé em todo lugar, todo quarto e todo móvel; a ponte é o único atravessadouro; um documento por lugar |
+| `rua/conferir_zumbi.tscn` | visão, parede cortando a visão, chamado de horda e toque |
+| `rua/conferir_relogio.tscn` | a luz do dia, o vasculho gastando em dobro, a noite e o aviso |
+| `rua/conferir_mochila.tscn` | as vagas, o que atravessa o fim do dia, o mundo não repondo, o loot total e a HUD |
+| `rua/conferir_arma.tscn` | a pistola, a munição, o tiro chamando a horda |
+| `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota, morrer custando o dia e a escalada de zumbis |
+| `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` |
 
-**Nenhuma cena da rua conhece uma cena da casa, e vice-versa.** As duas conhecem
-só esse arquivo. É o que permite as duas frentes andarem em paralelo e se
-colarem em 04/11, que é o que o cronograma já reserva — e se a equipe quiser
-outra costura, esse é o único arquivo que muda.
+Dá para rodar sem abrir o editor:
 
-A rua **só acrescenta** na mochila. Quem constrói a casa decide o que é
-consumido e esvazia o que gastou; por isso nada ali se limpa sozinho.
+```
+Godot_v4.7.2-stable_win64_console.exe --path . --headless res://rua/conferir_mapa.tscn
+```
 
-### `casa/casa.tscn` é lugar reservado
+## O design
 
-Não é a casa: é uma tela com o recado de quem chega nela, para a travessia
-funcionar de ponta a ponta enquanto a outra metade da equipe não começa. Quem
-for fazer essa frente **troca essa cena por uma de verdade e não precisa tocar
-em nada da rua.**
-
-Ainda sem dono: **onde fica o laboratório.** Os objetivos do High Concept falam
-em *equipar a casa e o laboratório* — se é o porão junto com ela ou outro canto
-da casa, é decisão de quem fizer essa frente.
-
-## O fim do jogo (`fim_de_jogo.gd`)
-
-**09/09/2026.** É o passo 5, e é o que faz "fase = dia" ficar legível: o jogo
-passa a ter começo, meio e fim, que é o *jogo arcade que acaba no game over*
-reivindicado como escopo.
-
-São **dois desfechos, e só os dois que o High Concept declara** — a cura fica
-pronta a tempo, ou o prazo se esgota. Quem decide os dois é a casa, porque é
-ela quem faz a pesquisa e é ela quem segura o prazo; a tecla `E` na casa faz
-três coisas diferentes, na ordem em que as regras decidem:
-
-1. a cura está pronta → **terminar a cura** (vitória)
-2. é o último dia → **o prazo acabou** (derrota)
-3. o resto → sair para a rua no dia seguinte
-
-A vitória vem antes do prazo de propósito: cura pronta no último dia é cura
-pronta **a tempo**.
-
-### A derrota é o diferencial, e por isso não parece uma derrota
-
-A tela de derrota **não é uma tela de game over**: é uma paródia de final feliz
-de casal. O quadro diz *"E FORAM FELIZES PARA SEMPRE"* em âmbar grande; o corpo
-conta que o prazo acabou, ela saiu do porão e os dois seguem juntos — do mesmo
-lado da porta. A palavra "game over" aparece **embaixo, em corpo 13, como aviso
-legal**.
-
-Isso não é enfeite: é o diferencial que o High Concept vende e é material
-direto para o pitch de investimentos, que pergunta justamente por isso. O
-`conferir_fim.tscn` **defende o tom**: reprova se o título entregar o jogo
-(falar "derrota" ou "perdeu") ou se o "game over" não estiver menor que o final
-feliz. É a única coisa que essa tela não pode perder quando alguém trocar o
-texto por arte.
-
-### Quantos documentos a cura pede
-
-**Quatro** (`Travessia.DOCUMENTOS_PARA_A_CURA`) — e este número está segurando
-um buraco de papel, não uma decisão.
-
-⬜ **A pesquisa da cura é do modo Casa.** Quem fizer aquela frente decide o que
-ela consome, em que ordem, e o que mais entra na conta: remédio? ferramenta?
-tempo dentro de casa? O número existe para o ciclo fechar de ponta a ponta
-enquanto isso não for decidido.
-
-São 4 dos 6 que o bairro tem, e **a folga é de propósito**: com 6 um único dia
-perdido carregando documento deixaria a partida impossível de ganhar sem
-avisar. Com 4 dá para errar dois dias. O `conferir_fim.tscn` reprova as duas
-situações — bairro com documento de menos, e bairro sem folga nenhuma.
-
-#### E com 30 dias esse número deixou de fechar
-
-Com o prazo em 10 dias, 4 documentos era apertado o bastante. **Com 30, o prazo
-sobra:** o `conferir_fim.tscn` mede que a cura fecha em **0,9 dia de vasculho**
-— 3% do prazo —, e os outros 29 dias não cobram nada. Um prazo que ninguém
-alcança não é pressão; é enfeite, e o relógio, a noite e a escalada passam a
-empurrar o jogador para um lugar onde não tem ninguém esperando.
-
-A ferramenta avisa isso a cada rodada, como **ATENÇÃO** e não como falha: o
-código está certo, o desenho é que tem o buraco. E as três saídas são todas de
-mesa, nenhuma minha:
-
-1. **A cura pede mais** — mas o bairro só tem 6, então isso só funciona junto
-   com a saída 2 ou 3.
-2. **O bairro dá mais documento** — mais móveis, ou um documento a cada menos
-   móveis (`Bairro.CADA_QUANTOS_MOVEIS_UM_DOCUMENTO`). Hoje são 6 placeholders
-   numerados, e repetir documento como moeda de progressão é esquisito.
-3. **O mapa muda com os dias** — é o que o High Concept sugere ao dizer que a
-   rua vai ficando mais apocalíptica. É a mais caro das três e a mais
-   interessante: novos lugares reabrindo dá para que servir aos 30 dias sem
-   inventar documento nem apertar a cura.
-
-Enquanto nenhuma for decidida, **os 30 dias são um teto e não um aperto** — o
-jogo funciona de ponta a ponta, e a partida acaba quando você quer que acabe.
-
-### Morrer custa o dia, e não a partida
-
-**Não é provisório, é decisão.** O High Concept declara dois desfechos, e
-morrer na rua não é nenhum dos dois. Quem zera a vida acorda em casa sem nada
-do que carregava, e paga **um dia do prazo** — que é o recurso caro do jogo.
-
-⬜ Se a equipe quiser que morrer acabe a partida, é uma linha no `jogador.gd`
-(`Travessia.acabar_o_jogo()`). Mas aí o jogo passa a ter um game over que o
-documento não previu, e a paródia deixa de ser o único fim.
-
-### Mexeu no fim, no prazo ou na escalada? Rode o `conferir_fim.tscn` (F6)
-
-Confere seis coisas: **a partida dá para ganhar** — o bairro tem documento
-bastante, com folga; juntar os documentos leva à vitória, e ela vem antes do
-prazo; passar do último dia sem a cura leva à derrota, e a tela dela mantém a
-paródia; morrer custa o dia e não a partida; a rua piora com os dias; e
-recomeçar zera tudo, inclusive os móveis vazios — senão a segunda partida
-começaria num bairro já saqueado.
-
-A primeira é a única que fala do **desenho** e não do código, e por isso tem
-categoria própria: além de reprovar bairro com documento de menos (que torna a
-partida inganhável), ela mede em quantos dias a cura fecha no piso e levanta um
-**ATENÇÃO** se isso for menos da metade do prazo. ATENÇÃO não reprova a rodada —
-o código está certo —, mas aparece no fim, porque é o tipo de coisa que ninguém
-descobre jogando dois minutos.
+| arquivo | o quê |
+|---|---|
+| [`design/high-concept.md`](design/high-concept.md) | os 14 tópicos que o professor cobra — a base do GDD |
+| [`design/narrativa.md`](design/narrativa.md) | a história: elenco, lore, fluxo narrativo. É a fonte da seção 2 do GDD |
+| `design/high-concept.pdf` e `design/high-concept-one-pager.html` | a peça entregue em 09/09/2026 — ficam como foram entregues |
+| [`../README.md`](../README.md) | a disciplina: prazos, critérios e o que cada entrega cobra |
 
 ## Combinados de Git
 
-Enquanto não houver outra decisão, dois acordos que evitam a maior dor de
-trabalhar em Godot a várias mãos:
-
-1. **Uma cena, um dono por vez.** `.tscn` e `.tres` são texto e até mergeiam,
-   mas conflito em cena grande custa mais tempo do que combinar antes.
+1. **Uma cena, um dono por vez.** `.tscn` é texto e até mergeia, mas conflito em
+   cena grande custa mais tempo do que combinar antes.
 2. **Cada fase em arquivo separado**, para duas pessoas nunca editarem o mesmo
    arquivo de nível.
+3. O cache do Godot (`.godot/`) e os builds exportados estão no `.gitignore` —
+   não commitar.
 
-O cache do Godot (`.godot/`) e os builds exportados estão no `.gitignore` — não
-commitar.
+## Sobre este arquivo
 
-## Entregas
-
-O escopo, os pesos e os critérios de cada entrega (High Concept, Alfa, Beta,
-GDD, Gold e apresentações) estão no documento do professor no AVA. Prazo perdido
-nas Etapas 1 e 2 é nota zerada, sem entrega atrasada.
+Ele descreve **como o projeto está e como mexer nele** — não o histórico de como
+chegou aqui. Por que uma decisão foi tomada e o que havia antes está no
+`git log` e nos comentários do próprio código, que é onde não envelhece sozinho.
