@@ -154,31 +154,33 @@ const CONTEUDO := {
 
 
 
-## Os documentos - o item que destrava a historia dentro de casa.
+## Os documentos - o item que o vasculho entrega para a pesquisa da cura.
 ##
-## Sao seis, e desde 09/09/2026 **cada um mora num lugar declarado do mapa**, no
-## quarto mais fundo do predio: dois no bairro e quatro exigindo viagem. Antes
-## era um a cada seis moveis, o que num mapa 100x maior daria documento repetido
-## - e documento repetido como moeda de progressao nao quer dizer nada.
+## **Sao placeholders, e nada neles foi decidido pela equipe**: nem o nome, nem
+## o que cada um diz, nem que lugar do mapa guarda qual. O que existe aqui e a
+## quantidade de itens distintos que o mapa precisa distribuir para a partida ter
+## como ser ganha - a historia que eles eventualmente contem e conversa da mesa,
+## e ate la nao ha nenhuma pendurada neles.
 ##
-## Quem marca o predio e o `rua/lugares.gd`, com "documento": true.
+## Sao seis porque seis predios estao marcados com "documento": true no
+## `rua/lugares.gd`. Sao distintos entre si so para o conferir_mapa conseguir
+## acusar documento repetido.
 const DOCUMENTOS := [
-	"documento: relatório de laboratório",
-	"documento: recorte de jornal",
-	"documento: carta manuscrita",
-	"documento: prontuário rasgado",
-	"documento: memorando interno",
-	"documento: página de diário",
+	"documento 1",
+	"documento 2",
+	"documento 3",
+	"documento 4",
+	"documento 5",
+	"documento 6",
 ]
 
 # ------------------------------------------------------------------ geometria
 
 ## Se um achado e documento e nao comida.
 ##
-## Documento conta separado, aparece com destaque e e o que destrava a historia
-## dentro de casa - entao alguem precisa saber distinguir os dois. Fica aqui, e
-## pela propria lista, para nao existir uma segunda fonte de verdade sobre o
-## que e documento.
+## Documento conta separado da comida e e o que a casa soma na pesquisa - entao
+## alguem precisa saber distinguir os dois. Fica aqui, e pela propria lista,
+## para nao existir uma segunda fonte de verdade sobre o que e documento.
 static func e_documento(achado: String) -> bool:
 	return DOCUMENTOS.has(achado)
 

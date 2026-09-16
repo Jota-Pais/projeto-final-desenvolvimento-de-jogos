@@ -108,7 +108,7 @@ func _a_partida_da_para_ganhar() -> void:
 	#
 	# Ate o mapa grande a conta era so a luz do vasculho, varrendo os moveis na
 	# ordem de geracao. **Num mapa de 1,44 km o caminho a pe e o custo, nao o
-	# vasculho** - o documento da mansao esta a 1.070 m de casa. Entao a conta e
+	# vasculho** - o documento mais distante esta a 1.070 m de casa. Entao a conta e
 	# por viagem: ida e volta ate o documento, mais a luz de esvaziar o movel.
 	var no_mapa := 0
 	var custos: Array[float] = []
