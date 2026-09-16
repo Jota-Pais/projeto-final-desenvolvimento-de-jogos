@@ -3,10 +3,12 @@
 Onde a história do jogo é escrita e mantida. Aberto em **16/09/2026**, no dia da
 aula de narrativa.
 
-Este arquivo é a **fonte da seção 2 do GDD** (*Narrativa*), do mesmo jeito que o
-`high-concept.md` foi a fonte do one-pager. O professor cobra seis itens ali, e
-são as seis seções abaixo. O High Concept continua sendo o registro dos 14
-tópicos e só aponta para cá.
+Este arquivo é a **fonte da seção 2 do GDD** (*Narrativa*). O professor cobra
+seis itens ali, e são as seis seções abaixo.
+
+O High Concept, que foi a fonte do one-pager entregue em 09/09, **saiu da árvore
+em 16/09/2026** — ele registrava uma entrega feita e ficava pedindo manutenção a
+cada mudança do jogo. Continua no git, e o README diz como trazer de volta.
 
 ## Como escrever aqui — não precisa saber git
 

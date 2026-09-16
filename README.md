@@ -123,10 +123,29 @@ Godot_v4.7.2-stable_win64_console.exe --path . --headless res://rua/conferir_map
 
 | arquivo | o quê |
 |---|---|
-| [`design/high-concept.md`](design/high-concept.md) | os 14 tópicos que o professor cobra — a base do GDD |
 | [`design/narrativa.md`](design/narrativa.md) | a história: elenco, lore, fluxo narrativo. É a fonte da seção 2 do GDD |
 | `design/high-concept.pdf` e `design/high-concept-one-pager.html` | a peça entregue em 09/09/2026 — ficam como foram entregues |
 | [`../README.md`](../README.md) | a disciplina: prazos, critérios e o que cada entrega cobra |
+
+### O High Concept saiu daqui, e está no git
+
+O `.md` que serviu de fonte para a peça acima **saiu da árvore em 16/09/2026**.
+Ele era o registro de uma entrega já feita tentando viver como especificação: o
+jogo mudava, ele ficava para trás, e toda mudança cobrava manutenção num
+documento que ninguém ia reentregar.
+
+**Nada se perdeu** — ele volta em um comando, e é de lá que saem público-alvo e
+proto-persona, benchmarking, orçamento, cronograma, equipe e funções,
+classificação etária, gênero e plataformas. O GDD cobra todos esses, e o pitch
+puxa público e orçamento prontos de lá:
+
+```
+git show 0fcdbc1:design/high-concept.md > design/high-concept.md
+```
+
+Quando o GDD começar, é esse o ponto de partida — **lendo com data na mão**: o
+que estiver lá vale como o que foi declarado em setembro, não como o que o jogo
+faz hoje. Para o que o jogo faz hoje, vale este README e o código.
 
 ## Combinados de Git
 
