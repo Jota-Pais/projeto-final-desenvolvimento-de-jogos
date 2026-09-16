@@ -32,6 +32,14 @@ exige no lugar de um documento de texto — estão em
 [`design/high-concept-one-pager.md`](design/high-concept-one-pager.md), pronto
 para entregar a quem for diagramar.
 
+> ⬜ **Os dois `.md` de design valem mais que o `.pdf` e o `.html` ao lado
+> deles**, que são a peça entregue em 09/09/2026 e ficam congelados nela. A
+> diferença conhecida é uma só, corrigida em 15/09/2026: a peça entregue diz que
+> os **documentos da rua** revelam a origem do apocalipse e dão pistas da cura, e
+> **isso nunca foi decidido pela equipe**. No jogo eles são placeholders
+> numerados; o que eles são, o que contam e onde ficam continua em aberto, e é
+> assunto dos narrative designers.
+
 O título de trabalho é **Você me amaria se eu fosse um zumbi?**. O grupo foi
 consultado em 03/09/2026 e pode propor outro — a tagline ainda não existe.
 
@@ -40,14 +48,25 @@ e é ela que roda no F5. A cena de teste em `teste-movimento/` foi **apagada em
 08/09/2026** — o zumbi foi escrito do zero, sem reaproveitar nada dela.
 
 **O mapa foi refeito em 09/09/2026** e passou de uma quadra e meia (144 × 90 m)
-para **1,44 km × 900 m**, com seis lugares de tipos diferentes, rio e ponte —
-ver *O mapa tem 1,44 km × 900 m*. O dia subiu de 180 para 420 s por causa disso:
+para **1 km × 550 m**, com seis lugares de tipos diferentes, rio e ponte —
+ver *O mapa tem 1 km × 550 m*. O dia subiu de 180 para 420 s por causa disso:
 até o carro existir, o mapa tem que ser andável a pé.
 
 **Os cinco passos que levam à Alfa estão de pé**: a mecânica de vasculhar (1),
 o zumbi (2), o relógio do dia com a noite e a HUD (3), a mochila com os
 documentos (4) e o ciclo fechado, com os dois desfechos (5). O que sobrou de
 declarado e não construído é **fome e água** — ver *O que ainda não tem*.
+
+**Duas mudanças em 15/09/2026**, as duas na rua e as duas com conferência nova
+no `conferir_mochila.tscn`:
+
+- **A porta de casa saiu do quarto do fundo e foi para a fachada.** Voltar da
+  rua deixou de cobrar a travessia da sala e do corredor — ver *Ela saiu do
+  quarto do fundo*;
+- **a mochila virou uma tela**, com `Tab`: dá para ver o que se carrega e
+  **largar no chão** o que não vale a vaga, e o que cai dá para pegar de volta.
+  No caminho apareceu um furo antigo — *o que não cabe fica no móvel, e dá para
+  voltar* estava escrito em todo lugar e não era verdade. Agora é.
 
 Pendentes de decisão da equipe:
 
@@ -86,17 +105,20 @@ Pendentes de decisão da equipe:
       `CUSTO_DO_VASCULHO`, `ZUMBIS_DA_NOITE`, `VISTA_A_MAIS_DE_NOITE`).
       Provisórios, e o único jeito de decidir é jogando — o que a direção
       fechou em 09/09 foi a **forma** da noite, não os números
-- [ ] ⚠️ **Desligar o `Travessia.COMECA_ARMADO`** antes de entregar. Hoje o jogo
-      começa com pistola e 18 balas, o que é facilidade de teste e contradiz a
-      progressão. O `conferir_arma.tscn` avisa em toda rodada
-- [ ] **O mouse entrou nos controles** com a pistola (mira e botão esquerdo), e
-      o one-pager declara teclado só. A linha de controles da peça precisa
-      ganhar o mouse
+- [x] ⚠️ **Desligar o `Travessia.COMECA_ARMADO`** — feito em 09/09/2026. A
+      constante existe e está em `false`; ligá-la de novo para testar o tiro faz
+      o `conferir_arma.tscn` avisar em toda rodada, de propósito
+- [ ] **Os controles mudaram duas vezes e o one-pager não sabe.** A peça declara
+      teclado só, e hoje há **mouse** (mira e botão esquerdo da pistola) e
+      **`Tab`** (a tela da mochila). A linha de controles precisa das duas
+- [ ] **`Tab` para a mochila é proposta**, como o resto do teclado. E a tela em
+      si é versão beta: texto puro, sem ícone e sem mouse — ver *A tela da
+      mochila*
 - [ ] **Os export templates do Godot** (~1 GB) não estão instalados, e sem eles
       não há build para o professor rodar. São **2 dos 10 pontos da Alfa**
       ("funcional e jogável"), e é download e não código
 - [ ] **A fase hipotética "ajudando no entendimento"** é parte dos 5 pontos da
-      Alfa. Um mapa de 1,44 km pode atrapalhar aqui: quem abre o jogo e anda
+      Alfa. Um mapa de 1 km pode atrapalhar aqui: quem abre o jogo e anda
       30 s em grama não vê a mecânica. Vale decidir como a Alfa se apresenta
 - [ ] **Quantos documentos a cura pede, e o que mais ela consome.** Hoje são 4
       dos 6 que o bairro tem, e é número provisório segurando uma decisão que é
@@ -243,9 +265,13 @@ tunadas à mão, e mexer nelas seria re-errar o que o conferir já validou.
 
 ### Um documento por lugar, e é isso que faz o mapa grande valer algo
 
+> ⬜ **Os documentos são placeholders.** Nome, conteúdo e que lugar guarda qual
+> não foram decididos pela equipe — o que está descrito aqui é a distribuição
+> provisória que faz a partida ter como ser ganha, e nada além disso.
+
 Cada um dos seis lugares com prédio guarda **um documento**, sempre no quarto
-mais fundo. Não é sorteio — os seis que existem estão em seis prédios
-declarados: dois no bairro e quatro exigindo viagem.
+mais fundo. Não é sorteio — os seis estão em seis prédios declarados: dois no
+bairro e quatro exigindo viagem.
 
 Antes era um documento a cada seis móveis. Num mapa com 73 móveis isso daria
 documento repetido, e documento repetido como moeda de progressão não quer dizer
@@ -277,7 +303,7 @@ declara top-down. Foi copiada a planta, não a projeção.
 O mapa denso de 09/09 à noite acusou três problemas que já existiam e nunca
 tinham aparecido:
 
-- **O jogador nascia fora da própria casa.** A posição dele e da porta do porão
+- **O jogador nascia fora da própria casa.** A posição dele e da porta de casa
   estavam escritas à mão no `rua.tscn`; quando o bairro mudou de lugar no mapa,
   ele passou a acordar no meio do campo, a 89 m de casa. Não dá erro nenhum — só
   aparece no lugar errado. Agora saem do `Mapa.onde_o_jogador_nasce()`, e é o
@@ -362,7 +388,7 @@ móvel e a velocidade — e **rode o `conferir_mapa.tscn` depois**.
 - `rua.tscn` — a cena, e é minúscula: `Relogio`, `Cenario`, `Jogador`,
   `EntradaDeCasa`, `Telhados` e `Hud`. Tudo o mais é gerado
 - `mochila.gd` — o que você está carregando hoje, as 12 vagas, e a regra de que
-  **só entra em casa o que passou pela porta do porão**. Ver a seção própria
+  **só entra em casa o que passou pela porta de casa**. Ver a seção própria
   abaixo
 - `pistola.gd` — a arma. Achada na armaria da delegacia, munição vinda do
   vasculho, e o tiro chamando a horda. Ver a seção própria abaixo
@@ -667,7 +693,7 @@ aqui o loot era texto no console; agora ele entra numa mochila, atravessa para
 a casa — ou fica na calçada.
 
 **A mochila do dia não é a mochila da casa**, e a diferença entre as duas é o
-preço da noite: **só entra em casa o que passou pela porta do porão.** Ser pego
+preço da noite: **só entra em casa o que passou pela porta de casa.** Ser pego
 pelo amanhecer ou cair sem vida deixa tudo na rua, e a casa te diz quanto ficou
 lá. É isso que faz o aviso das 19:00 valer algo em vez de ser enfeite — antes
 disso, ficar até tarde não custava nada de concreto.
@@ -675,10 +701,11 @@ disso, ficar até tarde não custava nada de concreto.
 #### Documento conta separado, e aparece diferente
 
 As duas recompensas do vasculho não valem o mesmo. **A comida te mantém vivo; o
-documento faz a pesquisa da cura andar** — é a moeda do eixo rua → casa, e é
-por isso que ela tem linha própria na HUD, em âmbar, acima da mochila. Mesmo
-sem a casa existir, esse contador já prova o eixo, que é exatamente o que o
-passo 4 tinha que provar.
+documento é o que a cura conta** — e é por isso que ele tem linha própria na
+HUD, em âmbar, acima da mochila. Mesmo sem a casa existir, esse contador já
+prova o eixo rua → casa, que é exatamente o que o passo 4 tinha que provar. O
+item em si continua sendo placeholder: o que ele é, e o que diz, é decisão da
+equipe e não está tomada.
 
 No móvel vasculhado o documento sai na cor da casa, com uma marca ao lado, e a
 comida sai apagada embaixo — o one-pager pede que ele seja *"visualmente
@@ -718,15 +745,20 @@ pede*, na seção do fim do jogo, e as pendências no começo deste arquivo.
 
 ### Mexeu na mochila, no loot ou no que atravessa o dia? Rode o `conferir_mochila.tscn` (F6)
 
-Confere cinco coisas: vasculhar enche a mochila e documento conta separado de
-comida; **só entra em casa o que passou pela porta do porão** — nos três jeitos
+Confere sete coisas: vasculhar enche a mochila e documento conta separado de
+comida; **só entra em casa o que passou pela porta de casa** — nos três jeitos
 de o dia acabar; o mundo esvazia e não repõe, e só o móvel vasculhado nasce
-vazio; o bairro tem documento suficiente para a história andar; e a HUD mostra
-o documento na linha dele.
+vazio; o bairro tem documento suficiente para a história andar; a HUD mostra
+o documento na linha dele; **a tela da mochila** — o que sai dela cai no chão e
+o chão devolve; e **o que não coube dá para pegar depois**, no mesmo dia.
 
 O segundo é o que precisa de conferência de verdade: a regra vive numa ligação
 indireta — a mochila escuta o `chegou_em_casa` do `Travessia` e lê o
 `fim_do_dia` para decidir entregar ou perder — e quebra sem dar erro em tela.
+
+Os dois últimos são de 15/09/2026, e o sétimo nasceu do furo da sobra: o
+caminho que ele confere passa por três arquivos que não se conhecem (tela →
+mochila → cenário) e quebra sem dar erro em tela, igual.
 
 ### A rua piora com os dias
 
@@ -759,9 +791,9 @@ vasculhar deixa de ser "pego tudo" e passa a ser "levo o quê?".
 visível"* — e aparece na HUD como `mochila 7/12`.
 
 **Com a mochila cheia, o que não couber fica no móvel** e aparece escrito em
-cima dele como "ficou:". Dá para voltar, e voltar gasta dia. A alternativa —
-não deixar vasculhar de mochila cheia — travaria justamente o verbo que vale 5
-pontos na Alfa, e essa foi a razão de descartá-la.
+cima dele como "ficou:". A alternativa — não deixar vasculhar de mochila cheia
+— travaria justamente o verbo que vale 5 pontos na Alfa, e essa foi a razão de
+descartá-la.
 
 **Documento entra primeiro, sempre.** São duas passadas na lista: ninguém quer
 descobrir que deixou o documento para trás porque uma lata de comida entrou na
@@ -769,8 +801,74 @@ frente.
 
 A mochila **tira da lista o que levou**, e a lista é o próprio `achados` do
 móvel — o mesmo objeto, não uma cópia. É assim que a regra acontece sem o móvel
-saber que existe mochila, e sem inventar uma tela de troca (que fica para a
-Beta, se a equipe quiser).
+saber que existe mochila.
+
+#### O que ficou no móvel dá para pegar depois — e até 15/09 não dava
+
+**Era um furo, e estava escrito como se não fosse.** O README, o `COMO-JOGAR` e
+a própria ferramenta de conferência diziam *"o que não cabe fica no móvel, e dá
+para voltar"*. Ficava e aparecia na tela — mas o móvel virava vazio no mesmo
+instante e **nunca mais aceitava vasculho**. A sobra era decoração.
+
+Agora o móvel só é "vazio" quando não sobra nada. Com sobra dentro ele muda de
+cor, o aviso vira *"E pegar o que ficou"* e **o segundo vasculho custa 0,8 s**
+(`DURACAO_DA_SOBRA`) em vez da duração cheia — a gaveta já está aberta, e
+cobrar os 5,5 s do armário de armas de novo transformaria "dá para voltar" em
+"não vale a pena voltar".
+
+**Sobra é coisa de hoje.** Para o dia seguinte o móvel continua contando como
+vasculhado, porque o mundo não repõe — deixar para amanhã é perder.
+
+### A tela da mochila (`tela_da_mochila.gd`)
+
+**15/09/2026. `Tab` abre e fecha; `W`/`S` escolhem a linha; `E` larga no
+chão.** Era o que a seção acima chamava de *tela de troca, que fica para a
+Beta* — é esta.
+
+Sem ela a mochila era um **teto**: 12 vagas, e com elas cheias o que você
+achasse ficava para trás e acabou. A quarta pressão é a que cobra **escolha**,
+e escolha que não se desfaz não é escolha. A tela é o que faz a vaga virar
+moeda — largo a comida estragada e levo o remédio, ou não.
+
+Documento aparece em cima e em âmbar, o resto embaixo; o rodapé mostra o que
+está no cinto (pistola e munição **não ocupam vaga**), as teclas, e o que caiu
+no chão por último.
+
+**O que sai da mochila cai no chão, aos seus pés, e dá para pegar de volta.**
+A pilha do chão é um vasculhável como outro qualquer — mesmo `E`, mesma barra,
+mesma mochila do outro lado —, custa 0,8 s e junta tudo o que você largar no
+mesmo lugar. Largar não destrói: quem larga a lata para caber o remédio tem que
+poder voltar na lata se o remédio não valer a viagem.
+
+Ela **não sobrevive ao dia**: a rua é montada de novo todo dia, e o que ficou na
+calçada fica na calçada. E não entra na conta dos móveis gerados — o índice do
+móvel sai de semente fixa, e enfiar uma pilha no meio embaralharia o conteúdo
+do mapa inteiro.
+
+**Largar documento é permitido.** A tentação é proibir, já que é o que ganha a
+partida — mas são 12 vagas para 6 documentos no mapa, então não existe mochila
+travada de documento, e o que cai dá para pegar de volta. Proibir seria proteger
+o jogador de uma escolha que o jogo inteiro é feito de cobrar.
+
+#### O mundo não para, e é a decisão de desenho desta tela
+
+**Não há pausa.** O relógio corre, o zumbi anda, a noite chega. O jogador fica
+parado enquanto escolhe — não anda, não vascula, não atira — e **levar dano
+fecha a tela na hora**, igual ao vasculho que se interrompe.
+
+Com pausa, largar sairia de graça: abrir, esvaziar o saco no chão, fechar, e as
+12 vagas nunca mais custariam nada. A pressão não está no limite de 12; está em
+decidir com o dia correndo.
+
+Quem precisa saber que ela está aberta são três — o jogador (para não andar), o
+vasculhável (para o mesmo `E` não vasculhar junto) e a pistola (para não atirar)
+—, e os três leem um `static var aberta` da classe. Nenhum deles precisa
+conhecer esta cena, e ninguém procura node em grupo a cada quadro.
+
+⬜ **É versão beta**: funciona de ponta a ponta e ainda é texto puro, como o
+resto da rua. Ícone, arrastar com o mouse e ordenar por tipo são polimento — e
+polimento depois de a equipe jogar isto e dizer se a escolha está no lugar
+certo. A tecla `Tab` também é proposta.
 
 ### A pistola (`pistola.gd`)
 
@@ -862,16 +960,40 @@ do lado norte e a única desenhada em tom quente — seguindo a separação por
 temperatura da direção de arte: rua fria, casa quente. Como toda construção do
 bairro, ela se entra: o telhado dela já está fora quando o jogo começa.
 
-A porta do **porão** fica num dos quartos do fundo, não na fachada: para chegar
-nela você atravessa a sala e o corredor. Encoste e segure `E` por 1,2 s — o dia
-na rua encerra e o jogo troca para a cena da casa. Lá, `E` sai para a rua no dia
-seguinte.
+A porta fica **na fachada** — é o vão da frente da sua casa, o mesmo que todo
+prédio do mapa tem, só que nesta se entra em vez de se vasculhar. Encoste e
+segure `E` por 1,2 s: o dia na rua encerra e o jogo troca para a cena da casa.
+Lá, `E` sai para a rua no dia seguinte.
 
 É **casa, não bunker** — o High Concept fechou em 03/09 que ela está trancada no
 **porão** de casa. A sua casa é a única construção do mapa que não se vasculha.
 
+#### Ela saiu do quarto do fundo em 15/09/2026
+
+Até essa data a porta era a **porta do porão**, e ficava num dos quartos de trás:
+para chegar nela você entrava em casa, atravessava a sala e o corredor. A
+fantasia era boa e o ritmo era ruim — **chegar em casa é o alívio do ciclo**, e a
+travessia de cômodo só adiava o alívio. Com zumbi atrás, adiava dentro de casa,
+que é o pior lugar para descobrir que a porta ainda está longe.
+
+O porão continua onde estava na história: ele é do modo Casa, e é o que você vê
+do outro lado. O que mudou foi onde o jogador encosta.
+
+Duas consequências de implementação, e as duas importam para quem mexer nisso:
+
+- **A porta não é sólida.** Quando morava no meio de um quarto podia ser um
+  bloco; na fachada, um bloco sólido tapa o único vão da casa e tranca você
+  dentro dela. O que evita entrar sem querer é a duração do `E`, não a colisão.
+- **Ela desenha por cima do telhado**, e é a única coisa que vem depois dos
+  `Telhados` no `rua.tscn`. É uma coisa que se opera de fora: telhado por cima
+  esconderia a barra e o aviso justamente de quem está chegando da rua.
+
+A posição sai do próprio prédio, pelo mesmo `Construcao.porta_de()` que abre o
+vão de qualquer fachada — antes era uma constante escrita à mão. Se a sua casa
+mudar de lugar ou de tamanho, a porta vai junto.
+
 Segurar em vez de apertar é de propósito: é a chave na fechadura com zumbi
-chegando, e de graça evita entrar em casa sem querer ao vasculhar por perto.
+chegando, e de graça evita entrar em casa sem querer ao passar pela porta.
 
 ### O que as duas frentes compartilham
 
@@ -880,7 +1002,7 @@ Um autoload só, o `travessia.gd`, e é **proposta, não decisão tomada**:
 | | |
 |---|---|
 | `Travessia.dia` | qual dia está correndo |
-| `Travessia.PRAZO_DA_CURA` | quantos dias existem para a cura — 10, e é proposta |
+| `Travessia.PRAZO_DA_CURA` | quantos dias existem para a cura — 30, e é proposta |
 | `Travessia.dias_restantes()` | quantos sobram depois de hoje |
 | `Travessia.e_o_ultimo_dia()` | a casa consulta antes de deixar sair |
 | `Travessia.fim_do_dia` | como o dia acabou: pela porta, amanheceu na rua ou sem vida |
@@ -977,9 +1099,8 @@ mesa, nenhuma minha:
 1. **A cura pede mais** — mas o bairro só tem 6, então isso só funciona junto
    com a saída 2 ou 3.
 2. **O bairro dá mais documento** — mais móveis, ou um documento a cada menos
-   móveis (`Bairro.CADA_QUANTOS_MOVEIS_UM_DOCUMENTO`). Custa escrever mais
-   documentos, que é conteúdo de narrativa: hoje são 6 nomes, e repetir
-   documento como moeda de progressão é esquisito.
+   móveis (`Bairro.CADA_QUANTOS_MOVEIS_UM_DOCUMENTO`). Hoje são 6 placeholders
+   numerados, e repetir documento como moeda de progressão é esquisito.
 3. **O mapa muda com os dias** — é o que o High Concept sugere ao dizer que a
    rua vai ficando mais apocalíptica. É a mais caro das três e a mais
    interessante: novos lugares reabrindo dá para que servir aos 30 dias sem

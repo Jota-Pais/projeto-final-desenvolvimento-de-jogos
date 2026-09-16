@@ -24,7 +24,7 @@ extends Node
 ## As 19:00. A rua nao muda de cena: comeca a apertar.
 signal anoiteceu
 
-## As 05:00. O dia acaba com voce na rua, e sem passar pela porta do porao.
+## As 05:00. O dia acaba com voce na rua, e sem passar pela porta de casa.
 signal amanheceu
 
 ## Segundos reais de luz num dia - 07:00 as 19:00. **Numero de feel, e
@@ -97,7 +97,7 @@ func gastar(segundos: float) -> void:
 	amanheceu.emit()
 	if not encerra_o_dia:
 		return
-	# O dia acaba, e acaba do jeito ruim: sem passar pela porta do porao. Hoje
+	# O dia acaba, e acaba do jeito ruim: sem passar pela porta de casa. Hoje
 	# a diferenca e so o texto que a casa mostra - com a mochila do passo 4,
 	# passa a ser o que voce deixou de entregar.
 	print("Amanheceu na rua - o dia %d acabou sem voce chegar em casa" % Travessia.dia)

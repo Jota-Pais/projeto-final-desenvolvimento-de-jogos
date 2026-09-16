@@ -28,9 +28,9 @@ const CENA_DO_FIM := "res://fim_de_jogo.tscn"
 ## tempo dentro de casa?). Isto existe para o ciclo do jogo fechar de ponta a
 ## ponta enquanto essa decisao nao for tomada.
 ##
-## Sao 4 dos 6 que o bairro tem, e a folga e de proposito: com 6 um unico dia
-## perdido carregando documento deixaria a partida impossivel de ganhar sem
-## avisar. Com 4 da para errar dois dias.
+## Sao 4 dos 6 placeholders que o mapa distribui, e a folga e de proposito: com
+## 6 um unico dia perdido carregando documento deixaria a partida impossivel de
+## ganhar sem avisar. Com 4 da para errar dois dias.
 const DOCUMENTOS_PARA_A_CURA := 4
 
 ## Quantos dias existem para a cura ficar pronta.
@@ -44,10 +44,10 @@ const DOCUMENTOS_PARA_A_CURA := 4
 ## Duas coisas sao calibradas em cima deste numero e mudaram junto: a escalada
 ## de zumbis por dia (rua/cenario.gd) e o mato tomando o terreno.
 ##
-## Uma nao mudou, e e a que importa: **quantos documentos a cura pede.** O
-## bairro tem 6 e nao repoe, entao com 30 dias o prazo sobra - da para fechar a
-## cura na primeira semana e os outros 23 dias nao cobram nada. O
-## conferir_fim.tscn mede isso e avisa.
+## Uma nao mudou, e e a que importa: **quantos documentos a cura pede.** O mapa
+## tem 6 e nao repoe, entao com 30 dias o prazo sobra - da para fechar a cura na
+## primeira semana e os outros 23 dias nao cobram nada. O conferir_fim.tscn mede
+## isso e avisa.
 const PRAZO_DA_CURA := 30
 
 ## Qual dia esta correndo.
@@ -61,7 +61,7 @@ var dia := 1
 ## O que o jogador **entregou** em casa, acumulado de todos os dias.
 ##
 ## Nao e o que ele carrega: isso e a mochila da rua (rua/mochila.gd), e so vira
-## isto aqui quando o dia acaba pela porta do porao. Quem for pego pelo
+## isto aqui quando o dia acaba pela porta de casa. Quem for pego pelo
 ## amanhecer ou cair sem vida chega de mao vazia.
 ##
 ## A rua so acrescenta. **Quem constroi a casa decide o que e consumido** e
@@ -122,7 +122,7 @@ var documentos_perdidos := 0
 ## aquela casa amanha.
 var moveis_vazios := {}
 
-## Chamado pela mochila da rua quando o dia acaba pela porta do porao.
+## Chamado pela mochila da rua quando o dia acaba pela porta de casa.
 func receber(itens: Array[String], docs: Array[String]) -> void:
 	mochila.append_array(itens)
 	documentos.append_array(docs)

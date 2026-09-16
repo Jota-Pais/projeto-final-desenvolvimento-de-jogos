@@ -238,7 +238,7 @@ func _moveis_por_lugar() -> Dictionary:
 		if not por_lugar.has(nome):
 			por_lugar[nome] = []
 		(por_lugar[nome] as Array).append(filho)
-	# A porta do porao nao e movel gerado, mas tem que ser alcancavel igual.
+	# A porta de casa nao e movel gerado, mas tem que ser alcancavel igual.
 	var porta := _rua.get_node("EntradaDeCasa") as Node2D
 	var onde := Mapa.lugar_em(porta.position)
 	if not por_lugar.has(onde):
@@ -248,7 +248,7 @@ func _moveis_por_lugar() -> Dictionary:
 
 # --- 3. um documento por lugar ----------------------------------------------
 
-## Os seis documentos que existem tem que estar em seis lugares diferentes, e
+## Os seis documentos placeholder tem que estar em seis lugares diferentes, e
 ## cada um sair uma vez so. Documento repetido como moeda de progressao nao quer
 ## dizer nada, e documento num lugar inalcancavel trava a partida.
 func _os_documentos() -> void:
@@ -273,7 +273,7 @@ func _os_documentos() -> void:
 
 	var no_bairro := 0
 	for achado in onde_estao:
-		print("  %-22s em %s" % [achado.replace("documento: ", ""), onde_estao[achado]])
+		print("  %-22s em %s" % [achado, onde_estao[achado]])
 		if onde_estao[achado] == "bairro":
 			no_bairro += 1
 

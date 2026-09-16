@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://rua/relogio.gd" id="1_relogio"]
 [ext_resource type="Script" path="res://rua/cenario.gd" id="2_cenario"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://rua/telhados.gd" id="5_telhados"]
 [ext_resource type="PackedScene" path="res://rua/hud.tscn" id="6_hud"]
 [ext_resource type="Script" path="res://rua/mochila.gd" id="7_mochila"]
+[ext_resource type="PackedScene" path="res://rua/tela_da_mochila.tscn" id="8_tela"]
 
 [node name="Rua" type="Node2D"]
 
@@ -22,10 +23,12 @@ script = ExtResource("2_cenario")
 [node name="Jogador" parent="." instance=ExtResource("3_jogador")]
 position = Vector2(6700, 16720)
 
-[node name="EntradaDeCasa" parent="." instance=ExtResource("4_entrada")]
-position = Vector2(6390, 16385)
-
 [node name="Telhados" type="Node2D" parent="."]
 script = ExtResource("5_telhados")
 
+[node name="EntradaDeCasa" parent="." instance=ExtResource("4_entrada")]
+position = Vector2(6467.5, 16810)
+
 [node name="Hud" parent="." instance=ExtResource("6_hud")]
+
+[node name="TelaDaMochila" parent="." instance=ExtResource("8_tela")]

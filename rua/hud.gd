@@ -9,9 +9,10 @@ extends CanvasLayer
 ## o passo 5. A vida tem barra em cima da cabeca do jogador, que e onde ela
 ## importa na hora do aperto.
 ##
-## **Fome, agua e mochila aparecem como "—" porque ainda nao existem** (passo
-## 4). Deixar o campo vazio na tela e melhor que esconder: e o mapa do que
-## falta, e quem for fazer o passo 4 acha o lugar pronto.
+## **Fome e agua aparecem como "—" porque ainda nao existem.** Deixar o campo
+## vazio na tela e melhor que esconder: e o mapa do que falta, e quem for fazer
+## acha o lugar pronto. As duas ficaram para o modo Casa, que e quem decide o
+## consumo do que a mochila trouxe.
 ##
 ## Ela nao guarda estado: le o relogio, o jogador e o Travessia todo quadro. Se
 ## algum deles nao estiver na cena, o campo apaga em vez de estourar - assim a
@@ -99,18 +100,21 @@ func _linha_da_esquerda(jogador: Node) -> String:
 	return "vida    %s\nfome    —\nágua    —%s" % [vida, arma]
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
-## Some tudo se voce nao voltar pela porta do porao.
+## Some tudo se voce nao voltar pela porta de casa.
 ## "mochila 7/12" - o **espaco ja ocupado visivel** que o one-pager declara. O
 ## numero conta documento junto, porque documento ocupa espaco igual: e nisso
 ## que a escolha existe.
+## O "[Tab]" fica sempre na linha, e nao so com a mochila cheia: e a unica
+## pista de que existe uma tela para abrir, e o jogo nao tem tutorial. Quem
+## descobre a tecla so quando ja esta cheio descobre tarde.
 func _linha_da_direita(mochila: Node) -> String:
 	if mochila == null:
 		return "mochila   —"
 	var quantos: int = mochila.quantos()
 	var cabe: int = mochila.CAPACIDADE
 	if quantos >= cabe:
-		return "mochila   %d/%d   CHEIA" % [quantos, cabe]
-	return "mochila   %d/%d" % [quantos, cabe]
+		return "mochila   %d/%d   CHEIA   [Tab]" % [quantos, cabe]
+	return "mochila   %d/%d   [Tab]" % [quantos, cabe]
 
 ## O documento tem linha propria, acima da mochila e na cor dele. E o que o
 ## one-pager pede - "conta separado" - e o que prova o eixo rua -> casa mesmo

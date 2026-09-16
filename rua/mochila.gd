@@ -2,7 +2,7 @@ extends Node
 ## A mochila do dia: o que voce esta **carregando agora**, na rua.
 ##
 ## Nao e a mochila que a casa le, e a diferenca entre as duas e o preco da
-## noite: **so entra em casa o que passou pela porta do porao.** Ser pego pelo
+## noite: **so entra em casa o que passou pela porta de casa.** Ser pego pelo
 ## amanhecer ou cair sem vida deixa tudo na calcada - e e isso que faz o aviso
 ## das 19:00 valer algo em vez de ser enfeite.
 ##
@@ -30,6 +30,13 @@ const CAPACIDADE := 12
 ## o som e o "+1" na tela sao passo 5 e se penduram aqui.
 signal guardou(achado: String, documento: bool)
 
+## Emitido quando o jogador tira uma coisa da mochila pela tela dela.
+##
+## **Ela nao sabe onde a coisa cai.** Quem escuta e o cenario, que poe uma
+## pilha no chao aos pes do jogador - mesmo arranjo do `vasculhado` do movel:
+## a mochila nao conhece o mundo, e o mundo nao mexe na mochila.
+signal largou(achado: String, documento: bool)
+
 ## O que entrou hoje. **Documento conta separado** porque e a moeda do eixo
 ## rua -> casa: a comida te mantem vivo, o documento avanca a pesquisa da cura.
 ## Sao as duas recompensas do vasculho, e elas nao valem o mesmo.
@@ -43,8 +50,11 @@ func _ready() -> void:
 ##
 ## **Tira da lista o que levou, e o que nao couber fica nela** - e a lista e o
 ## proprio `achados` do movel, o mesmo objeto e nao uma copia. E assim que "o
-## que nao cabe fica no movel" acontece sem o movel saber que existe mochila, e
-## sem inventar uma tela de troca: voce volta depois, e voltar gasta dia.
+## que nao cabe fica no movel" acontece sem o movel saber que existe mochila.
+##
+## O movel com sobra continua aceitando vasculho, mais barato (ver
+## DURACAO_DA_SOBRA, em rua/vasculhavel.gd): abrir vaga pela tela da mochila e
+## voltar nele e o ciclo que faz a capacidade ser escolha e nao teto.
 ##
 ## Duas passadas, **documento primeiro**: e a recompensa que importa, e ninguem
 ## quer descobrir que deixou o documento para tras porque uma lata de comida
@@ -96,7 +106,41 @@ func quantos() -> int:
 func esta_cheia() -> bool:
 	return quantos() >= CAPACIDADE
 
-## O dia acabou. So entrega quem voltou pela porta do porao.
+## Tudo o que esta dentro, **na ordem em que a tela mostra**: documento em cima,
+## na cor dele, e o resto embaixo.
+##
+## E a mesma ordem que largar() indexa, de proposito: a tela desenha esta lista
+## e devolve o indice da linha escolhida, sem precisar saber que por baixo sao
+## duas listas separadas.
+func tudo() -> Array[String]:
+	var lista: Array[String] = []
+	lista.append_array(documentos)
+	lista.append_array(itens)
+	return lista
+
+## Tira da mochila a coisa da linha `qual` de tudo(), e avisa quem escuta.
+##
+## **Largar documento e permitido.** Ele e o que ganha a partida, entao a
+## tentacao e proibir - mas a mochila e 12 vagas e os documentos do mapa sao 6:
+## nao existe mochila travada de documento. E o que cai, cai no chao e da para
+## pegar de volta. Proibir aqui seria proteger o jogador de uma escolha que o
+## jogo inteiro e feito de cobrar.
+func largar(qual: int) -> String:
+	var lista := tudo()
+	if qual < 0 or qual >= lista.size():
+		return ""
+
+	var achado := lista[qual]
+	var documento := qual < documentos.size()
+	if documento:
+		documentos.remove_at(qual)
+	else:
+		itens.remove_at(qual - documentos.size())
+
+	largou.emit(achado, documento)
+	return achado
+
+## O dia acabou. So entrega quem voltou pela porta de casa.
 func _ao_acabar_o_dia() -> void:
 	if Travessia.fim_do_dia == Travessia.FimDoDia.PELA_PORTA:
 		Travessia.receber(itens, documentos)

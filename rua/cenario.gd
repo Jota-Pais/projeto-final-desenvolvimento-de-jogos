@@ -30,6 +30,28 @@ const Navegacao := preload("res://rua/navegacao.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
+## A pilha do que o jogador largou no chao, pela tela da mochila.
+##
+## **E um vasculhavel como outro qualquer** - so que pequena, sem colisao e
+## barata de abrir. E por isso que pegar de volta funciona sem inventar um
+## segundo tipo de objeto: o mesmo E, a mesma barra, a mesma mochila do outro
+## lado.
+##
+## Ela **nao entra na conta dos moveis gerados**: o indice do movel e o nome
+## dele entre os dias e sai de uma semente fixa, e enfiar uma pilha no meio
+## embaralharia o conteudo de todo o resto do mapa. Por isso ela tambem nao e
+## anotada como vasculhada - e por isso ela **nao sobrevive ao dia**: a rua e
+## montada de novo todo dia, e o que voce largou na calcada fica na calcada.
+const ROTULO_DO_CHAO := "Coisas no chão"
+const DURACAO_DO_CHAO := 0.8
+const TAMANHO_DO_CHAO := Vector2(40.0, 40.0)
+const COR_DO_CHAO := Color("6a6152")
+
+## Ate onde uma coisa largada cai numa pilha que ja existe em vez de comecar
+## outra. Sem isto, esvaziar a mochila deixaria doze quadradinhos empilhados no
+## mesmo pixel.
+const PERTO_DA_PILHA := 90.0
+
 ## Quantos zumbis a noite traz, ao todo, das 19:00 as 05:00. **Proposta.**
 ##
 ## Em cima do povoamento por perto, a rua mais que dobra ao longo da noite - e e
@@ -96,8 +118,8 @@ const COR_TERRA := Color("55503f")
 
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
-## Quantos documentos ja foram colocados. Decide qual dos seis sai no proximo
-## lugar: cada um sai uma vez so.
+## Quantos documentos ja foram colocados. Decide qual dos seis placeholders sai
+## no proximo lugar: cada um sai uma vez so.
 var _documentos_colocados := 0
 
 ## O relogio do dia, achado pelo grupo. E aqui que ele se liga em cada movel:
@@ -148,10 +170,15 @@ func _ready() -> void:
 	# deles ainda nao tenha rodado.
 	_relogio = get_tree().get_first_node_in_group("relogio")
 	_mochila = get_tree().get_first_node_in_group("mochila")
+	# A mochila avisa o que saiu dela; quem sabe onde a coisa cai e daqui. Ela
+	# nao conhece o mundo, e o mundo nao mexe nela - mesmo arranjo do
+	# `vasculhado` do movel.
+	if _mochila != null:
+		_mochila.largou.connect(_ao_largar)
 
 	var mundo := Mapa.mundo()
 
-	# Antes de qualquer coisa: o jogador e a porta do porao vao para onde o mapa
+	# Antes de qualquer coisa: o jogador e a porta de casa vao para onde o mapa
 	# diz, e nao para onde o rua.tscn tinha escrito na mao. Tem que ser antes do
 	# povoamento, que depende de onde o jogador esta.
 	_por_no_lugar()
@@ -188,7 +215,7 @@ func _ready() -> void:
 	# arvore, por isso o deferido.
 	_limitar_camera.call_deferred()
 
-## O jogador e a porta do porao, no lugar que o mapa diz. Sao irmaos do cenario
+## O jogador e a porta de casa, no lugar que o mapa diz. Sao irmaos do cenario
 ## na cena, e e o cenario que sabe ler o mapa.
 func _por_no_lugar() -> void:
 	var jogador := get_tree().get_first_node_in_group("jogador") as Node2D
@@ -196,7 +223,7 @@ func _por_no_lugar() -> void:
 		jogador.global_position = Mapa.onde_o_jogador_nasce()
 	var porta := get_parent().get_node_or_null("EntradaDeCasa") as Node2D
 	if porta != null:
-		porta.global_position = Mapa.onde_fica_a_porta_do_porao()
+		porta.global_position = Mapa.onde_fica_a_porta_de_casa()
 
 # ------------------------------------------------------------------- desenho
 
@@ -356,13 +383,14 @@ func _povoar(construcao: Dictionary) -> void:
 
 	var ao_sul: bool = Construcao.e_da_frente_ao_sul(construcao)
 	var um_quarto_so: bool = Construcao.QUARTOS_POR_TIPO[construcao["tipo"]] < 3
-	# O documento do lugar fica no **ultimo** quarto, que e o mais fundo: o que
-	# custa mais para chegar paga o que vale mais.
+	# O documento do lugar cai no **ultimo** quarto, que e o mais fundo, para o
+	# que custa mais chegar pagar mais. **Posicao provisoria**: onde documento
+	# fica nao foi decidido, e isto e so o lugar que existe para ele nascer.
 	var quarto_do_documento := -1
 	if construcao.get("documento", false):
 		quarto_do_documento = mini(quartos.size(), vagas.size()) - 1
 	# A pistola vai no mesmo lugar, pelo mesmo motivo: e a armaria da delegacia,
-	# e ela guarda o prontuario e a arma.
+	# e ela guarda os dois.
 	var quarto_da_arma := -1
 	if construcao.get("arma", false):
 		quarto_da_arma = mini(quartos.size(), vagas.size()) - 1
@@ -547,6 +575,50 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
 	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - ficha["tamanho"] / 2.0, ficha["tamanho"]))
+
+## O jogador tirou uma coisa da mochila: ela cai no chao onde ele esta.
+##
+## **Largar nao destroi.** A alternativa era sumir com o item, e sumir faz a
+## escolha ser irreversivel por engano: quem larga a lata de comida para caber
+## o remedio quer poder voltar na lata se o remedio nao valer a viagem. Cair no
+## chao tambem e o que mantem a regra do mapa de pe - o mundo nao repoe, mas
+## tambem nao engole o que ja saiu de um movel.
+func _ao_largar(achado: String, _documento: bool) -> void:
+	if _jogador == null:
+		_jogador = get_tree().get_first_node_in_group("jogador") as Node2D
+	if _jogador == null:
+		return
+
+	var onde := _jogador.global_position
+	var pilha := _pilha_perto_de(onde)
+	if pilha != null:
+		pilha.receber(achado)
+		return
+	_criar_pilha(onde, achado)
+
+func _pilha_perto_de(onde: Vector2) -> Node2D:
+	for no in get_tree().get_nodes_in_group("largado"):
+		var pilha := no as Node2D
+		if pilha != null and pilha.global_position.distance_to(onde) <= PERTO_DA_PILHA:
+			return pilha
+	return null
+
+func _criar_pilha(onde: Vector2, achado: String) -> void:
+	var pilha := CENA_DO_MOVEL.instantiate()
+	pilha.position = onde
+	pilha.rotulo = ROTULO_DO_CHAO
+	pilha.duracao = DURACAO_DO_CHAO
+	pilha.tamanho = TAMANHO_DO_CHAO
+	pilha.cor = COR_DO_CHAO
+	pilha.solido = false
+	pilha.achados = [achado] as Array[String]
+	pilha.add_to_group("largado")
+
+	add_child(pilha)
+	if _relogio != null:
+		pilha.vasculhando.connect(_relogio.ao_vasculhar)
+	if _mochila != null:
+		pilha.vasculhado.connect(_mochila.ao_vasculhar)
 
 func _anotar_ponto_limpo(indice: int) -> void:
 	_pontos_limpos[indice] = true

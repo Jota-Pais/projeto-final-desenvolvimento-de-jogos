@@ -7,11 +7,12 @@
 ## ## A escala, e por que ela e essa
 ##
 ## **40 px = 1 metro** - o jogador tem 40 px de altura. O mundo tem
-## 40.000 x 26.000 px, ou seja **1 km x 650 m**.
+## 40.000 x 22.000 px, ou seja **1 km x 550 m** - e o numero sai do MUNDO
+## abaixo, que e quem manda.
 ##
 ## Ele ja foi de 144 x 90 m (o bairro sozinho, ate 09/09/2026) e de 1,44 km x
 ## 900 m (a primeira versao do mapa grande, no mesmo dia). **Encolheu para 1 km
-## x 650 m em 09/09 a noite**, e por um motivo: era campo vazio demais para
+## x 550 m em 09/09 a noite**, e por um motivo: era campo vazio demais para
 ## caminhada demais. Mapa grande nao e mapa bom - o que faz distancia valer algo
 ## e ter coisa nas duas pontas.
 ##
@@ -35,11 +36,15 @@
 ##
 ## ## Um documento por lugar
 ##
-## Os seis documentos que existem estao em seis predios declarados - dois no
-## bairro, dois na cidade, um no posto e um na mansao. Nao e sorteio, e e o que
-## faz a variedade do mapa valer algo mecanicamente e nao so visualmente.
+## Os seis documentos placeholder saem em seis predios declarados em vez de
+## sorteados, para o mapa espalhar a progressao em vez de amontoa-la. **Quais
+## lugares, e o que cada documento e, nao foi decidido pela equipe** - a divisao
+## de hoje existe so para a partida ter como ser ganha.
 
 const Lugares := preload("res://rua/lugares.gd")
+## So para a porta de casa: a fachada de uma construcao e regra do Construcao,
+## e o mapa nao tem por que saber onde fica o vao.
+const Construcao := preload("res://rua/construcao.gd")
 
 const MUNDO := Rect2(0.0, 0.0, 40000.0, 22000.0)
 
@@ -259,6 +264,16 @@ static func onde_o_bairro_comeca() -> Vector2:
 static func onde_o_jogador_nasce() -> Vector2:
 	return onde_o_bairro_comeca() + Lugares.BAIRRO_JOGADOR
 
-## A porta do porao, que e por onde o dia acaba.
-static func onde_fica_a_porta_do_porao() -> Vector2:
-	return onde_o_bairro_comeca() + Lugares.BAIRRO_PORTA_DO_PORAO
+## A porta de casa, que e por onde o dia acaba.
+##
+## **E a porta da fachada, e nao uma posicao escrita a mao** (15/09/2026). Ate
+## entao ela ficava num quarto do fundo: voce voltava da rua, atravessava a
+## sala e o corredor e so entao acabava o dia. Chegar em casa e o momento de
+## alivio do ciclo, e cobrar uma travessia de comodo depois dele so adiava o
+## alivio - com zumbi atras, adiava dentro de casa.
+##
+## Sai do proprio predio, pelo mesmo `porta_de()` que abre o vao na fachada de
+## qualquer construcao do mapa. Se a sua casa mudar de lugar ou de tamanho, a
+## porta vai junto e ninguem precisa lembrar de mexer aqui.
+static func onde_fica_a_porta_de_casa() -> Vector2:
+	return onde_o_bairro_comeca() + Construcao.porta_de(Lugares.sua_casa())

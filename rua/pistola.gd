@@ -21,6 +21,9 @@ extends Node2D
 ## parte da luta. A esquiva nao e mecanica: e andar evitando, que sempre deu
 ## para fazer porque o zumbi e mais lento que voce.
 
+## So para a guarda do `aberta`: nao se atira com a mochila aberta.
+const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
+
 ## Ate onde o tiro alcanca. Parede corta, porque e raycast: atirar de dentro de
 ## casa nao acerta quem esta na rua.
 const ALCANCE := 900.0
@@ -55,6 +58,10 @@ func _process(delta: float) -> void:
 	if para_o_mouse.length() > 1.0:
 		_mira = para_o_mouse.normalized()
 	queue_redraw()
+
+	# Com a mochila aberta ele esta com as duas maos no saco, nao no gatilho.
+	if TelaDaMochila.aberta:
+		return
 
 	if Input.is_action_pressed("atirar") and _espera <= 0.0 and Travessia.municao > 0:
 		_atirar()

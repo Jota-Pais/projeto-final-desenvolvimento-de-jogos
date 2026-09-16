@@ -12,6 +12,9 @@ extends Area2D
 
 ## Le so a tabela de documentos, para saber qual achado desenhar com destaque.
 const Construcao := preload("res://rua/construcao.gd")
+## So para a guarda do `aberta`: com a tela da mochila na frente, o E que larga
+## uma coisa nao pode vasculhar o movel encostado ao mesmo tempo.
+const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 
 ## Emitido quando o vasculho termina. Quem escuta e a mochila da rua, e e ela
 ## quem separa documento de comida.
@@ -64,19 +67,37 @@ const DECAIMENTO := 0.0
 ## 40 px.
 const ALCANCE := 60.0
 
+## Quanto custa **voltar num movel ja vasculhado** para pegar o que nao coube
+## na mochila. Nao e a duracao original: a gaveta ja esta aberta, e cobrar os
+## 5,5 s do armario de armas de novo transformaria "da para voltar" em "nao
+## vale a pena voltar".
+const DURACAO_DA_SOBRA := 0.8
+
+## A cor do movel **ja vasculhado mas com sobra dentro**. Fica entre a cor dele
+## cheio e a de vazio: de longe da para ver que aquele ja foi mexido, e de perto
+## o "ficou:" diz o que sobrou.
+const COR_ABERTO := Color("4a443d")
 const COR_VAZIO := Color("34302d")
 const COR_BARRA := Color("c8b78a")
 const COR_FUNDO_DA_BARRA := Color("22201e")
 const COR_DO_AVISO := Color("e8e2d6")
 ## O documento tem cor propria, e a mesma do modo Casa. O one-pager pede que
-## ele seja "visualmente distinto dos outros itens, com brilho": e o que
-## destrava a historia, e no meio de lata de comida e pano sujo tem que dar
-## para ver de longe qual movel valeu a pena.
+## ele seja "visualmente distinto dos outros itens, com brilho": e o que a cura
+## conta, e no meio de lata de comida e pano sujo tem que dar para ver de longe
+## qual movel valeu a pena.
 const COR_DO_DOCUMENTO := Color("e8b061")
 
 var _progresso := 0.0
 var _jogador_dentro := false
+
+## Sem nada dentro. **Nao e "ja foi vasculhado"** - um movel de onde a mochila
+## cheia so levou metade continua com a outra metade, e continua valendo a pena
+## voltar nele.
 var _vazio := false
+
+## Se ja foi aberto hoje. Muda a cor, o aviso e a duracao: o segundo vasculho
+## do mesmo movel custa DURACAO_DA_SOBRA.
+var _ja_vasculhado := false
 
 func _ready() -> void:
 	if nasce_vazio:
@@ -91,6 +112,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if _vazio:
+		return
+	# Com a tela da mochila aberta o jogador esta escolhendo o que carrega, e
+	# nao vasculhando. Sem esta guarda o mesmo E faria as duas coisas, e largar
+	# uma lata em cima de um armario comecaria a abrir o armario.
+	if TelaDaMochila.aberta:
 		return
 
 	var antes := _progresso
@@ -114,11 +140,40 @@ func interromper() -> void:
 	_progresso = 0.0
 	queue_redraw()
 
+## Fim do vasculho: quem escuta leva o que couber, e **o que nao couber fica
+## aqui e continua pegavel** (15/09/2026).
+##
+## Ate esta data "o que nao cabe fica no movel" era meia verdade: ficava, e
+## aparecia escrito na tela, mas o movel virava `_vazio` no mesmo instante e
+## nunca mais aceitava vasculho. O README e o COMO-JOGAR ja prometiam "da para
+## voltar" - agora da.
+##
+## Ele so vira vazio de verdade quando nao sobra nada. Para o dia seguinte,
+## porem, ele conta como vasculhado de qualquer jeito: quem anota e o cenario,
+## no sinal, e o mundo nao repoe. **Sobra e coisa do dia de hoje** - deixar para
+## amanha e perder.
 func _esvaziar() -> void:
-	_vazio = true
-	_progresso = duracao
 	vasculhado.emit(rotulo, achados)
 	print("%s: %s" % [rotulo, "nada" if achados.is_empty() else ", ".join(achados)])
+
+	_ja_vasculhado = true
+	if achados.is_empty():
+		_vazio = true
+		_progresso = duracao
+	else:
+		duracao = DURACAO_DA_SOBRA
+		_progresso = 0.0
+	queue_redraw()
+
+## Poe uma coisa dentro deste ponto depois de ele ja existir na cena.
+##
+## Quem chama e o cenario, quando o jogador larga algo no chao: a pilha do chao
+## e um vasculhavel como outro qualquer, e e assim que pegar de volta funciona
+## sem inventar um segundo tipo de objeto.
+func receber(achado: String) -> void:
+	achados.append(achado)
+	_vazio = false
+	_progresso = 0.0
 	queue_redraw()
 
 ## As formas saem do "tamanho" em vez de estarem gravadas na cena, para cada
@@ -129,13 +184,16 @@ func _esvaziar() -> void:
 ## com uma marca ao lado; comida e traste embaixo, apagados. Sao duas linhas e
 ## nao uma porque draw_string desenha numa cor so - e a cor e justamente o que
 ## separa a recompensa que importa da que nao importa.
-func _desenhar_o_saldo(fonte: Font, esquerda: float, topo: float) -> void:
+##
+## `base` e a linha do "ficou:". No movel vazio ela fica em cima dele; no movel
+## com sobra fica embaixo, para nao brigar com a barra e com o aviso de E.
+func _desenhar_o_saldo(fonte: Font, esquerda: float, base: float) -> void:
 	var comuns: Array[String] = []
 	var achou_documento := false
 	for achado in achados:
 		if Construcao.e_documento(achado):
 			achou_documento = true
-			draw_string(fonte, Vector2(esquerda + 16.0, topo - 26.0), achado,
+			draw_string(fonte, Vector2(esquerda + 16.0, base - 18.0), achado,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_DOCUMENTO)
 		else:
 			comuns.append(achado)
@@ -143,14 +201,14 @@ func _desenhar_o_saldo(fonte: Font, esquerda: float, topo: float) -> void:
 	if achou_documento:
 		# A "marca com brilho" do one-pager, na medida do greybox: um quadrado
 		# na cor do documento com um halo em volta.
-		var marca := Rect2(esquerda, topo - 36.0, 11.0, 11.0)
+		var marca := Rect2(esquerda, base - 28.0, 11.0, 11.0)
 		draw_rect(marca.grow(4.0), Color(COR_DO_DOCUMENTO, 0.22))
 		draw_rect(marca, COR_DO_DOCUMENTO)
 
 	# "ficou" e nao "achou": o que esta escrito aqui e o que a mochila NAO
-	# levou, porque nao caberia. Da para voltar - e voltar gasta dia.
+	# levou, porque nao caberia. Da para voltar buscar no mesmo dia.
 	var saldo := "vazio" if comuns.is_empty() else "ficou: " + ", ".join(comuns)
-	draw_string(fonte, Vector2(esquerda, topo - 8.0), saldo,
+	draw_string(fonte, Vector2(esquerda, base), saldo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
 
 func _montar_formas() -> void:
@@ -191,7 +249,8 @@ func _ao_ser_atingido(_dano: float) -> void:
 
 func _draw() -> void:
 	var caixa := Rect2(-tamanho / 2.0, tamanho)
-	draw_rect(caixa, COR_VAZIO if _vazio else cor)
+	var cheio_ou_nao := COR_ABERTO if _ja_vasculhado else cor
+	draw_rect(caixa, COR_VAZIO if _vazio else cheio_ou_nao)
 	draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
 
 	var fonte := ThemeDB.fallback_font
@@ -199,8 +258,13 @@ func _draw() -> void:
 	var esquerda := -tamanho.x / 2.0
 
 	if _vazio:
-		_desenhar_o_saldo(fonte, esquerda, topo)
+		_desenhar_o_saldo(fonte, esquerda, topo - 8.0)
 		return
+
+	# Ja aberto e com sobra: o que ficou aparece por baixo dele, para a barra e
+	# o aviso de E continuarem sendo o que se le em cima.
+	if _ja_vasculhado:
+		_desenhar_o_saldo(fonte, esquerda, -topo + 30.0)
 
 	if _progresso > 0.0:
 		var largura := maxf(tamanho.x, 76.0)
@@ -212,6 +276,8 @@ func _draw() -> void:
 		draw_rect(barra, Color(0.0, 0.0, 0.0, 0.5), false, 1.0)
 
 	if _jogador_dentro:
-		draw_string(fonte, Vector2(esquerda, topo - 26.0),
-			"E  vasculhar %s (%.1fs)" % [rotulo, duracao],
+		var aviso := "E  vasculhar %s (%.1fs)" % [rotulo, duracao]
+		if _ja_vasculhado:
+			aviso = "E  pegar o que ficou (%.1fs)" % duracao
+		draw_string(fonte, Vector2(esquerda, topo - 26.0), aviso,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_AVISO)

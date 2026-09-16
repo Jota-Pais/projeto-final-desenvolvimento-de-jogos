@@ -27,15 +27,18 @@ const Construcao := preload("res://rua/construcao.gd")
 
 const BAIRRO_TAMANHO := Vector2(5760.0, 3600.0)
 
-## Onde o jogador nasce e onde fica a porta do porao, em coordenada LOCAL do
-## bairro. Sao a sala e o quarto do fundo da sua casa.
+## Onde o jogador nasce, em coordenada LOCAL do bairro: a sala da sua casa.
 ##
-## **Estavam escritas na mao no rua.tscn** ate 09/09/2026 a noite, e quando o
+## **Estava escrita na mao no rua.tscn** ate 09/09/2026 a noite, e quando o
 ## bairro mudou de lugar no mapa o jogador passou a nascer no meio do campo, a
 ## 89 m da propria casa. Nao dava erro nenhum: ele so aparecia no lugar errado.
-## Agora saem daqui, somadas a origem do bairro.
+## Agora sai daqui, somada a origem do bairro.
+##
+## **A porta de casa nao tem constante irma.** Ate 15/09/2026 tinha - era a
+## BAIRRO_PORTA_DO_PORAO, escrita a mao dentro de um quarto do fundo. Agora ela
+## e a porta da fachada, e sai da propria construcao: ver sua_casa() abaixo e
+## Mapa.onde_fica_a_porta_de_casa().
 const BAIRRO_JOGADOR := Vector2(700.0, 1240.0)
-const BAIRRO_PORTA_DO_PORAO := Vector2(390.0, 905.0)
 
 ## A rua principal do bairro local. O mapa alinha ela com a rodovia: e o mesmo
 ## asfalto, como Muldraugh esticada ao longo da US-31W.
@@ -57,6 +60,14 @@ const BAIRRO_CONSTRUCOES := [
 	{ "rect": Rect2(4200.0, 480.0, 280.0, 240.0), "porta": "sul", "tipo": "galpao" },
 	{ "rect": Rect2(1400.0, 2960.0, 280.0, 240.0), "porta": "norte", "tipo": "galpao" },
 ]
+
+## A sua casa: a unica construcao do bairro marcada com "sua". E a unica que
+## nao se vasculha, e e a fachada dela que tem a porta por onde o dia acaba.
+static func sua_casa() -> Dictionary:
+	for construcao in BAIRRO_CONSTRUCOES:
+		if construcao.get("sua", false):
+			return construcao
+	return {}
 
 const BAIRRO_CERCAS := [
 	Rect2(200.0, 370.0, 720.0, 18.0),
@@ -284,8 +295,9 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 				"porta": "norte" if fileira == 0 else "sul",
 				"tipo": tipo,
 			}
-			# Ha uma delegacia e um mercado so na cidade, e cada um guarda um
-			# documento no quarto mais fundo. A pistola fica na armaria, que e o
+			# Ha uma delegacia e um mercado so na cidade, e cada um recebe um
+			# documento placeholder no quarto mais fundo - divisao provisoria, nao
+				# decidida. A pistola fica na armaria, que e o
 			# quarto mais fundo da delegacia.
 			if tipo == "delegacia":
 				predio["documento"] = true

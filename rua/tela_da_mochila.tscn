@@ -1,0 +1,93 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://rua/tela_da_mochila.gd" id="1_tela"]
+
+[node name="TelaDaMochila" type="CanvasLayer"]
+layer = 2
+script = ExtResource("1_tela")
+
+[node name="Painel" type="Control" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Fundo" type="ColorRect" parent="Painel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0313725, 0.0392157, 0.0470588, 0.72549)
+
+[node name="Caixa" type="ColorRect" parent="Painel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -240.0
+offset_right = 290.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0862745, 0.0823529, 0.0745098, 0.968627)
+
+[node name="Borda" type="ColorRect" parent="Painel/Caixa"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 3.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0.909804, 0.690196, 0.380392, 0.72549)
+
+[node name="Titulo" type="Label" parent="Painel/Caixa"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 26.0
+offset_top = 24.0
+offset_right = -26.0
+offset_bottom = 58.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.909804, 0.690196, 0.380392, 1)
+theme_override_font_sizes/font_size = 24
+text = "MOCHILA   0/12"
+
+[node name="Lista" type="RichTextLabel" parent="Painel/Caixa"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = 76.0
+offset_right = -26.0
+offset_bottom = -110.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+bbcode_enabled = true
+scroll_active = false
+theme_override_colors/default_color = Color(0.850980, 0.831373, 0.792157, 1)
+theme_override_font_sizes/normal_font_size = 18
+
+[node name="Rodape" type="Label" parent="Painel/Caixa"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = -100.0
+offset_right = -26.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.615686, 0.6, 0.564706, 1)
+theme_override_font_sizes/font_size = 15
+text = "W/S escolher   ·   E largar no chão   ·   Tab fechar"

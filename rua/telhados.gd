@@ -7,9 +7,14 @@ extends Node2D
 ## dentro, nao ler de fora e escolher. Sem isso, o mapa inteiro se le da rua e
 ## vasculhar deixa de ser exploracao.
 ##
-## Precisa ser um no separado, e o ULTIMO irmao que desenha no mundo: o Godot
-## desenha na ordem da arvore, e o telhado tem que vir depois do cenario, dos
-## moveis e do jogador.
+## Precisa ser um no separado e desenhar depois do cenario, dos moveis e do
+## jogador: o Godot desenha na ordem da arvore.
+##
+## **Uma coisa so vem depois dele, a EntradaDeCasa** (15/09/2026). Desde que a
+## porta de casa passou para a fachada, ela e uma coisa que se opera de fora - e
+## um telhado por cima dela esconderia a barra de E e o aviso justamente de quem
+## esta chegando da rua. E a mesma excecao que a marca da porta abaixo ja fazia,
+## so que agora com a porta de verdade.
 ##
 ## A HUD vem depois dele no rua.tscn e nao atrapalha - ela e CanvasLayer, tem
 ## camada propria e nao entra nessa ordem.

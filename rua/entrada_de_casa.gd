@@ -6,8 +6,25 @@ extends Area2D
 ## do outro lado - so chama Travessia.entrar_em_casa(). Quem for fazer o modo
 ## Casa nao precisa tocar neste arquivo.
 ##
+## ## Ela fica na fachada, e nao la dentro (15/09/2026)
+##
+## Ate esta data a porta ficava num quarto do fundo - era a porta do porao, e
+## para chegar nela voce entrava em casa, atravessava a sala e o corredor. A
+## fantasia era boa e o ritmo era ruim: **chegar em casa e o alivio do ciclo**,
+## e a travessia de comodo so adiava o alivio. Com zumbi atras, adiava dentro
+## de casa, que e o pior lugar para descobrir que a porta ainda esta longe.
+##
+## Agora ela e o vao da fachada, pelo `Construcao.porta_de()` - a mesma porta
+## que todo predio do mapa tem, so que nesta se entra em vez de se vasculhar. O
+## porao continua onde estava na historia: ele e do modo Casa, e e o que voce
+## ve do outro lado.
+##
+## **Ela nao e solida.** Quando morava no meio de um quarto podia ser um bloco;
+## na fachada, um bloco solido tapa o unico vao da casa e tranca voce dentro
+## dela. O que estanca a entrada sem querer e a DURACAO, nao a colisao.
+##
 ## Segurar em vez de apertar e de proposito: e a chave na fechadura com zumbi
-## chegando, e de graca evita entrar em casa sem querer ao vasculhar por perto.
+## chegando, e de graca evita entrar em casa sem querer ao passar pela porta.
 ## Se atrapalhar, e so baixar a DURACAO.
 
 ## Segundos de E segurado para entrar. Bem menor que o de vasculhar uma porta
@@ -19,7 +36,8 @@ const DURACAO := 1.2
 ## zona ao mesmo tempo.
 const ALCANCE := 60.0
 
-## Na escala do vao de porta do bairro (Construcao.VAO).
+## Na escala do vao de porta do bairro (Construcao.VAO): ela preenche o vao
+## inteiro, e e por isso que a largura e exatamente a de la.
 const TAMANHO := Vector2(100.0, 40.0)
 
 # Tom quente, que e a cor do modo Casa na direcao de arte. Numa rua inteira
@@ -63,14 +81,12 @@ func _entrar() -> void:
 	# O unico jeito bom de acabar o dia, e o unico que passa por aqui.
 	Travessia.entrar_em_casa(Travessia.FimDoDia.PELA_PORTA)
 
+## So a zona de deteccao. Nao ha corpo solido: ver o cabecalho - porta solida
+## na fachada e casa trancada por fora, com voce dentro.
 func _montar_formas() -> void:
 	var deteccao := RectangleShape2D.new()
 	deteccao.size = TAMANHO + Vector2.ONE * ALCANCE * 2.0
 	($Deteccao as CollisionShape2D).shape = deteccao
-
-	var corpo := RectangleShape2D.new()
-	corpo.size = TAMANHO
-	($Corpo/Colisao as CollisionShape2D).shape = corpo
 
 func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):

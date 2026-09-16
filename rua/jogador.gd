@@ -18,7 +18,12 @@ extends CharacterBody2D
 const VELOCIDADE := 280.0
 const VELOCIDADE_CORRENDO := 460.0
 
-## Emitido ao levar dano. O Vasculhavel escuta para interromper o vasculho.
+## So para a guarda do `aberta`: com a tela da mochila na frente, WASD escolhe
+## linha em vez de andar.
+const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
+
+## Emitido ao levar dano. O Vasculhavel escuta para interromper o vasculho, e a
+## tela da mochila para se fechar - quem apanha para de arrumar a mochila.
 signal atingido(dano: float)
 
 const VIDA_CHEIA := 100.0
@@ -40,6 +45,11 @@ func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
 		"andar_esquerda", "andar_direita", "andar_cima", "andar_baixo"
 	)
+	# Com a mochila aberta ele para: as mesmas teclas de andar sao as que
+	# escolhem a linha na tela. **O mundo nao para junto** - o relogio corre e o
+	# zumbi anda, e e isso que faz escolher o que largar custar alguma coisa.
+	if TelaDaMochila.aberta:
+		direcao = Vector2.ZERO
 	var velocidade := VELOCIDADE_CORRENDO if Input.is_action_pressed("correr") else VELOCIDADE
 	velocity = direcao * velocidade + _empurrao
 	move_and_slide()

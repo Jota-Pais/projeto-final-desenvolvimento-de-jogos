@@ -15,7 +15,7 @@ const COR_DA_MATA := Color("9db28f")
 const COR_DO_TITULO := Color("e8b061")
 const COR_DA_ESCALA := Color("d8cbb6")
 
-## Onde fica a porta do porao, para medir a distancia de cada lugar. Sai do
+## Onde fica a porta de casa, para medir a distancia de cada lugar. Sai do
 ## mapa, e nao do node: a legenda nao depende da cena estar montada.
 var _de_casa := Vector2.ZERO
 
@@ -71,7 +71,7 @@ func _desenhar_titulo(fonte: Font) -> void:
 	draw_string(fonte, Vector2(22.0, 34.0), titulo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 22, COR_DO_TITULO)
 
-	var abaixo := "%.2f km x %.2f km  ·  greybox  ·  distâncias a pé desde a porta do porão" % [
+	var abaixo := "%.2f km x %.2f km  ·  greybox  ·  distâncias a pé desde a porta de casa" % [
 		Mapa.MUNDO.size.x / 40000.0, Mapa.MUNDO.size.y / 40000.0]
 	draw_string(fonte, Vector2(23.0, 58.0), abaixo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DA_SOMBRA)
