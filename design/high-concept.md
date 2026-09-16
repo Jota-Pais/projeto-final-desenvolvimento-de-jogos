@@ -10,6 +10,12 @@ Registro do que a equipe fechou em conversa, escrito em **03/09/2026**.
 Organizado nos 14 tópicos que o professor cobra. ⬜ é o que ainda não foi
 decidido; onde há sugestão minha, está dito que é sugestão.
 
+> **O `.pdf` e o `.html` desta pasta são a peça entregue em 09/09/2026, e ficam
+> como foram entregues.** Eles ainda dizem que os documentos da rua *revelam a
+> origem do apocalipse e trazem pistas sobre a cura* — isso **nunca foi decidido
+> pela equipe**, foi escrito por engano e saiu daqui em 15/09/2026. Onde os dois
+> discordarem, **vale este arquivo**, não o que foi entregue.
+
 ## Premissa
 
 Apocalipse zumbi. A namorada do protagonista foi mordida e se transformou. Em
@@ -27,8 +33,10 @@ O jogo se divide em **dois modos que se alternam a cada dia**.
 Top-down pixelado. Mundo e exploração de casas no espírito de *Project Zomboid*,
 mas com campo de visão e ritmo de horda mais próximos de *Vampire Survivors*. O
 jogador luta ou esquiva dos zumbis enquanto vasculha o cenário atrás de comida,
-água, suprimentos e **documentos** que revelam a origem do apocalipse e trazem
-pistas sobre a cura. É onde o jogador passa a maior parte do tempo.
+água, suprimentos e **documentos** — o item que a pesquisa da cura consome. ⬜ O
+que esses documentos são, o que contam e onde ficam **não foi decidido**: no
+protótipo são placeholders numerados. É onde o jogador passa a maior parte do
+tempo.
 
 ### Casa — a narrativa
 
@@ -47,11 +55,33 @@ arrisca lá fora, mais narrativa e mais progresso na cura ele libera.
 
 **Decidido em 03/09/2026.** A distância entre a rua e a casa é intencional —
 controle, arte e ritmo diferentes de propósito, quase como dois jogos dentro de
-um. A equipe se divide **metade em cada modo**, e é assim que o trabalho cabe no
-prazo: duas frentes em paralelo, não uma fila.
+um. A equipe se divide **por frente**, e é assim que o trabalho cabe no prazo:
+duas frentes em paralelo, não uma fila.
 
 Isso responde o tópico 8 (modos de jogabilidade) e é metade da resposta do
-tópico 12 (equipe e funções) — falta dizer quem fica em qual frente.
+tópico 12 (equipe e funções).
+
+## Equipe e funções
+
+**Fechado em 09/09/2026.** A intenção de 03/09 era metade em cada frente; o que
+as pessoas escolheram foi outra coisa, e a tabela registra o que é, não o que
+estava planejado.
+
+| Integrante | Frente | Função |
+|---|---|---|
+| João Carlos Pais | rua e casa | Programador · game designer |
+| Renan Floriano | rua | Artista · game designer · narrative designer |
+| João Otávio Benedet Zanette | rua | Game designer · narrative designer |
+| Lorraini Vieira Costa | casa | Artista — e o que mais a frente pedir, menos programar |
+
+Duas consequências, e as duas são conversa de mesa:
+
+- **Sound designer não tem dono.** É uma das cinco funções que o professor
+  lista, e ninguém reivindicou.
+- **A casa tem uma artista e nenhum programador.** Por isso a linha do João
+  Carlos diz *rua e casa*: enquanto ninguém mais programar, a costura entre os
+  dois modos e a lógica da casa saem da mesma mão que fez a rua. A frente da
+  casa começa em 23/09 pelo cronograma — é até lá que isso precisa de resposta.
 
 ## Progressão e finais
 
@@ -79,7 +109,7 @@ e o conceito de arte de cada fase na seção de estética.
 
 | # | Tópico | Situação |
 |---|---|---|
-| 1 | Título do jogo | **Você me amaria se eu fosse um zumbi?** — título de trabalho; o grupo foi consultado e pode propor outro. ⬜ falta a **tagline** |
+| 1 | Título do jogo | ✅ **Você me amaria se eu fosse um zumbi?** — mantido em 09/09/2026. Deixou de ser título de trabalho: ninguém propôs alternativa. **Tagline dispensada** — não é exigida por nenhum dos 14 tópicos |
 | 2 | Plataformas | PC (Windows) e navegador — *proposta, não discutida em grupo* |
 | 3 | Jogadores e interação | 1 jogador, offline — *proposta, não discutida em grupo* |
 | 4 | Gênero e subgêneros | Survival horror narrativo; ação top-down e aventura ponto e clique como subgêneros — *proposta* |
@@ -90,7 +120,7 @@ e o conceito de arte de cada fase na seção de estética.
 | 9 | Diferenciais e concorrentes | ✅ — diferenciais escritos e benchmarking levantado no SteamSpy em 03/09/2026 (*Darkwood*, *60 Seconds!*, *Vampire Survivors*, *Papers, Please* como concorrentes de porte; *Project Zomboid*, *This War of Mine* e *Inscryption* como referência). Tabelas no brief |
 | 10 | Público-alvo | ✅ — demografia, psicografia e a proto-persona (Rafael, 24) estão no brief |
 | 11 | Cronograma | Marcos conhecidos montados. ⬜ o encaixe exato depende do `prazosAtividades(turma)` |
-| 12 | Equipe e funções | Quatro pessoas, metade em cada modo. João Carlos Pais confirmado. ⬜ os outros três nomes com sobrenome e as funções |
+| 12 | Equipe e funções | ✅ — fechado em 09/09/2026. Quatro pessoas: **dois na rua** (Renan Floriano, João Otávio Benedet Zanette), **uma na casa** (Lorraini Vieira Costa) e a programação atravessando as duas (João Carlos Pais). Ver *Equipe e funções* |
 | 13 | Orçamento | **R$ 3.600** — 12 encontros (09/09 a 25/11) × 3h × R$ 100/hora. Simulado, pela fórmula literal do modelo |
 | 14 | Protótipo | A alfa é outra entrega. O **desenho de uma tela de gameplay** está descrito em detalhe no brief, para o agente de design executar |
 
@@ -125,14 +155,9 @@ secundários, controles e o público-alvo. Aprovar ou rasgar é decisão da equi
 
 O que ninguém além do grupo pode resolver:
 
-- **Os três nomes que faltam**, com sobrenome — o professor pede por causa de
-  nomes repetidos na turma. São também a questão 1 da tarefa no AVA.
-- **O título definitivo e a tagline.** *Você me amaria se eu fosse um zumbi?* é
-  título de trabalho, e o grupo foi convidado a propor alternativas e a escrever
-  a tagline — a linha curta de cartaz que fica embaixo do título.
-- **Quem fica na rua e quem fica na casa**, e as funções formais de cada um
-  (artista, programador, game designer, sound designer, narrative designer;
-  uma pessoa pode acumular).
+- **Quem assume sound designer**, e **quem programa a casa** — ver *Equipe e
+  funções*. São as duas que sobraram: título, tagline, nomes e funções fecharam
+  em 09/09/2026.
 
 ## Pontos de atenção
 

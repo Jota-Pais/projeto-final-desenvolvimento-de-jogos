@@ -8,6 +8,13 @@ está aqui — o texto final, o layout, a direção de arte e os critérios pelo
 quais ela vai ser avaliada. Quatro campos ainda não chegaram e estão marcados
 como ⬜; eles são enviados depois e não bloqueiam o resto.
 
+> **A peça já foi entregue em 09/09/2026, e o `.html` e o `.pdf` desta pasta são
+> aquela versão — não mexer neles.** Este brief mudou depois: em 15/09/2026
+> saíram daqui as frases que davam aos **documentos da rua** uma origem, um
+> conteúdo e um lugar certo no mapa. Nada disso foi decidido pela equipe; eram
+> invenção. A peça entregue ainda traz, e fica assim — quem for retomar o
+> assunto lê este arquivo.
+
 ---
 
 ## 1. O que você vai produzir
@@ -159,17 +166,25 @@ Todo o texto abaixo é final e pode ser diagramado como está, salvo os ⬜.
 
 # Você me amaria se eu fosse um zumbi?
 
-⬜ **Pode mudar** — o título definitivo chega depois. O que ele precisa manter,
-caso mude: ser uma pergunta, entregar o tom e antecipar a piada do final.
+**Mantido em 09/09/2026.** Deixou de ser título de trabalho: o grupo foi
+consultado, ninguém propôs alternativa, e ele fica. A nota *"título de trabalho"*
+saiu da peça — numa peça de pitch, hedge no título só enfraquece.
 
 Trate o título **como imagem, não como texto**. É o elemento que ocupa o maior
 espaço do mural e é o que vende a peça sozinho.
 
-### Tagline
+### Tagline — dispensada
 
-⬜ **Chega depois.** É a linha curta embaixo do título, no espírito de cartaz de
-cinema: dá o tom em uma frase, sem explicar o jogo. Entre 8 e 12 palavras.
-Reserve o espaço.
+**Decidido em 09/09/2026: a peça não leva tagline.** Ela nunca foi exigida — o
+tópico 1 do professor pede só *"Qual o título do jogo? É o nome do jogo"*, e
+tagline não aparece em nenhum dos 14 tópicos nem em nenhum dos cinco critérios
+de nota. Ela tinha entrado aqui por convenção de cartaz, copiada do exemplo do
+Sunny Fox.
+
+Na peça ela também era redundante: o **pitch de duas linhas** fica logo abaixo
+do título e já faz esse trabalho. E um bloco tracejado *"a definir"* numa peça
+entregue custa mais em *apresentação organizada* (peso 2) do que a tagline
+somaria. Se o grupo quiser uma depois, o espaço embaixo do título está livre.
 
 ### Pitch — texto de entrada, duas linhas
 
@@ -203,9 +218,8 @@ coisas separadamente.
 
 Top-down pixelado. Hordas e esquiva, com exploração no espírito de *Project
 Zomboid* e campo de visão e ritmo mais próximos de *Vampire Survivors*.
-Vasculhar casas atrás de comida, água, suprimentos e **documentos** — que
-revelam a origem do apocalipse e dão pistas da cura. É onde o jogador passa a
-maior parte do tempo.
+Vasculhar casas atrás de comida, água, suprimentos e **documentos** — o item que
+a pesquisa da cura consome. É onde o jogador passa a maior parte do tempo.
 
 **Controles:** `WASD` ou setas para andar · mouse para mirar e interagir ·
 `E` para vasculhar · `Shift` para correr.
@@ -229,7 +243,8 @@ fora.
 
 **Secundários:**
 
-- Descobrir a origem do apocalipse pelos documentos espalhados na rua
+- ⬜ *(a decidir)* — o que os documentos da rua contam ainda é conversa de
+  equipe; até lá não há objetivo secundário escrito em cima deles
 - Manter ela estável: quanto pior o estado dela, menos tempo sobra
 - Equipar a casa e o laboratório para acelerar as tentativas de cura
 - Sobreviver mais um dia com menos dano do que no anterior
@@ -331,17 +346,20 @@ try-hard:** não liga para ranking, dificuldade máxima nem platinar.
 
 ### Equipe e funções
 
+**Chegou em 09/09/2026.** Texto final, pode diagramar como está.
+
 | Integrante | Frente | Função |
 |---|---|---|
-| João Carlos Pais | ⬜ | ⬜ |
-| ⬜ | ⬜ | ⬜ |
-| ⬜ | ⬜ | ⬜ |
-| ⬜ | ⬜ | ⬜ |
+| João Carlos Pais | rua e casa | Programador · game designer |
+| Renan Floriano | rua | Artista · game designer · narrative designer |
+| João Otávio Benedet Zanette | rua | Game designer · narrative designer |
+| Lorraini Vieira Costa | casa | Artista — e o que mais a frente pedir, menos programar |
 
-⬜ **Três nomes e todas as funções chegam depois.** São quatro pessoas, metade
-em cada frente — dois na rua, dois na casa. As funções possíveis são artista,
-programador, game designer, sound designer e narrative designer; uma pessoa pode
-acumular mais de uma. Reserve o espaço para quatro linhas.
+Não é metade em cada frente, como o plano de 03/09 supunha: são **dois na rua,
+uma na casa e a programação atravessando as duas**. Onde a peça dizia *"a equipe
+se divide metade em cada frente"*, o texto passou a ser **"duas frentes que não
+se veem: cada modo tem sua própria equipe, sua arte e seu controle"** — que é o
+argumento que interessa ali e continua verdadeiro.
 
 ### Cronograma — linha do tempo horizontal
 
@@ -417,7 +435,7 @@ ilustração; anotado, vale mais.
 - **Uma casa com a porta destacada ou aberta**, sinalizando que dá para entrar e
   vasculhar
 - **Um documento no chão, com brilho**, visualmente distinto dos outros itens —
-  é o que destrava a história, precisa parecer especial
+  é o que a cura conta, precisa parecer especial
 - Dois ou três itens comuns espalhados (lata de comida, garrafa de água), para
   contrastar com o documento
 
@@ -453,14 +471,14 @@ peça deve transmitir isso antes de qualquer texto ser lido.
   podem aparecer; mutilação, crueldade e violência gratuita, não. Se a arte
   passar disso, a classificação na peça fica incoerente com o que está desenhado.
 
-## 11. Os quatro campos que chegam depois
+## 11. Os quatro campos que chegavam depois — todos fechados
 
-Reserve espaço para eles e siga com o resto:
+Fechados em 09/09/2026, antes do prazo. **Não há mais bloco reservado na peça.**
 
-1. **Título definitivo** — se mudar, mantém o espírito de pergunta
-2. **Tagline** — 8 a 12 palavras, embaixo do título
-3. **Três nomes completos** dos integrantes
-4. **Frente e função de cada um** dos quatro
+1. **Título** — [x] mantido. *Você me amaria se eu fosse um zumbi?*
+2. **Tagline** — [x] dispensada, não é exigida. Ver *Tagline* na seção 8
+3. **Três nomes completos** dos integrantes — [x] chegaram
+4. **Frente e função de cada um** dos quatro — [x] chegaram
 
 ## 12. O que não fazer
 
