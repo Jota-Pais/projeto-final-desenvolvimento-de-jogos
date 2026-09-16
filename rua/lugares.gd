@@ -25,7 +25,11 @@ const Construcao := preload("res://rua/construcao.gd")
 #
 # Sao coordenadas LOCAIS - o mapa soma a origem do lugar.
 
-const BAIRRO_TAMANHO := Vector2(5760.0, 3600.0)
+## O bairro cresceu para o sul em 16/09/2026, de 3.600 para 6.800 (90 m para
+## 170 m). Ele era uma fita de casas dos dois lados da rodovia, e o mapa inteiro
+## se passava nela; agora e um **loteamento**, com rede de ruas propria. O espaco
+## saiu do vazio que havia ao sul, que nao servia para nada.
+const BAIRRO_TAMANHO := Vector2(5760.0, 6800.0)
 
 # **Nem a porta de casa nem o nascimento do jogador tem constante aqui.** Os
 # dois ja tiveram: a porta era a BAIRRO_PORTA_DO_PORAO, escrita a mao dentro de
@@ -36,25 +40,103 @@ const BAIRRO_TAMANHO := Vector2(5760.0, 3600.0)
 # Agora os dois saem da propria construcao marcada como "sua": ver sua_casa()
 # abaixo, Mapa.onde_fica_a_porta_de_casa() e Mapa.onde_o_jogador_nasce().
 
-## A rua principal do bairro local. O mapa alinha ela com a rodovia: e o mesmo
-## asfalto, como Muldraugh esticada ao longo da US-31W.
-const BAIRRO_RUA_PRINCIPAL := Rect2(0.0, 1620.0, 5760.0, 400.0)
-const BAIRRO_RUA_TRANSVERSAL := Rect2(2700.0, 0.0, 400.0, 3600.0)
+## **A rede de ruas do bairro** (16/09/2026). Antes eram duas: a rodovia, que
+## corta o bairro em y 1620, e uma transversal que atravessava o lote inteiro e
+## **acabava no mato nas duas pontas**. Rua que morre em campo aberto nao existe
+## em cidade nenhuma, e era a queixa.
+##
+## A regra que organiza estas seis: **toda rua termina em outra rua, no retorno,
+## ou na borda do mapa.** Nenhuma para no meio da grama.
+##
+##     ════════════ rodovia ═══════════════   (atravessa o bairro)
+##       ║                ║              ║
+##     oeste            meio           leste
+##       ║                ║              ║
+##       ╚════════ rua do fundo ═════════╝
+##                        ║
+##                    saida sul
+##                        ║
+##                    ( retorno )
+##
+## As tres verticais saem da rodovia e morrem na rua do fundo: e um **quarteirao
+## fechado**, o desenho de loteamento que o PZ usa em Rosewood. A saida sul e a
+## unica que nao fecha, e por isso ela termina num **retorno** - o bulbo onde o
+## carro da a volta. E assim que cul-de-sac se resolve no mundo real, e e o
+## contrario de parar no mato: o retorno **e** o fim da rua, declarado.
+const BAIRRO_RUA_OESTE := Rect2(760.0, 2020.0, 400.0, 2380.0)
+const BAIRRO_RUA_MEIO := Rect2(2680.0, 2020.0, 400.0, 1980.0)
+const BAIRRO_RUA_LESTE := Rect2(4600.0, 2020.0, 400.0, 2380.0)
+const BAIRRO_RUA_DO_FUNDO := Rect2(760.0, 4000.0, 4640.0, 400.0)
+const BAIRRO_SAIDA_SUL := Rect2(2680.0, 4400.0, 400.0, 700.0)
+## O bulbo do retorno: mais largo que a rua, que e o que permite dar a volta.
+const BAIRRO_RETORNO := Rect2(2180.0, 5100.0, 1400.0, 800.0)
 
+const BAIRRO_RUAS := [
+	BAIRRO_RUA_OESTE, BAIRRO_RUA_MEIO, BAIRRO_RUA_LESTE,
+	BAIRRO_RUA_DO_FUNDO, BAIRRO_SAIDA_SUL, BAIRRO_RETORNO,
+]
+
+## As construcoes do bairro, **uma fileira por rua**.
+##
+## Duas coisas mudaram em 16/09/2026, e sao as duas queixas de olhar o mapa:
+##
+##  - **nenhuma casa tem a planta da vizinha.** Eram treze predios de 650 x 520,
+##    um atras do outro. Agora cada lote tem a sua medida, e a **fachada nao fica
+##    na regua**: dentro da mesma fileira o recuo da rua varia de 60 em 60, que
+##    e o que faz o olho ver casas e nao um pente;
+##  - **elas nao olham todas para a mesma rua.** Antes o bairro era uma fita: seis
+##    casas de um lado da rodovia e quatro do outro, e acabou. Agora sao quatro
+##    fileiras, cada uma virada para uma via diferente da rede, mais tres em
+##    volta do retorno.
+##
+## As bandas de x existem porque as tres verticais cortam o lote: 760-1160,
+## 2680-3080 e 4600-5000 sao rua, e predio nenhum entra nelas.
 const BAIRRO_CONSTRUCOES := [
-	{ "rect": Rect2(240.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa", "sua": true },
-	{ "rect": Rect2(1000.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa" },
-	{ "rect": Rect2(1760.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa", "documento": true },
-	{ "rect": Rect2(3340.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa" },
-	{ "rect": Rect2(4100.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa" },
-	{ "rect": Rect2(4860.0, 820.0, 650.0, 520.0), "porta": "sul", "tipo": "casa" },
-	{ "rect": Rect2(240.0, 2300.0, 940.0, 540.0), "porta": "norte", "tipo": "comercio", "documento": true },
-	{ "rect": Rect2(1300.0, 2300.0, 650.0, 520.0), "porta": "norte", "tipo": "casa" },
-	{ "rect": Rect2(3340.0, 2300.0, 650.0, 520.0), "porta": "norte", "tipo": "casa" },
-	{ "rect": Rect2(4360.0, 2300.0, 650.0, 520.0), "porta": "norte", "tipo": "casa" },
-	{ "rect": Rect2(420.0, 480.0, 280.0, 240.0), "porta": "sul", "tipo": "galpao" },
-	{ "rect": Rect2(4200.0, 480.0, 280.0, 240.0), "porta": "sul", "tipo": "galpao" },
-	{ "rect": Rect2(1400.0, 2960.0, 280.0, 240.0), "porta": "norte", "tipo": "galpao" },
+	# Fileira A - norte da rodovia, fachada virada para ela (porta ao sul).
+	{ "rect": Rect2(240.0, 880.0, 650.0, 520.0), "porta": "sul", "tipo": "casa", "sua": true },
+	{ "rect": Rect2(1020.0, 880.0, 560.0, 460.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(1700.0, 920.0, 640.0, 500.0), "porta": "sul", "tipo": "casa", "documento": true },
+	{ "rect": Rect2(2460.0, 920.0, 520.0, 440.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(3200.0, 880.0, 660.0, 520.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(3960.0, 850.0, 580.0, 480.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(4720.0, 910.0, 620.0, 500.0), "porta": "sul", "tipo": "casa" },
+
+	# Fileira B - sul da rodovia, de costas para a fileira A. O comercio fica
+	# aqui, virado para a via de maior movimento, como no PZ.
+	{ "rect": Rect2(140.0, 2260.0, 560.0, 460.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(1220.0, 2240.0, 900.0, 540.0), "porta": "norte", "tipo": "comercio", "documento": true },
+	{ "rect": Rect2(2180.0, 2300.0, 460.0, 440.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(3160.0, 2260.0, 620.0, 500.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(3860.0, 2320.0, 560.0, 460.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(5060.0, 2260.0, 560.0, 480.0), "porta": "norte", "tipo": "casa" },
+
+	# Fileira C - norte da rua do fundo, de costas para a fileira B: os quintais
+	# se encontram no meio da quadra, que e o desenho de quarteirao.
+	{ "rect": Rect2(140.0, 3340.0, 540.0, 460.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(1240.0, 3260.0, 600.0, 500.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(1960.0, 3340.0, 560.0, 480.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(3160.0, 3280.0, 580.0, 500.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(3860.0, 3340.0, 540.0, 460.0), "porta": "sul", "tipo": "casa" },
+	{ "rect": Rect2(5060.0, 3290.0, 580.0, 480.0), "porta": "sul", "tipo": "casa" },
+
+	# Fileira D - sul da rua do fundo. Aqui nao ha mais vertical cortando, so a
+	# saida sul.
+	{ "rect": Rect2(200.0, 4620.0, 600.0, 480.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(940.0, 4660.0, 520.0, 460.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(1620.0, 4600.0, 580.0, 500.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(3160.0, 4620.0, 620.0, 480.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(3880.0, 4600.0, 540.0, 460.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(4700.0, 4650.0, 600.0, 500.0), "porta": "norte", "tipo": "casa" },
+
+	# Em volta do retorno: as tres casas do fim da rua, viradas para o bulbo.
+	{ "rect": Rect2(1900.0, 6040.0, 560.0, 480.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(2620.0, 6080.0, 600.0, 500.0), "porta": "norte", "tipo": "casa" },
+	{ "rect": Rect2(3340.0, 6040.0, 520.0, 460.0), "porta": "norte", "tipo": "casa" },
+
+	# Galpao de quintal, no fundo do lote - nao na rua.
+	{ "rect": Rect2(500.0, 2900.0, 280.0, 240.0), "porta": "sul", "tipo": "galpao" },
+	{ "rect": Rect2(4200.0, 2900.0, 280.0, 240.0), "porta": "sul", "tipo": "galpao" },
+	{ "rect": Rect2(1400.0, 5300.0, 280.0, 240.0), "porta": "norte", "tipo": "galpao" },
 ]
 
 ## A sua casa: a unica construcao do bairro marcada com "sua". E a unica que
@@ -65,55 +147,63 @@ static func sua_casa() -> Dictionary:
 			return construcao
 	return {}
 
+## Cerca de fundo de lote. **Sao trechos soltos, e de proposito**: cerca que
+## atravessa a quadra inteira sela o quintal, e foi assim que a primeira rodada
+## do conferir_mapa achou 38 moveis inalcancaveis. Trecho solto le como divisa e
+## nao fecha caminho nenhum.
 const BAIRRO_CERCAS := [
-	Rect2(200.0, 370.0, 720.0, 18.0),
-	Rect2(1010.0, 370.0, 670.0, 18.0),
-	Rect2(1790.0, 370.0, 620.0, 18.0),
-	Rect2(3350.0, 370.0, 610.0, 18.0),
-	Rect2(4130.0, 370.0, 590.0, 18.0),
-	Rect2(4890.0, 370.0, 590.0, 18.0),
-	Rect2(200.0, 3270.0, 970.0, 18.0),
-	Rect2(1290.0, 3270.0, 680.0, 18.0),
-	Rect2(3350.0, 3270.0, 620.0, 18.0),
-	Rect2(4350.0, 3270.0, 680.0, 18.0),
-	Rect2(958.0, 388.0, 14.0, 220.0),
-	Rect2(1718.0, 388.0, 14.0, 220.0),
-	Rect2(4048.0, 388.0, 14.0, 220.0),
-	Rect2(1240.0, 3050.0, 14.0, 220.0),
+	Rect2(240.0, 640.0, 620.0, 18.0),
+	Rect2(1700.0, 660.0, 620.0, 18.0),
+	Rect2(3960.0, 640.0, 580.0, 18.0),
+	Rect2(1240.0, 3060.0, 600.0, 18.0),
+	Rect2(3160.0, 3060.0, 600.0, 18.0),
+	Rect2(940.0, 5280.0, 520.0, 18.0),
+	Rect2(3880.0, 5260.0, 540.0, 18.0),
 ]
 
+## Carro abandonado e lata de lixo, **na rua onde ha rua**. Com a rede nova eles
+## se espalham pelo loteamento em vez de ficarem todos na rodovia.
 const BAIRRO_MOVEIS_DE_RUA := [
-	{ "tipo": "carro", "pos": Vector2(1200.0, 1720.0) },
-	{ "tipo": "carro", "pos": Vector2(3600.0, 1920.0) },
-	{ "tipo": "carro", "pos": Vector2(2900.0, 3100.0) },
-	{ "tipo": "carro", "pos": Vector2(620.0, 1900.0) },
-	{ "tipo": "lata", "pos": Vector2(1560.0, 1560.0) },
-	{ "tipo": "lata", "pos": Vector2(3900.0, 1560.0) },
-	{ "tipo": "lata", "pos": Vector2(2300.0, 2080.0) },
+	{ "tipo": "carro", "pos": Vector2(1620.0, 1760.0) },
+	{ "tipo": "carro", "pos": Vector2(3600.0, 1900.0) },
+	{ "tipo": "carro", "pos": Vector2(2880.0, 3400.0) },
+	{ "tipo": "carro", "pos": Vector2(960.0, 3100.0) },
+	{ "tipo": "carro", "pos": Vector2(2880.0, 5480.0) },
+	{ "tipo": "carro", "pos": Vector2(4800.0, 3200.0) },
+	{ "tipo": "lata", "pos": Vector2(2340.0, 4200.0) },
+	{ "tipo": "lata", "pos": Vector2(3980.0, 4200.0) },
+	{ "tipo": "lata", "pos": Vector2(1400.0, 4200.0) },
+	{ "tipo": "lata", "pos": Vector2(2420.0, 5700.0) },
 	{ "tipo": "lata", "pos": Vector2(4600.0, 2080.0) },
 ]
 
 const BAIRRO_ZUMBIS := [
-	Vector2(900.0, 1820.0),
-	Vector2(1700.0, 1780.0),
+	Vector2(1900.0, 1820.0),
 	Vector2(2350.0, 1900.0),
 	Vector2(3300.0, 1820.0),
 	Vector2(4200.0, 1880.0),
 	Vector2(5100.0, 1800.0),
-	Vector2(2900.0, 700.0),
-	Vector2(2900.0, 2600.0),
-	Vector2(1300.0, 620.0),
-	Vector2(4600.0, 640.0),
-	Vector2(600.0, 3000.0),
-	Vector2(2085.0, 1222.0),
-	Vector2(710.0, 2450.0),
+	Vector2(960.0, 2600.0),
+	Vector2(960.0, 3600.0),
+	Vector2(2880.0, 2600.0),
+	Vector2(2880.0, 3600.0),
+	Vector2(4800.0, 3000.0),
+	Vector2(1700.0, 4200.0),
+	Vector2(3600.0, 4200.0),
+	Vector2(2880.0, 4700.0),
+	Vector2(3200.0, 5600.0),
+	Vector2(2400.0, 5500.0),
 ]
 
 ## Bosque nas bordas do lote, longe de beco, porta e vao de cerca: arvore e
 ## solida, e arvore solida em area de circulacao fecha caminho sem avisar.
+##
+## Com o bairro crescendo para o sul, os dois cantos de baixo sobraram sem nada -
+## e canto de loteamento com mato e o que o PZ tem ali.
 const BAIRRO_BOSQUES := [
 	Rect2(0.0, 0.0, 5760.0, 300.0),
-	Rect2(0.0, 3350.0, 5760.0, 250.0),
+	Rect2(0.0, 5300.0, 700.0, 1300.0),
+	Rect2(4500.0, 5300.0, 1260.0, 1300.0),
 ]
 
 # ------------------------------------------------------------------ montagem
@@ -190,6 +280,23 @@ const CIDADE_ESPECIAIS := {
 	"18400,0,1,0": "mercado",
 }
 
+## Largura do beco de servico, em 5 m - metade de uma rua.
+const CIDADE_BECO := 200.0
+
+## Quais quadras tem beco, na chave `x da quadra, linha`.
+##
+## **Nem toda quadra do PZ e um bloco macico.** Algumas tem servidao no meio,
+## por onde se chega no fundo das lojas e onde ficam as lixeiras - e e o que
+## quebra a leitura de planilha que quatro quadras iguais dao.
+##
+## Ele corre **no vazio que os quintais ja deixavam**, entre as duas fileiras, e
+## termina nas duas ruas verticais que ladeiam a quadra. Nao inventa espaco e
+## nao morre no meio do quarteirao.
+##
+## Sao tres e nao as oito de proposito: beco em toda quadra e a mesma planilha,
+## so que com mais linha.
+const CIDADE_BECOS := ["11600,1", "18400,0", "21000,1"]
+
 static func _somar(construcao: Dictionary, origem: Vector2) -> Dictionary:
 	var copia := construcao.duplicate()
 	copia["rect"] = (construcao["rect"] as Rect2).grow(0.0)
@@ -217,9 +324,9 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 	for onde in BAIRRO_ZUMBIS:
 		pecas["zumbis"].append(onde + origem)
 
-	# A rua principal do bairro E a rodovia; so a transversal e rua de bairro.
-	pecas["ruas"].append(Rect2(BAIRRO_RUA_TRANSVERSAL.position + origem,
-		BAIRRO_RUA_TRANSVERSAL.size))
+	# A rua principal do bairro E a rodovia; o resto da rede e do loteamento.
+	for rua in BAIRRO_RUAS:
+		pecas["ruas"].append(Rect2((rua as Rect2).position + origem, (rua as Rect2).size))
 
 # --- a cidade ---------------------------------------------------------------
 
@@ -280,11 +387,24 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 				"comercio" if fileira == fileira_da_rodovia else "casa")
 			var tamanho: Vector2 = Construcao.TAMANHOS[tipo]
 
+			# **Cada lote tem a sua planta e o seu recuo.** O lote continua do
+			# mesmo tamanho - e assim no mundo real -, e quem varia e a casa em
+			# cima dele e o quanto ela recua da rua. Sem isso a quadra inteira
+			# sai com a mesma casa na mesma linha, que era a queixa.
+			var lote := int(esquerda) + linha * 31 + fileira * 101 + vaga * 617
+			var recuo := CIDADE_RECUO
+			if tipo == "casa":
+				tamanho = Construcao.planta_de_casa(lote)
+				recuo += Construcao.recuo_de_casa(lote)
+
 			var margem := (largura - float(vagas - 1) * CIDADE_PASSO - casa.x) * 0.5
-			var px := canto.x + margem + float(vaga) * CIDADE_PASSO
-			var py := canto.y + CIDADE_RECUO
+			# Centrada na vaga, e nao encostada na esquerda dela: casa estreita
+			# encostada na esquerda so troca uma linha reta por outra.
+			var px := canto.x + margem + float(vaga) * CIDADE_PASSO \
+				+ (casa.x - tamanho.x) * 0.5
+			var py := canto.y + recuo
 			if fileira == 1:
-				py = canto.y + CIDADE_QUADRA.y - CIDADE_RECUO - tamanho.y
+				py = canto.y + CIDADE_QUADRA.y - recuo - tamanho.y
 
 			var predio := {
 				"rect": Rect2(px, py, tamanho.x, tamanho.y),
@@ -311,6 +431,17 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 				var tamanho: Vector2 = Construcao.TAMANHOS[CIDADE_ESPECIAIS[chave]]
 				mais_largo = maxi(mais_largo, int(ceil(tamanho.x / CIDADE_PASSO)))
 		vaga += mais_largo
+
+	if CIDADE_BECOS.has("%d,%d" % [int(esquerda), linha]):
+		var meio := canto.y + CIDADE_QUADRA.y * 0.5
+		pecas["ruas"].append(Rect2(esquerda, meio - CIDADE_BECO * 0.5, largura, CIDADE_BECO))
+		# Lixeira no beco, que e onde ela fica: nos fundos, e nao na fachada.
+		pecas["moveis_de_rua"].append({
+			"tipo": "lata", "pos": Vector2(esquerda + largura * 0.3, meio),
+		})
+		pecas["moveis_de_rua"].append({
+			"tipo": "lata", "pos": Vector2(esquerda + largura * 0.7, meio),
+		})
 
 	pecas["zumbis"].append(canto + Vector2(largura, CIDADE_QUADRA.y) * 0.5)
 

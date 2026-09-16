@@ -114,7 +114,10 @@ const ESTRADAS_DE_TERRA := [
 ## conferir_mapa acusa.
 const LUGARES := [
 	{ "nome": "mata do oeste", "tipo": "floresta", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0) },
-	{ "nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 8580.0, 5760.0, 3600.0) },
+	# Cresceu para o sul em 16/09/2026, quando virou loteamento com rede de ruas
+	# propria. O tamanho e o do Lugares.BAIRRO_TAMANHO, e os dois tem que bater:
+	# o gerador desenha em coordenada local e este retangulo e a moldura.
+	{ "nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 8580.0, 5760.0, 6800.0) },
 	{ "nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 7400.0, 13200.0, 6000.0) },
 	{ "nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10600.0, 2200.0, 1500.0) },
 	{ "nome": "lavoura", "tipo": "lavoura", "rect": Rect2(13000.0, 14380.0, 9000.0, 4600.0) },

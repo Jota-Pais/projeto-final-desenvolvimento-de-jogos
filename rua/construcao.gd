@@ -73,6 +73,53 @@ const TAMANHOS := {
 	"garagem": Vector2(460.0, 380.0),
 }
 
+## **Casa nao e um tamanho so** (16/09/2026). Ate aqui toda casa do mapa media
+## 520 x 420, e fileira de casa identica le como conjunto habitacional - no
+## Project Zomboid duas vizinhas quase nunca tem a mesma planta.
+##
+## Sao **plantas**, e nao sorteio livre: cada uma e uma casa plausivel de
+## suburbio - a rasa e larga, a estreita e funda, a pequena de esquina.
+##
+## Duas regras que as amarram:
+##
+##  - **nenhuma passa de 520 de frente**, que e a vaga de lote da cidade. Lote
+##    tem largura igual no mundo real; o que varia e a casa em cima dele, e
+##    respeitar isso e o que deixa a geometria da quadra valida;
+##  - **nenhuma e menor que o galpao** (420 x 340), que e o menor predio que
+##    ainda cabe movel alcancavel dentro. Menor que isso o conferir_mapa acusa.
+const PLANTAS_DE_CASA := [
+	Vector2(520.0, 420.0),
+	Vector2(480.0, 460.0),
+	Vector2(520.0, 380.0),
+	Vector2(460.0, 430.0),
+	Vector2(500.0, 500.0),
+	Vector2(440.0, 400.0),
+	Vector2(520.0, 460.0),
+]
+
+## Quanto a fachada pode recuar a mais da rua, em cima do recuo do lote.
+##
+## **Fachada alinhada na regua e o que faz uma quadra parecer desenhada e nao
+## construida.** Casa de verdade nao nasce toda na mesma linha: uma tem garagem
+## na frente, outra tem jardim maior. Tres degraus de 60 (1,5 m) ja quebram a
+## linha sem baguncar o lote.
+const RECUOS_DE_CASA := [0.0, 60.0, 120.0]
+
+## A planta e o recuo de um lote, sempre os mesmos para o mesmo lote.
+##
+## **Embaralha antes do resto.** `indice % n` puro devolve as plantas em ciclo
+## (1,2,3,1,2,3) e a fileira volta a parecer conjunto habitacional, so que com
+## sete modelos em vez de um. O embaralho e uma multiplicacao por numero primo
+## grande - barato, deterministico, e sem estado nenhum para carregar.
+static func _embaralhar(indice: int) -> int:
+	return absi(indice * 2654435761) % 1000003
+
+static func planta_de_casa(indice: int) -> Vector2:
+	return PLANTAS_DE_CASA[_embaralhar(indice) % PLANTAS_DE_CASA.size()]
+
+static func recuo_de_casa(indice: int) -> float:
+	return RECUOS_DE_CASA[_embaralhar(indice + 7919) % RECUOS_DE_CASA.size()]
+
 ## Quantos quartos cada tipo de construcao tem. Tres quartos ganham divisoria
 ## interna; um quarto e salao unico.
 const QUARTOS_POR_TIPO := {
