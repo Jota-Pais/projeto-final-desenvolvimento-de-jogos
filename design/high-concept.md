@@ -139,7 +139,11 @@ foi entregue. Vieram para cá para o High Concept ficar de pé sozinho.
   equipe; até lá não há objetivo secundário escrito em cima deles
 - Manter ela estável: quanto pior o estado dela, menos tempo sobra
 - Equipar a casa e o laboratório para acelerar as tentativas de cura
-- Sobreviver mais um dia com menos dano do que no anterior
+- ⬜ *(caiu)* — havia aqui **"sobreviver mais um dia com menos dano do que no
+  anterior"**, e ele não existe mais: a vida do jogador saiu do jogo em
+  16/09/2026, junto com a fome e a água. Enquanto a camada de sobrevivência não
+  voltar, não há dano para comparar. A peça entregue em 09/09 ainda traz a
+  linha, e fica como foi entregue
 
 ### 8 · Controles
 
@@ -231,11 +235,24 @@ O professor exige **uma mecânica principal só**, usada de várias maneiras pel
 obstáculos e inimigos. A resposta da equipe, em 03/09/2026, é **vasculhar sob
 pressão**: é o que o jogador faz o tempo todo na rua, é o que destrava a
 história dentro de casa, e o zumbi existe justamente para atrapalhar isso.
-Combate, fome, tempo e escuridão são variações de pressão em cima da mesma ação.
+Tempo, escuridão, combate e espaço na mochila são variações de pressão em cima
+da mesma ação.
 
 O nome é **nominal**: serve para responder o que o professor cobra e para dar um
 eixo ao documento. O jogo continua sendo exatamente o que está descrito aqui —
 nada foi cortado nem redesenhado para caber na frase.
+
+⬜ **A lista de pressões mudou em 16/09/2026.** Em 03/09 ela era *"combate,
+fome, tempo e escuridão"*, e é assim que a peça entregue em 09/09 ainda diz. A
+**fome saiu** junto com a vida e a água — a camada de sobrevivência ficou para
+depois de as regras da rua e da casa fecharem — e o **espaço da mochila** entrou
+no lugar, que é uma pressão que o protótipo aplica de verdade: 12 vagas, e o que
+não cabe fica para trás.
+
+As quatro que o jogo aplica hoje são o **zumbi** (que interrompe o vasculho e
+cobra o tempo que faltava), o **relógio do dia**, o **prazo da cura** e as
+**vagas da mochila**. A peça fica como foi entregue; onde os dois discordarem,
+vale este arquivo.
 
 ### A "fase" é o dia
 
