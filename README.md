@@ -31,14 +31,15 @@ sendo editada no Godot.
 | botão esquerdo | atirar |
 | `Tab` | abrir a mochila |
 
-O dia tem 420 s de luz (07:00 às 19:00) e **vasculhar gasta luz em dobro**. Volte
-à porta do porão antes de anoitecer: só entra em casa o que passou por ela. A
-cura precisa de 4 documentos e o prazo é de 30 dias.
+O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de luz
+(07:00 às 19:00) e **vasculhar gasta luz em dobro**. Volte à porta de casa antes
+de anoitecer e segure `E` nela: só entra em casa o que passou por ali. A cura
+precisa de 4 documentos e o prazo é de 30 dias.
 
 ## O que existe hoje
 
 - **A rua** é jogável de ponta a ponta: mapa de 1 km × 550 m, vasculhar, zumbi,
-  relógio, mochila, pistola, e o dia fechando pela porta do porão.
+  relógio, mochila, pistola, e o dia fechando pela porta de casa.
 - **A casa** (`casa/casa.tscn`) é um **lugar reservado** — uma tela de texto que
   fecha o ciclo enquanto a outra frente da equipe não começa. Quem for fazer essa
   frente troca a cena e não precisa tocar em nada da rua.
@@ -52,7 +53,11 @@ cura precisa de 4 documentos e o prazo é de 30 dias.
   em cima da mesma ação: o zumbi cobra vida, o relógio cobra luz, o prazo cobra
   dia e as 12 vagas da mochila cobram escolha.
 - **O mundo esvazia e não repõe.** Móvel vasculhado ontem nasce vazio hoje.
-- **Só entra em casa o que passou pela porta do porão.** Amanhecer na rua ou
+- **A porta da fachada é a única entrada da sua casa.** Ela é sólida e fecha o
+  vão inteiro: não se atravessa a pé. O único jeito de entrar é segurar `E`
+  nela — e o que se entra é a cena da casa, não o interior do prédio. É por isso
+  que o jogador nasce na calçada, e é a única construção do mapa assim.
+- **Só entra em casa o que passou por essa porta.** Amanhecer na rua ou
   ficar sem vida deixa a mochila na calçada e custa o dia.
 - **Morrer custa o dia, não a partida.**
 - **A arma não é loot, é equipamento**: não ocupa vaga e não se perde. Está na
@@ -82,7 +87,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/pistola.gd` | a arma, a munição e o tiro chamando a horda |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
-| `rua/entrada_de_casa.gd` | a porta do porão: segure `E` e o dia encerra |
+| `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
 | `casa/casa.gd` | o lugar reservado do modo Casa |
 | `fim_de_jogo.gd` | as duas telas de fim de partida |
 
@@ -97,7 +102,7 @@ jogando dois minutos.
 
 | cena | confere |
 |---|---|
-| `rua/conferir_mapa.tscn` | dá para chegar a pé em todo lugar, todo quarto e todo móvel; a ponte é o único atravessadouro; um documento por lugar |
+| `rua/conferir_mapa.tscn` | dá para chegar a pé em todo lugar, todo quarto e todo móvel; a sua casa é a exceção e tem que estar selada; a ponte é o único atravessadouro; um documento por lugar |
 | `rua/conferir_zumbi.tscn` | visão, parede cortando a visão, chamado de horda e toque |
 | `rua/conferir_relogio.tscn` | a luz do dia, o vasculho gastando em dobro, a noite e o aviso |
 | `rua/conferir_mochila.tscn` | as vagas, o que atravessa o fim do dia, o mundo não repondo, o loot total e a HUD |

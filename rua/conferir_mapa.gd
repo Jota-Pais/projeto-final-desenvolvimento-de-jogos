@@ -218,6 +218,10 @@ func _dentro_de_cada_lugar() -> void:
 			if not (lugar["rect"] as Rect2).intersects(construcao["rect"]):
 				continue
 			var quartos := Construcao.quartos_de(construcao)
+			# **A sua casa e a excecao, e ela e conferida ao contrario.**
+			if construcao.get("sua", false):
+				quartos_ruins += _a_sua_casa_esta_selada(alcancavel, quartos)
+				continue
 			for j in quartos.size():
 				if not _tem_celula_em(alcancavel, quartos[j], PASSO_FINO):
 					_erro("%s: quarto %d da %s sem passagem" % [
@@ -227,6 +231,26 @@ func _dentro_de_cada_lugar() -> void:
 		if ruins == 0 and quartos_ruins == 0:
 			print("  %-16s %2d moveis e todos os quartos, tudo alcancavel"
 				% [lugar["nome"], quantos])
+
+## Em todo predio do mapa, quarto sem passagem e bug. **Na sua casa e o
+## desenho** (16/09/2026): o unico jeito de entrar nela e segurar E na porta, e
+## isso troca para a cena da casa em vez de te por dentro do predio.
+##
+## Entao aqui a conferencia inverte: se der para chegar a pe em algum quarto
+## dela, a porta parou de ser a unica entrada - e ninguem descobre isso lendo o
+## codigo, porque basta a colisao da porta sumir para o vao virar corredor.
+## Ja aconteceu uma vez, em 15/09, e foi assim que este teste nasceu.
+func _a_sua_casa_esta_selada(alcancavel: Dictionary, quartos: Array[Rect2]) -> int:
+	var abertos := 0
+	for j in quartos.size():
+		if _tem_celula_em(alcancavel, quartos[j], PASSO_FINO):
+			abertos += 1
+	if abertos > 0:
+		_erro("da para entrar na sua casa a pe: %d dos %d quartos se alcancam"
+			% [abertos, quartos.size()] + " pela rua, e a porta devia ser a unica entrada")
+	else:
+		print("  %-16s a sua casa esta selada: so se entra pela porta" % "bairro")
+	return abertos
 
 ## Cada movel gerado, agrupado pelo lugar em que caiu.
 func _moveis_por_lugar() -> Dictionary:

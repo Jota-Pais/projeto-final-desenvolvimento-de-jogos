@@ -27,6 +27,9 @@ const Construcao := preload("res://rua/construcao.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
 const Navegacao := preload("res://rua/navegacao.gd")
+## So para ler o TAMANHO dela na hora de registrar o obstaculo: a porta e irma
+## do cenario na cena, e nao nasce aqui dentro como os outros corpos solidos.
+const EntradaDeCasa := preload("res://rua/entrada_de_casa.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
@@ -221,9 +224,17 @@ func _por_no_lugar() -> void:
 	var jogador := get_tree().get_first_node_in_group("jogador") as Node2D
 	if jogador != null:
 		jogador.global_position = Mapa.onde_o_jogador_nasce()
-	var porta := get_parent().get_node_or_null("EntradaDeCasa") as Node2D
-	if porta != null:
-		porta.global_position = Mapa.onde_fica_a_porta_de_casa()
+
+	var porta := get_parent().get_node_or_null("EntradaDeCasa") as EntradaDeCasa
+	if porta == null:
+		return
+	porta.global_position = Mapa.onde_fica_a_porta_de_casa()
+	# A porta e solida e nao nasce aqui dentro, entao nao passa pelo
+	# _criar_corpo() - mas o zumbi tem que desviar dela igual, senao a
+	# navegacao acha que o vao da sua casa e passagem e manda a horda se
+	# amontoar na sua soleira.
+	_obstaculos.append(Rect2(
+		porta.global_position - porta.TAMANHO / 2.0, porta.TAMANHO))
 
 # ------------------------------------------------------------------- desenho
 

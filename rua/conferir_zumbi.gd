@@ -165,15 +165,18 @@ func _navegacao() -> void:
 	# De uma ponta a outra do bairro. Eram coordenadas do bairro pequeno ate
 	# 09/09/2026, e com o mapa novo elas cairam na mata do oeste - fora da
 	# janela, e o teste passou a medir nada. Agora saem do proprio bairro.
-	var porao := (_bairro.get_node("EntradaDeCasa") as Node2D).position
+	# O alvo e a **soleira**, e nao a porta: desde 16/09/2026 a porta e um corpo
+	# solido, e o zumbi que persegue voce ate em casa para na calcada. Pedir
+	# caminho para dentro do obstaculo seria pedir o que nao existe.
+	var soleira := Mapa.onde_o_jogador_nasce()
 	var bairro := Mapa.lugar("bairro")["rect"] as Rect2
 	var canto := bairro.end - Vector2(400.0, 400.0)
 	_nav.remontar_em(bairro.get_center())
-	var longe: PackedVector2Array = _nav.caminho(canto, porao)
+	var longe: PackedVector2Array = _nav.caminho(canto, soleira)
 	if longe.is_empty():
-		_erro("sem caminho do canto sudeste do bairro ate o porao")
+		_erro("sem caminho do canto sudeste do bairro ate a porta de casa")
 	else:
-		print("  canto do bairro -> porao  %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
+		print("  canto do bairro -> casa   %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
 	# Devolve a janela para onde o jogador esta, senao as fases seguintes medem
 	# perseguicao com a grade montada no lugar errado.
 	_nav.remontar_em(_jogador.global_position)

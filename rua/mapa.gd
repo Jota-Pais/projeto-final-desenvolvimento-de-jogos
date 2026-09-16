@@ -257,12 +257,29 @@ static func onde_o_bairro_comeca() -> Vector2:
 			return (lugar["rect"] as Rect2).position
 	return Vector2.ZERO
 
-## Onde o jogador nasce, dentro da sua casa. **O cenario posiciona ele por aqui**
-## em vez de a posicao estar escrita no rua.tscn: quando o bairro mudou de lugar
-## no mapa, a posicao escrita a mao deixou o jogador nascendo no meio do campo, a
-## 89 m da propria casa - e isso nao da erro nenhum, so aparece no lugar errado.
+## Quanto o jogador nasce afastado da porta, para fora.
+##
+## Tem que ser maior que a meia altura da zona de deteccao da porta (80 px),
+## senao o dia comecaria com voce ja dentro dela: quem sai de casa segurando E
+## para vasculhar a primeira lata voltaria para dentro sem entender por que.
+const RECUO_DO_NASCIMENTO := 110.0
+
+## Onde o jogador nasce: **na calcada, em frente a porta de casa** - ele acabou
+## de sair. Antes ele nascia na sala, e nascer la dentro deixou de ser possivel
+## em 16/09/2026, quando a porta virou a unica entrada da casa e passou a ser
+## solida: seria nascer trancado.
+##
+## Sai da porta, que sai do proprio predio - ninguem precisa lembrar de mexer
+## aqui se a casa mudar de lugar. A posicao ja esteve escrita a mao no rua.tscn
+## e ja esteve escrita a mao no lugares.gd, e as duas vezes ela ficou para tras
+## quando o mapa mudou. Nao da erro nenhum: o jogador so aparece no lugar
+## errado.
+##
+## **O cenario posiciona ele por aqui**, e nao o rua.tscn.
 static func onde_o_jogador_nasce() -> Vector2:
-	return onde_o_bairro_comeca() + Lugares.BAIRRO_JOGADOR
+	var casa := Lugares.sua_casa()
+	var para_fora := 1.0 if Construcao.e_da_frente_ao_sul(casa) else -1.0
+	return onde_fica_a_porta_de_casa() + Vector2(0.0, RECUO_DO_NASCIMENTO * para_fora)
 
 ## A porta de casa, que e por onde o dia acaba.
 ##

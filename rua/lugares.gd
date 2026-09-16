@@ -27,18 +27,14 @@ const Construcao := preload("res://rua/construcao.gd")
 
 const BAIRRO_TAMANHO := Vector2(5760.0, 3600.0)
 
-## Onde o jogador nasce, em coordenada LOCAL do bairro: a sala da sua casa.
-##
-## **Estava escrita na mao no rua.tscn** ate 09/09/2026 a noite, e quando o
-## bairro mudou de lugar no mapa o jogador passou a nascer no meio do campo, a
-## 89 m da propria casa. Nao dava erro nenhum: ele so aparecia no lugar errado.
-## Agora sai daqui, somada a origem do bairro.
-##
-## **A porta de casa nao tem constante irma.** Ate 15/09/2026 tinha - era a
-## BAIRRO_PORTA_DO_PORAO, escrita a mao dentro de um quarto do fundo. Agora ela
-## e a porta da fachada, e sai da propria construcao: ver sua_casa() abaixo e
-## Mapa.onde_fica_a_porta_de_casa().
-const BAIRRO_JOGADOR := Vector2(700.0, 1240.0)
+# **Nem a porta de casa nem o nascimento do jogador tem constante aqui.** Os
+# dois ja tiveram: a porta era a BAIRRO_PORTA_DO_PORAO, escrita a mao dentro de
+# um quarto do fundo, e o jogador era a BAIRRO_JOGADOR, escrita a mao na sala.
+# Cada vez que o mapa mudou, as duas ficaram para tras sem dar erro nenhum -
+# so apareciam no lugar errado.
+#
+# Agora os dois saem da propria construcao marcada como "sua": ver sua_casa()
+# abaixo, Mapa.onde_fica_a_porta_de_casa() e Mapa.onde_o_jogador_nasce().
 
 ## A rua principal do bairro local. O mapa alinha ela com a rodovia: e o mesmo
 ## asfalto, como Muldraugh esticada ao longo da US-31W.

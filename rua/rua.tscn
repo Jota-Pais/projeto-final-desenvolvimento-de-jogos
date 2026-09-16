@@ -21,13 +21,13 @@ script = ExtResource("7_mochila")
 script = ExtResource("2_cenario")
 
 [node name="Jogador" parent="." instance=ExtResource("3_jogador")]
-position = Vector2(6700, 16720)
+position = Vector2(4667.5, 10020)
 
 [node name="Telhados" type="Node2D" parent="."]
 script = ExtResource("5_telhados")
 
 [node name="EntradaDeCasa" parent="." instance=ExtResource("4_entrada")]
-position = Vector2(6467.5, 16810)
+position = Vector2(4667.5, 9910)
 
 [node name="Hud" parent="." instance=ExtResource("6_hud")]
 

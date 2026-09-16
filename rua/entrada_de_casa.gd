@@ -19,13 +19,29 @@ extends Area2D
 ## porao continua onde estava na historia: ele e do modo Casa, e e o que voce
 ## ve do outro lado.
 ##
-## **Ela nao e solida.** Quando morava no meio de um quarto podia ser um bloco;
-## na fachada, um bloco solido tapa o unico vao da casa e tranca voce dentro
-## dela. O que estanca a entrada sem querer e a DURACAO, nao a colisao.
+## ## Ela e solida, e e por isso que ela e a unica entrada (16/09/2026)
+##
+## **Ela fecha o vao inteiro** (TAMANHO.x e o Construcao.VAO), e a sua casa nao
+## tem outra abertura. Nao da para atravessar a porta a pe: o unico jeito de
+## entrar e segurar E nela, e o que entra e a **cena da casa**, nao o interior
+## do predio.
+##
+## Isso importa mais do que parece. Entrar em casa **encerra o dia na rua** - e
+## a travessia entre os dois modos do jogo, e nao uma passagem de comodo. Se
+## desse para atravessar o vao andando, o predio teria dois significados ao
+## mesmo tempo: um lugar onde se anda e o gesto que acaba o dia. Como bloco
+## solido, so sobra o gesto.
+##
+## Por isso tambem **o jogador nasce na calcada**, e nao la dentro: com a porta
+## fechada, nascer dentro seria nascer trancado. Ver
+## Mapa.onde_o_jogador_nasce().
+##
+## O interior da sua casa continua desenhado e continua embaixo do telhado -
+## nunca se ve, e nao precisa: quem entra vai para o modo Casa, que e outra
+## cena e outra arte.
 ##
 ## Segurar em vez de apertar e de proposito: e a chave na fechadura com zumbi
-## chegando, e de graca evita entrar em casa sem querer ao passar pela porta.
-## Se atrapalhar, e so baixar a DURACAO.
+## chegando. Se atrapalhar, e so baixar a DURACAO.
 
 ## Segundos de E segurado para entrar. Bem menor que o de vasculhar uma porta
 ## alheia (5 s) - a sua chave voce tem.
@@ -81,12 +97,17 @@ func _entrar() -> void:
 	# O unico jeito bom de acabar o dia, e o unico que passa por aqui.
 	Travessia.entrar_em_casa(Travessia.FimDoDia.PELA_PORTA)
 
-## So a zona de deteccao. Nao ha corpo solido: ver o cabecalho - porta solida
-## na fachada e casa trancada por fora, com voce dentro.
+## A zona de deteccao e o corpo solido. O corpo tem o tamanho do vao inteiro:
+## e ele que faz a porta ser a unica entrada, em vez de um enfeite no meio de
+## uma passagem aberta.
 func _montar_formas() -> void:
 	var deteccao := RectangleShape2D.new()
 	deteccao.size = TAMANHO + Vector2.ONE * ALCANCE * 2.0
 	($Deteccao as CollisionShape2D).shape = deteccao
+
+	var corpo := RectangleShape2D.new()
+	corpo.size = TAMANHO
+	($Corpo/Colisao as CollisionShape2D).shape = corpo
 
 func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
