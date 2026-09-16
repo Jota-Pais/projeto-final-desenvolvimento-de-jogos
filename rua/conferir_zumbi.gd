@@ -54,6 +54,11 @@ var _partida := 0
 ## ferramenta sabia que o toque tinha acontecido.
 var _foi_tocado := false
 
+## O que a fase 6 viu acontecer ao longo dos 240 quadros, e nao no ultimo deles.
+## Ver _conferir_horda().
+var _horda_enxergou := false
+var _horda_acordados := {}
+
 func _ready() -> void:
 	_bairro = CENA_DA_RUA.instantiate()
 	add_child(_bairro)
@@ -371,17 +376,34 @@ func _preparar_horda() -> void:
 	_zumbis[0].foi_chamado(_jogador.global_position)
 	_passar()
 
+## **Marca a cada quadro, e so julga no fim.** Ate 16/09/2026 esta conferencia
+## lia o estado dos quatro zumbis uma vez so, no quadro 240 - e reprovava em
+## cerca de metade das rodadas, dizendo "o primeiro zumbi nao chegou a enxergar
+## o jogador".
+##
+## Ele enxergava, e no **quadro 2**. O que acontecia depois e que ele chegava em
+## cima do jogador: a 43 px os dois corpos se empurram, a velocidade dele vira
+## para o lado, e o `_olhando` sai da propria velocidade - o jogador sai do cone
+## de 110 graus e ele cai para PROCURANDO. No quadro 240 o estado dele era
+## legitimamente "procurando", e a pergunta que a ferramenta faz nao e essa:
+## e se ele **chegou a** enxergar.
+##
+## Estado instantaneo nao responde pergunta sobre o que aconteceu. A fase 4 ja
+## marcava assim (`_chegou_a_perseguir`); esta nao.
 func _conferir_horda() -> void:
-	if _quadros < 240:
-		return
-	var acordados := 0
+	if _zumbis[0]._estado == PERSEGUINDO:
+		_horda_enxergou = true
 	for i in range(1, 4):
 		if _zumbis[i]._estado != VAGANDO:
-			acordados += 1
-	if _zumbis[0]._estado != PERSEGUINDO:
+			_horda_acordados[i] = true
+
+	if _quadros < 240:
+		return
+
+	if not _horda_enxergou:
 		_erro("o primeiro zumbi nao chegou a enxergar o jogador")
-	elif acordados == 0:
+	elif _horda_acordados.is_empty():
 		_erro("nenhum dos 3 vizinhos foi chamado")
 	else:
-		print("  1 enxergou e %d de 3 vizinhos vieram atras" % acordados)
+		print("  1 enxergou e %d de 3 vizinhos vieram atras" % _horda_acordados.size())
 	_passar()
