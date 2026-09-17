@@ -28,11 +28,45 @@
 ## Descartavel: e greybox. O TileSet e o level design de verdade entram quando o
 ## layout parar de mudar. **Depois de mexer em qualquer numero daqui, rode o
 ## `rua/conferir_mapa.tscn` (F6)** - numero errado fecha caminho sem avisar.
+##
+## ## A porta em quatro direcoes (17/09/2026)
+##
+## Ate esta data toda a geometria vivia dentro de um booleano
+## (`e_da_frente_ao_sul`): cada funcao tinha um `if` para o caso sul e outro
+## para o caso norte, escritos a mao duas vezes. Isso nunca deu erro nenhum
+## quando alguem esquecia o segundo `if` - so produzia casa virada para o mato
+## em silencio, porque toda casa do mapa era norte ou sul.
+##
+## Agora a geometria e escrita **uma vez so**, num referencial canonico com a
+## fachada sempre ao SUL (`_ao_mundo`/`_rect_mundo` fazem a volta para o
+## mundo), e o caso `sul` e literalmente a identidade dessa volta - e por isso
+## a regressao bit a bit (`conferir_regressao_construcao.tscn`) prova que
+## norte/sul nao se mexeu, e o `conferir_construcao.tscn` prova que leste/oeste
+## esta certo, o que a regressao sozinha nao alcanca.
+##
+## **Uma correcao saiu dessa reescrita, e nao so refatoracao**: o codigo antigo
+## media a divisoria interna com a mesma formula `Rect2(x, y, largura, PAREDE)`
+## nos dois ramos de `if e_da_frente_ao_sul`, mas "crescer no y positivo" e rumo
+## a fachada para porta sul e rumo ao fundo para porta norte - entao a sala de
+## uma casa norte saia PAREDE (20 px) mais funda que a de uma casa sul com a
+## mesma planta, sem ninguem ter notado. Escrita uma vez so, a formula trata as
+## duas orientacoes do mesmo jeito - como o sul sempre tratou, que e a maioria
+## das construcoes de hoje. Ver a docstring de `conferir_regressao_construcao.gd`
+## para a prova de que essa e a unica divergencia real contra o mapa de hoje.
 
 const PAREDE := 20.0
 ## Vao de porta: 3,6 corpos de largura. Generoso de proposito - porta apertada
 ## com zumbi atras e frustracao, nao tensao.
 const VAO := 100.0
+
+## As quatro direcoes que uma porta pode encarar, com o vetor unitario que sai
+## por ela (a "normal" da fachada, apontando para fora do predio).
+const LADOS := {
+	"norte": Vector2(0.0, -1.0),
+	"sul":   Vector2(0.0, 1.0),
+	"leste": Vector2(1.0, 0.0),
+	"oeste": Vector2(-1.0, 0.0),
+}
 
 ## A entrada de carro: largura, e quanto ela avanca da fachada para fora.
 ##
@@ -80,6 +114,11 @@ const TAMANHOS := {
 ## Sao **plantas**, e nao sorteio livre: cada uma e uma casa plausivel de
 ## suburbio - a rasa e larga, a estreita e funda, a pequena de esquina.
 ##
+## **Provisorio** (ate P7): sera substituida por `CONJUNTOS_DE_PLANTA` quando
+## `lugares.gd` passar a gerar sobre `quadras.gd`. Ate la, o mapa de hoje ainda
+## usa `planta_de_casa`/`recuo_de_casa` por indice, e essas duas funcoes nao
+## podem quebrar.
+##
 ## Duas regras que as amarram:
 ##
 ##  - **nenhuma passa de 520 de frente**, que e a vaga de lote da cidade. Lote
@@ -111,14 +150,56 @@ const RECUOS_DE_CASA := [0.0, 60.0, 120.0]
 ## (1,2,3,1,2,3) e a fileira volta a parecer conjunto habitacional, so que com
 ## sete modelos em vez de um. O embaralho e uma multiplicacao por numero primo
 ## grande - barato, deterministico, e sem estado nenhum para carregar.
-static func _embaralhar(indice: int) -> int:
+##
+## Provisorio (ver `PLANTAS_DE_CASA`) - o sucessor e `embaralhar(chave)` mais
+## `planta_de(tipo, chave)`, indexados por chave e nao por indice de geracao.
+static func _embaralhar_indice(indice: int) -> int:
 	return absi(indice * 2654435761) % 1000003
 
 static func planta_de_casa(indice: int) -> Vector2:
-	return PLANTAS_DE_CASA[_embaralhar(indice) % PLANTAS_DE_CASA.size()]
+	return PLANTAS_DE_CASA[_embaralhar_indice(indice) % PLANTAS_DE_CASA.size()]
 
 static func recuo_de_casa(indice: int) -> float:
-	return RECUOS_DE_CASA[_embaralhar(indice + 7919) % RECUOS_DE_CASA.size()]
+	return RECUOS_DE_CASA[_embaralhar_indice(indice + 7919) % RECUOS_DE_CASA.size()]
+
+## **Os conjuntos de planta por zona** (17/09/2026, arquitetura nova do mapa,
+## secao 3.6). Substitui `PLANTAS_DE_CASA` a partir de P7, quando `lugares.gd`
+## passar a gerar sobre `rua/quadras.gd` e a identidade vira chave de texto em
+## vez de indice de geracao.
+##
+## Frente x fundo, **em relacao a fachada** (frente = o lado que da para a rua,
+## fundo = a profundidade) - nao em x/y de mundo. Quem poe o predio no lote
+## transpoe quando a porta e leste/oeste (ver `predio_no_lote`, `rua/lotes.gd`).
+##
+## `suburbio`: 9 plantas de 12-18 x 12-16 tiles (480-720 x 480-640 px), a faixa
+## medida em Rosewood/Riverside. `cidade`: 7 plantas de lote de grade, um pouco
+## mais estreitas e mais fundas (a quadra da grade e mais raza). `fita`: 5
+## plantas de comercio de rua, sempre com a frente menor que o fundo - loja de
+## fita e funda, nao larga.
+const CONJUNTOS_DE_PLANTA := {
+	"suburbio": [
+		Vector2(560.0, 480.0), Vector2(640.0, 560.0), Vector2(480.0, 600.0),
+		Vector2(600.0, 520.0), Vector2(520.0, 640.0), Vector2(720.0, 560.0),
+		Vector2(600.0, 600.0), Vector2(560.0, 560.0), Vector2(680.0, 480.0),
+	],
+	"cidade": [
+		Vector2(520.0, 420.0), Vector2(480.0, 460.0), Vector2(520.0, 380.0),
+		Vector2(460.0, 430.0), Vector2(500.0, 500.0), Vector2(440.0, 400.0),
+		Vector2(520.0, 460.0),
+	],
+	"fita": [
+		Vector2(480.0, 640.0), Vector2(440.0, 720.0), Vector2(520.0, 680.0),
+		Vector2(460.0, 760.0), Vector2(500.0, 700.0),
+	],
+}
+
+## A planta de um predio, pela sua chave estavel - nao pelo indice de geracao
+## (`chave` sobrevive a inserir ou mover outro predio; indice, nao). `tipo` e a
+## chave de `CONJUNTOS_DE_PLANTA` (nao o tipo de construcao) - "suburbio",
+## "cidade" ou "fita".
+static func planta_de(conjunto: String, chave: String) -> Vector2:
+	var plantas: Array = CONJUNTOS_DE_PLANTA[conjunto]
+	return plantas[embaralhar(chave) % plantas.size()]
 
 ## Quantos quartos cada tipo de construcao tem. Tres quartos ganham divisoria
 ## interna; um quarto e salao unico.
@@ -231,61 +312,104 @@ const DOCUMENTOS := [
 static func e_documento(achado: String) -> bool:
 	return DOCUMENTOS.has(achado)
 
-
+## Casca de compatibilidade: `porta == "sul"`. A geometria de verdade nao
+## pergunta mais isso a ninguem - ela pergunta `construcao["porta"]` direto -,
+## mas o resto do codigo (P2 em diante substitui) ainda faz essa pergunta em
+## alguns lugares.
 static func e_da_frente_ao_sul(construcao: Dictionary) -> bool:
 	return construcao["porta"] == "sul"
 
-## O centro do vao da porta, na fachada.
+## O vetor unitario que sai da fachada para fora - "para onde a porta olha".
+static func normal_de(construcao: Dictionary) -> Vector2:
+	return LADOS[construcao["porta"]]
+
+## O vetor unitario AO LONGO da fachada (perpendicular ao normal). Fachada
+## norte/sul: ao longo de x. Fachada leste/oeste: ao longo de y.
+static func eixo_da_fachada(construcao: Dictionary) -> Vector2:
+	var normal := normal_de(construcao)
+	return Vector2(absf(normal.y), absf(normal.x))
+
+## `frente` (o quanto o predio mede ao longo da propria fachada) e
+## `profundidade` (o quanto ele mede da fachada ate o fundo), em px - nao em
+## x/y de mundo. Para fachada norte/sul isso e (size.x, size.y); para
+## leste/oeste e transposto, porque a fachada passou a ser o lado vertical.
+static func _frente(rect: Rect2, porta: String) -> float:
+	return rect.size.y if (porta == "leste" or porta == "oeste") else rect.size.x
+
+static func _profundidade(rect: Rect2, porta: String) -> float:
+	return rect.size.x if (porta == "leste" or porta == "oeste") else rect.size.y
+
+## Leva um ponto do referencial CANONICO (fachada sempre ao SUL, origem no
+## canto onde fachada e fundo se encontram do lado "esquerdo") para o mundo.
+## `p.x` anda ao longo da fachada; `p.y` anda do fundo (p.y=0) ate a fachada
+## (p.y=profundidade).
+##
+##   sul   -> identidade (e por isso a regressao bit a bit prova tanto faz
+##            escrever a geometria contra o rect direto ou passar por aqui)
+##   norte -> espelho em y
+##   leste, oeste -> transposicao (com espelho no caso oeste)
+##
+## Como as quatro sao isometrias de 90 graus, todo retangulo canonico convertido
+## por `_rect_mundo` continua axial - fisica, navegacao e `draw_rect` nao
+## percebem a diferenca.
+static func _ao_mundo(rect: Rect2, porta: String, p: Vector2) -> Vector2:
+	match porta:
+		"sul":
+			return rect.position + p
+		"leste":
+			return Vector2(rect.position.x + p.y, rect.position.y + p.x)
+		"oeste":
+			return Vector2(rect.end.x - p.y, rect.position.y + p.x)
+		_:  # norte
+			return Vector2(rect.position.x + p.x, rect.end.y - p.y)
+
+## Um retangulo canonico (posicao `p`, tamanho `tamanho`) convertido para o
+## mundo. Calcula os dois cantos e monta o retangulo pelo min/max, em vez de
+## tentar adivinhar formula por orientacao - assim funciona para as quatro sem
+## repetir logica.
+static func _rect_mundo(rect: Rect2, porta: String, p: Vector2, tamanho: Vector2) -> Rect2:
+	var a := _ao_mundo(rect, porta, p)
+	var b := _ao_mundo(rect, porta, p + tamanho)
+	return Rect2(minf(a.x, b.x), minf(a.y, b.y), absf(b.x - a.x), absf(b.y - a.y))
+
+## O centro do vao da porta, na fachada - a 35% do comprimento dela.
 static func porta_de(construcao: Dictionary) -> Vector2:
-	var r: Rect2 = construcao["rect"]
-	var x := r.position.x + r.size.x * 0.35
-	if e_da_frente_ao_sul(construcao):
-		return Vector2(x, r.end.y - PAREDE / 2.0)
-	return Vector2(x, r.position.y + PAREDE / 2.0)
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	var profundidade := _profundidade(rect, porta)
+	return _ao_mundo(rect, porta, Vector2(frente * 0.35, profundidade - PAREDE / 2.0))
 
 ## As quatro paredes externas, com a da fachada partida em duas pelo vao.
 static func paredes_externas(construcao: Dictionary) -> Array[Rect2]:
-	var r: Rect2 = construcao["rect"]
-	var ao_sul := e_da_frente_ao_sul(construcao)
-	var y_frente := r.end.y - PAREDE if ao_sul else r.position.y
-	var y_fundo := r.position.y if ao_sul else r.end.y - PAREDE
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	var profundidade := _profundidade(rect, porta)
+	var meio := frente * 0.35
 
 	var lista: Array[Rect2] = []
-	lista.append(Rect2(r.position.x, y_fundo, r.size.x, PAREDE))
-	lista.append(Rect2(r.position.x, r.position.y, PAREDE, r.size.y))
-	lista.append(Rect2(r.end.x - PAREDE, r.position.y, PAREDE, r.size.y))
-
-	var meio := porta_de(construcao).x
-	lista.append(Rect2(r.position.x, y_frente, meio - VAO / 2.0 - r.position.x, PAREDE))
-	lista.append(Rect2(meio + VAO / 2.0, y_frente, r.end.x - meio - VAO / 2.0, PAREDE))
+	lista.append(_rect_mundo(rect, porta, Vector2(0.0, 0.0), Vector2(frente, PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(0.0, 0.0), Vector2(PAREDE, profundidade)))
+	lista.append(_rect_mundo(rect, porta, Vector2(frente - PAREDE, 0.0), Vector2(PAREDE, profundidade)))
+	lista.append(_rect_mundo(rect, porta, Vector2(0.0, profundidade - PAREDE),
+		Vector2(meio - VAO / 2.0, PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(meio + VAO / 2.0, profundidade - PAREDE),
+		Vector2(frente - meio - VAO / 2.0, PAREDE)))
 	return lista
 
-## O retangulo de piso, ja descontadas as paredes externas.
+## O retangulo de piso, ja descontadas as paredes externas. Nao depende da
+## porta: e um recuo simetrico de PAREDE nas quatro bordas do mundo, e isso vale
+## para as quatro orientacoes sem precisar do referencial canonico.
 static func interior_de(construcao: Dictionary) -> Rect2:
 	var r: Rect2 = construcao["rect"]
 	return Rect2(r.position + Vector2.ONE * PAREDE, r.size - Vector2.ONE * PAREDE * 2.0)
 
-static func _y_da_divisoria(construcao: Dictionary) -> float:
-	var dentro := interior_de(construcao)
-	if e_da_frente_ao_sul(construcao):
-		return dentro.end.y - dentro.size.y * 0.45
-	return dentro.position.y + dentro.size.y * 0.45
-
-## A metade de tras da casa, que a segunda divisoria parte em dois quartos.
-static func _fundo_de(construcao: Dictionary) -> Rect2:
-	var dentro := interior_de(construcao)
-	var y := _y_da_divisoria(construcao)
-	if e_da_frente_ao_sul(construcao):
-		return Rect2(dentro.position.x, dentro.position.y, dentro.size.x, y - dentro.position.y)
-	return Rect2(dentro.position.x, y + PAREDE, dentro.size.x, dentro.end.y - y - PAREDE)
-
-## A sala, que e o quarto onde a porta da rua da.
-static func _sala_de(construcao: Dictionary) -> Rect2:
-	var dentro := interior_de(construcao)
-	var y := _y_da_divisoria(construcao)
-	if e_da_frente_ao_sul(construcao):
-		return Rect2(dentro.position.x, y + PAREDE, dentro.size.x, dentro.end.y - y - PAREDE)
-	return Rect2(dentro.position.x, dentro.position.y, dentro.size.x, y - dentro.position.y)
+## A linha (canonica, medida do fundo) onde fica a divisoria que separa a sala
+## do fundo da casa: a 45% da profundidade **interior**, contando da fachada.
+static func _v_da_divisoria(rect: Rect2, porta: String) -> float:
+	var profundidade := _profundidade(rect, porta)
+	return profundidade - PAREDE - (profundidade - 2.0 * PAREDE) * 0.45
 
 ## As divisorias internas, cada uma com o seu vao de passagem. Casa de tres
 ## quartos: uma divisoria paralela a fachada separa a sala do fundo, e uma
@@ -296,39 +420,149 @@ static func paredes_internas(construcao: Dictionary) -> Array[Rect2]:
 	if QUARTOS_POR_TIPO[construcao["tipo"]] < 3:
 		return lista
 
-	var dentro := interior_de(construcao)
-	var y := _y_da_divisoria(construcao)
-	var vao_x := dentro.position.x + dentro.size.x * 0.78
-	lista.append(Rect2(dentro.position.x, y, vao_x - VAO / 2.0 - dentro.position.x, PAREDE))
-	lista.append(Rect2(vao_x + VAO / 2.0, y, dentro.end.x - vao_x - VAO / 2.0, PAREDE))
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	var v_div := _v_da_divisoria(rect, porta)
+	var u_vao := PAREDE + (frente - 2.0 * PAREDE) * 0.78
+	var u_perp := PAREDE + (frente - 2.0 * PAREDE) * 0.45
+	# O meio da zona do fundo (entre a parede de tras e a divisoria): e ali que
+	# fica o vao da divisoria perpendicular.
+	var v_vao := (PAREDE + v_div) / 2.0
 
-	var fundo := _fundo_de(construcao)
-	var x := dentro.position.x + dentro.size.x * 0.45
-	var vao_y := fundo.get_center().y
-	lista.append(Rect2(x, fundo.position.y, PAREDE, vao_y - VAO / 2.0 - fundo.position.y))
-	lista.append(Rect2(x, vao_y + VAO / 2.0, PAREDE, fundo.end.y - vao_y - VAO / 2.0))
+	lista.append(_rect_mundo(rect, porta, Vector2(PAREDE, v_div),
+		Vector2(u_vao - VAO / 2.0 - PAREDE, PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(u_vao + VAO / 2.0, v_div),
+		Vector2(frente - PAREDE - (u_vao + VAO / 2.0), PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(u_perp, PAREDE),
+		Vector2(PAREDE, v_vao - VAO / 2.0 - PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(u_perp, v_vao + VAO / 2.0),
+		Vector2(PAREDE, v_div - (v_vao + VAO / 2.0))))
 	return lista
 
-## Os quartos, como retangulos de piso livre. E onde o movel vai.
+## Os quartos, como retangulos de piso livre. E onde o movel vai. O primeiro e
+## sempre a sala (onde a porta da rua da); o segundo e o terceiro sao o fundo,
+## partido ao meio pela divisoria perpendicular.
 static func quartos_de(construcao: Dictionary) -> Array[Rect2]:
-	var dentro := interior_de(construcao)
 	if QUARTOS_POR_TIPO[construcao["tipo"]] < 3:
-		var unico: Array[Rect2] = [dentro]
+		var unico: Array[Rect2] = [interior_de(construcao)]
 		return unico
 
-	var fundo := _fundo_de(construcao)
-	var x := dentro.position.x + dentro.size.x * 0.45
-	var lista: Array[Rect2] = [_sala_de(construcao)]
-	lista.append(Rect2(fundo.position.x, fundo.position.y, x - fundo.position.x, fundo.size.y))
-	lista.append(Rect2(x + PAREDE, fundo.position.y, fundo.end.x - x - PAREDE, fundo.size.y))
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	var profundidade := _profundidade(rect, porta)
+	var v_div := _v_da_divisoria(rect, porta)
+	var u_perp := PAREDE + (frente - 2.0 * PAREDE) * 0.45
+
+	var lista: Array[Rect2] = []
+	lista.append(_rect_mundo(rect, porta, Vector2(PAREDE, v_div + PAREDE),
+		Vector2(frente - 2.0 * PAREDE, profundidade - 2.0 * PAREDE - v_div)))
+	lista.append(_rect_mundo(rect, porta, Vector2(PAREDE, PAREDE),
+		Vector2(u_perp - PAREDE, v_div - PAREDE)))
+	lista.append(_rect_mundo(rect, porta, Vector2(u_perp + PAREDE, PAREDE),
+		Vector2(frente - 2.0 * PAREDE - u_perp, v_div - PAREDE)))
 	return lista
 
-## A entrada de carro: uma faixa que sai da fachada para fora. E o que faz o
-## lote parecer lote, e nao um bloco solto na grama.
+## Uma marca retangular sobre o vao da porta (o traco do telhado que indica a
+## entrada) - comprida ao longo da fachada, fina na perpendicular. Antes era
+## escrita direto em `telhados.gd` supondo fachada horizontal; com porta em 4
+## direcoes a marca tem que girar junto.
+static func marca_da_porta(construcao: Dictionary) -> Rect2:
+	var centro := porta_de(construcao)
+	var eixo := eixo_da_fachada(construcao)
+	var perpendicular := Vector2(eixo.y, eixo.x)
+	var a := centro - eixo * (VAO / 2.0) - perpendicular * 7.0
+	var b := centro + eixo * (VAO / 2.0) + perpendicular * 7.0
+	return Rect2(minf(a.x, b.x), minf(a.y, b.y), absf(b.x - a.x), absf(b.y - a.y))
+
+## O tamanho de um movel, pronto para desenhar dentro desta construcao:
+## transposto quando a fachada e vertical (leste/oeste) - senao o movel "deitado"
+## nasceria de lado dentro da parede.
+static func tamanho_do_movel(construcao: Dictionary, tipo: String) -> Vector2:
+	var tamanho: Vector2 = MOVEIS[tipo]["tamanho"]
+	var porta: String = construcao["porta"]
+	if porta == "leste" or porta == "oeste":
+		return Vector2(tamanho.y, tamanho.x)
+	return tamanho
+
+## As posicoes de uma fileira de moveis dentro de UM quarto: encostados na
+## parede OPOSTA a fachada (a que fica longe da porta - encostar sempre do
+## mesmo lado poria o movel em cima do vao em toda casa de fachada ao norte) e
+## espalhados ao longo da parede. Escrita uma vez em termos do normal e do
+## comprimento ao longo da fachada; antes so existia para fachada norte/sul,
+## embutida dentro de `cenario._povoar`.
+static func posicoes_de_movel(construcao: Dictionary, quarto: Rect2, tipos: Array) -> Array[Vector2]:
+	var normal := normal_de(construcao)
+	var um_quarto_so: bool = QUARTOS_POR_TIPO[construcao["tipo"]] < 3
+	# Fachada norte/sul: espalha ao longo de x, encosta em y. Fachada
+	# leste/oeste: o oposto.
+	var horizontal := normal.y != 0.0
+
+	var origem_ao_longo := quarto.position.x if horizontal else quarto.position.y
+	var comprimento := quarto.size.x if horizontal else quarto.size.y
+
+	var posicoes: Array[Vector2] = []
+	for j in tipos.size():
+		var tamanho := tamanho_do_movel(construcao, tipos[j])
+		var meia_profundidade := (tamanho.y if horizontal else tamanho.x) / 2.0 + 8.0
+
+		var ao_longo: float
+		if um_quarto_so:
+			# Salao sem divisoria: da para espalhar pela largura toda, com
+			# folga entre um movel e outro.
+			var vao := (comprimento - 160.0) / float(tipos.size())
+			ao_longo = origem_ao_longo + 80.0 + vao * (float(j) + 0.5)
+		else:
+			# Na METADE da parede longe do vao: a divisoria interna abre a
+			# passagem a 78% da largura, entao movel nenhum passa de 50%.
+			var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
+			ao_longo = origem_ao_longo + comprimento * fracao
+
+		if horizontal:
+			var y := quarto.position.y + meia_profundidade if normal.y > 0.0 \
+				else quarto.end.y - meia_profundidade
+			posicoes.append(Vector2(ao_longo, y))
+		else:
+			var x := quarto.position.x + meia_profundidade if normal.x > 0.0 \
+				else quarto.end.x - meia_profundidade
+			posicoes.append(Vector2(x, ao_longo))
+	return posicoes
+
+## A entrada de carro: uma faixa perpendicular a fachada, saindo dela para
+## fora. E o que faz o lote parecer lote, e nao um bloco solto na grama.
+##
+## Primitiva de baixo nivel: so precisa do retangulo, da porta e do
+## comprimento - nao da construcao inteira - porque quem gera lote (P4 em
+## diante) monta a entrada ANTES de decidir se o lote serve, e grava o
+## resultado (ver `rua/lotes.gd`, campo `entrada`).
+static func entrada_de_carro_para(rect: Rect2, porta: String, comprimento: float) -> Rect2:
+	var frente := _frente(rect, porta)
+	var x := frente * 0.35 - ENTRADA_DE_CARRO / 2.0
+	return _rect_mundo(rect, porta, Vector2(x, _profundidade(rect, porta)),
+		Vector2(ENTRADA_DE_CARRO, comprimento))
+
+## Casca de compatibilidade sobre `entrada_de_carro_para`: usa o comprimento
+## fixo de sempre, a menos que a construcao ja tenha um `recuo_ate_a_via`
+## gravado (o campo que `rua/lotes.gd` vai comecar a gravar a partir de P4).
 static func entrada_de_carro(construcao: Dictionary) -> Rect2:
-	var r: Rect2 = construcao["rect"]
-	var x := porta_de(construcao).x - ENTRADA_DE_CARRO / 2.0
-	if e_da_frente_ao_sul(construcao):
-		return Rect2(x, r.end.y, ENTRADA_DE_CARRO, ENTRADA_DE_CARRO_COMPRIMENTO)
-	return Rect2(x, r.position.y - ENTRADA_DE_CARRO_COMPRIMENTO,
-		ENTRADA_DE_CARRO, ENTRADA_DE_CARRO_COMPRIMENTO)
+	var comprimento: float = construcao.get("recuo_ate_a_via", ENTRADA_DE_CARRO_COMPRIMENTO)
+	return entrada_de_carro_para(construcao["rect"], construcao["porta"], comprimento)
+
+## Hash FNV-1a de 32 bits sobre uma chave de texto. Determinismo pela CHAVE, e
+## nao pelo indice de geracao: mover ou inserir um predio deixa de re-sortear
+## planta e recuo de todo o resto do mapa - o problema que `_embaralhar_indice`
+## tem e que um lugar novo desloca o indice de todo mundo depois dele.
+##
+## FNV-1a de **32 bits**, e nao de 64: um desenho anterior usava hash de 64 bits
+## com `frac(s * 0.618)`, e em `double` isso da exatamente 0,0 para boa parte
+## das chaves - todo recuo colapsava no mesmo valor, "todas as casas iguais"
+## reintroduzido por ponto flutuante, em silencio. Foi o bug de determinismo
+## que a revisao achou; `% tamanho_da_lista` sobre um inteiro nao tem esse
+## problema, mas o hash em si continua de 32 bits por seguranca.
+static func embaralhar(chave: String) -> int:
+	var hash: int = 2166136261
+	for byte in chave.to_utf8_buffer():
+		hash = (hash ^ byte) & 0xFFFFFFFF
+		hash = (hash * 16777619) & 0xFFFFFFFF
+	return hash
