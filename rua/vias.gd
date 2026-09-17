@@ -320,9 +320,13 @@ static func grafo(vias: Array) -> Dictionary:
 						no_de_ponta[outra_chave] = nome
 						(incidencias[nome] as Array).append((vias[k] as Dictionary)["nome"])
 
-	# Segunda passada: ponta que caiu dentro da faixa de outra via - a outra
-	# via tambem fica incidente aquele no (cruzamento em T por sobreposicao,
-	# como o mapa de hoje desenha).
+	# Segunda passada: ponta que caiu dentro da faixa de outra via, OU so
+	# encostou na borda dela - a outra via tambem fica incidente aquele no
+	# (cruzamento em T, como o mapa de hoje desenha: uma rua que TERMINA
+	# exatamente na borda de outra e uma ligacao legitima, nao uma
+	# sobreposicao). Por isso `grow(1)`, a doutrina da ADJACENCIA - `grow(-1)`
+	# e para sobreposicao, e rejeitaria como "solta" toda rua que so encosta
+	# certinho na outra, que e o caso mais comum do mapa de hoje.
 	for nome in nos:
 		var p: Vector2 = nos[nome]
 		for via in vias:
@@ -331,7 +335,7 @@ static func grafo(vias: Array) -> Dictionary:
 				continue
 			if not (via.has("eixo") or via.has("rect")):
 				continue
-			if faixa_de(via).grow(-1.0).has_point(p):
+			if faixa_de(via).grow(1.0).has_point(p):
 				(incidencias[nome] as Array).append(nome_via)
 
 	var grau := {}

@@ -31,6 +31,7 @@ extends Node
 
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
+const Vias := preload("res://rua/vias.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 
 ## Celula da passada grossa: 3 metros. Serve para "da para ir de la ate ca",
@@ -59,6 +60,11 @@ var _feito := false
 var _falhas := 0
 
 func _ready() -> void:
+	# A fase 0 le so o dicionario (Mapa.mundo()), antes de qualquer coisa
+	# instanciar - custa milissegundos, e roda ANTES das duas passadas
+	# fisicas de baixo, que continuam intactas.
+	_a_geometria_fecha()
+
 	_rua = CENA_DA_RUA.instantiate()
 	add_child(_rua)
 
@@ -91,6 +97,212 @@ func _process(_delta: float) -> void:
 func _erro(texto: String) -> void:
 	_falhas += 1
 	print("  FALHA: " + texto)
+
+# --- 0. a geometria do dado --------------------------------------------------
+#
+# A FASE 0 (17/09/2026, P4 do plano da arquitetura nova). Le so
+# `Mapa.mundo()` - nenhuma fisica, nenhuma cena -, e por isso roda ANTES de
+# instanciar `rua.tscn` e custa milissegundos. As duas passadas fisicas
+# abaixo (1 e 2) continuam intactas.
+#
+# Doutrina da borda, valendo para toda checagem daqui para baixo:
+# sobreposicao se testa com `grow(-1)` (dois retangulos so encostando na
+# borda um do outro NAO sao sobreposicao), porque `Rect2.intersects()` do
+# Godot conta a borda como colisao.
+#
+# **Este e o portao que tem que ACUSAR o mapa de hoje.** Um validador que
+# aprova o mapa quebrado de hoje aprovaria o de amanha tambem - por isso ele
+# entra ANTES do layout ser reescrito (P5 em diante), contra o mapa como ele
+# esta agora. A lista abaixo e a linha de base MEDIDA (nao suposta) em
+# 17/09/2026, rodando esta mesma fase 0: **64 achados**. E exatamente o que o
+# layout novo (P5 em diante) tem que zerar - se um dia isto voltar a passar
+# vermelho com o layout novo no lugar, o validador ficou cego, nao o mapa
+# ficou bom.
+#
+##  - a "rua do fundo" do bairro passa ~400 px alem da ultima vertical
+##    (`bairro rua leste`) e morre num toco, em (9600, 12780) - grau 1, sem
+##    ponta declarada;
+##  - **~40 casas e acessorios** tem a entrada de carro (comprimento fixo,
+##    `ENTRADA_DE_CARRO_COMPRIMENTO`) que nao alcanca asfalto nenhum - o recuo
+##    da casa (`RECUOS_DE_CASA`, ate 120 px) some da conta;
+##  - **~14 predios** tem a porta olhando para o mato, sem via nenhuma a
+##    400 px - sitios, mansao e as pontas de fileira do bairro;
+##  - o mercado (`CIDADE_ESPECIAIS`, quadra x=18400) invade 380 px a rua
+##    vertical a oeste dele - a conta de centralizacao usa o tamanho da vaga
+##    generica, nao o tamanho real do predio largo; a delegacia e um galpao
+##    do bairro tambem pisam na rua ao lado, e o posto pisa no proprio piso
+##    de concreto dele (a loja fica maior que a folga que sobrou);
+##  - tres dos quatro lugares tipo "floresta" chamados "mata" tem densidade
+##    0,03 (a de bosque raro) - so "mata do sul" tem densidade propria.
+#
+# O bulbo de retorno do bairro (`BAIRRO_RETORNO`) fica de fora desta lista de
+# proposito: e uma area solida sem "direcao", nao um laco de verdade, mas
+# `Vias.grafo` aceita a ponta dele (classe `laco`, ponta declarada) - o anel
+# de verdade (`Vias.laco`) e tarefa de P7, quando o bairro for reescrito.
+#
+# Corrigir os achados acima e o proprio trabalho de P5 em diante; aqui so se
+# prova que o validador ENXERGA.
+func _a_geometria_fecha() -> void:
+	print("0. a geometria do dado")
+	var antes := _falhas
+	_a_rede_de_vias_fecha()
+	_a_largura_bate_com_a_classe()
+	_o_predio_encara_uma_via()
+	_a_entrada_de_carro_chega_na_via()
+	_predio_nao_cruza_via_nem_calcada_nem_piso()
+	_predio_nao_cruza_predio()
+	_predio_dentro_do_lugar_e_do_mundo()
+	_mata_tem_nome_de_mata()
+	print("  %d achado(s) nesta fase" % (_falhas - antes))
+
+## Sobreposicao de verdade: os dois cresceram -1, para dois retangulos so se
+## tocando na borda nao contarem.
+func _sobrepoe(a: Rect2, b: Rect2) -> bool:
+	return a.grow(-1.0).intersects(b.grow(-1.0))
+
+## Toda via tem que terminar em outra via (grau >= 2), na borda do MUNDO, ou
+## ter uma ponta declarada que o proprio nome ja diz o tipo ("borda",
+## "T:...", "emenda:...", "laco:...", "u:..."). `pontas` so declara o TIPO da
+## excecao - quem prova e o grafo (`Vias.grafo`), que acha os nos por
+## geometria e nao por declaracao.
+func _a_rede_de_vias_fecha() -> void:
+	var vias: Array = Mapa.mundo()["vias"]
+	var grafo := Vias.grafo(vias)
+	var nos: Dictionary = grafo["nos"]
+	var grau: Dictionary = grafo["grau"]
+	var incidencias: Dictionary = grafo["incidencias"]
+	var pontas_por_via := {}
+	for via in vias:
+		pontas_por_via[(via as Dictionary)["nome"]] = (via as Dictionary).get("pontas", [])
+
+	for nome in nos:
+		if int(grau[nome]) >= 2:
+			continue
+		var p: Vector2 = nos[nome]
+		if not Mapa.MUNDO.grow(-200.0).has_point(p):
+			continue  # perto da borda do mundo: fim legitimo
+		# So uma via incide neste no (grau 1) - ela declarou um tipo de ponta
+		# legitimo para ESTA ponta especifica?
+		var via_incidente: String = (incidencias[nome] as Array)[0]
+		var declarada := false
+		for tipo in (pontas_por_via.get(via_incidente, []) as Array):
+			if (tipo as String) != "":
+				declarada = true
+				break
+		if declarada:
+			continue
+		_erro("a via '%s' morre sem ligar a nada, em %s (grau %d, sem ponta declarada)"
+			% [via_incidente, p, grau[nome]])
+
+## A largura de cada via reta bate com a faixa `[minima, maxima]` da propria
+## classe - a checagem le a MESMA fonte que o dado (`Vias.CLASSES`), entao
+## uma classe nova sem faixa reprova em vez de passar em silencio.
+func _a_largura_bate_com_a_classe() -> void:
+	for via in Mapa.mundo()["vias"]:
+		var classe: String = (via as Dictionary)["classe"]
+		var faixa: Dictionary = Vias.CLASSES[classe]
+		if faixa["minima"] <= 0.0 and faixa["maxima"] <= 0.0:
+			continue  # classe sem largura de verdade (hoje: laco em bulbo)
+		var largura := Vias.largura_de(via)
+		if largura < faixa["minima"] or largura > faixa["maxima"]:
+			_erro("a via '%s' (classe %s) tem %.0f px de largura, fora de [%.0f, %.0f]"
+				% [(via as Dictionary)["nome"], classe, largura, faixa["minima"], faixa["maxima"]])
+
+## Toda construcao encara uma via que realmente passa na frente da porta - o
+## vao nao pode abrir para o mato. "Encarar" quer dizer: existe alguma via
+## reta cuja faixa cobre a projecao do vao no eixo da fachada, dentro de
+## `RECUO_MAXIMO` da porta.
+const RECUO_MAXIMO_DA_VIA := 400.0
+
+func _o_predio_encara_uma_via() -> void:
+	var vias: Array = Mapa.mundo()["vias"]
+	for construcao in Mapa.mundo()["construcoes"]:
+		var porta := Construcao.porta_de(construcao)
+		var normal := Construcao.normal_de(construcao)
+		var alvo := porta + normal * RECUO_MAXIMO_DA_VIA
+		var achou := false
+		for via in vias:
+			if not Vias.e_reta(via):
+				continue
+			if Vias.faixa_de(via).grow(1.0).has_point(alvo) \
+					or Vias.faixa_de(via).grow(1.0).has_point(porta + normal * 40.0):
+				achou = true
+				break
+		if not achou:
+			_erro("%s em %s: a porta (%s, olhando %s) nao encara via nenhuma a ate %.0f px"
+				% [construcao["tipo"], construcao["rect"], porta, normal, RECUO_MAXIMO_DA_VIA])
+
+## A entrada de carro tem que chegar em asfalto de verdade - nao pode acabar
+## na grama. Criterio A: `entrada_de_carro(c)` cresce 1 px e tem que
+## interceptar alguma via reta.
+func _a_entrada_de_carro_chega_na_via() -> void:
+	var vias: Array = Mapa.mundo()["vias"]
+	for construcao in Mapa.mundo()["construcoes"]:
+		var entrada := Construcao.entrada_de_carro(construcao).grow(1.0)
+		var achou := false
+		for via in vias:
+			if Vias.e_reta(via) and Vias.faixa_de(via).intersects(entrada):
+				achou = true
+				break
+		if not achou:
+			_erro("%s em %s: a entrada de carro (%s) nao chega em via nenhuma"
+				% [construcao["tipo"], construcao["rect"], entrada])
+
+## Nenhum predio pisa em via, calcada ou piso de concreto.
+func _predio_nao_cruza_via_nem_calcada_nem_piso() -> void:
+	var mundo := Mapa.mundo()
+	for construcao in mundo["construcoes"]:
+		var r: Rect2 = construcao["rect"]
+		for via in mundo["vias"]:
+			if not Vias.e_reta(via):
+				continue
+			if _sobrepoe(r, Vias.faixa_de(via)):
+				_erro("%s em %s pisa na via '%s'" % [construcao["tipo"], r, (via as Dictionary)["nome"]])
+		for calcada in mundo["calcadas"]:
+			if _sobrepoe(r, calcada):
+				_erro("%s em %s pisa na calcada" % [construcao["tipo"], r])
+		for piso in mundo["piso"]:
+			if _sobrepoe(r, piso):
+				_erro("%s em %s pisa no piso de concreto" % [construcao["tipo"], r])
+
+## Nenhum par de predios se sobrepoe.
+func _predio_nao_cruza_predio() -> void:
+	var construcoes: Array = Mapa.mundo()["construcoes"]
+	for i in construcoes.size():
+		for j in range(i + 1, construcoes.size()):
+			var a: Rect2 = construcoes[i]["rect"]
+			var b: Rect2 = construcoes[j]["rect"]
+			if _sobrepoe(a, b):
+				_erro("%s em %s se sobrepoe a %s em %s"
+					% [construcoes[i]["tipo"], a, construcoes[j]["tipo"], b])
+
+## Toda construcao cabe dentro do lugar que a gerou (com folga) e dentro do
+## MUNDO. Nao ha "predio orfao", pisando fora de tudo.
+func _predio_dentro_do_lugar_e_do_mundo() -> void:
+	for construcao in Mapa.mundo()["construcoes"]:
+		var r: Rect2 = construcao["rect"]
+		if not Mapa.MUNDO.encloses(r):
+			_erro("%s em %s sai dos limites do MUNDO" % [construcao["tipo"], r])
+			continue
+		var achou := false
+		for lugar in Mapa.LUGARES:
+			if (lugar["rect"] as Rect2).grow(600.0).encloses(r):
+				achou = true
+				break
+		if not achou:
+			_erro("%s em %s nao cabe (nem com folga) em nenhum lugar do MUNDO" % [construcao["tipo"], r])
+
+## Lugar cujo nome comeca com "mata" tem que ter densidade de mata (>= 0,4) -
+## senao o rotulo mente. **Nao corrige nada** (o rename floresta -> bosque /
+## mata / campo e P9): so acusa o que ja esta errado hoje.
+func _mata_tem_nome_de_mata() -> void:
+	for lugar in Mapa.LUGARES:
+		if not (lugar["nome"] as String).begins_with("mata"):
+			continue
+		var densidade: float = lugar.get("densidade", 0.03)
+		if densidade < 0.4:
+			_erro("'%s' tem nome de mata fechada mas densidade %.2f (esperado >= 0,40)"
+				% [lugar["nome"], densidade])
 
 func _cabe(onde: Vector2) -> bool:
 	_consulta.transform = Transform2D(0.0, onde)
