@@ -98,7 +98,7 @@ static func _bairro_rede() -> Array[Dictionary]:
 		"pontas": ["T:rua do bairro", "T:rua de baixo"] })
 
 	# A Estrada Velha: a SEGUNDA rota ate a cidade, que nao usa a rodovia -
-	# critério F. Sobe e encontra a Rua do Correio da cidade exatamente no
+	# criterio F. Sobe e encontra a Rua do Correio da cidade exatamente no
 	# mesmo ponto (13000, 10520), dentro da propria rodovia.
 	fora.append({ "nome": "estrada velha", "classe": "residencial", "lugar": "bairro",
 		"eixo": [Vector2(9800.0, 15600.0), Vector2(13000.0, 15600.0)],
@@ -319,7 +319,7 @@ static func _cidade_rede() -> Array[Dictionary]:
 
 	# Quatro verticais descendo da avenida ate a rodovia - Rua do Correio e
 	# a que a Estrada Velha do bairro encontra em (13000, 10520), a segunda
-	# rota da critério F. Rua da Delegacia sobe mais, ate o Laco do Norte.
+	# rota do criterio F. Rua da Delegacia sobe mais, ate o Laco do Norte.
 	fora.append({ "nome": "rua do poente", "classe": "residencial", "lugar": "cidade",
 		"eixo": [Vector2(12800.0, 6900.0), Vector2(12800.0, 10520.0)],
 		"pontas": ["T:avenida central (oeste)", "emenda:rodovia"] })
@@ -481,7 +481,7 @@ static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 ## calcada. E o que separa "predio numa grade" de lugar.
 static func _o_que_vem_com_o_predio(predio: Dictionary, pecas: Dictionary) -> void:
 	var tipo: String = predio["tipo"]
-	# O centro do predio NAO serve para pôr zumbi: num predio de tres quartos a
+	# O centro do predio NAO serve para por zumbi: num predio de tres quartos a
 	# divisoria interna passa quase no meio, e o zumbi nascia dentro da parede.
 	# O centro da sala serve. O conferir_zumbi pegou.
 	var sala: Vector2 = Construcao.quartos_de(predio)[0].get_center()
@@ -747,7 +747,7 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 
 ## Mata. Nao tem loot e nao tem construcao: e o vazio entre os lugares, e e ele
 ## que faz a distancia existir. No PZ e a floresta entre as cidades que
-## transforma "ir ate lá" numa decisao.
+## transforma "ir ate la" numa decisao.
 ##
 ## **Tipo "mata", nao mais "floresta"** (17/09/2026, P10): o proprio nome de
 ## cada lugar ja dizia "mata do X", e o conferir_mapa cobra que "mata" no nome

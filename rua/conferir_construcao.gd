@@ -2,9 +2,10 @@ extends Node
 ## Ferramenta. Rode esta cena (F6) depois de mexer em `construcao.gd`.
 ##
 ## Prova que a porta em quatro direcoes (17/09/2026) esta certa para
-## leste/oeste - o que a regressao bit a bit (`conferir_regressao_construcao.tscn`)
-## nao alcanca, porque nenhuma construcao do mapa de hoje usa essas duas portas.
-## Monta o MESMO predio sintetico nas 4 orientacoes e exige:
+## leste/oeste - o que a regressao bit a bit contra o mapa de entao (P1,
+## removida em P14) nao alcancava, porque nenhuma construcao do mapa usa
+## essas duas portas ainda hoje. Monta o MESMO predio sintetico nas 4
+## orientacoes e exige:
 ##
 ##  a) a uniao das 5 paredes externas mais o vao da porta preenche exatamente o
 ##     anel do retangulo (sem buraco e sem sobra), amostrado numa grade fina;

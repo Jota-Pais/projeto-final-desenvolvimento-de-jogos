@@ -3,8 +3,8 @@
 ## `rua/vias.gd` diz o que uma rua e por fora; este arquivo diz como o chao
 ## entre as vias vira quadra, a quadra vira lote, e o lote recebe um predio
 ## virado para a via que o serve. Nasce em 17/09/2026 (P5 da arquitetura
-## nova), **ainda sem consumidor** - `lugares.gd` so passa a gerar em cima
-## disto em P7 em diante. Ate la, so `conferir_quadras.tscn` chama.
+## nova); `lugares.gd` gera a cidade e o bairro inteiros em cima disto desde
+## P8/P9 (`_construir_quadra`).
 ##
 ## ## Por que a quadra nao e um Rect2 escrito a mao
 ##
@@ -239,8 +239,8 @@ static func lotes_da_quadra(quadra: Dictionary, vias: Dictionary) -> Array[Dicti
 			# `tamanho` (o trecho inteiro): sao os mesmos px que a margem
 			# abaixo deixa de fora. Normalizar contra o trecho inteiro faz a
 			# soma das larguras exceder `quantos * passo` pela margem
-			# inteira, e o ultimo lote estoura o trecho coberto pela via - o
-			# proprio conferir_quadras pegou isso no teste 4.
+			# inteira, e o ultimo lote estoura o trecho coberto pela via -
+			# achado testando isto em P5/P6, antes de lugares.gd consumir.
 			var alvo: float = float(quantos) * passo
 			var x: float = t.x + (tamanho - alvo) / 2.0
 			for i in quantos:

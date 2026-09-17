@@ -58,7 +58,7 @@ const VERSAO_DO_MAPA := 1
 
 ## Hash (8 digitos hex) da lista de chaves de todo movel gerado num dia
 ## comum, na ordem em que nascem - commitada aqui e COMPARADA pelo
-## conferir_mapa (17/09/2026, P6), nao so impressa. Imprimir não é
+## conferir_mapa (17/09/2026, P6), nao so impressa. Imprimir nao e
 ## checagem: um numero que so aparece no console e que ninguem confere
 ## nunca falha, e a identidade podia embaralhar em silencio de novo.
 ##

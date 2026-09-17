@@ -107,7 +107,7 @@ func gastar(segundos: float) -> void:
 func ao_vasculhar(segundos: float) -> void:
 	gastar(segundos * CUSTO_DO_VASCULHO)
 
-## 1.0 ao amanhecer o dia, 0.0 as 19:00 e daí em diante.
+## 1.0 ao amanhecer o dia, 0.0 as 19:00 e dai em diante.
 func fracao_de_luz() -> float:
 	return clampf(1.0 - decorrido / DURACAO_DO_DIA, 0.0, 1.0)
 

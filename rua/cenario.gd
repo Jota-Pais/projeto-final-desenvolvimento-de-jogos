@@ -471,7 +471,7 @@ func _desenhar_mato(mundo: Dictionary) -> void:
 ## Um movel por vaga de cada quarto, distribuidos pela parede do fundo do
 ## quarto. E o jeito do PZ: o loot esta dentro, em movel, e nao na calcada.
 func _povoar(construcao: Dictionary) -> void:
-	# A sua casa nao se vasculha - o que tem lá dentro e o porao.
+	# A sua casa nao se vasculha - o que tem la dentro e o porao.
 	if construcao.get("sua", false):
 		return
 

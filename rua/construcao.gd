@@ -39,10 +39,12 @@
 ##
 ## Agora a geometria e escrita **uma vez so**, num referencial canonico com a
 ## fachada sempre ao SUL (`_ao_mundo`/`_rect_mundo` fazem a volta para o
-## mundo), e o caso `sul` e literalmente a identidade dessa volta - e por isso
-## a regressao bit a bit (`conferir_regressao_construcao.tscn`) prova que
-## norte/sul nao se mexeu, e o `conferir_construcao.tscn` prova que leste/oeste
-## esta certo, o que a regressao sozinha nao alcanca.
+## mundo), e o caso `sul` e literalmente a identidade dessa volta. Provado em
+## P1 por dois conferidores: uma regressao bit a bit contra as 91 construcoes
+## do mapa de entao (provou que norte/sul nao se mexeu) e o `conferir_
+## construcao.tscn` que continua aqui (prova leste/oeste nas 4 orientacoes). A
+## regressao cumpriu o papel dela e saiu do repositorio em P14 - o resultado
+## dela (zero divergencia) e permanente, o teste era so a prova pontual.
 ##
 ## **Uma correcao saiu dessa reescrita, e nao so refatoracao**: o codigo antigo
 ## media a divisoria interna com a mesma formula `Rect2(x, y, largura, PAREDE)`
@@ -51,8 +53,7 @@
 ## uma casa norte saia PAREDE (20 px) mais funda que a de uma casa sul com a
 ## mesma planta, sem ninguem ter notado. Escrita uma vez so, a formula trata as
 ## duas orientacoes do mesmo jeito - como o sul sempre tratou, que e a maioria
-## das construcoes de hoje. Ver a docstring de `conferir_regressao_construcao.gd`
-## para a prova de que essa e a unica divergencia real contra o mapa de hoje.
+## das construcoes de hoje.
 
 const PAREDE := 20.0
 ## Vao de porta: 3,6 corpos de largura. Generoso de proposito - porta apertada

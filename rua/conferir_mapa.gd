@@ -143,7 +143,7 @@ func _a_geometria_fecha() -> void:
 	_ha_segunda_rota_bairro_cidade()
 	print("  %d achado(s) nesta fase" % (_falhas - antes))
 
-## Critério F: existe uma rota entre o bairro e a cidade que NAO depende da
+## Criterio F: existe uma rota entre o bairro e a cidade que NAO depende da
 ## rodovia - a "segunda rota" (17/09/2026, P7). Tira toda via de classe
 ## `rodovia` do grafo e confere que o `acesso` do bairro ainda alcanca o da
 ## cidade pelas vias que sobraram (BFS). Bem mais simples que provar 2
