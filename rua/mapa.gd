@@ -65,7 +65,7 @@ const VERSAO_DO_MAPA := 1
 ## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
 ## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
 ## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "7c38a223"
+const IMPRESSAO_ESPERADA := "01c38612"
 
 ## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
 ## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
@@ -373,12 +373,6 @@ static func lugar(nome: String) -> Dictionary:
 			return qual
 	return {}
 
-static func onde_o_bairro_comeca() -> Vector2:
-	for lugar in LUGARES:
-		if lugar["tipo"] == "bairro":
-			return (lugar["rect"] as Rect2).position
-	return Vector2.ZERO
-
 ## Quanto o jogador nasce afastado da porta, para fora.
 ##
 ## Tem que ser maior que a meia altura da zona de deteccao da porta (80 px),
@@ -416,8 +410,11 @@ static func onde_o_jogador_nasce() -> Vector2:
 ## Sai do proprio predio, pelo mesmo `porta_de()` que abre o vao na fachada de
 ## qualquer construcao do mapa. Se a sua casa mudar de lugar ou de tamanho, a
 ## porta vai junto e ninguem precisa lembrar de mexer aqui.
+##
+## Sem soma de origem (17/09/2026, P9): `Lugares.sua_casa()` ja nasce em
+## coordenada de MUNDO, porque o bairro inteiro passou a nascer assim.
 static func onde_fica_a_porta_de_casa() -> Vector2:
-	return onde_o_bairro_comeca() + Construcao.porta_de(Lugares.sua_casa())
+	return Construcao.porta_de(Lugares.sua_casa())
 
 ## Para que lado a porta da sua casa olha - "norte", "sul", "leste" ou
 ## "oeste". E o que `rua/entrada_de_casa.gd` usa para saber se o vao dela e
