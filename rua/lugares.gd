@@ -31,7 +31,12 @@ const Quadras := preload("res://rua/quadras.gd")
 ## 170 m). Ele era uma fita de casas dos dois lados da rodovia, e o mapa inteiro
 ## se passava nela; agora e um **loteamento**, com rede de ruas propria. O espaco
 ## saiu do vazio que havia ao sul, que nao servia para nada.
-const BAIRRO_TAMANHO := Vector2(5760.0, 6800.0)
+##
+## Cresceu de novo para o leste em 17/09/2026 (P16, 5.760 -> 6.800 px): a
+## Estrada Velha entra no bairro so 160 px antes do limite antigo (x 9800 a
+## 9960) - de menos para QUALQUER casa encarar ela sem sair do MUNDO
+## (achado rodando o conferir_mapa: casa "nao cabe em nenhum lugar").
+const BAIRRO_TAMANHO := Vector2(6800.0, 6800.0)
 
 # **Nem a porta de casa nem o nascimento do jogador tem constante aqui.** Os
 # dois ja tiveram: a porta era a BAIRRO_PORTA_DO_PORAO, escrita a mao dentro de
@@ -175,11 +180,11 @@ static func sua_casa() -> Dictionary:
 
 # --- o bairro residencial ---------------------------------------------------
 
-## As quadras do bairro (17/09/2026, P9 - arquitetura nova), em cima de
-## `_bairro_rede()`. Substitui o loteamento de 16/09/2026
+## As quadras do bairro (17/09/2026, P9 - arquitetura nova; densificado em
+## P16), em cima de `_bairro_rede()`. Substitui o loteamento de 16/09/2026
 ## (`BAIRRO_CONSTRUCOES`/`BAIRRO_CERCAS`/`BAIRRO_MOVEIS_DE_RUA`/
-## `BAIRRO_ZUMBIS`/`BAIRRO_BOSQUES`, tudo removido) - quatro quadras, cada
-## uma sabendo so quais vias a limitam.
+## `BAIRRO_ZUMBIS`/`BAIRRO_BOSQUES`, tudo removido) - cada quadra sabendo so
+## quais vias a limitam.
 static func _quadras_do_bairro() -> Array[Dictionary]:
 	return [
 		# Ao norte da Rua do Bairro - a UNICA via do loteamento com calcada,
@@ -200,14 +205,16 @@ static func _quadras_do_bairro() -> Array[Dictionary]:
 			"entre": { "norte": "rua do bairro", "sul": "rua de baixo",
 				"leste": "estrada do bairro" },
 			"fundo": { "oeste": 1600.0 }, "frentes": ["norte"], "passo": 800.0 },
-		# Ao sul da Rua de Baixo, a oeste da Estrada do Bairro. Fundo 1200,
-		# nao 1000 (17/09/2026, P9): 1000 deixava a planta mais funda sem
-		# folga (recuo minimo 240 + planta funda 640 + quintal 160 = 1040 >
-		# 1000) - o lote nascia e o predio era descartado.
-		{ "id": "QB-baixo", "lugar": "bairro", "uso": "casa",
-			"entre": { "norte": "rua de baixo", "leste": "estrada do bairro" },
-			"fundo": { "sul": 1200.0, "oeste": 1600.0 },
-			"frentes": ["norte"], "passo": 800.0 },
+		# QB-baixo (o quarteirao a sul da Rua de Baixo, a oeste da Estrada do
+		# Bairro) foi REMOVIDA em P16: o retorno de baixo (o "U" que fecha a
+		# Rua de Baixo) atravessa bem no meio do retangulo dela - x 5600 a
+		# 6400, dentro do x 5240-6840 que a quadra reclamava -, e nenhuma
+		# das duas sabia da outra. Enquanto a quadra so descartava o unico
+		# lote (por falta de espaco), o conflito ficava escondido; ao
+		# consertar o descarte (achado acima, testando densidade) a casa
+		# nascia EM CIMA do proprio retorno. A area dela virou as casas de
+		# `_casas_junto_a_via` em volta do retorno, mais abaixo em `_bairro`.
+		#
 		# A leste do Beco dos Fundos, virada para a Rua de Baixo (que agora
 		# chega ate aqui - ver a rede acima). Fundo 1600, nao 700
 		# (17/09/2026, P9): 700 nao cabia nem UM lote de passo 800.
@@ -215,6 +222,13 @@ static func _quadras_do_bairro() -> Array[Dictionary]:
 			"entre": { "sul": "rua de baixo", "oeste": "beco dos fundos" },
 			"fundo": { "norte": 1600.0, "leste": 1600.0 },
 			"frentes": ["sul"], "passo": 800.0 },
+		# A Estrada Velha nao vira quadra (17/09/2026, P16): ancorar o lado
+		# leste dela precisaria da Estrada Velha (subida), a 3.200 px dali -
+		# bem alem do proprio limite do bairro (x 9960), que so cobre 160 px
+		# depois de onde a Estrada Velha comeca (x 9800). Uma casa ali
+		# nasceria fora de qualquer lugar do MUNDO (achado rodando o
+		# conferir_mapa). Ganha UMA casa a mao em `_bairro`, com o bairro
+		# alargado o suficiente pra ela caber - ver `_casas_junto_a_via`.
 	]
 
 ## O bairro (17/09/2026, P9 - arquitetura nova): quadra -> lote -> predio,
@@ -252,6 +266,44 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 				})
 			_:
 				_construir_quadra(quadra, vias, pecas, "casa")
+
+	# Casas viradas PRA DENTRO do laco do poente e do retorno de baixo
+	# (17/09/2026, P16 - pedido do dono: "esses lacos nao fazem sentido,
+	# eles nao tao levando pra lugar algum"). Os dois eram geometria pura -
+	# nenhum lote da quadra os usava como frente, porque um laco/retorno so
+	# tem ~1000 px de reta por lado, curto demais para ancorar uma quadra
+	# nos dois eixos. `_casas_junto_a_via` reusa `Quadras.predio_no_lote`
+	# direto, sem passar pela quadra inteira.
+	#
+	# So um lado de cada (norte/sul do laco; oeste do retorno): o lado
+	# oeste do laco esbarra na mata do oeste (a via nasce a 10 px da borda
+	# do proprio lugar), e o leste do retorno esbarra na Estrada do Bairro -
+	# nenhum dos dois sobra espaco de verdade.
+	_casas_junto_a_via(vias["laco do poente norte"], "sul", 4230.0,
+		[950.0], 1250.0, "bairro/laco-norte", pecas)
+	_casas_junto_a_via(vias["laco do poente sul"], "norte", 4230.0,
+		[950.0], 1250.0, "bairro/laco-sul", pecas)
+	_casas_junto_a_via(vias["retorno de baixo (a)"], "leste", 15650.0,
+		[1100.0], 1350.0, "bairro/retorno-oeste", pecas)
+	# O fundo do retorno e raso demais (so ~740 px ate a borda do lugar) para
+	# uma casa de verdade - um galpao de quintal cabe, e sobra a mesma
+	# variedade que o sitio/a lavoura ja usam.
+	var via_fundo: Dictionary = vias["retorno de baixo (fundo)"]
+	var borda_fundo: float = Vias.borda_util_de(via_fundo, Quadras.OPOSTO["norte"])
+	var lote_do_fundo := { "rect": Rect2(5620.0, borda_fundo, 650.0, 740.0), "frente": "norte",
+		"profundidade": 740.0, "chave": "bairro/retorno-fundo/0" }
+	var galpao_do_fundo := Quadras.predio_no_lote(lote_do_fundo, "galpao", via_fundo, {})
+	if not galpao_do_fundo.is_empty():
+		pecas["construcoes"].append(galpao_do_fundo)
+		_o_que_vem_com_o_predio(galpao_do_fundo, pecas)
+		pecas["zumbis"].append(Construcao.em_frente(galpao_do_fundo, 0.5, 200.0))
+
+	# Uma casa na Estrada Velha (17/09/2026, P16): a segunda rota ate a
+	# cidade tinha 3.200 px de via residencial sem NENHUM predio encarando
+	# ela. O bairro alargou (ver BAIRRO_TAMANHO/mapa.gd) so o suficiente
+	# para esta casa caber com folga.
+	_casas_junto_a_via(vias["estrada velha"], "norte", 9820.0,
+		[950.0], 1350.0, "bairro/estrada-velha", pecas)
 
 	for construcao in pecas["construcoes"]:
 		if (construcao as Dictionary).get("sua", false):
@@ -354,10 +406,24 @@ static func _cidade_rede() -> Array[Dictionary]:
 ## residencial ao sul dela, virado para a mesma Avenida.
 static func _quadras_da_cidade() -> Array[Dictionary]:
 	return [
+		# Passo 880, nao 1000 (17/09/2026, P16 - achado reproduzindo a
+		# matematica de rect_da_quadra: a testada real contra a Avenida mede
+		# so 930 px, menor que o proprio passo de 1000 - "sul:0" nunca
+		# nascia, nem o armazem que o comentario antigo prometia. Agora e o
+		# Corpo de Bombeiros, no unico lote que sobra.
 		{ "id": "QC-fita-oeste", "lugar": "cidade", "uso": "comercio",
 			"entre": { "sul": "avenida central (oeste)", "leste": "rua do poente" },
 			"fundo": { "norte": 1200.0, "oeste": 1100.0 },
-			"frentes": ["sul"], "passo": 1000.0 },
+			"frentes": ["sul"], "passo": 880.0 },
+		# O Hospital (17/09/2026, P16): o bolso de terra entre a fita
+		# comercial e a Rua da Delegacia, apoiado nas duas vias reais que ja
+		# o limitam por fora. So "leste" como frente - a Avenida
+		# ("sul"/"norte") fica perto demais do cotovelo (x 19600) para
+		# reservar canto sem sobrepor ele.
+		{ "id": "QC-hospital", "lugar": "cidade", "uso": "publico",
+			"entre": { "sul": "avenida central (leste)", "leste": "rua da delegacia" },
+			"fundo": { "norte": 1400.0, "oeste": 1000.0 },
+			"frentes": ["leste"], "passo": 1300.0 },
 		{ "id": "QC-fita-centro", "lugar": "cidade", "uso": "comercio",
 			"entre": { "sul": "avenida central (oeste)", "oeste": "rua do correio" },
 			"fundo": { "norte": 1200.0, "leste": 6300.0 },
@@ -441,6 +507,40 @@ static func _construir_quadra(quadra: Dictionary, vias: Dictionary, pecas: Dicti
 		_o_que_vem_com_o_predio(predio, pecas)
 		pecas["zumbis"].append(Construcao.em_frente(predio, 0.5, 260.0))
 
+## Casas encostadas a mao numa via que `Quadras` nao cobre sozinha - um laco
+## ou um retorno em U so tem uns 1000 px de frente por lado, curto demais
+## para valer uma quadra inteira (que precisa de ancora nos DOIS eixos, e um
+## laco so oferece via no proprio perimetro). Reusa
+## `Quadras.predio_no_lote` direto, montando o "lote" a mao: mesma logica de
+## recuo, entrada de carro e descarte por falta de espaco que qualquer
+## quadra de verdade usa - so o retangulo do lote nao vem de
+## `rect_da_quadra`.
+##
+## `larguras` e a frente de cada casa em fila, começando em `x_inicio` ao
+## longo do eixo da via (x se a via for horizontal, y se for vertical).
+static func _casas_junto_a_via(via: Dictionary, frente: String, x_inicio: float,
+		larguras: Array, profundidade: float, chave_base: String, pecas: Dictionary) -> void:
+	var borda: float = Vias.borda_util_de(via, Quadras.OPOSTO[frente])
+	var x := x_inicio
+	for i in larguras.size():
+		var largura: float = larguras[i]
+		var rect: Rect2
+		match frente:
+			"sul": rect = Rect2(x, borda - profundidade, largura, profundidade)
+			"norte": rect = Rect2(x, borda, largura, profundidade)
+			"leste": rect = Rect2(borda - profundidade, x, profundidade, largura)
+			_: rect = Rect2(borda, x, profundidade, largura)  # oeste
+		var lote := {
+			"rect": rect, "frente": frente, "profundidade": profundidade,
+			"chave": "%s/%d" % [chave_base, i],
+		}
+		var predio := Quadras.predio_no_lote(lote, "casa", via, {})
+		if not predio.is_empty():
+			pecas["construcoes"].append(predio)
+			_o_que_vem_com_o_predio(predio, pecas)
+			pecas["zumbis"].append(Construcao.em_frente(predio, 0.5, 260.0))
+		x += largura
+
 static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["vias"].append_array(_cidade_rede())
 
@@ -453,9 +553,14 @@ static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	for quadra in _quadras_da_cidade():
 		match quadra["id"]:
 			"QC-fita-oeste":
-				# O armazem fica no primeiro lote da ponta oeste da fita -
-				# a "entrada norte" que Rosewood tem.
-				_construir_quadra(quadra, vias, pecas, "comercio", { "sul:0": { "tipo": "armazem" } })
+				# O corpo de bombeiros no unico lote da ponta oeste da fita
+				# (17/09/2026, P16 - substitui o "armazem" do comentario
+				# antigo, que nunca chegava a nascer: a testada real so
+				# cobre 930 px, curta demais para o passo de 1000 que a
+				# quadra tinha).
+				_construir_quadra(quadra, vias, pecas, "comercio", { "sul:0": { "tipo": "bombeiros" } })
+			"QC-hospital":
+				_construir_quadra(quadra, vias, pecas, "hospital", { "leste:0": { "tipo": "hospital" } })
 			"QC-fita-centro":
 				# O mercado no meio da fita, comendo dois lotes (1 e 2) -
 				# 1360 px de largura nao cabe numa vaga so -, com o
@@ -514,6 +619,25 @@ static func _o_que_vem_com_o_predio(predio: Dictionary, pecas: Dictionary) -> vo
 			pecas["moveis_de_rua"].append({
 				"tipo": "lata", "pos": Construcao.em_frente(predio, 0.05, 60.0),
 			})
+		"hospital":
+			# Uma ambulancia na frente - o mesmo movel "carro", que ja serve
+			# de viatura na delegacia. Longe de 0.35 (17/09/2026, P16 -
+			# achado rodando o conferir_mapa: a porta fica a 0,35 da
+			# fachada - `Construcao.paredes_externas` - e o carro em 0,3
+			# caia bem em cima do vao, tapando a UNICA entrada do predio.
+			# Todo movel de rua encostado em fachada usa fracao bem longe
+			# de 0,35 - a delegacia usa 0,22/0,78, o armazem usa 0,7).
+			pecas["piso"].append(Construcao.na_frente(predio, 60.0, 200.0))
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.75, 130.0),
+			})
+			pecas["zumbis"].append(sala)
+		"bombeiros":
+			pecas["piso"].append(Construcao.na_frente(predio, 60.0, 200.0))
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.75, 140.0),
+			})
+			pecas["zumbis"].append(sala)
 
 # --- o sitio ----------------------------------------------------------------
 

@@ -137,6 +137,20 @@ static func _trecho_do_canto(rect: Rect2, f: String, p: float) -> Vector2:
 		"leste": return Vector2(rect.end.x - p, rect.end.x)
 		_: return Vector2(rect.position.x, rect.position.x + p)  # oeste
 
+## Quanto uma esquina reserva na aresta perpendicular, NO MAXIMO - bem menor
+## que a profundidade de lote inteira. Achado julgando propostas de expansao
+## da cidade (P16): uma frente SEM oposta usa a quadra inteira como
+## `_profundidade_da_frente` (correto - e a profundidade real do LOTE, sem
+## fileira dos fundos dividindo o meio). Mas antes desta constante,
+## `cantos_reservados` usava esse mesmo numero como tamanho da reserva de
+## canto - e duas frentes perpendiculares, cada uma sem oposta, reservavam a
+## aresta INTEIRA uma da outra, zerando os lotes dos dois lados. A esquina so
+## precisa da profundidade que um predio de verdade ocupa (recuo + planta +
+## quintal), nao o quintal inteiro que sobra atras dele. Maior recuo de
+## classe (comercial, 720) + planta mais funda (mercado/delegacia, ~700) +
+## QUINTAL_MIN (160) = 1580; 1600 fecha com uma folga minima.
+const RESERVA_DE_CANTO_MAXIMA := 1600.0
+
 ## Os trechos reservados em cada aresta pelas esquinas com as frentes
 ## perpendiculares, por posto de classe. Sem isto, duas frentes perpendiculares
 ## geram lote de esquina sobreposto - o caso que so aparece com 3 ou 4 frentes.
@@ -152,7 +166,7 @@ static func cantos_reservados(quadra: Dictionary, vias: Dictionary, rect: Rect2)
 		return (a as String) < (b as String))
 
 	for f in frentes:
-		var p := _profundidade_da_frente(quadra, rect, f)
+		var p := minf(_profundidade_da_frente(quadra, rect, f), RESERVA_DE_CANTO_MAXIMA)
 		for g in PERPENDICULAR[f]:
 			if not frentes.has(g):
 				continue
@@ -193,6 +207,12 @@ static func _lote(quadra: Dictionary, frente: String, x: float, largura: float,
 		"rect": rect, "frente": frente, "profundidade": profundidade,
 		"chave": "%s/%s/%s/%d" % [quadra["lugar"], quadra["id"], frente, indice],
 		"quadra": quadra["id"],
+		# Sem isto, "plantas" na quadra era campo morto (achado em P16,
+		# reduzindo o passo do bairro): `predio_no_lote` le
+		# `lote.get("plantas","suburbio")`, mas ninguem copiava o valor da
+		# QUADRA para o LOTE - toda quadra do mapa usava "suburbio" nas
+		# costas de quem declarasse outra coisa.
+		"plantas": quadra.get("plantas", "suburbio"),
 	}
 
 ## Os lotes de uma quadra, em TODAS as frentes declaradas. Um lote so nasce

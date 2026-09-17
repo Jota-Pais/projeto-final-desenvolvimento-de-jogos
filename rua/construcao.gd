@@ -109,6 +109,14 @@ const TAMANHOS := {
 	# A ponta oeste da fita comercial da cidade (17/09/2026, P8) - um deposito
 	# de estoque, mais raso que uma loja e sem vitrine.
 	"armazem": Vector2(900.0, 560.0),
+	# Predios publicos novos (17/09/2026, P16 - pedido do dono: "hospital,
+	# bombeiro e etc"). Hospital entre a loja e a delegacia em porte (15 x
+	# 17,5 m - profundidade 700, nao 850: o lote dele (QC-hospital) tem
+	# 1000 px de folga ate o cotovelo da Avenida Central, e 850 estourava
+	# essa folga por 10 px); bombeiros do porte de um posto pequeno
+	# (17 x 11,5 m).
+	"hospital": Vector2(600.0, 700.0),
+	"bombeiros": Vector2(680.0, 460.0),
 }
 
 ## **Casa nao e um tamanho so** (16/09/2026). Ate aqui toda casa do mapa media
@@ -217,6 +225,8 @@ const QUARTOS_POR_TIPO := {
 	"mansao": 3,
 	"garagem": 1,
 	"armazem": 1,
+	"hospital": 3,
+	"bombeiros": 1,
 }
 
 ## Que movel entra em cada quarto, por tipo de construcao.
@@ -238,6 +248,11 @@ const MOVEIS_POR_QUARTO := {
 	"mansao": [["comoda"], ["armario"], ["estante"]],
 	"garagem": [["caixa"]],
 	"armazem": [["caixa", "prateleira", "prateleira", "caixa"]],
+	# Hospital: recepcao (maca comum) -> farmacia (remedio de prateleira) ->
+	# sala de curativos no fundo, com a seringa - o quarto mais fundo custa
+	# mais para chegar, mesma regra da delegacia com o armario de armas.
+	"hospital": [["maca", "maca"], ["armario_de_remedios"], ["armario_de_seringas"]],
+	"bombeiros": [["armario_de_bombeiro", "armario_de_bombeiro"]],
 }
 const MOVEIS := {
 	"geladeira": { "rotulo": "Geladeira", "duracao": 3.5, "tamanho": Vector2(72.0, 54.0), "cor": Color("6e7a76") },
@@ -254,6 +269,11 @@ const MOVEIS := {
 	"bomba": { "rotulo": "Bomba de combustível", "duracao": 4.0, "tamanho": Vector2(56.0, 86.0), "cor": Color("7a5a4a") },
 	"arquivo": { "rotulo": "Arquivo", "duracao": 4.2, "tamanho": Vector2(88.0, 52.0), "cor": Color("5a5f63") },
 	"armario_de_armas": { "rotulo": "Armário de armas", "duracao": 5.5, "tamanho": Vector2(108.0, 50.0), "cor": Color("4e5a55") },
+	# Hospital e corpo de bombeiros (17/09/2026, P16).
+	"maca": { "rotulo": "Maca", "duracao": 2.8, "tamanho": Vector2(90.0, 42.0), "cor": Color("8a9a94") },
+	"armario_de_remedios": { "rotulo": "Armário de remédios", "duracao": 3.2, "tamanho": Vector2(84.0, 44.0), "cor": Color("7d8a84") },
+	"armario_de_seringas": { "rotulo": "Armário de seringas", "duracao": 4.5, "tamanho": Vector2(70.0, 40.0), "cor": Color("6f7d76") },
+	"armario_de_bombeiro": { "rotulo": "Armário de bombeiro", "duracao": 4.0, "tamanho": Vector2(104.0, 48.0), "cor": Color("6b3f3a") },
 }
 
 ## Os dois achados que sao **equipamento e nao loot**: nao ocupam vaga na
@@ -284,6 +304,10 @@ const CONTEUDO := {
 	"bomba": ["gasolina", "mangueira", "galão vazio"],
 	"arquivo": ["papelada", "pasta com fichas", "grampeador"],
 	"armario_de_armas": ["algemas", "colete", "cassetete", MUNICAO],
+	"maca": ["atadura", "algodão", "soro fisiológico"],
+	"armario_de_remedios": ["remédio", "álcool", "gaze"],
+	"armario_de_seringas": ["seringa", "seringa", "anestésico"],
+	"armario_de_bombeiro": ["mangueira", "extintor", "capacete", "machadinha"],
 }
 
 

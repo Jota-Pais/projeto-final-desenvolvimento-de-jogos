@@ -65,7 +65,7 @@ const VERSAO_DO_MAPA := 1
 ## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
 ## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
 ## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "73029ce9"
+const IMPRESSAO_ESPERADA := "ec11cc72"
 
 ## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
 ## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
@@ -145,10 +145,12 @@ const LUGARES := [
 		"nome": "mata do oeste", "tipo": "mata", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0),
 		"densidade": 0.45, "lado_da_mata": "oeste",
 	},
-	# Ao SUL da rodovia (y >= 10840). Tamanho inalterado desde 16/09 - o
-	# retangulo e o de Lugares.BAIRRO_TAMANHO, os dois tem que bater.
+	# Ao SUL da rodovia (y >= 10840). O retangulo e o de Lugares.BAIRRO_TAMANHO,
+	# os dois tem que bater. Cresceu 1040 px para o leste em P16, para a
+	# Estrada Velha ganhar uma casa sem sair do MUNDO (ver a docstring de
+	# BAIRRO_TAMANHO).
 	{
-		"nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 10840.0, 5760.0, 6800.0),
+		"nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 10840.0, 6800.0, 6800.0),
 		"acesso": Vector2(7000.0, 10520.0),
 	},
 	# Ao NORTE da rodovia, encostada nela (y ate 10200). Cresceu 1000 px pra
