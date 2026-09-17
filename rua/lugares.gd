@@ -16,6 +16,7 @@
 
 const Construcao := preload("res://rua/construcao.gd")
 const Vias := preload("res://rua/vias.gd")
+const Quadras := preload("res://rua/quadras.gd")
 
 # ---------------------------------------------------------------- o bairro
 #
@@ -273,41 +274,9 @@ static func montar(lugar: Dictionary) -> Dictionary:
 # uma coluna de quadra e mudar um numero, e todo predio nasce virado para a rua
 # certa com recuo de calcada.
 
-## Largura de rua da cidade: 10 m. Bate com a rodovia de proposito, porque a rua
-## do meio da grade **e** a rodovia.
-const CIDADE_RUA := 400.0
-## A altura de uma quadra: 60 m. A largura varia por coluna - ver
-## CIDADE_LARGURAS.
-const CIDADE_QUADRA := Vector2(2600.0, 2400.0)
-
-## A largura de cada coluna de quadra. **Nao sao iguais de proposito:** grade
-## com quadra do mesmo tamanho em toda parte le como planilha, e nao como
-## cidade. Rosewood tem quadra curta no centro e comprida na borda, e o numero
-## de lotes por quadra sai da largura dela.
-const CIDADE_LARGURAS := [2600.0, 3400.0, 2200.0, 3000.0]
-const CIDADE_LINHAS := 2
-## O passo entre uma vaga de lote e a seguinte. Com predio de 520 e passo de 800
-## sobram 7 m entre um lote e outro, que e o que faz parecer lote. Quantas vagas
-## cabem sai da largura da quadra.
-const CIDADE_PASSO := 800.0
-## Recuo da rua ate a fachada. E o que sobra de quintal na frente.
+## Recuo generico da rua ate a fachada, para o patio/estacionamento de um
+## predio publico (ver `_o_que_vem_com_o_predio`).
 const CIDADE_RECUO := 220.0
-
-## Os predios que nao sao casa nem loja, na chave `x da quadra, linha, fileira,
-## vaga`.
-##
-## A chave usa o **x da quadra** e nao o indice da coluna porque as quadras tem
-## larguras diferentes: com indice, mexer numa largura movia o predio especial
-## para outra quadra sem avisar.
-##
-## A delegacia e o mercado moram **dentro da cidade**, e nao soltos no campo:
-## era o que a referencia mostrava e o que o mapa nao tinha. A delegacia fica na
-## quadra mais larga, virada para a rodovia; o mercado na fileira comercial da
-## quadra seguinte. Os dois sao mais largos que uma vaga e comem a seguinte.
-const CIDADE_ESPECIAIS := {
-	"14600,1,0,0": "delegacia",
-	"18400,0,1,0": "mercado",
-}
 
 static func _somar(construcao: Dictionary, origem: Vector2) -> Dictionary:
 	var copia := construcao.duplicate()
@@ -406,137 +375,165 @@ static func _cidade_rede() -> Array[Dictionary]:
 
 	return fora
 
-static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
-	var r: Rect2 = lugar["rect"]
+## As quadras da cidade (17/09/2026, P8 - arquitetura nova): quadra -> lote
+## -> predio, em cima de `rua/quadras.gd` e da rede de `_cidade_rede`. Cada
+## quadra declara so quais vias a limitam - o retangulo dela e CALCULADO
+## (`Quadras.rect_da_quadra`), nunca escrito a mao.
+##
+## Substitui a grade uniforme de 16/09/2026 (`CIDADE_LARGURAS`/`CIDADE_QUADRA`/
+## `CIDADE_ESPECIAIS`): a fita comercial ao norte da Avenida (armazem numa
+## ponta, mercado no meio, mais loja do outro lado da Rua da Delegacia) e o
+## residencial ao sul dela, virado para a mesma Avenida.
+static func _quadras_da_cidade() -> Array[Dictionary]:
+	return [
+		{ "id": "QC-fita-oeste", "lugar": "cidade", "uso": "comercio",
+			"entre": { "sul": "avenida central (oeste)", "leste": "rua do poente" },
+			"fundo": { "norte": 1200.0, "oeste": 1100.0 },
+			"frentes": ["sul"], "passo": 1000.0 },
+		{ "id": "QC-fita-centro", "lugar": "cidade", "uso": "comercio",
+			"entre": { "sul": "avenida central (oeste)", "oeste": "rua do correio" },
+			"fundo": { "norte": 1200.0, "leste": 6300.0 },
+			"frentes": ["sul"], "passo": 1050.0 },
+		{ "id": "QC-fita-leste", "lugar": "cidade", "uso": "comercio",
+			"entre": { "sul": "avenida central (leste)", "oeste": "rua da delegacia" },
+			"fundo": { "norte": 1200.0, "leste": 2700.0 },
+			"frentes": ["sul"], "passo": 1000.0 },
+		# Ao sul, quatro quadras - nao tres: sem parar em CADA vertical (Poente,
+		# Correio, Mercado, Delegacia), a que ficasse "por baixo" de uma
+		# vertical do meio pisaria nela sem ninguem perceber (achado rodando
+		# o conferir_mapa: "casa pisa na via 'rua do mercado'"). Rasa (900,
+		# nao 1000): funda demais e a quadra descia ate a linha do Beco do
+		# Mercado (y 8000) e pisava nele tambem.
+		{ "id": "QC-sul-oeste", "lugar": "cidade", "uso": "casa",
+			"entre": { "norte": "avenida central (oeste)", "leste": "rua do poente" },
+			"fundo": { "sul": 900.0, "oeste": 1100.0 },
+			"frentes": ["norte"], "passo": 900.0 },
+		{ "id": "QC-sul-centro-oeste", "lugar": "cidade", "uso": "casa",
+			"entre": { "norte": "avenida central (oeste)", "oeste": "rua do correio",
+				"leste": "rua do mercado" },
+			"fundo": { "sul": 900.0 },
+			"frentes": ["norte"], "passo": 900.0 },
+		{ "id": "QC-sul-centro-leste", "lugar": "cidade", "uso": "casa",
+			"entre": { "norte": "avenida central (oeste)", "oeste": "rua do mercado" },
+			"fundo": { "sul": 900.0, "leste": 2600.0 },
+			"frentes": ["norte"], "passo": 900.0 },
+		{ "id": "QC-sul-leste", "lugar": "cidade", "uso": "casa",
+			"entre": { "norte": "avenida central (leste)", "oeste": "rua da delegacia" },
+			"fundo": { "sul": 900.0, "leste": 2700.0 },
+			"frentes": ["norte"], "passo": 900.0 },
+	]
 
-	# A rede nova (17/09/2026, P7) - substitui a grade uniforme de verticais/
-	# horizontais de 16/09. As construcoes ainda nascem na grade ANTIGA
-	# (ver _uma_quadra, abaixo) - de proposito: a rua bate certo e a casa
-	# nao, ate P8/P9 reescrever onde a casa fica sobre esta rede.
+## Constroi uma quadra inteira: cada lote vira predio de `tipo_padrao`, exceto
+## os indices citados em `especiais` (chave `indice`, valor `{tipo, extras,
+## juntar_ate}`). E o sucessor do velho `CIDADE_ESPECIAIS` - a mesma ideia
+## (alguns lotes tem tipo fixo), so que por indice DENTRO da quadra em vez de
+## "x absoluto, linha, fileira, vaga", porque agora a quadra sabe contar os
+## proprios lotes. `juntar_ate` funde este lote com os seguintes ate aquele
+## indice (`Quadras.juntar`) - o mercado precisa de mais de uma vaga.
+static func _construir_quadra(quadra: Dictionary, vias: Dictionary, pecas: Dictionary,
+		tipo_padrao: String, especiais := {}) -> void:
+	var lotes := Quadras.lotes_da_quadra(quadra, vias)
+	var pular := {}
+	for indice in especiais:
+		var ate: int = especiais[indice].get("juntar_ate", -1)
+		if ate <= indice:
+			continue
+		for i in range(indice + 1, ate + 1):
+			pular[i] = true
+
+	for i in lotes.size():
+		if pular.has(i):
+			continue
+		var lote: Dictionary = lotes[i]
+		var indice := int((lote["chave"] as String).get_slice("/", 3))
+		var tipo: String = tipo_padrao
+		var extras := {}
+		if especiais.has(indice):
+			var ate: int = especiais[indice].get("juntar_ate", -1)
+			if ate > indice:
+				lote = Quadras.juntar(lotes, i, ate)
+			tipo = especiais[indice]["tipo"]
+			extras = especiais[indice].get("extras", {})
+		var via: Dictionary = vias[quadra["entre"][lote["frente"]]]
+		var predio := Quadras.predio_no_lote(lote, tipo, via, extras)
+		if predio.is_empty():
+			continue
+		pecas["construcoes"].append(predio)
+		_o_que_vem_com_o_predio(predio, pecas)
+		pecas["zumbis"].append(Construcao.em_frente(predio, 0.5, 260.0))
+
+static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["vias"].append_array(_cidade_rede())
 
-	var x := r.position.x + CIDADE_RUA
-	for coluna in CIDADE_LARGURAS.size():
-		var largura: float = CIDADE_LARGURAS[coluna]
-		for linha in CIDADE_LINHAS:
-			_uma_quadra(r, x, largura, linha, pecas)
-		# Zumbi na rua, nas esquinas de cima e de baixo da quadra.
-		pecas["zumbis"].append(Vector2(x + largura * 0.5, r.position.y + CIDADE_RUA * 0.5))
-		pecas["zumbis"].append(Vector2(x + largura * 0.5, r.end.y - CIDADE_RUA * 0.5))
-		x += largura + CIDADE_RUA
+	var vias := {}
+	for via in pecas["vias"]:
+		vias[via["nome"]] = via
+	# A rodovia nao esta em pecas["vias"] (nasce em mapa.gd) - as quadras da
+	# cidade nao encaram ela diretamente, entao nao falta nenhuma referencia.
 
-## Uma quadra: duas fileiras de lote, uma virada para a rua de cima e outra para
-## a de baixo, com o quintal se encontrando no meio.
-##
-## **Quantos lotes cabem sai da largura da quadra**, e nao de uma constante: a
-## quadra de 3.400 tem quatro e a de 2.200 tem tres. E o que faz a grade nao
-## parecer planilha.
-static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
-		linha: int, pecas: Dictionary) -> void:
-	var canto := Vector2(esquerda,
-		cidade.position.y + CIDADE_RUA + float(linha) * (CIDADE_QUADRA.y + CIDADE_RUA))
-	var casa: Vector2 = Construcao.TAMANHOS["casa"]
-	var vagas := maxi(1, int(floor((largura - casa.x) / CIDADE_PASSO)) + 1)
-
-	# Qual fileira da na rodovia: a de baixo da primeira linha de quadras, e a
-	# de cima da segunda. E nelas que fica o comercio.
-	var fileira_da_rodovia := 1 if linha == 0 else 0
-
-	var vaga := 0
-	while vaga < vagas:
-		for fileira in 2:
-			var chave := "%d,%d,%d,%d" % [int(esquerda), linha, fileira, vaga]
-			var tipo: String = CIDADE_ESPECIAIS.get(chave,
-				"comercio" if fileira == fileira_da_rodovia else "casa")
-			var tamanho: Vector2 = Construcao.TAMANHOS[tipo]
-
-			# **Cada lote tem a sua planta e o seu recuo.** O lote continua do
-			# mesmo tamanho - e assim no mundo real -, e quem varia e a casa em
-			# cima dele e o quanto ela recua da rua. Sem isso a quadra inteira
-			# sai com a mesma casa na mesma linha, que era a queixa.
-			var lote := int(esquerda) + linha * 31 + fileira * 101 + vaga * 617
-			var recuo := CIDADE_RECUO
-			if tipo == "casa":
-				tamanho = Construcao.planta_de_casa(lote)
-				recuo += Construcao.recuo_de_casa(lote)
-
-			var margem := (largura - float(vagas - 1) * CIDADE_PASSO - casa.x) * 0.5
-			# Centrada na vaga, e nao encostada na esquerda dela: casa estreita
-			# encostada na esquerda so troca uma linha reta por outra.
-			var px := canto.x + margem + float(vaga) * CIDADE_PASSO \
-				+ (casa.x - tamanho.x) * 0.5
-			var py := canto.y + recuo
-			if fileira == 1:
-				py = canto.y + CIDADE_QUADRA.y - recuo - tamanho.y
-
-			var predio := {
-				"rect": Rect2(px, py, tamanho.x, tamanho.y),
-				"porta": "norte" if fileira == 0 else "sul",
-				"tipo": tipo,
-			}
-			# Ha uma delegacia e um mercado so na cidade, e cada um recebe um
-			# documento placeholder no quarto mais fundo - divisao provisoria, nao
-			# decidida. A pistola fica na armaria, que e o quarto mais fundo da
-			# delegacia. O NUMERO (17/09/2026, P6) e so identidade textual -
-			# nao diz nada sobre ordem de importancia entre os seis.
-			if tipo == "delegacia":
-				predio["documento"] = 3
-				predio["arma"] = true
-			elif tipo == "mercado":
-				predio["documento"] = 4
-			pecas["construcoes"].append(predio)
-			_o_que_vem_com_o_predio(predio, pecas)
-
-		# Predio mais largo que uma vaga come a vaga seguinte.
-		var mais_largo := 1
-		for fileira in 2:
-			var chave := "%d,%d,%d,%d" % [int(esquerda), linha, fileira, vaga]
-			if CIDADE_ESPECIAIS.has(chave):
-				var tamanho: Vector2 = Construcao.TAMANHOS[CIDADE_ESPECIAIS[chave]]
-				mais_largo = maxi(mais_largo, int(ceil(tamanho.x / CIDADE_PASSO)))
-		vaga += mais_largo
-
-	# O beco de servico desta quadra (CIDADE_BECOS) saiu daqui em 17/09/2026:
-	# a rede nova (`_cidade_rede`) tem o seu proprio ("Beco do Mercado"), numa
-	# posicao que nao segue mais o meio de UMA quadra generica.
-
-	pecas["zumbis"].append(canto + Vector2(largura, CIDADE_QUADRA.y) * 0.5)
-
-
+	for quadra in _quadras_da_cidade():
+		match quadra["id"]:
+			"QC-fita-oeste":
+				# O armazem fica no primeiro lote da ponta oeste da fita -
+				# a "entrada norte" que Rosewood tem.
+				_construir_quadra(quadra, vias, pecas, "comercio", { 0: { "tipo": "armazem" } })
+			"QC-fita-centro":
+				# O mercado no meio da fita, comendo dois lotes (1 e 2) -
+				# 1360 px de largura nao cabe numa vaga so -, com o
+				# documento 4. A pistola e o documento 3 ficam com a
+				# delegacia, na fita leste.
+				_construir_quadra(quadra, vias, pecas, "comercio", {
+					1: { "tipo": "mercado", "extras": { "documento": 4 }, "juntar_ate": 2 },
+				})
+			"QC-fita-leste":
+				# Tambem comendo 2 vagas - 1040 px de delegacia nao cabe
+				# numa vaga so de 1000 (achado rodando o conferir_mapa: o
+				# lote saia raso demais e o predio era descartado).
+				_construir_quadra(quadra, vias, pecas, "comercio", {
+					0: { "tipo": "delegacia", "extras": { "documento": 3, "arma": true }, "juntar_ate": 1 },
+				})
+			_:
+				_construir_quadra(quadra, vias, pecas, "casa")
 
 ## O que cada tipo de predio traz junto: patio, carro na frente, lata na
 ## calcada. E o que separa "predio numa grade" de lugar.
 static func _o_que_vem_com_o_predio(predio: Dictionary, pecas: Dictionary) -> void:
 	var tipo: String = predio["tipo"]
-	var onde: Rect2 = predio["rect"]
 	# O centro do predio NAO serve para pôr zumbi: num predio de tres quartos a
 	# divisoria interna passa quase no meio, e o zumbi nascia dentro da parede.
 	# O centro da sala serve. O conferir_zumbi pegou.
 	var sala: Vector2 = Construcao.quartos_de(predio)[0].get_center()
+	# Tudo NA FRENTE da fachada, seja ela para onde for (17/09/2026, P8):
+	# antes usava `onde.end.y`/`onde.position.y` direto, supondo fachada ao
+	# norte ou ao sul - um predio de porta leste/oeste (a rede nova ja tem
+	# alguns) poria o patio dentro do proprio predio ou do lado errado.
 	match tipo:
 		"delegacia":
 			# Patio de concreto entre a fachada e a rua, com viatura.
-			pecas["piso"].append(Rect2(onde.position.x - 80.0, onde.end.y,
-				onde.size.x + 160.0, CIDADE_RECUO))
+			pecas["piso"].append(Construcao.na_frente(predio, 80.0, 220.0))
 			pecas["moveis_de_rua"].append({
-				"tipo": "carro", "pos": Vector2(onde.get_center().x - 300.0, onde.end.y + 110.0),
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.22, 130.0),
 			})
 			pecas["moveis_de_rua"].append({
-				"tipo": "carro", "pos": Vector2(onde.get_center().x + 300.0, onde.end.y + 110.0),
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.78, 130.0),
 			})
 			pecas["zumbis"].append(sala)
-			pecas["zumbis"].append(Vector2(onde.get_center().x, onde.end.y + 120.0))
+			pecas["zumbis"].append(Construcao.em_frente(predio, 0.5, 140.0))
 		"mercado":
-			pecas["piso"].append(Rect2(onde.position.x - 100.0,
-				onde.position.y - CIDADE_RECUO, onde.size.x + 200.0, CIDADE_RECUO))
+			pecas["piso"].append(Construcao.na_frente(predio, 100.0, CIDADE_RECUO))
 			pecas["moveis_de_rua"].append({
-				"tipo": "carro", "pos": Vector2(onde.get_center().x - 420.0,
-					onde.position.y - 110.0),
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.2, 130.0),
+			})
+			pecas["zumbis"].append(sala)
+		"armazem":
+			pecas["piso"].append(Construcao.na_frente(predio, 40.0, 160.0))
+			pecas["moveis_de_rua"].append({
+				"tipo": "carro", "pos": Construcao.em_frente(predio, 0.7, 140.0),
 			})
 			pecas["zumbis"].append(sala)
 		"comercio":
 			pecas["moveis_de_rua"].append({
-				"tipo": "lata", "pos": Vector2(onde.position.x - 90.0, onde.get_center().y),
+				"tipo": "lata", "pos": Construcao.em_frente(predio, 0.05, 60.0),
 			})
 
 # --- o sitio ----------------------------------------------------------------

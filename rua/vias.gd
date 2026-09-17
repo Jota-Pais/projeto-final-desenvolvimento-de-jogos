@@ -198,7 +198,16 @@ static func calcadas_de(via: Dictionary) -> Array[Rect2]:
 ## lotes) - existe aqui porque e uma pergunta sobre a VIA, nao sobre o lote.
 static func borda_util_de(via: Dictionary, lado: String) -> float:
 	var r := faixa_de(via)
-	var c: float = CLASSES[via["classe"]]["calcada"]
+	# So soma calcada+grama se ESTE lado e o lado declarado em via["calcada"]
+	# - **so um lado tem passeio** (17/09/2026, P8: achado gerando os
+	# primeiros predios de fachada norte sobre a Avenida - toda borda_util
+	# ganhava a folga da calcada, mesmo do lado sem passeio nenhum, e o
+	# recuo do predio somava mais ~120 px do que devia. Mesma familia do bug
+	# que `calcadas_de` teve).
+	var c := 0.0
+	if via.get("calcada", "") == lado:
+		var classe: Dictionary = CLASSES[via["classe"]]
+		c = classe["calcada"] + classe["grama"]
 	match lado:
 		"norte": return r.position.y - c
 		"sul": return r.end.y + c

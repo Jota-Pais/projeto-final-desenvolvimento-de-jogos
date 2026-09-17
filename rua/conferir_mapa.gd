@@ -274,20 +274,34 @@ func _a_largura_bate_com_a_classe() -> void:
 ## vao nao pode abrir para o mato. "Encarar" quer dizer: existe alguma via
 ## reta cuja faixa cobre a projecao do vao no eixo da fachada, dentro de
 ## `RECUO_MAXIMO` da porta.
-const RECUO_MAXIMO_DA_VIA := 400.0
+##
+## **950, nao 400** (17/09/2026, P8): 400 vinha do recuo fixo de antes de
+## quadras.gd (no maximo ~340 com o degrau de 120). O maior recuo de
+## verdade hoje e o da classe `comercial` - 720 de recuo mais 120 de calcada
+## mais 80 de grama = 920 -, e o cheque tem que caber isso com folga, senao
+## ele proprio acusa um predio comercial corretamente recuado como se a
+## porta encarasse o mato.
+const RECUO_MAXIMO_DA_VIA := 950.0
 
 func _o_predio_encara_uma_via() -> void:
 	var vias: Array = Mapa.mundo()["vias"]
 	for construcao in Mapa.mundo()["construcoes"]:
 		var porta := Construcao.porta_de(construcao)
 		var normal := Construcao.normal_de(construcao)
-		var alvo := porta + normal * RECUO_MAXIMO_DA_VIA
+		# O RAIO inteiro da porta ate RECUO_MAXIMO_DA_VIA, nao so dois pontos
+		# amostrados (achado em P8: um recuo de verdade cai em qualquer lugar
+		# entre a porta e o maximo, e amostrar so `40` e o maximo passava
+		# batido sempre que o recuo real caia no meio - por acaso quase todo
+		# recuo de comercial/principal). Vira um retangulo fino (a largura de
+		# uma pessoa) e confere INTERSECAO com a faixa da via, nao ponto.
+		var perpendicular := Vector2(-normal.y, normal.x)
+		var raio := Rect2(porta - perpendicular * 2.0, perpendicular * 4.0)
+		raio = raio.abs().expand(porta + normal * RECUO_MAXIMO_DA_VIA)
 		var achou := false
 		for via in vias:
 			if not Vias.e_reta(via):
 				continue
-			if Vias.faixa_de(via).grow(1.0).has_point(alvo) \
-					or Vias.faixa_de(via).grow(1.0).has_point(porta + normal * 40.0):
+			if Vias.faixa_de(via).grow(1.0).intersects(raio):
 				achou = true
 				break
 		if not achou:

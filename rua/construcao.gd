@@ -105,6 +105,9 @@ const TAMANHOS := {
 	"delegacia": Vector2(1040.0, 700.0),
 	"mansao": Vector2(880.0, 640.0),
 	"garagem": Vector2(460.0, 380.0),
+	# A ponta oeste da fita comercial da cidade (17/09/2026, P8) - um deposito
+	# de estoque, mais raso que uma loja e sem vitrine.
+	"armazem": Vector2(900.0, 560.0),
 }
 
 ## **Casa nao e um tamanho so** (16/09/2026). Ate aqui toda casa do mapa media
@@ -212,6 +215,7 @@ const QUARTOS_POR_TIPO := {
 	"delegacia": 3,
 	"mansao": 3,
 	"garagem": 1,
+	"armazem": 1,
 }
 
 ## Que movel entra em cada quarto, por tipo de construcao.
@@ -232,6 +236,7 @@ const MOVEIS_POR_QUARTO := {
 	"delegacia": [["arquivo"], ["caixa"], ["armario_de_armas"]],
 	"mansao": [["comoda"], ["armario"], ["estante"]],
 	"garagem": [["caixa"]],
+	"armazem": [["caixa", "prateleira", "prateleira", "caixa"]],
 }
 const MOVEIS := {
 	"geladeira": { "rotulo": "Geladeira", "duracao": 3.5, "tamanho": Vector2(72.0, 54.0), "cor": Color("6e7a76") },
@@ -544,10 +549,32 @@ static func entrada_de_carro_para(rect: Rect2, porta: String, comprimento: float
 
 ## Casca de compatibilidade sobre `entrada_de_carro_para`: usa o comprimento
 ## fixo de sempre, a menos que a construcao ja tenha um `recuo_ate_a_via`
-## gravado (o campo que `rua/lotes.gd` vai comecar a gravar a partir de P4).
+## gravado (o campo que `rua/quadras.gd` grava desde P5).
 static func entrada_de_carro(construcao: Dictionary) -> Rect2:
 	var comprimento: float = construcao.get("recuo_ate_a_via", ENTRADA_DE_CARRO_COMPRIMENTO)
 	return entrada_de_carro_para(construcao["rect"], construcao["porta"], comprimento)
+
+## Um retangulo na FRENTE da fachada (na direcao do normal): a largura da
+## fachada mais `folga` de cada lado, por `profundidade` para fora. E o
+## patio/estacionamento generico de um predio publico - escrito uma vez para
+## as 4 orientacoes (17/09/2026, P8): antes cada gerador de lugar escrevia
+## `onde.end.y` a mao, supondo fachada ao norte ou ao sul.
+static func na_frente(construcao: Dictionary, folga: float, profundidade: float) -> Rect2:
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	return _rect_mundo(rect, porta, Vector2(-folga, _profundidade(rect, porta)),
+		Vector2(frente + 2.0 * folga, profundidade))
+
+## Um ponto na frente da fachada: a `ao_longo` (0..1) do comprimento dela,
+## `distancia` px para fora, na direcao do normal.
+static func em_frente(construcao: Dictionary, ao_longo: float, distancia: float) -> Vector2:
+	var rect: Rect2 = construcao["rect"]
+	var porta: String = construcao["porta"]
+	var frente := _frente(rect, porta)
+	var profundidade := _profundidade(rect, porta)
+	return _ao_mundo(rect, porta, Vector2(frente * ao_longo, profundidade)) \
+		+ normal_de(construcao) * distancia
 
 ## Hash FNV-1a de 32 bits sobre uma chave de texto. Determinismo pela CHAVE, e
 ## nao pelo indice de geracao: mover ou inserir um predio deixa de re-sortear

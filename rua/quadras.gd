@@ -251,6 +251,18 @@ static func lotes_da_quadra(quadra: Dictionary, vias: Dictionary) -> Array[Dicti
 				indice += 1
 	return fora
 
+## Um lote que e a UNIAO de lotes vizinhos (mesma frente), para o predio que
+## come mais de uma vaga - o mercado, na fita comercial. Fica com o `rect`
+## somado, e a `chave`/`frente`/`quadra` do primeiro (`profundidade` e igual
+## nos dois, ja que sao da mesma frente).
+static func juntar(lotes: Array[Dictionary], de: int, ate: int) -> Dictionary:
+	var rect: Rect2 = lotes[de]["rect"]
+	for i in range(de + 1, ate + 1):
+		rect = rect.merge(lotes[i]["rect"])
+	var fundido := (lotes[de] as Dictionary).duplicate()
+	fundido["rect"] = rect
+	return fundido
+
 ## O predio dentro do lote, virado para a via que o serve, nas 4 direcoes.
 ##
 ## Devolve `{}` (lote descartado) se o predio nao couber com folga lateral e
@@ -259,7 +271,14 @@ static func lotes_da_quadra(quadra: Dictionary, vias: Dictionary) -> Array[Dicti
 static func predio_no_lote(lote: Dictionary, tipo: String, via: Dictionary,
 		extras: Dictionary) -> Dictionary:
 	var porta: String = lote["frente"]
-	var planta: Vector2 = Construcao.planta_de(lote.get("plantas", "suburbio"), lote["chave"])
+	# So "casa" varia de planta (17/09/2026, P8 - achado ao usar isto pela
+	# primeira vez para um tipo que nao e casa): os outros tipos tem
+	# tamanho fixo em `Construcao.TAMANHOS`, e sortear uma planta de casa
+	# para um mercado ou uma delegacia daria um predio do tamanho errado -
+	# a funcao nunca tinha sido chamada com outro tipo ate agora, entao o
+	# gap nao aparecia em teste nenhum.
+	var planta: Vector2 = Construcao.planta_de(lote.get("plantas", "suburbio"), lote["chave"]) \
+		if tipo == "casa" else Construcao.TAMANHOS[tipo]
 	var tamanho := planta
 	if porta == "leste" or porta == "oeste":
 		tamanho = Vector2(planta.y, planta.x)
@@ -277,8 +296,19 @@ static func predio_no_lote(lote: Dictionary, tipo: String, via: Dictionary,
 
 	var desloca := 80.0 * float(Construcao.embaralhar(lote["chave"] + "!") % 3 - 1)
 	var rect := _encostar(lote, porta, recuo, tamanho, desloca)
+	# A entrada de carro tem que atravessar a grama e a calcada tambem, nao
+	# so o recuo - senao ela para na beira do proprio quintal, curta da
+	# calcada pelo tanto que a calcada mede (achado gerando os primeiros
+	# predios coma calcada de verdade, em P8: a Rua do Bairro e a Avenida
+	# sao as primeiras vias com calcada que ganham predio).
+	# O lado da via que da para o predio e o OPOSTO da porta (a via fica do
+	# lado de fora do lote, entao "porta sul" quer dizer "a via encara o
+	# norte dela mesma").
+	var ate_o_asfalto := recuo
+	if via.get("calcada", "") == OPOSTO[porta]:
+		ate_o_asfalto += classe["calcada"] + classe["grama"]
 	var construcao := {
-		"rect": rect, "porta": porta, "tipo": tipo, "recuo_ate_a_via": recuo,
+		"rect": rect, "porta": porta, "tipo": tipo, "recuo_ate_a_via": ate_o_asfalto,
 		"via": via["nome"], "chave": lote["chave"],
 	}
 	construcao.merge(extras)
