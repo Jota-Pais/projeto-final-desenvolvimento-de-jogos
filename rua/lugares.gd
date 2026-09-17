@@ -756,28 +756,49 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 ##
 ## O bosque nao ocupa o retangulo inteiro - fica uma faixa livre na borda, para
 ## a mata nunca fechar a passagem ao lado da estrada. Nas tres que encostam no
-## limite do MUNDO (`lado_da_mata`), a faixa FECHADA e so um anel perto dessa
-## borda - o resto do retangulo fica aberto, sem bosque. Sem o anel, dar
-## densidade 0,45 ao retangulo INTEIRO (24.000 x 3.200 px, no caso da mata do
-## norte) tomaria a maior parte do orcamento fixo de arvores do mapa inteiro,
-## e o bairro/a mansao - que precisam de arvore para valer como bosque -
-## ficariam quase pelados (achado fazendo essa conta rodando P10).
+## limite do MUNDO (`lado_da_mata`), sao DOIS aneis perto dessa borda, nao um
+## so: primeiro uma faixa de bosque **ralo** (a transicao), so depois a mata
+## FECHADA de verdade - o resto do retangulo fica aberto, sem bosque nenhum.
+## Sem o anel, dar densidade 0,45 ao retangulo INTEIRO (24.000 x 3.200 px, no
+## caso da mata do norte) tomaria a maior parte do orcamento fixo de arvores
+## do mapa inteiro, e o bairro/a mansao - que precisam de arvore para valer
+## como bosque - ficariam quase pelados (achado fazendo essa conta rodando
+## P10). E sem o bosque ralo entre o campo aberto e a mata fechada, a
+## transicao era um corte seco de zero arvore para mata cerrada, sem o
+## "aberto -> bosque -> mata" que a revisao visual de P13 foi olhar.
 const PROFUNDIDADE_DA_MATA_FECHADA := 1400.0
+const PROFUNDIDADE_DO_BOSQUE_RALO := 900.0
+const DENSIDADE_DO_BOSQUE_RALO := 0.15
 
 static func _mata(lugar: Dictionary, pecas: Dictionary) -> void:
 	var r: Rect2 = (lugar["rect"] as Rect2).grow(-160.0)
 	var densidade: float = lugar.get("densidade", 0.03)
+	var lado: String = lugar.get("lado_da_mata", "")
+	if lado == "":
+		pecas["bosques"].append({ "rect": r, "densidade": densidade })
+		_zumbis_da_mata(r, pecas)
+		return
+
 	var fechada := r
-	match lugar.get("lado_da_mata", ""):
+	var ralo := r
+	match lado:
 		"oeste":
 			fechada = Rect2(r.position.x, r.position.y, PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
+			ralo = Rect2(fechada.end.x, r.position.y, PROFUNDIDADE_DO_BOSQUE_RALO, r.size.y)
 		"norte":
 			fechada = Rect2(r.position.x, r.position.y, r.size.x, PROFUNDIDADE_DA_MATA_FECHADA)
+			ralo = Rect2(r.position.x, fechada.end.y, r.size.x, PROFUNDIDADE_DO_BOSQUE_RALO)
 		"leste":
 			fechada = Rect2(r.end.x - PROFUNDIDADE_DA_MATA_FECHADA, r.position.y,
 				PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
+			ralo = Rect2(fechada.position.x - PROFUNDIDADE_DO_BOSQUE_RALO, r.position.y,
+				PROFUNDIDADE_DO_BOSQUE_RALO, r.size.y)
 	pecas["bosques"].append({ "rect": fechada, "densidade": densidade })
-	# Um ou dois arrastando entre as arvores, para a mata nao ser passeio.
+	pecas["bosques"].append({ "rect": ralo, "densidade": DENSIDADE_DO_BOSQUE_RALO })
+	_zumbis_da_mata(r, pecas)
+
+## Um ou dois arrastando entre as arvores, para a mata nao ser passeio.
+static func _zumbis_da_mata(r: Rect2, pecas: Dictionary) -> void:
 	pecas["zumbis"].append(r.get_center())
 	if r.get_area() > 60000000.0:
 		pecas["zumbis"].append(r.get_center() + r.size * 0.28)

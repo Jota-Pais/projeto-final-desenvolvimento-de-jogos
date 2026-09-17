@@ -29,8 +29,21 @@ const CENA_DA_RUA := preload("res://rua/rua.tscn")
 ## usado pelo jogo, entao ignorar a pasta inteira e o certo de qualquer jeito.
 const ARQUIVO := "res://design/mapa.png"
 
-## Folga em volta do mundo na moldura, para o mapa nao ficar encostado na borda.
+## Folga em volta do mundo (ou do recorte) na moldura, para nao ficar encostado
+## na borda.
 const FOLGA := 1.06
+
+## Recorte por argumento (17/09/2026, P13): sem "--regiao=X" na linha de
+## comando (depois do "--" do Godot), retrata o MUNDO inteiro, como sempre -
+## e o que a revisao visual pede: `design/mapa.png` (mundo), mais tres perto
+## (`design/mapa-bairro.png`, `mapa-centro.png`, `mapa-transicao.png`), sem
+## precisar de tres ferramentas. Nomes validos: ver `_rect_da_regiao`.
+##
+## Cada regiao e um Rect2 **derivado** de `Mapa` (lugar ou coordenada ja
+## nomeada em `mapa.gd`/`lugares.gd`), nunca um numero solto sem fonte.
+var _regiao := ""
+var _rect_do_retrato: Rect2
+var _arquivo := ARQUIVO
 
 var _rua: Node
 var _legenda: Control
@@ -38,8 +51,15 @@ var _quadros := 0
 var _salvou := false
 
 func _ready() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if (arg as String).begins_with("--regiao="):
+			_regiao = (arg as String).trim_prefix("--regiao=")
+
 	_rua = CENA_DA_RUA.instantiate()
 	add_child(_rua)
+	_rect_do_retrato = _rect_da_regiao(_regiao)
+	if _regiao != "":
+		_arquivo = "res://design/mapa-%s.png" % _regiao
 
 	# A figura e do mapa, nao do jogo rodando: sem HUD por cima, sem o dia
 	# passando e sem zumbi com cone de visao poluindo a geografia.
@@ -62,16 +82,37 @@ func _process(_delta: float) -> void:
 	_salvou = true
 	_salvar()
 
-## Afasta a camera ate o mundo inteiro caber, seja qual for a resolucao da
+## O retangulo de uma regiao nomeada, **derivado** de `Mapa` - nunca um
+## numero solto. "" (sem argumento) e o mundo inteiro, de sempre.
+func _rect_da_regiao(nome: String) -> Rect2:
+	match nome:
+		"bairro":
+			# O loteamento inteiro (laco, U, beco, quadras) com folga de
+			# contexto - mostra a rede toda de uma vez.
+			return (Mapa.lugar("bairro")["rect"] as Rect2).grow(500.0)
+		"centro":
+			# O miolo comercial da cidade: cotovelo da Avenida Central
+			# (x 19600), a fita comercial ao norte dela e a delegacia/o
+			# mercado ao sul e a leste.
+			return Rect2(15800.0, 5900.0, 8200.0, 4800.0)
+		"transicao":
+			# Do sitio do norte (aberto, dentro do que e nominalmente "mata
+			# do norte") ate o anel fechado dela, mais ao norte - a mesma
+			# mata que P10 restringiu a uma faixa perto da borda do MUNDO.
+			return Rect2(6800.0, 0.0, 5200.0, 4200.0)
+		_:
+			return Mapa.MUNDO
+
+## Afasta a camera ate a regiao pedida caber, seja qual for a resolucao da
 ## janela. O zoom sai da conta, e nao de um numero escrito na mao: mudar o
-## tamanho do mundo ou da janela nao quebra a figura.
+## tamanho do mundo (ou do recorte) ou da janela nao quebra a figura.
 func _afastar_a_camera() -> void:
 	var camera := get_viewport().get_camera_2d()
 	if camera == null:
 		return
 	var tela := Vector2(get_viewport().get_visible_rect().size)
-	var mundo := Mapa.MUNDO.size * FOLGA
-	var zoom := minf(tela.x / mundo.x, tela.y / mundo.y)
+	var alvo := _rect_do_retrato.size * FOLGA
+	var zoom := minf(tela.x / alvo.x, tela.y / alvo.y)
 
 	# Os limites da camera sao os do mundo, e com o zoom afastado eles a
 	# empurrariam de volta para dentro. Fora com eles, so para o retrato.
@@ -82,23 +123,23 @@ func _afastar_a_camera() -> void:
 	camera.position_smoothing_enabled = false
 	camera.zoom = Vector2.ONE * zoom
 	# A camera e filha do jogador, entao quem se move e ele.
-	(_rua.get_node("Jogador") as Node2D).global_position = Mapa.MUNDO.get_center()
+	(_rua.get_node("Jogador") as Node2D).global_position = _rect_do_retrato.get_center()
 
 func _salvar() -> void:
 	var imagem := get_viewport().get_texture().get_image()
-	var erro := imagem.save_png(ARQUIVO)
+	var erro := imagem.save_png(_arquivo)
 	if erro != OK:
 		# Uma segunda tentativa: rodando o retrato logo depois de outra rodada
 		# do Godot, o arquivo as vezes ainda esta preso pelo processo anterior e
 		# o save falha com "Can't save PNG at path". Na segunda vez passa.
-		erro = imagem.save_png(ARQUIVO)
+		erro = imagem.save_png(_arquivo)
 	if erro != OK:
-		push_error("nao deu para salvar %s (erro %d) - tente de novo" % [ARQUIVO, erro])
+		push_error("nao deu para salvar %s (erro %d) - tente de novo" % [_arquivo, erro])
 	else:
-		print("mapa salvo em %s" % ProjectSettings.globalize_path(ARQUIVO))
-		print("%d x %d px, para um mundo de %.2f km x %.2f km" % [
+		print("mapa salvo em %s" % ProjectSettings.globalize_path(_arquivo))
+		print("%d x %d px, para uma area de %.2f km x %.2f km" % [
 			imagem.get_width(), imagem.get_height(),
-			Mapa.MUNDO.size.x / 40000.0, Mapa.MUNDO.size.y / 40000.0])
+			_rect_do_retrato.size.x / 40000.0, _rect_do_retrato.size.y / 40000.0])
 	if not Engine.is_editor_hint():
 		get_tree().quit(0 if erro == OK else 1)
 
