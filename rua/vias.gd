@@ -22,20 +22,29 @@
 ## arquitetura final (que so entram quando o layout for reescrito, em cima
 ## desta infraestrutura). `minima`/`maxima` ja ficam largos o bastante para
 ## cobrir os dois, para P4 em diante nao precisar mexer aqui de novo.
+##
+## `recuo` (Vector2 minimo/maximo, 17/09/2026 - P5) e `grama` chegam com
+## `quadras.gd`: quanto a fachada de um predio pode recuar da borda util da
+## via que o serve, e a faixa de verde entre calcada e pista (0 ate a fita
+## comercial existir, em P7). Ainda sem consumidor no mapa de hoje - so o
+## `conferir_quadras.tscn` sintetico usa.
 const CLASSES := {
 	"rodovia": {
 		"largura": 400.0, "minima": 320.0, "maxima": 800.0,
-		"calcada": 120.0, "faixa": true, "sujeira": true, "lote": false,
+		"calcada": 120.0, "grama": 0.0, "faixa": true, "sujeira": true, "lote": false,
+		"recuo": Vector2(400.0, 800.0),
 	},
 	# Toda rua de bairro e de cidade de hoje: sem nome proprio ainda (isso e
 	# tarefa de layout, P7 em diante), todas classificadas igual.
 	"residencial": {
 		"largura": 400.0, "minima": 160.0, "maxima": 800.0,
-		"calcada": 0.0, "faixa": true, "sujeira": false, "lote": true,
+		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": false, "lote": true,
+		"recuo": Vector2(240.0, 520.0),
 	},
 	"beco": {
 		"largura": 200.0, "minima": 120.0, "maxima": 240.0,
-		"calcada": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"recuo": Vector2(120.0, 360.0),
 	},
 	# O bulbo de retorno de hoje (`BAIRRO_RETORNO`) e uma area solida, nao um
 	# anel com ilha de verdade - por isso usa `rect` (como patio/estacionamento)
@@ -43,15 +52,18 @@ const CLASSES := {
 	# for reescrito.
 	"laco": {
 		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
-		"calcada": 0.0, "faixa": false, "sujeira": false, "lote": false,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": false,
+		"recuo": Vector2(200.0, 400.0),
 	},
 	"rural": {
 		"largura": 400.0, "minima": 320.0, "maxima": 800.0,
-		"calcada": 0.0, "faixa": true, "sujeira": false, "lote": false,
+		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": false, "lote": false,
+		"recuo": Vector2(0.0, 0.0),
 	},
 	"terra": {
 		"largura": 260.0, "minima": 200.0, "maxima": 320.0,
-		"calcada": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"recuo": Vector2(160.0, 620.0),
 	},
 }
 
