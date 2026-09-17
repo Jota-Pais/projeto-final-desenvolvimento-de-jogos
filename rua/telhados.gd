@@ -67,10 +67,11 @@ func _desenhar(construcao: Dictionary) -> void:
 	draw_rect(r, COR_BEIRAL, false, 3.0)
 
 	# A marca da porta fica POR CIMA do telhado: de fora nao se ve nada da
-	# planta, mas tem que dar para achar por onde entrar.
-	var porta := Construcao.porta_de(construcao)
-	var marca := Rect2(porta.x - Construcao.VAO / 2.0, porta.y - 7.0, Construcao.VAO, 14.0)
-	draw_rect(marca, COR_DA_PORTA_SUA if sua else COR_DA_PORTA)
+	# planta, mas tem que dar para achar por onde entrar. `marca_da_porta` ja
+	# gira sozinha conforme a orientacao (17/09/2026) - antes disto a marca era
+	# escrita aqui direto, comprida sempre em x, o que ficava errado numa
+	# fachada leste ou oeste.
+	draw_rect(Construcao.marca_da_porta(construcao), COR_DA_PORTA_SUA if sua else COR_DA_PORTA)
 
 	if sua:
 		var fonte := ThemeDB.fallback_font

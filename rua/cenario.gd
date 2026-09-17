@@ -228,6 +228,9 @@ func _por_no_lugar() -> void:
 	var porta := get_parent().get_node_or_null("EntradaDeCasa") as EntradaDeCasa
 	if porta == null:
 		return
+	# Antes de posicionar: o tamanho do vao (deitado ou em pe) depende de para
+	# que lado a fachada da sua casa olha.
+	porta.orientar(Mapa.lado_da_porta_de_casa())
 	porta.global_position = Mapa.onde_fica_a_porta_de_casa()
 	# A porta e solida e nao nasce aqui dentro, entao nao passa pelo
 	# _criar_corpo() - mas o zumbi tem que desviar dela igual, senao a
@@ -392,8 +395,6 @@ func _povoar(construcao: Dictionary) -> void:
 	var quartos := Construcao.quartos_de(construcao)
 	var vagas: Array = Construcao.MOVEIS_POR_QUARTO[construcao["tipo"]]
 
-	var ao_sul: bool = Construcao.e_da_frente_ao_sul(construcao)
-	var um_quarto_so: bool = Construcao.QUARTOS_POR_TIPO[construcao["tipo"]] < 3
 	# O documento do lugar cai no **ultimo** quarto, que e o mais fundo, para o
 	# que custa mais chegar pagar mais. **Posicao provisoria**: onde documento
 	# fica nao foi decidido, e isto e so o lugar que existe para ele nascer.
@@ -411,37 +412,16 @@ func _povoar(construcao: Dictionary) -> void:
 			break
 		var quarto: Rect2 = quartos[i]
 		var tipos: Array = vagas[i]
+		# `posicoes_de_movel` encosta cada movel na parede OPOSTA a fachada e
+		# espalha ao longo dela - escrito uma vez para as 4 orientacoes
+		# (17/09/2026); antes disto a conta vivia aqui dentro e so sabia
+		# fachada norte/sul.
+		var posicoes := Construcao.posicoes_de_movel(construcao, quarto, tipos)
 		for j in tipos.size():
-			var tamanho: Vector2 = Construcao.MOVEIS[tipos[j]]["tamanho"]
-
-			# Encostado na parede OPOSTA a fachada. Encostar sempre na de cima
-			# punha a geladeira em cima do vao da porta em toda casa de
-			# fachada ao norte, e o quarto ficava sem entrada.
-			var y := quarto.end.y - tamanho.y / 2.0 - 8.0
-			if ao_sul:
-				y = quarto.position.y + tamanho.y / 2.0 + 8.0
-
-			var x: float
-			if um_quarto_so:
-				# Salao sem divisoria: da para espalhar pela largura toda, com
-				# folga entre um movel e outro.
-				#
-				# A conta antiga - a mesma dos tres quartos - **empilhava**: o
-				# mercado tinha seis moveis com 66 px entre os centros e
-				# prateleira de 156 de largura, ou seja um dentro do outro. Nao
-				# dava erro e o conferir nao pegava, porque movel dentro de movel
-				# continua alcancavel de fora.
-				var vao := (quarto.size.x - 160.0) / float(tipos.size())
-				x = quarto.position.x + 80.0 + vao * (float(j) + 0.5)
-			else:
-				# Na METADE da parede longe do vao: a divisoria interna abre a
-				# passagem a 78% da largura, entao movel nenhum passa de 50%.
-				var fracao := 0.15 + 0.35 * (float(j) + 1.0) / (float(tipos.size()) + 1.0)
-				x = quarto.position.x + quarto.size.x * fracao
-
 			var com_documento := i == quarto_do_documento and j == 0
 			var com_arma := i == quarto_da_arma and j == 0
-			_criar_movel(tipos[j], Vector2(x, y), com_documento, com_arma)
+			_criar_movel(tipos[j], posicoes[j], com_documento, com_arma,
+				Construcao.tamanho_do_movel(construcao, tipos[j]))
 
 ## A navegacao do zumbi, montada da lista de obstaculos. Fica num no proprio,
 ## no grupo "navegacao", que e como o zumbi acha ela.
@@ -551,16 +531,22 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 			outro.esquecer_quem_ignorar()
 	return zumbi
 
+## `tamanho_override` existe para o movel de dentro de uma casa de fachada
+## leste/oeste, que nasce transposto (`Construcao.tamanho_do_movel`) - senao a
+## geladeira "deitada" apareceria de lado dentro da parede. Deixado em zero,
+## usa o tamanho da tabela direto: e o caso do movel de rua, que nao pertence a
+## nenhuma construcao.
 func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
-		com_arma := false) -> void:
+		com_arma := false, tamanho_override := Vector2.ZERO) -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
+	var tamanho: Vector2 = tamanho_override if tamanho_override != Vector2.ZERO else ficha["tamanho"]
 	var movel := CENA_DO_MOVEL.instantiate()
 	# Antes do add_child: o _ready() do vasculhavel monta as formas de colisao
 	# a partir do tamanho.
 	movel.position = posicao
 	movel.rotulo = ficha["rotulo"]
 	movel.duracao = ficha["duracao"]
-	movel.tamanho = ficha["tamanho"]
+	movel.tamanho = tamanho
 	movel.cor = ficha["cor"]
 	movel.solido = tipo != "lata"
 
@@ -585,7 +571,7 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
 	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
 	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
-		_obstaculos.append(Rect2(posicao - ficha["tamanho"] / 2.0, ficha["tamanho"]))
+		_obstaculos.append(Rect2(posicao - tamanho / 2.0, tamanho))
 
 ## O jogador tirou uma coisa da mochila: ela cai no chao onde ele esta.
 ##

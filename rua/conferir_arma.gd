@@ -251,7 +251,9 @@ func _preparar_o_tiro() -> void:
 		return
 	var alvo := Construcao.quartos_de(casa)[0].get_center()
 	_alvo = _um_zumbi_em(alvo)
-	_jogador.global_position = alvo + Vector2(-220.0, 0.0)
+	# Ao longo da FACHADA, e nao sempre em x: numa casa de porta leste/oeste a
+	# largura do quarto corre em y, nao em x.
+	_jogador.global_position = alvo + Construcao.eixo_da_fachada(casa) * -220.0
 
 func _conferir_o_tiro() -> void:
 	if _alvo == null:
@@ -275,7 +277,7 @@ func _preparar_a_parede() -> void:
 	if casa.is_empty():
 		return
 	_alvo = _um_zumbi_em(Construcao.quartos_de(casa)[1].get_center())
-	_jogador.global_position = Construcao.porta_de(casa) + Vector2(0.0, 300.0)
+	_jogador.global_position = Construcao.porta_de(casa) + Construcao.normal_de(casa) * 300.0
 
 func _conferir_a_parede() -> void:
 	if _alvo == null:

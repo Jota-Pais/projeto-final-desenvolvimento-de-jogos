@@ -281,8 +281,10 @@ const RECUO_DO_NASCIMENTO := 110.0
 ## **O cenario posiciona ele por aqui**, e nao o rua.tscn.
 static func onde_o_jogador_nasce() -> Vector2:
 	var casa := Lugares.sua_casa()
-	var para_fora := 1.0 if Construcao.e_da_frente_ao_sul(casa) else -1.0
-	return onde_fica_a_porta_de_casa() + Vector2(0.0, RECUO_DO_NASCIMENTO * para_fora)
+	# `normal_de`, e nao um sinal em y (17/09/2026): a porta em 4 direcoes
+	# manda a direcao "para fora" certa, seja a fachada norte, sul, leste ou
+	# oeste.
+	return onde_fica_a_porta_de_casa() + Construcao.normal_de(casa) * RECUO_DO_NASCIMENTO
 
 ## A porta de casa, que e por onde o dia acaba.
 ##
@@ -297,3 +299,9 @@ static func onde_o_jogador_nasce() -> Vector2:
 ## porta vai junto e ninguem precisa lembrar de mexer aqui.
 static func onde_fica_a_porta_de_casa() -> Vector2:
 	return onde_o_bairro_comeca() + Construcao.porta_de(Lugares.sua_casa())
+
+## Para que lado a porta da sua casa olha - "norte", "sul", "leste" ou
+## "oeste". E o que `rua/entrada_de_casa.gd` usa para saber se o vao dela e
+## deitado ou em pe.
+static func lado_da_porta_de_casa() -> String:
+	return Lugares.sua_casa()["porta"]

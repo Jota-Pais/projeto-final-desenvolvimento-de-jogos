@@ -53,8 +53,14 @@ const DURACAO := 1.2
 const ALCANCE := 60.0
 
 ## Na escala do vao de porta do bairro (Construcao.VAO): ela preenche o vao
-## inteiro, e e por isso que a largura e exatamente a de la.
-const TAMANHO := Vector2(100.0, 40.0)
+## inteiro, e e por isso que a largura (a medida ao longo da fachada) e
+## exatamente a de la.
+##
+## **Deixou de ser const em 17/09/2026** (porta em 4 direcoes): deitada
+## (100 x 40) quando a fachada da sua casa e norte ou sul, em pe (40 x 100)
+## quando e leste ou oeste. `orientar()` decide, chamada por
+## `cenario._por_no_lugar` antes de montar as formas.
+var TAMANHO := Vector2(100.0, 40.0)
 
 # Tom quente, que e a cor do modo Casa na direcao de arte. Numa rua inteira
 # cinza e a pista mais barata de "e aqui que voce volta".
@@ -72,6 +78,14 @@ func _ready() -> void:
 	_montar_formas()
 	body_entered.connect(_ao_entrar)
 	body_exited.connect(_ao_sair)
+
+## Chamado por `cenario._por_no_lugar` antes de posicionar a porta: decide se
+## o vao e deitado ou em pe, e remonta as formas de colisao com o tamanho novo.
+func orientar(porta_da_casa: String) -> void:
+	TAMANHO = Vector2(40.0, 100.0) if (porta_da_casa == "leste" or porta_da_casa == "oeste") \
+		else Vector2(100.0, 40.0)
+	_montar_formas()
+	queue_redraw()
 
 func _process(delta: float) -> void:
 	if _entrando:
@@ -122,9 +136,12 @@ func _ao_sair(corpo: Node2D) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	# Luz vazando da porta para a calcada. Marca o lugar de longe, que e o que
-	# uma porta de casa precisa fazer num mapa cinza.
-	draw_rect(Rect2(-TAMANHO.x, TAMANHO.y / 2.0 - 4.0, TAMANHO.x * 2.0, 90.0), COR_DA_LUZ)
+	# Luz vazando da porta para a calcada, ao longo da fachada - deitada
+	# quando o vao e deitado, em pe quando o vao e em pe (17/09/2026).
+	if TAMANHO.x > TAMANHO.y:
+		draw_rect(Rect2(-TAMANHO.x, TAMANHO.y / 2.0 - 4.0, TAMANHO.x * 2.0, 90.0), COR_DA_LUZ)
+	else:
+		draw_rect(Rect2(TAMANHO.x / 2.0 - 4.0, -TAMANHO.y, 90.0, TAMANHO.y * 2.0), COR_DA_LUZ)
 
 	var caixa := Rect2(-TAMANHO / 2.0, TAMANHO)
 	draw_rect(caixa, COR_DA_PORTA)

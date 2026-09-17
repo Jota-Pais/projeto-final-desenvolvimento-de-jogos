@@ -154,7 +154,10 @@ func _spawn() -> void:
 func _navegacao() -> void:
 	print("\n2. navegacao")
 	var casa := _uma_construcao("casa")
-	var rua := Construcao.porta_de(casa) + Vector2(0.0, 300.0)
+	# `normal_de`, e nao Vector2(0, N): antes disto (P2, 17/09/2026) supunha
+	# fachada norte/sul; com a porta em 4 direcoes, a casa que `_uma_construcao`
+	# achar pode ter fachada leste ou oeste.
+	var rua := Construcao.porta_de(casa) + Construcao.normal_de(casa) * 300.0
 	# A grade cobre so uma janela em volta do jogador e e remontada quando ele
 	# anda. Pedir a janela aqui, em vez de contar com o _process ja ter rodado,
 	# e o que faz esta conferencia medir a navegacao e nao o relogio de quadros.
@@ -219,14 +222,17 @@ func _linha_de_visao() -> void:
 	if _quadros == 1:
 		zumbi.set_physics_process(false)
 		zumbi.velocity = Vector2.ZERO
-		zumbi.global_position = porta + Vector2(0.0, 260.0)
-		zumbi._olhando = Vector2.UP
+		var para_fora := Construcao.normal_de(casa)
+		zumbi.global_position = porta + para_fora * 260.0
+		# Olhando para DENTRO da casa (o contrario do normal, que sai por ela) -
+		# antes escrito como Vector2.UP porque toda casa de teste era ao sul.
+		zumbi._olhando = -para_fora
 		match _caso_da_visao:
 			0: _jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
-			1: _jogador.global_position = porta + Vector2(0.0, 90.0)
+			1: _jogador.global_position = porta + para_fora * 90.0
 			2:
-				_jogador.global_position = porta + Vector2(0.0, 90.0)
-				zumbi._olhando = Vector2.DOWN
+				_jogador.global_position = porta + para_fora * 90.0
+				zumbi._olhando = para_fora
 		return
 	if _quadros < 4:
 		return
@@ -334,7 +340,7 @@ func _preparar_dentro_de_casa() -> void:
 	var casa := _uma_construcao("casa")
 	_jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
 	var zumbi = _zumbis[0]
-	zumbi.global_position = Construcao.porta_de(casa) + Vector2(0.0, 240.0)
+	zumbi.global_position = Construcao.porta_de(casa) + Construcao.normal_de(casa) * 240.0
 	# Zerar antes: foi_chamado() recusa quem ja esta perseguindo, e com razao -
 	# quem esta em cima de voce nao troca de alvo por causa de um grito.
 	zumbi._estado = VAGANDO
