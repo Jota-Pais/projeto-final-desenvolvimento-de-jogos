@@ -455,6 +455,17 @@ static func _quadras_da_cidade() -> Array[Dictionary]:
 			"entre": { "norte": "avenida central (leste)", "oeste": "rua da delegacia" },
 			"fundo": { "sul": 900.0, "leste": 2700.0 },
 			"frentes": ["norte"], "passo": 900.0 },
+		# A primeira quadra do mapa com frente a OESTE (17/09/2026, P17 -
+		# pedido do dono: "arruma esses bugs" sobre a lacuna de leste/oeste
+		# deixada em P16). No bolso aberto entre a Rua do Norte e a fita
+		# comercial (QC-fita-leste comeca so em y 5840 - 1.180 px de folga),
+		# a leste da Rua da Delegacia - unica frente, entao nem passa pelo
+		# `cantos_reservados`/`RESERVA_DE_CANTO_MAXIMA` de P16 (esses so
+		# entram em jogo com DUAS frentes perpendiculares na mesma quadra).
+		{ "id": "QC-poente-norte", "lugar": "cidade", "uso": "casa",
+			"entre": { "norte": "rua do norte", "oeste": "rua da delegacia" },
+			"fundo": { "sul": 1000.0, "leste": 1200.0 },
+			"frentes": ["oeste"], "passo": 900.0 },
 	]
 
 ## Constroi uma quadra inteira: cada lote vira predio de `tipo_padrao`, exceto

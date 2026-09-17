@@ -65,7 +65,7 @@ const VERSAO_DO_MAPA := 1
 ## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
 ## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
 ## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "ec11cc72"
+const IMPRESSAO_ESPERADA := "de3d29b3"
 
 ## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
 ## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
