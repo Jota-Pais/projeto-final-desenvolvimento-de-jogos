@@ -45,6 +45,9 @@ const Lugares := preload("res://rua/lugares.gd")
 ## So para a porta de casa: a fachada de uma construcao e regra do Construcao,
 ## e o mapa nao tem por que saber onde fica o vao.
 const Construcao := preload("res://rua/construcao.gd")
+## O que uma via e por fora - largura, calcada, grafo. Ver a docstring de
+## `vias.gd` para o porque desta entidade existir.
+const Vias := preload("res://rua/vias.gd")
 
 const MUNDO := Rect2(0.0, 0.0, 40000.0, 22000.0)
 
@@ -63,9 +66,6 @@ const RIO := Rect2(30000.0, 0.0, 1600.0, 22000.0)
 ## A ponte, onde a rodovia cruza o rio.
 const PONTE := Rect2(30000.0, 9980.0, 1600.0, 840.0)
 
-const LARGURA_DA_RODOVIA := 400.0
-const LARGURA_DA_ESTRADA_DE_TERRA := 260.0
-
 ## **As estradas tortas, e por que elas existem.**
 ##
 ## Ate 09/09/2026 a noite o mapa inteiro passava por uma linha reta so, de ponta
@@ -73,7 +73,8 @@ const LARGURA_DA_ESTRADA_DE_TERRA := 260.0
 ##
 ## Dava para consertar barato porque **estrada nao tem colisao**: e chao
 ## pintado, e o custo de fazer ela torta e desenho, nao fisica nem navegacao.
-## Cada polilinha aqui vira uma fila de retangulos sobrepostos (ver _faixa).
+## Cada polilinha aqui vira uma VIA de classe `rural`/`terra` (17/09/2026: antes
+## virava direto uma fila de retangulos; `Vias.faixa_pintada` desenha agora).
 ##
 ## O trecho reto do meio continua reto, e e onde ficam o bairro e a cidade. O
 ## que era estrada de terra em linha vertical virou uma estrada que serpenteia
@@ -157,12 +158,17 @@ static func _montar() -> Dictionary:
 		"bosques": [],
 		"moveis_de_rua": [],
 		"zumbis": [],
-		# "ruas" sao os trechos retos, e sao os unicos que ganham calcada.
-		"ruas": [RODOVIA],
-		# "estradas" e "terra" sao as tortas: fila de retangulos ao longo de uma
-		# polilinha, sem calcada. Estrada de rodagem no meio do campo nao tem.
-		"estradas": [],
-		"terra": [],
+		# "vias" e a rede inteira, com nome e classe (17/09/2026) - a fonte.
+		# "ruas", "estradas", "terra", "calcadas" e "abertos" viram DERIVADAS
+		# dela mais abaixo; nenhum consumidor delas muda de comportamento.
+		"vias": [
+			{
+				"nome": "rodovia", "classe": "rodovia", "lugar": "",
+				"eixo": [Vector2(RODOVIA.position.x, RODOVIA.get_center().y),
+					Vector2(RODOVIA.end.x, RODOVIA.get_center().y)],
+				"pontas": ["emenda:estrada do noroeste", "emenda:estrada do nordeste"],
+			},
+		],
 		"piso": [PONTE],
 		"agua": [RIO],
 		# Terra arada: so chao pintado, sem colisao. E a textura de campo do PZ.
@@ -171,10 +177,16 @@ static func _montar() -> Dictionary:
 		"solidos": [],
 	}
 
-	for pontos in ESTRADAS:
-		tudo["estradas"].append_array(_faixa(pontos, LARGURA_DA_RODOVIA))
-	for pontos in ESTRADAS_DE_TERRA:
-		tudo["terra"].append_array(_faixa(pontos, LARGURA_DA_ESTRADA_DE_TERRA))
+	for i in ESTRADAS.size():
+		tudo["vias"].append({
+			"nome": "estrada rural %d" % i, "classe": "rural", "lugar": "",
+			"eixo": ESTRADAS[i], "pontas": ["borda", "borda"],
+		})
+	for i in ESTRADAS_DE_TERRA.size():
+		tudo["vias"].append({
+			"nome": "estrada de terra %d" % i, "classe": "terra", "lugar": "",
+			"eixo": ESTRADAS_DE_TERRA[i], "pontas": ["borda", "borda"],
+		})
 
 	# O rio e solido dos dois lados da ponte. Nao ha como nadar, e nao ha outro
 	# atravessadouro - e o que faz a mansao ser longe de verdade.
@@ -188,43 +200,92 @@ static func _montar() -> Dictionary:
 		for chave in pecas:
 			(tudo[chave] as Array).append_array(pecas[chave])
 
+	# Derivadas, todas a partir de "vias" - e por isso que so existe UMA fonte
+	# de verdade sobre largura, classe e calcada de cada rua (17/09/2026).
+	tudo["ruas"] = _ruas_de(tudo["vias"])
+	tudo["estradas"] = _pintadas_de(tudo["vias"], "rural")
+	tudo["terra"] = _pintadas_de(tudo["vias"], "terra")
+	tudo["calcadas"] = _calcadas_de(tudo["vias"])
+	tudo["abertos"] = _abertos_de(tudo["vias"], tudo["piso"])
+
 	return tudo
 
-## Uma faixa de estrada ao longo de uma polilinha, feita de quadrados que se
-## sobrepoem.
-##
-## **Estrada nao tem colisao** - e chao pintado -, entao ela pode ser tao torta
-## quanto se queira: o custo de fazer curva e desenho, e nao fisica nem
-## navegacao. Foi isso que permitiu tirar o mapa da linha reta sem mexer em nada
-## mais.
-##
-## Quadrado e nao retangulo orientado, e com sobreposicao de 55%: assim a faixa
-## fica continua em qualquer angulo, sem serrilha e sem buraco na curva.
-static func _faixa(pontos: Array, largura: float) -> Array[Rect2]:
+## As vias que resolvem para UM retangulo (reta ou `rect` declarado) - o que
+## `cenario._draw` pinta na camada de asfalto comum, e o que sempre teve
+## calcada nos dois lados ate esta reescrita.
+static func _ruas_de(vias: Array) -> Array[Rect2]:
 	var fora: Array[Rect2] = []
-	var passo := largura * 0.45
-	for i in range(1, pontos.size()):
-		var de: Vector2 = pontos[i - 1]
-		var ate: Vector2 = pontos[i]
-		var quantos := maxi(1, int(ceil(de.distance_to(ate) / passo)))
-		for k in quantos + 1:
-			var onde := de.lerp(ate, float(k) / float(quantos))
-			fora.append(Rect2(onde - Vector2.ONE * largura * 0.5, Vector2.ONE * largura))
+	for via in vias:
+		if Vias.e_reta(via):
+			fora.append(Vias.faixa_de(via))
 	return fora
 
-## Calcada dos dois lados de cada rua. Sai da lista de ruas em vez de estar
-## escrita: rua nova ja nasce com calcada.
-static func calcadas() -> Array[Rect2]:
+## As vias poligonais (3+ pontos, sem `rect`) de uma classe, ja como fila de
+## quadrados pintados - o que era `ESTRADAS`/`ESTRADAS_DE_TERRA` viravam direto
+## antes desta reescrita.
+static func _pintadas_de(vias: Array, classe: String) -> Array[Rect2]:
 	var fora: Array[Rect2] = []
-	for rua in mundo()["ruas"]:
-		var r: Rect2 = rua
-		if r.size.x > r.size.y:
-			fora.append(Rect2(r.position.x, r.position.y - CALCADA, r.size.x, CALCADA))
-			fora.append(Rect2(r.position.x, r.end.y, r.size.x, CALCADA))
-		else:
-			fora.append(Rect2(r.position.x - CALCADA, r.position.y, CALCADA, r.size.y))
-			fora.append(Rect2(r.end.x, r.position.y, CALCADA, r.size.y))
+	for via in vias:
+		if via["classe"] == classe and not Vias.e_reta(via):
+			fora.append_array(Vias.faixa_pintada(via))
 	return fora
+
+## Calcada de toda via cuja classe tem (`CLASSES[classe].calcada > 0`) -
+## **so a rodovia, por enquanto** (17/09/2026): antes toda entrada de "ruas"
+## ganhava calcada dos dois lados, residencial e beco inclusive; a fita
+## comercial do bairro que vai merecer calcada de verdade so nasce em P7 em
+## diante, quando o layout for reescrito.
+static func _calcadas_de(vias: Array) -> Array[Rect2]:
+	var fora: Array[Rect2] = []
+	for via in vias:
+		for calcada in Vias.calcadas_de(via):
+			fora.append_array(Vias.recortar(calcada, vias))
+	return fora
+
+## A faixa aberta ao lado de toda via, mais o piso crescido - onde
+## `cenario._e_terreno` recusa arvore. Substitui varrer `ruas`, `estradas`,
+## `terra` e `piso` como quatro listas separadas: com o mapa 100x maior isso
+## economiza consulta, e o resultado e o mesmo (17/09/2026).
+##
+## Via poligonal (rural/terra) usa a fila de quadrados pintados, sem grow -
+## `aberto_de` sozinha devolveria o envelope (retangulo que cobre TODOS os
+## pontos da curva), que para uma estrada serpenteando e muito maior que a
+## faixa real e fecharia a arvore fora de area que deveria estar livre.
+static func _abertos_de(vias: Array, pisos: Array) -> Array[Rect2]:
+	var fora: Array[Rect2] = []
+	for via in vias:
+		if Vias.e_reta(via):
+			fora.append(Vias.aberto_de(via))
+		else:
+			fora.append_array(Vias.faixa_pintada(via))
+	for piso in pisos:
+		fora.append((piso as Rect2).grow(80.0))
+	return fora
+
+## Calcada dos dois lados de cada rua. **Derivada de `vias`** (17/09/2026) -
+## antes calculava direto de `mundo()["ruas"]`, sem olhar a classe.
+static func calcadas() -> Array[Rect2]:
+	return mundo()["calcadas"]
+
+## Uma via pelo nome. Mesma regra de `lugar()`: por nome, nunca por indice.
+static func via(nome: String) -> Dictionary:
+	for qual in mundo()["vias"]:
+		if qual["nome"] == nome:
+			return qual
+	return {}
+
+## As vias que um lugar gerou.
+static func vias_do_lugar(nome_do_lugar: String) -> Array:
+	var fora := []
+	for qual in mundo()["vias"]:
+		if qual.get("lugar", "") == nome_do_lugar:
+			fora.append(qual)
+	return fora
+
+## Um ponto sobre uma via, por nome - para ponto de teste que nao quebra
+## quando o layout muda de numero. Ainda sem consumidor (chega em P7).
+static func ponto_na_via(nome: String, t: float) -> Vector2:
+	return Vias.ponto_em(via(nome), t)
 
 ## Em qual construcao esta o ponto, ou -1. Os telhados usam para esconder o
 ## telhado de quem esta dentro.

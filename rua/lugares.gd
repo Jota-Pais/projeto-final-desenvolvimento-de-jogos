@@ -15,6 +15,7 @@
 ## existia antes de 09/09/2026 cabe num canto deste mapa.
 
 const Construcao := preload("res://rua/construcao.gd")
+const Vias := preload("res://rua/vias.gd")
 
 # ---------------------------------------------------------------- o bairro
 #
@@ -71,10 +72,22 @@ const BAIRRO_SAIDA_SUL := Rect2(2680.0, 4400.0, 400.0, 700.0)
 ## O bulbo do retorno: mais largo que a rua, que e o que permite dar a volta.
 const BAIRRO_RETORNO := Rect2(2180.0, 5100.0, 1400.0, 800.0)
 
-const BAIRRO_RUAS := [
-	BAIRRO_RUA_OESTE, BAIRRO_RUA_MEIO, BAIRRO_RUA_LESTE,
-	BAIRRO_RUA_DO_FUNDO, BAIRRO_SAIDA_SUL, BAIRRO_RETORNO,
-]
+## As mesmas seis, agora como VIAS nomeadas (17/09/2026) - a rede continua
+## identica, so a representacao muda: antes eram `Rect2` soltos em "ruas", sem
+## nome nem classe; `Vias.via_do_rect` deriva o eixo do meio de cada retangulo.
+## O retorno e o unico que fica com `rect` (e classe `laco`): e um bulbo
+## solido, nao um segmento reto, e so vira anel de verdade quando o bairro for
+## reescrito (P7 em diante).
+static func _bairro_vias() -> Array[Dictionary]:
+	return [
+		Vias.via_do_rect("bairro rua oeste", "residencial", BAIRRO_RUA_OESTE, "bairro"),
+		Vias.via_do_rect("bairro rua meio", "residencial", BAIRRO_RUA_MEIO, "bairro"),
+		Vias.via_do_rect("bairro rua leste", "residencial", BAIRRO_RUA_LESTE, "bairro"),
+		Vias.via_do_rect("bairro rua do fundo", "residencial", BAIRRO_RUA_DO_FUNDO, "bairro"),
+		Vias.via_do_rect("bairro saida sul", "residencial", BAIRRO_SAIDA_SUL, "bairro"),
+		{ "nome": "bairro retorno", "classe": "laco", "rect": BAIRRO_RETORNO,
+			"lugar": "bairro", "pontas": ["laco:bairro retorno", "laco:bairro retorno"] },
+	]
 
 ## As construcoes do bairro, **uma fileira por rua**.
 ##
@@ -219,7 +232,7 @@ static func montar(lugar: Dictionary) -> Dictionary:
 		"bosques": [],
 		"moveis_de_rua": [],
 		"zumbis": [],
-		"ruas": [],
+		"vias": [],
 		"piso": [],
 		"lavoura": [],
 	}
@@ -325,8 +338,8 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 		pecas["zumbis"].append(onde + origem)
 
 	# A rua principal do bairro E a rodovia; o resto da rede e do loteamento.
-	for rua in BAIRRO_RUAS:
-		pecas["ruas"].append(Rect2((rua as Rect2).position + origem, (rua as Rect2).size))
+	for via in _bairro_vias():
+		pecas["vias"].append(Vias.deslocar(via, origem))
 
 # --- a cidade ---------------------------------------------------------------
 
@@ -343,14 +356,15 @@ static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	# esquerda dela - e por isso que quadra de largura diferente nao quebra nada.
 	var x := r.position.x
 	for coluna in CIDADE_LARGURAS.size() + 1:
-		pecas["ruas"].append(Rect2(x, r.position.y, CIDADE_RUA, r.size.y))
+		pecas["vias"].append(Vias.via_do_rect("cidade vertical %d" % coluna, "residencial",
+			Rect2(x, r.position.y, CIDADE_RUA, r.size.y), "cidade"))
 		if coluna < CIDADE_LARGURAS.size():
 			x += CIDADE_RUA + CIDADE_LARGURAS[coluna]
 
 	for linha in CIDADE_LINHAS + 1:
-		pecas["ruas"].append(Rect2(
+		pecas["vias"].append(Vias.via_do_rect("cidade horizontal %d" % linha, "residencial", Rect2(
 			r.position.x, r.position.y + float(linha) * (CIDADE_QUADRA.y + CIDADE_RUA),
-			r.size.x, CIDADE_RUA))
+			r.size.x, CIDADE_RUA), "cidade"))
 
 	x = r.position.x + CIDADE_RUA
 	for coluna in CIDADE_LARGURAS.size():
@@ -434,7 +448,8 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 
 	if CIDADE_BECOS.has("%d,%d" % [int(esquerda), linha]):
 		var meio := canto.y + CIDADE_QUADRA.y * 0.5
-		pecas["ruas"].append(Rect2(esquerda, meio - CIDADE_BECO * 0.5, largura, CIDADE_BECO))
+		pecas["vias"].append(Vias.via_do_rect("beco %d,%d" % [int(esquerda), linha], "beco",
+			Rect2(esquerda, meio - CIDADE_BECO * 0.5, largura, CIDADE_BECO), "cidade"))
 		# Lixeira no beco, que e onde ela fica: nos fundos, e nao na fachada.
 		pecas["moveis_de_rua"].append({
 			"tipo": "lata", "pos": Vector2(esquerda + largura * 0.3, meio),

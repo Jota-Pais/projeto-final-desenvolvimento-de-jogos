@@ -24,6 +24,7 @@ extends Node2D
 
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
+const Vias := preload("res://rua/vias.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
 const Navegacao := preload("res://rua/navegacao.gd")
@@ -276,7 +277,7 @@ func _draw() -> void:
 		draw_rect(estrada, COR_ASFALTO)
 	for rua in mundo["ruas"]:
 		draw_rect(rua, COR_ASFALTO)
-	_desenhar_sujeira()
+	_desenhar_sujeira(mundo)
 	_desenhar_faixas(mundo)
 
 	for calcada in Mapa.calcadas():
@@ -296,11 +297,16 @@ func _draw() -> void:
 	for cerca in mundo["cercas"]:
 		draw_rect(cerca, COR_CERCA)
 
-## Faixa central tracejada em cada rua. Nao e enfeite: num asfalto liso o
-## jogador parece parado, porque quem se mexe na tela e o cenario.
+## Faixa central tracejada em cada rua **cuja classe tem** (17/09/2026: antes
+## era toda entrada de "ruas", sem distincao - agora o beco perde o tracejado
+## de avenida, que e uma das duas diferencas esperadas desta migracao). Nao e
+## enfeite: num asfalto liso o jogador parece parado, porque quem se mexe na
+## tela e o cenario.
 func _desenhar_faixas(mundo: Dictionary) -> void:
-	for rua in mundo["ruas"]:
-		var r: Rect2 = rua
+	for via in mundo["vias"]:
+		if not Vias.e_reta(via) or not Vias.CLASSES[via["classe"]]["faixa"]:
+			continue
+		var r := Vias.faixa_de(via)
 		if r.size.x > r.size.y:
 			var y := r.get_center().y - 7.0
 			var x := r.position.x + 60.0
@@ -338,17 +344,24 @@ func _desenhar_juntas(calcada: Rect2) -> void:
 
 ## Semente fixa para o desenho ser o mesmo em toda execucao - sujeira que muda
 ## de lugar a cada redraw pisca e atrapalha em vez de ajudar.
-func _desenhar_sujeira() -> void:
+##
+## Por classe (17/09/2026: so a rodovia tem `sujeira` hoje, mesma via de
+## sempre - generaliza sem mudar o resultado, para quando outra classe ganhar
+## sujeira nao precisar mexer aqui).
+func _desenhar_sujeira(mundo: Dictionary) -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 20260907
-	var rua := Mapa.RODOVIA
-	for _pedaco in 900:
-		var lado := sorteio.randf_range(8.0, 30.0)
-		var posicao := Vector2(
-			sorteio.randf_range(rua.position.x, rua.end.x - lado),
-			sorteio.randf_range(rua.position.y, rua.end.y - lado)
-		)
-		draw_rect(Rect2(posicao, Vector2(lado, lado * sorteio.randf_range(0.4, 1.0))), COR_SUJEIRA)
+	for via in mundo["vias"]:
+		if not Vias.e_reta(via) or not Vias.CLASSES[via["classe"]]["sujeira"]:
+			continue
+		var rua := Vias.faixa_de(via)
+		for _pedaco in 900:
+			var lado := sorteio.randf_range(8.0, 30.0)
+			var posicao := Vector2(
+				sorteio.randf_range(rua.position.x, rua.end.x - lado),
+				sorteio.randf_range(rua.position.y, rua.end.y - lado)
+			)
+			draw_rect(Rect2(posicao, Vector2(lado, lado * sorteio.randf_range(0.4, 1.0))), COR_SUJEIRA)
 
 ## Mato **dentro dos bosques**, e nao no mundo inteiro.
 ##
@@ -717,21 +730,14 @@ func _peso_dos_bosques(bosques: Array) -> float:
 
 ## Se o retangulo esta em terreno livre - fora de rua, calcada, construcao,
 ## entrada de carro, piso de concreto e agua.
+##
+## **Consulta `abertos`** (17/09/2026), e nao mais quatro listas separadas
+## (rua, estrada, terra, piso): `abertos` ja e essa uniao, derivada de `vias`
+## mais o piso - mesmo resultado, uma so varredura em vez de quatro.
 func _e_terreno(area: Rect2) -> bool:
 	var mundo := Mapa.mundo()
-	for rua in mundo["ruas"]:
-		if (rua as Rect2).grow(Mapa.CALCADA).intersects(area):
-			return false
-	# Estrada torta tambem: arvore no meio dela fecha o unico caminho para o
-	# sitio, e ninguem descobre sem rodar o conferir_mapa.
-	for estrada in mundo["estradas"]:
-		if (estrada as Rect2).intersects(area):
-			return false
-	for terra in mundo["terra"]:
-		if (terra as Rect2).intersects(area):
-			return false
-	for piso in mundo["piso"]:
-		if (piso as Rect2).intersects(area):
+	for aberto in mundo["abertos"]:
+		if (aberto as Rect2).intersects(area):
 			return false
 	for agua in mundo["agua"]:
 		if (agua as Rect2).grow(60.0).intersects(area):
