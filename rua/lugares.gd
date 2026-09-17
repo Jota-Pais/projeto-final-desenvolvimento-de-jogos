@@ -872,6 +872,19 @@ static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 		"tipo": "lata", "pos": Vector2(loja.position.x - 120.0, loja.position.y + 90.0),
 	})
 
+	# A oficina, na faixa que o lugar ganhou a leste das bombas (17/09/2026,
+	# P22): o lugar so tinha a loja - a pista de concreto ja cobria o resto
+	# do terreno por baixo, entao nao sobrava canto nenhum livre ate o lugar
+	# crescer. Porta norte, igual a loja: encara a MESMA pista.
+	var galpao: Vector2 = Construcao.TAMANHOS["galpao"]
+	var oficina := Rect2(r.position.x + 1200.0, r.end.y - galpao.y - 120.0, galpao.x, galpao.y)
+	pecas["construcoes"].append({ "rect": oficina, "porta": "norte", "tipo": "galpao" })
+	pecas["moveis_de_rua"].append({
+		"tipo": "carro", "pos": Vector2(oficina.get_center().x, r.position.y + 700.0),
+	})
+	pecas["zumbis"].append(Construcao.quartos_de(
+		{ "rect": oficina, "porta": "norte", "tipo": "galpao" })[0].get_center())
+
 	pecas["zumbis"].append(Vector2(r.position.x + 700.0, r.position.y + 700.0))
 	pecas["zumbis"].append(loja.get_center())
 

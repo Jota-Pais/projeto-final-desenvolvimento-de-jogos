@@ -65,7 +65,7 @@ const VERSAO_DO_MAPA := 1
 ## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
 ## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
 ## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "09bd2bc0"
+const IMPRESSAO_ESPERADA := "5c124aa9"
 
 ## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
 ## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
@@ -163,8 +163,12 @@ const LUGARES := [
 		"nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 3200.0, 13400.0, 7000.0),
 		"acesso": Vector2(17000.0, 10520.0),
 	},
+	# 3.000 de largura, nao 2.200 (17/09/2026, P22 - queixa do dono: "poucos
+	# detalhes"): a pista de concreto ja cobria o lugar inteiro por baixo da
+	# loja, entao nao sobrava nenhum canto livre para outro predio. A faixa
+	# nova (leste) ganha uma oficina - ver `_posto`.
 	{
-		"nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10840.0, 2200.0, 1500.0),
+		"nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10840.0, 3000.0, 1500.0),
 		"acesso": Vector2(24800.0, 10840.0),
 	},
 	{
