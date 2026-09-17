@@ -89,6 +89,7 @@ func _process(_delta: float) -> void:
 	_o_mapa_e_um_lugar_so()
 	_dentro_de_cada_lugar()
 	_os_documentos()
+	_a_identidade_bate()
 
 	print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 	if not Engine.is_editor_hint():
@@ -443,6 +444,30 @@ func _dentro_de_cada_lugar() -> void:
 		if ruins == 0 and quartos_ruins == 0:
 			print("  %-16s %2d moveis e todos os quartos, tudo alcancavel"
 				% [lugar["nome"], quantos])
+
+## A identidade dos moveis (17/09/2026, P6). Diferente da fase 0: essa
+## precisa do Cenario JA INSTANCIADO (a chave nasce em `_criar_movel`, e nao
+## esta em `Mapa.mundo()`), entao roda aqui, depois das duas passadas fisicas.
+##
+## **Imprimir nao e checagem.** Antes desta funcao, "IMPRESSAO DIGITAL DOS
+## MOVEIS" so aparecia no console - se a identidade embaralhasse de novo (um
+## gerador reordenado, um indice que virou outro movel), nada acusava. Agora
+## compara contra `Mapa.IMPRESSAO_ESPERADA`, commitada: mudou sem ninguem
+## atualizar a constante de proposito, o build cai.
+func _a_identidade_bate() -> void:
+	print("\n4. a identidade dos moveis")
+	var cenario := _rua.get_node("Cenario")
+	var chaves: PackedStringArray = cenario.chaves_dos_moveis()
+	var impressao := _hash_das_chaves(chaves)
+	print("  VERSAO DO MAPA: %d" % Mapa.VERSAO_DO_MAPA)
+	print("  IMPRESSAO DIGITAL DOS MOVEIS: %s (%d moveis)" % [impressao, chaves.size()])
+	if impressao != Mapa.IMPRESSAO_ESPERADA:
+		_erro(("a identidade dos moveis mudou (esperava %s, veio %s); se foi de " +
+			"proposito, atualize Mapa.IMPRESSAO_ESPERADA para o valor de cima")
+			% [Mapa.IMPRESSAO_ESPERADA, impressao])
+
+func _hash_das_chaves(chaves: PackedStringArray) -> String:
+	return "%08x" % Construcao.embaralhar(",".join(chaves))
 
 ## Em todo predio do mapa, quarto sem passagem e bug. **Na sua casa e o
 ## desenho** (16/09/2026): o unico jeito de entrar nela e segurar E na porta, e

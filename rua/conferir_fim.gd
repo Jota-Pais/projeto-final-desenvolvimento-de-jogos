@@ -299,7 +299,12 @@ func _recomecar_zera_tudo() -> void:
 	Travessia.dia = 7
 	Travessia.mochila.append("lata de comida")
 	Travessia.documentos.append(Construcao.DOCUMENTOS[0])
-	Travessia.moveis_vazios[3] = true
+	# Chave de texto, e nao indice cru (17/09/2026, P6): `moveis_vazios` e
+	# indexado por chave estavel agora. O valor exato nao importa aqui - o
+	# teste so confere que ALGO sujo em uma partida some no recomeco - por
+	# isso uma chave generica serve, sem precisar instanciar uma rua so para
+	# perguntar a ela a chave de um movel de verdade.
+	Travessia.moveis_vazios["teste/valor-generico-de-sujeira"] = true
 	Travessia.itens_perdidos = 5
 	Travessia.fim_do_dia = Travessia.FimDoDia.AMANHECEU_NA_RUA
 

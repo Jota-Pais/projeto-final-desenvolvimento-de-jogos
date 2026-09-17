@@ -122,9 +122,17 @@ const COR_TERRA := Color("55503f")
 
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
-## Quantos documentos ja foram colocados. Decide qual dos seis placeholders sai
-## no proximo lugar: cada um sai uma vez so.
-var _documentos_colocados := 0
+
+## A identidade de cada movel gerado hoje, na ORDEM em que nasceram - e nao
+## mais o indice sozinho (17/09/2026, P6 da arquitetura nova).
+##
+## Um indice de geracao aponta para outro movel assim que um gerador anterior
+## muda de tamanho - foi o defeito que o proprio rename do bairro (16/09)
+## quase escondeu. A chave e derivada de ONDE o movel esta (o predio dono,
+## pela posicao dele, mais o quarto e a vaga) - estavel mesmo que outro predio
+## nasca ou suma em outro lugar do mapa.
+var _chaves_dos_moveis: PackedStringArray = []
+var _indice_da_chave: Dictionary = {}
 
 ## O relogio do dia, achado pelo grupo. E aqui que ele se liga em cada movel:
 ## vasculhar gasta luz, e nem o movel nem o relogio precisam se conhecer para
@@ -201,7 +209,9 @@ func _ready() -> void:
 		_criar_corpo(solido)
 
 	for movel in mundo["moveis_de_rua"]:
-		_criar_movel(movel["tipo"], movel["pos"])
+		var chave := "rua/%s@%.0f,%.0f" % [movel["tipo"], (movel["pos"] as Vector2).x,
+			(movel["pos"] as Vector2).y]
+		_criar_movel(movel["tipo"], movel["pos"], chave)
 
 	_plantar_arvores()
 	_criar_muros_do_mundo()
@@ -407,12 +417,17 @@ func _povoar(construcao: Dictionary) -> void:
 
 	var quartos := Construcao.quartos_de(construcao)
 	var vagas: Array = Construcao.MOVEIS_POR_QUARTO[construcao["tipo"]]
+	var chave_do_predio := _chave_da_construcao(construcao)
 
-	# O documento do lugar cai no **ultimo** quarto, que e o mais fundo, para o
-	# que custa mais chegar pagar mais. **Posicao provisoria**: onde documento
-	# fica nao foi decidido, e isto e so o lugar que existe para ele nascer.
+	# O documento e um NUMERO agora (1..6, 17/09/2026), nao mais um booleano
+	# somado a um contador global (`_documentos_colocados % 6`, que trocava
+	# qual documento saia onde toda vez que um gerador anterior mudava de
+	# tamanho). Cai no **ultimo** quarto, que e o mais fundo, para o que custa
+	# mais chegar pagar mais. **Posicao provisoria**: onde documento fica nao
+	# foi decidido, e isto e so o lugar que existe para ele nascer.
+	var numero_do_documento: int = construcao.get("documento", 0)
 	var quarto_do_documento := -1
-	if construcao.get("documento", false):
+	if numero_do_documento > 0:
 		quarto_do_documento = mini(quartos.size(), vagas.size()) - 1
 	# A pistola vai no mesmo lugar, pelo mesmo motivo: e a armaria da delegacia,
 	# e ela guarda os dois.
@@ -431,10 +446,18 @@ func _povoar(construcao: Dictionary) -> void:
 		# fachada norte/sul.
 		var posicoes := Construcao.posicoes_de_movel(construcao, quarto, tipos)
 		for j in tipos.size():
-			var com_documento := i == quarto_do_documento and j == 0
+			var documento := numero_do_documento if (i == quarto_do_documento and j == 0) else 0
 			var com_arma := i == quarto_da_arma and j == 0
-			_criar_movel(tipos[j], posicoes[j], com_documento, com_arma,
+			var chave := "%s#%d/%d" % [chave_do_predio, i, j]
+			_criar_movel(tipos[j], posicoes[j], chave, documento, com_arma,
 				Construcao.tamanho_do_movel(construcao, tipos[j]))
+
+## A chave estavel de uma construcao: tipo + a posicao dela, que nao muda a
+## menos que a propria construcao se mova - ao contrario de um indice de
+## geracao, que qualquer predio novo antes dela na lista desloca.
+func _chave_da_construcao(construcao: Dictionary) -> String:
+	var r: Rect2 = construcao["rect"]
+	return "%s@%.0f,%.0f" % [construcao["tipo"], r.position.x, r.position.y]
 
 ## A navegacao do zumbi, montada da lista de obstaculos. Fica num no proprio,
 ## no grupo "navegacao", que e como o zumbi acha ela.
@@ -544,12 +567,16 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 			outro.esquecer_quem_ignorar()
 	return zumbi
 
+## `chave` e a identidade estavel do movel (17/09/2026, P6) - ela quem decide
+## se ele nasce vazio hoje (`Travessia.moveis_vazios`), nao mais o indice de
+## geracao. `documento` e 0 (nenhum) ou 1..6 (qual dos seis placeholders).
+##
 ## `tamanho_override` existe para o movel de dentro de uma casa de fachada
 ## leste/oeste, que nasce transposto (`Construcao.tamanho_do_movel`) - senao a
 ## geladeira "deitada" apareceria de lado dentro da parede. Deixado em zero,
 ## usa o tamanho da tabela direto: e o caso do movel de rua, que nao pertence a
 ## nenhuma construcao.
-func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
+func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 		com_arma := false, tamanho_override := Vector2.ZERO) -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
 	var tamanho: Vector2 = tamanho_override if tamanho_override != Vector2.ZERO else ficha["tamanho"]
@@ -565,10 +592,11 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
 
 	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
 	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
-	# outros. O indice tambem sai daqui, e e o nome do movel entre os dias.
-	movel.achados = _sortear_achados(tipo, com_documento, com_arma)
-	var indice := _moveis_gerados
-	movel.nasce_vazio = Travessia.moveis_vazios.has(indice)
+	# outros.
+	movel.achados = _sortear_achados(tipo, documento, com_arma)
+	_indice_da_chave[chave] = _chaves_dos_moveis.size()
+	_chaves_dos_moveis.append(chave)
+	movel.nasce_vazio = Travessia.moveis_vazios.has(chave)
 	if movel.nasce_vazio:
 		_moveis_ja_vazios += 1
 
@@ -577,14 +605,29 @@ func _criar_movel(tipo: String, posicao: Vector2, com_documento := false,
 		movel.vasculhando.connect(_relogio.ao_vasculhar)
 	if _mochila != null:
 		movel.vasculhado.connect(_mochila.ao_vasculhar)
-	# O movel nao sabe que existe dia seguinte; quem anota e quem conhece o
-	# indice. bind() pendura o indice no fim dos argumentos do sinal.
-	movel.vasculhado.connect(_anotar_movel_vazio.bind(indice))
+	# O movel nao sabe que existe dia seguinte; quem anota e quem conhece a
+	# chave. bind() pendura a chave no fim dos argumentos do sinal.
+	movel.vasculhado.connect(_anotar_movel_vazio.bind(chave))
 
 	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
 	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - tamanho / 2.0, tamanho))
+
+## A chave do movel de indice `i`, na ordem em que nasceu hoje - ou "" se `i`
+## for invalido. `indice_do_movel` faz o caminho contrario.
+func chave_do_movel(i: int) -> String:
+	if i < 0 or i >= _chaves_dos_moveis.size():
+		return ""
+	return _chaves_dos_moveis[i]
+
+func indice_do_movel(chave: String) -> int:
+	return _indice_da_chave.get(chave, -1)
+
+## Todas as chaves, na ordem de geracao - a impressao digital do mapa
+## (`Mapa.IMPRESSAO_ESPERADA`) e um hash desta lista. Ver conferir_mapa.gd.
+func chaves_dos_moveis() -> PackedStringArray:
+	return _chaves_dos_moveis
 
 ## O jogador tirou uma coisa da mochila: ela cai no chao onde ele esta.
 ##
@@ -634,12 +677,15 @@ func _anotar_ponto_limpo(indice: int) -> void:
 	_pontos_limpos[indice] = true
 	_zumbis_vivos.erase(indice)
 
-func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], indice: int) -> void:
-	Travessia.moveis_vazios[indice] = true
+func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], chave: String) -> void:
+	Travessia.moveis_vazios[chave] = true
 
 ## O que sai do movel. Cada tipo tem a sua tabela, e o documento entra so onde o
-## mapa declarou que ha um.
-func _sortear_achados(tipo: String, com_documento: bool, com_arma := false) -> Array[String]:
+## mapa declarou que ha um. `documento` e 0 (nenhum) ou o NUMERO (1..6) do
+## placeholder - nao mais um booleano contra um contador global (17/09/2026,
+## P6): `_documentos_colocados % 6` trocava qual documento saia onde toda vez
+## que um gerador anterior mudava a quantidade de moveis que fazia nascer.
+func _sortear_achados(tipo: String, documento: int, com_arma := false) -> Array[String]:
 	var achados: Array[String] = []
 	var tabela: Array = Construcao.CONTEUDO[tipo]
 
@@ -652,12 +698,8 @@ func _sortear_achados(tipo: String, com_documento: bool, com_arma := false) -> A
 		# bala dentro seria uma recompensa que nao recompensa nada - e a
 		# municao das outras tabelas e sorteada, entao podia nao vir nenhuma.
 		achados.append(Construcao.MUNICAO)
-	if com_documento:
-		# Qual documento, pela ordem em que os lugares aparecem no mapa: os seis
-		# sao seis, e cada um sai uma vez so.
-		var quais: Array = Construcao.DOCUMENTOS
-		achados.append(quais[_documentos_colocados % quais.size()])
-		_documentos_colocados += 1
+	if documento > 0:
+		achados.append(Construcao.DOCUMENTOS[documento - 1])
 
 	# Movel vazio existe de proposito: se todo movel desse algo, vasculhar
 	# deixaria de ser aposta.

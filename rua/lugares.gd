@@ -108,7 +108,7 @@ const BAIRRO_CONSTRUCOES := [
 	# Fileira A - norte da rodovia, fachada virada para ela (porta ao sul).
 	{ "rect": Rect2(240.0, 880.0, 650.0, 520.0), "porta": "sul", "tipo": "casa", "sua": true },
 	{ "rect": Rect2(1020.0, 880.0, 560.0, 460.0), "porta": "sul", "tipo": "casa" },
-	{ "rect": Rect2(1700.0, 920.0, 640.0, 500.0), "porta": "sul", "tipo": "casa", "documento": true },
+	{ "rect": Rect2(1700.0, 920.0, 640.0, 500.0), "porta": "sul", "tipo": "casa", "documento": 1 },
 	{ "rect": Rect2(2460.0, 920.0, 520.0, 440.0), "porta": "sul", "tipo": "casa" },
 	{ "rect": Rect2(3200.0, 880.0, 660.0, 520.0), "porta": "sul", "tipo": "casa" },
 	{ "rect": Rect2(3960.0, 850.0, 580.0, 480.0), "porta": "sul", "tipo": "casa" },
@@ -117,7 +117,7 @@ const BAIRRO_CONSTRUCOES := [
 	# Fileira B - sul da rodovia, de costas para a fileira A. O comercio fica
 	# aqui, virado para a via de maior movimento, como no PZ.
 	{ "rect": Rect2(140.0, 2260.0, 560.0, 460.0), "porta": "norte", "tipo": "casa" },
-	{ "rect": Rect2(1220.0, 2240.0, 900.0, 540.0), "porta": "norte", "tipo": "comercio", "documento": true },
+	{ "rect": Rect2(1220.0, 2240.0, 900.0, 540.0), "porta": "norte", "tipo": "comercio", "documento": 2 },
 	{ "rect": Rect2(2180.0, 2300.0, 460.0, 440.0), "porta": "norte", "tipo": "casa" },
 	{ "rect": Rect2(3160.0, 2260.0, 620.0, 500.0), "porta": "norte", "tipo": "casa" },
 	{ "rect": Rect2(3860.0, 2320.0, 560.0, 460.0), "porta": "norte", "tipo": "casa" },
@@ -427,13 +427,14 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 			}
 			# Ha uma delegacia e um mercado so na cidade, e cada um recebe um
 			# documento placeholder no quarto mais fundo - divisao provisoria, nao
-				# decidida. A pistola fica na armaria, que e o
-			# quarto mais fundo da delegacia.
+			# decidida. A pistola fica na armaria, que e o quarto mais fundo da
+			# delegacia. O NUMERO (17/09/2026, P6) e so identidade textual -
+			# nao diz nada sobre ordem de importancia entre os seis.
 			if tipo == "delegacia":
-				predio["documento"] = true
+				predio["documento"] = 3
 				predio["arma"] = true
 			elif tipo == "mercado":
-				predio["documento"] = true
+				predio["documento"] = 4
 			pecas["construcoes"].append(predio)
 			_o_que_vem_com_o_predio(predio, pecas)
 
@@ -587,7 +588,7 @@ static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 	var loja := Rect2(r.end.x - tamanho.x - 260.0, r.end.y - tamanho.y - 120.0,
 		tamanho.x, tamanho.y)
 	pecas["construcoes"].append({
-		"rect": loja, "porta": "norte", "tipo": "posto", "documento": true,
+		"rect": loja, "porta": "norte", "tipo": "posto", "documento": 5,
 	})
 
 	# Duas bombas em ilha, entre a rodovia e a loja. A pista aberta e o oposto de
@@ -639,7 +640,7 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 	var casa := Rect2(portao_x - tamanho.x * 0.5, r.position.y + 700.0,
 		tamanho.x, tamanho.y)
 	pecas["construcoes"].append({
-		"rect": casa, "porta": "sul", "tipo": "mansao", "documento": true,
+		"rect": casa, "porta": "sul", "tipo": "mansao", "documento": 6,
 	})
 
 	# Garagem separada, do lado.

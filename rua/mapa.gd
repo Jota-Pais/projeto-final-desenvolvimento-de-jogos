@@ -51,6 +51,22 @@ const Vias := preload("res://rua/vias.gd")
 
 const MUNDO := Rect2(0.0, 0.0, 40000.0, 22000.0)
 
+## A versao do mapa - sobe toda vez que a IDENTIDADE dos moveis (a lista de
+## chaves, na ordem de geracao) muda de proposito. So serve de carimbo no
+## relatorio do conferir_mapa; quem prova de verdade e IMPRESSAO_ESPERADA.
+const VERSAO_DO_MAPA := 1
+
+## Hash (8 digitos hex) da lista de chaves de todo movel gerado num dia
+## comum, na ordem em que nascem - commitada aqui e COMPARADA pelo
+## conferir_mapa (17/09/2026, P6), nao so impressa. Imprimir não é
+## checagem: um numero que so aparece no console e que ninguem confere
+## nunca falha, e a identidade podia embaralhar em silencio de novo.
+##
+## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
+## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
+## que moveu o numero foi de proposito.
+const IMPRESSAO_ESPERADA := "7c38a223"
+
 ## A rodovia leste-oeste, que e a espinha do mapa. No trecho do bairro e a rua
 ## principal dele, e no trecho da cidade e a rua do meio da grade.
 ## O trecho **reto** da rodovia: o que atravessa o bairro e a cidade.
