@@ -148,7 +148,7 @@ static func montar(lugar: Dictionary) -> Dictionary:
 		"mansao": _mansao(lugar, pecas)
 		"sitio": _sitio(lugar, pecas)
 		"lavoura": _lavoura(lugar, pecas)
-		"floresta": _floresta(lugar, pecas)
+		"mata": _mata(lugar, pecas)
 	return pecas
 
 # ---------------------------------------------------------------- a cidade
@@ -530,30 +530,49 @@ static func _sitio(lugar: Dictionary, pecas: Dictionary) -> void:
 	var casa: Vector2 = Construcao.TAMANHOS["casa"]
 	var galpao: Vector2 = Construcao.TAMANHOS["galpao"]
 
-	# A casa virada para a estrada, que vem de baixo.
-	pecas["construcoes"].append({
-		"rect": Rect2(r.position.x + 200.0, r.position.y + 300.0, casa.x, casa.y),
-		"porta": "sul", "tipo": "casa",
-	})
+	# As duas viradas para a estrada, que vem de baixo (r.end.y) - e por
+	# isso que ficam encostadas no fundo do terreno, e nao perto da frente
+	# (17/09/2026, P10 - achado rodando o conferir_mapa): a porta ja olhava
+	# para o sul certo, mas a casa nascia perto do TOPO do terreno - quase
+	# 1200 px de patio vazio ate a propria estrada de terra, bem alem dos
+	# 950 px que RECUO_MAXIMO_DA_VIA aceita. A casa e o galpao nao tem por
+	# que morar longe do proprio portao.
+	var casa_x := r.position.x + 200.0
+	var casa_rect := Rect2(casa_x, r.end.y - casa.y - 300.0, casa.x, casa.y)
+	pecas["construcoes"].append({ "rect": casa_rect, "porta": "sul", "tipo": "casa" })
 	# O galpao no fundo do terreno, virado para a casa.
-	pecas["construcoes"].append({
-		"rect": Rect2(r.end.x - galpao.x - 300.0, r.position.y + 260.0, galpao.x, galpao.y),
-		"porta": "sul", "tipo": "galpao",
+	var galpao_x := r.end.x - galpao.x - 300.0
+	var galpao_rect := Rect2(galpao_x, r.end.y - galpao.y - 260.0, galpao.x, galpao.y)
+	pecas["construcoes"].append({ "rect": galpao_rect, "porta": "sul", "tipo": "galpao" })
+
+	# O patio de terra batida na frente das duas, encostado na estrada de
+	# terra que chega em `lugar["acesso"]` (17/09/2026, P10 - novo): sem
+	# ele nenhuma das duas "encarava via" de verdade - a estrada de terra e
+	# poligonal (`Vias.e_reta` recusa), entao so um retangulo de verdade na
+	# ponta dela resolve, o mesmo padrao que o patio da delegacia/mercado
+	# ja usa. So um retangulo (classe sem largura minima/maxima, ver
+	# `Vias.CLASSES.patio`) - nao entra na conta de largura nem de arvore.
+	var frente_min := casa_x - 80.0
+	var frente_max := galpao_rect.end.x + 80.0
+	var patio_y := maxf(casa_rect.end.y, galpao_rect.end.y) + 10.0
+	pecas["vias"].append({
+		"nome": "patio de %s" % lugar["nome"], "classe": "patio", "lugar": lugar["nome"],
+		"rect": Rect2(frente_min, patio_y, frente_max - frente_min, 300.0),
+		"pontas": ["declarado:patio"],
 	})
 
-	# Cerca de frente com o vao onde a estrada entra.
-	var vao := 400.0
-	var entrada := r.position.x + 480.0
-	pecas["cercas"].append(Rect2(r.position.x, r.end.y - 16.0,
-		entrada - vao * 0.5 - r.position.x, 16.0))
-	pecas["cercas"].append(Rect2(entrada + vao * 0.5, r.end.y - 16.0,
-		r.end.x - entrada - vao * 0.5, 16.0))
+	# Cerca de frente com o vao do patio.
+	pecas["cercas"].append(Rect2(r.position.x, r.end.y - 16.0, frente_min - r.position.x, 16.0))
+	pecas["cercas"].append(Rect2(frente_max, r.end.y - 16.0, r.end.x - frente_max, 16.0))
 
+	# Os dois mais perto do portao agora (17/09/2026, P10): a casa e o
+	# galpao andaram para o fundo do terreno, e o carro/a lata na frente
+	# deles ficariam por baixo da propria parede se ficassem parados.
 	pecas["moveis_de_rua"].append({
-		"tipo": "carro", "pos": Vector2(r.position.x + 340.0, r.end.y - 300.0),
+		"tipo": "carro", "pos": Vector2(r.position.x + 340.0, r.end.y - 80.0),
 	})
 	pecas["moveis_de_rua"].append({
-		"tipo": "lata", "pos": Vector2(r.end.x - 220.0, r.end.y - 260.0),
+		"tipo": "lata", "pos": Vector2(r.end.x - 220.0, r.end.y - 80.0),
 	})
 	pecas["zumbis"].append(Vector2(r.get_center().x, r.end.y - 500.0))
 
@@ -566,6 +585,29 @@ static func _sitio(lugar: Dictionary, pecas: Dictionary) -> void:
 ## do que faz o mapa parecer um lugar habitado antes do apocalipse.
 static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
 	var r: Rect2 = lugar["rect"]
+
+	# Um galpao de fazenda perto de onde a estrada de terra chega, que e o
+	# unico loot daqui. **Centrado no `acesso` do lugar, nao no canto**
+	# (17/09/2026, P10 - achado rodando o conferir_mapa): morava no canto
+	# leste, a 3.880 px de onde a estrada realmente entra (x 17400) - a
+	# porta nunca ia encarar via nenhuma daquele jeito, por mais perto que
+	# o recuo fosse.
+	var acesso: Vector2 = lugar.get("acesso", r.position + Vector2(r.size.x * 0.5, 0.0))
+	var galpao := Construcao.TAMANHOS["galpao"]
+	var galpao_rect := Rect2(acesso.x - galpao.x * 0.5, r.position.y + 300.0, galpao.x, galpao.y)
+	pecas["construcoes"].append({
+		"rect": galpao_rect, "porta": "norte", "tipo": "galpao",
+	})
+	# O patio de terra entre o galpao e a propria estrada (mesmo padrao do
+	# sitio: a estrada de terra e poligonal, `Vias.e_reta` a recusa, entao
+	# so um retangulo de verdade na ponta dela faz o galpao encarar via).
+	var patio := Rect2(galpao_rect.position.x - 80.0, r.position.y - 300.0,
+		galpao_rect.size.x + 160.0, galpao_rect.position.y - r.position.y + 300.0 - 10.0)
+	pecas["vias"].append({
+		"nome": "patio da lavoura", "classe": "patio", "lugar": lugar["nome"],
+		"rect": patio, "pontas": ["declarado:patio"],
+	})
+
 	var colunas := 3
 	var linhas := 2
 	var carreador := 240.0
@@ -573,19 +615,19 @@ static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
 		(r.size.x - carreador * float(colunas + 1)) / float(colunas),
 		(r.size.y - carreador * float(linhas + 1)) / float(linhas))
 
+	# Pula o talhao que cairia em cima do galpao/patio novo - a lavoura e so
+	# chao pintado, sem colisao, mas plantacao por baixo do galpao ficaria
+	# esquisita de ver.
 	for coluna in colunas:
 		for linha in linhas:
-			pecas["lavoura"].append(Rect2(
+			var pedaco := Rect2(
 				r.position.x + carreador + float(coluna) * (talhao.x + carreador),
 				r.position.y + carreador + float(linha) * (talhao.y + carreador),
-				talhao.x, talhao.y))
+				talhao.x, talhao.y)
+			if pedaco.intersects(galpao_rect) or pedaco.intersects(patio):
+				continue
+			pecas["lavoura"].append(pedaco)
 
-	# Um galpao de fazenda no canto, que e o unico loot daqui.
-	var galpao := Construcao.TAMANHOS["galpao"]
-	pecas["construcoes"].append({
-		"rect": Rect2(r.end.x - galpao.x - 300.0, r.position.y + 300.0, galpao.x, galpao.y),
-		"porta": "norte", "tipo": "galpao",
-	})
 	pecas["zumbis"].append(r.get_center())
 
 # --- o posto de gasolina ----------------------------------------------------
@@ -599,9 +641,6 @@ static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
 static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 	var r: Rect2 = lugar["rect"]
 
-	# A pista toda de concreto, encostada na rodovia (que fica em cima).
-	pecas["piso"].append(r)
-
 	# A loja no fundo, virada para a rodovia. 18 x 12 m - tamanho de loja de
 	# conveniencia, e nao os 22 x 14 escritos na mao que tinha antes.
 	var tamanho: Vector2 = Construcao.TAMANHOS["posto"]
@@ -610,6 +649,12 @@ static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["construcoes"].append({
 		"rect": loja, "porta": "norte", "tipo": "posto", "documento": 5,
 	})
+
+	# A pista de concreto vai ate a LOJA, nao o lugar inteiro (17/09/2026, P10
+	# - achado rodando o conferir_mapa: "posto pisa no piso de concreto" - a
+	# loja nascia dentro do proprio retangulo de piso, porque ele cobria o
+	# lugar inteiro por baixo dela tambem).
+	pecas["piso"].append(Rect2(r.position, Vector2(r.size.x, loja.position.y - r.position.y - 40.0)))
 
 	# Duas bombas em ilha, entre a rodovia e a loja. A pista aberta e o oposto de
 	# uma casa: nao ha onde se esconder, e voce ve o zumbi vindo de longe.
@@ -620,7 +665,7 @@ static func _posto(lugar: Dictionary, pecas: Dictionary) -> void:
 		})
 
 	pecas["moveis_de_rua"].append({
-		"tipo": "carro", "pos": Vector2(r.position.x + 300.0, r.end.y - 260.0),
+		"tipo": "carro", "pos": Vector2(r.position.x + 300.0, r.position.y + 700.0),
 	})
 	pecas["moveis_de_rua"].append({
 		"tipo": "lata", "pos": Vector2(loja.position.x - 120.0, loja.position.y + 90.0),
@@ -664,14 +709,19 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 	})
 
 	# Garagem separada, do lado.
-	var garagem: Vector2 = Construcao.TAMANHOS["garagem"]
+	var garagem_tamanho: Vector2 = Construcao.TAMANHOS["garagem"]
+	var garagem := Rect2(casa.end.x + 500.0, casa.position.y + 200.0,
+		garagem_tamanho.x, garagem_tamanho.y)
 	pecas["construcoes"].append({
-		"rect": Rect2(casa.end.x + 500.0, casa.position.y + 200.0, garagem.x, garagem.y),
-		"porta": "sul", "tipo": "garagem",
+		"rect": garagem, "porta": "sul", "tipo": "garagem",
 	})
 
-	# Alameda de concreto do portao ate a porta da casa.
-	pecas["piso"].append(Rect2(portao_x - 200.0, casa.end.y, 400.0, r.end.y - casa.end.y))
+	# Alameda de concreto do portao ate a porta da casa - larga o bastante
+	# para cobrir a garagem tambem (17/09/2026, P10 - achado rodando o
+	# conferir_mapa): a faixa media so 400 px, centrada na casa, e a
+	# garagem fica bem mais a leste - a porta dela nao encarava nada.
+	pecas["piso"].append(Rect2(portao_x - 200.0, casa.end.y,
+		garagem.end.x + 100.0 - (portao_x - 200.0), r.end.y - casa.end.y))
 
 	# Jardim abandonado: mata fechada, que e o que faz o terreno parecer largado
 	# e nao apenas vazio.
@@ -693,24 +743,40 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["zumbis"].append(casa.get_center())
 	pecas["zumbis"].append(Vector2(casa.position.x - 500.0, casa.end.y + 400.0))
 
-# --- floresta ---------------------------------------------------------------
+# --- mata ---------------------------------------------------------------
 
 ## Mata. Nao tem loot e nao tem construcao: e o vazio entre os lugares, e e ele
 ## que faz a distancia existir. No PZ e a floresta entre as cidades que
 ## transforma "ir ate lá" numa decisao.
 ##
+## **Tipo "mata", nao mais "floresta"** (17/09/2026, P10): o proprio nome de
+## cada lugar ja dizia "mata do X", e o conferir_mapa cobra que "mata" no nome
+## va junto com densidade >= 0,40 (mata fechada de verdade) - renomear o tipo
+## e so acertar o codigo com o que o dado ja afirmava.
+##
 ## O bosque nao ocupa o retangulo inteiro - fica uma faixa livre na borda, para
-## a mata nunca fechar a passagem ao lado da estrada.
-static func _floresta(lugar: Dictionary, pecas: Dictionary) -> void:
-	var r: Rect2 = lugar["rect"]
-	# A densidade viaja com o bosque, e nao e detalhe: sem ela o orcamento de
-	# arvore se reparte por area, e a florestinha - pequena - recebia tao pouca
-	# arvore que ficava indistinguivel de campo aberto. Mata que nao se ve nao e
-	# mata, e uma cor de fundo.
-	pecas["bosques"].append({
-		"rect": r.grow(-160.0),
-		"densidade": lugar.get("densidade", 0.03),
-	})
+## a mata nunca fechar a passagem ao lado da estrada. Nas tres que encostam no
+## limite do MUNDO (`lado_da_mata`), a faixa FECHADA e so um anel perto dessa
+## borda - o resto do retangulo fica aberto, sem bosque. Sem o anel, dar
+## densidade 0,45 ao retangulo INTEIRO (24.000 x 3.200 px, no caso da mata do
+## norte) tomaria a maior parte do orcamento fixo de arvores do mapa inteiro,
+## e o bairro/a mansao - que precisam de arvore para valer como bosque -
+## ficariam quase pelados (achado fazendo essa conta rodando P10).
+const PROFUNDIDADE_DA_MATA_FECHADA := 1400.0
+
+static func _mata(lugar: Dictionary, pecas: Dictionary) -> void:
+	var r: Rect2 = (lugar["rect"] as Rect2).grow(-160.0)
+	var densidade: float = lugar.get("densidade", 0.03)
+	var fechada := r
+	match lugar.get("lado_da_mata", ""):
+		"oeste":
+			fechada = Rect2(r.position.x, r.position.y, PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
+		"norte":
+			fechada = Rect2(r.position.x, r.position.y, r.size.x, PROFUNDIDADE_DA_MATA_FECHADA)
+		"leste":
+			fechada = Rect2(r.end.x - PROFUNDIDADE_DA_MATA_FECHADA, r.position.y,
+				PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
+	pecas["bosques"].append({ "rect": fechada, "densidade": densidade })
 	# Um ou dois arrastando entre as arvores, para a mata nao ser passeio.
 	pecas["zumbis"].append(r.get_center())
 	if r.get_area() > 60000000.0:

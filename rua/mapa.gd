@@ -65,7 +65,7 @@ const VERSAO_DO_MAPA := 1
 ## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
 ## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
 ## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "01c38612"
+const IMPRESSAO_ESPERADA := "73029ce9"
 
 ## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
 ## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
@@ -141,7 +141,10 @@ const ESTRADAS_DE_TERRA := [
 ## a pista para ir da sua casa a cidade e um trecho de verdade do trajeto, e
 ## nao um detalhe que a rua ja resolvia sozinha.
 const LUGARES := [
-	{ "nome": "mata do oeste", "tipo": "floresta", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0) },
+	{
+		"nome": "mata do oeste", "tipo": "mata", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0),
+		"densidade": 0.45, "lado_da_mata": "oeste",
+	},
 	# Ao SUL da rodovia (y >= 10840). Tamanho inalterado desde 16/09 - o
 	# retangulo e o de Lugares.BAIRRO_TAMANHO, os dois tem que bater.
 	{
@@ -175,16 +178,25 @@ const LUGARES := [
 	},
 	# Encolheu de 6900 para 3200 de altura: a cidade subiu para caber toda ao
 	# norte da rodovia, e passou a nascer onde a mata do norte terminava.
-	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(3600.0, 0.0, 24000.0, 3200.0) },
+	{
+		"nome": "mata do norte", "tipo": "mata", "rect": Rect2(3600.0, 0.0, 24000.0, 3200.0),
+		"densidade": 0.45, "lado_da_mata": "norte",
+	},
 	# A mata do sul e a **fechada**: e nela que nao se ve o outro lado. Era um
 	# lugar proprio chamado "florestinha" ate 09/09 a noite, e virou redundante
 	# quando o mapa ganhou quatro matas - agora e uma densidade, e nao um lugar.
+	# Sem "lado_da_mata": e a unica cujo retangulo inteiro e fechado, nao so
+	# uma faixa de borda - ela nao encosta no limite do MUNDO dos dois lados
+	# como as outras tres, entao nao ha "fora" para deixar aberto.
 	{
-		"nome": "mata do sul", "tipo": "floresta", "densidade": 0.55,
+		"nome": "mata do sul", "tipo": "mata", "densidade": 0.55,
 		"rect": Rect2(23200.0, 14200.0, 5800.0, 7000.0),
 	},
 	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(32800.0, 5780.0, 4600.0, 4200.0) },
-	{ "nome": "mata do leste", "tipo": "floresta", "rect": Rect2(32000.0, 12380.0, 7800.0, 9400.0) },
+	{
+		"nome": "mata do leste", "tipo": "mata", "rect": Rect2(32000.0, 12380.0, 7800.0, 9400.0),
+		"densidade": 0.45, "lado_da_mata": "leste",
+	},
 ]
 
 const CALCADA := 120.0

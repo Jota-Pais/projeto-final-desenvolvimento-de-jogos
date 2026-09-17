@@ -24,18 +24,23 @@
 ##
 ## `recuo` (Vector2 minimo/maximo, P5) e `grama` (faixa verde entre calcada e
 ## pista, so onde ha calcada) alimentam `quadras.gd`.
+## `clareira` (P10): a folga sem arvore ao lado da faixa, ALEM da propria
+## faixa/calcada/grama - o anel de verdade do criterio G, maior na rodovia
+## (onde uma arvore bem na beira esconderia o proprio asfalto de longe) que
+## no beco (que e pra sentir apertado). So vale para via RETA - `aberto_de`
+## usa 0 para via poligonal, que ja usa a fila pintada como area livre.
 const CLASSES := {
 	"rodovia": {
 		"largura": 640.0, "minima": 560.0, "maxima": 800.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": true, "lote": false,
-		"recuo": Vector2(400.0, 800.0),
+		"recuo": Vector2(400.0, 800.0), "clareira": 240.0,
 	},
 	# O trecho alargado da Avenida Central, com a fita comercial - unica
 	# classe de rua da cidade com calcada, porque e a unica com loja.
 	"comercial": {
 		"largura": 600.0, "minima": 520.0, "maxima": 720.0,
 		"calcada": 120.0, "grama": 80.0, "faixa": true, "sujeira": false, "lote": true,
-		"recuo": Vector2(240.0, 720.0),
+		"recuo": Vector2(240.0, 720.0), "clareira": 160.0,
 	},
 	# O resto da Avenida Central e a Rua do Bairro (a unica do loteamento com
 	# calcada - ela carrega o comercio de esquina, e no PZ e assim que se
@@ -43,19 +48,19 @@ const CLASSES := {
 	"principal": {
 		"largura": 320.0, "minima": 280.0, "maxima": 400.0,
 		"calcada": 120.0, "grama": 80.0, "faixa": true, "sujeira": false, "lote": true,
-		"recuo": Vector2(240.0, 520.0),
+		"recuo": Vector2(240.0, 520.0), "clareira": 160.0,
 	},
 	# Toda rua residencial comum, de bairro ou de cidade - o PZ nao poe
 	# calcada nem faixa central nelas fora da rua principal.
 	"residencial": {
 		"largura": 320.0, "minima": 240.0, "maxima": 400.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(240.0, 520.0),
+		"recuo": Vector2(240.0, 520.0), "clareira": 120.0,
 	},
 	"beco": {
 		"largura": 160.0, "minima": 120.0, "maxima": 200.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(120.0, 360.0),
+		"recuo": Vector2(120.0, 360.0), "clareira": 60.0,
 	},
 	# O anel de fim de rua (loop + ilha). A largura do CLASS e so o piso; a
 	# largura de verdade de cada laco sai da via que ele fecha e fica
@@ -64,17 +69,17 @@ const CLASSES := {
 	"laco": {
 		"largura": 200.0, "minima": 160.0, "maxima": 400.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(200.0, 400.0),
+		"recuo": Vector2(200.0, 400.0), "clareira": 120.0,
 	},
 	"rural": {
 		"largura": 640.0, "minima": 400.0, "maxima": 800.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": false, "lote": false,
-		"recuo": Vector2(0.0, 0.0),
+		"recuo": Vector2(0.0, 0.0), "clareira": 200.0,
 	},
 	"terra": {
 		"largura": 260.0, "minima": 200.0, "maxima": 320.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(160.0, 620.0),
+		"recuo": Vector2(160.0, 620.0), "clareira": 80.0,
 	},
 	# As duas que fecham os criterios A e B sem clausula de excecao: a loja
 	# encara o estacionamento, o galpao do sitio encara o patio, e a estrada
@@ -84,12 +89,12 @@ const CLASSES := {
 	"estacionamento": {
 		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(0.0, 240.0), "piso": false,
+		"recuo": Vector2(0.0, 240.0), "piso": false, "clareira": 0.0,
 	},
 	"patio": {
 		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
-		"recuo": Vector2(0.0, 240.0), "piso": true,
+		"recuo": Vector2(0.0, 240.0), "piso": true, "clareira": 0.0,
 	},
 }
 
@@ -222,18 +227,20 @@ static func envelope_de(via: Dictionary) -> Rect2:
 		r = r.merge(c)
 	return r
 
-## A faixa aberta ao lado de uma via, sem arvore: o envelope inflado por uma
-## folga.
+## A faixa aberta ao lado de uma via, sem arvore: a FAIXA crua (nao o
+## envelope com calcada, que dobraria a folga na rodovia) inflada pela
+## `clareira` da classe - maior na rodovia, quase nenhuma no beco (criterio
+## G). Via poligonal devolve a propria faixa, sem folga: quem chama ja varre
+## a fila de quadrados pintada por fora, que e a area livre de verdade dela.
 ##
-## **Desde a migracao de P3 a folga reproduz a de ENTAO**, cresce a FAIXA
-## crua - nao o envelope com calcada, que dobraria a folga na rodovia -:
-## `120` para toda via que vira `Rect2` e `0` para via poligonal. O anel de
-## verdade do criterio G - folga por classe, maior na rodovia que no beco - e
-## o `_plantar_arvores` sendo reescrito em cima disto e tarefa de P10 (o
-## rural e os aneis), nao daqui: ate la o objetivo e so nao piorar o que
-## ja tinha.
+## **Ate 17/09/2026 (P10) a folga era um `120` fixo para toda via reta**,
+## a mesma desde a migracao de P3 - a rodovia (16 tiles) e o beco (4 tiles)
+## abriam a mesma faixa sem arvore, o que nao fazia sentido lado a lado.
 static func aberto_de(via: Dictionary) -> Rect2:
-	return faixa_de(via).grow(120.0 if e_reta(via) else 0.0)
+	if not e_reta(via):
+		return faixa_de(via)
+	var clareira: float = CLASSES[via["classe"]].get("clareira", 120.0)
+	return faixa_de(via).grow(clareira)
 
 ## Se o trecho `[de, ate]` no eixo dado (0 = x, 1 = y) esta coberto pela via -
 ## para o criterio "a porta encara uma via que realmente passa ali". So faz

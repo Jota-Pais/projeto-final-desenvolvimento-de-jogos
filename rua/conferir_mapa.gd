@@ -283,8 +283,16 @@ func _a_largura_bate_com_a_classe() -> void:
 ## porta encarasse o mato.
 const RECUO_MAXIMO_DA_VIA := 950.0
 
+## Alem de via, tambem aceita **piso** (17/09/2026, P10 - achado com a mansao
+## murada): a casa de um condominio murado encara a propria alameda de
+## concreto, nao a rodovia direto - a alameda e quem chega la, do mesmo jeito
+## que o patio da delegacia ou a pista do posto ja contam como piso hoje. Piso
+## so nasce colado na porta de quem o gerou (`Construcao.na_frente` ou a
+## alameda escrita a mao), entao aceitar ele aqui nao disfarca porta que
+## realmente nao da em lugar nenhum.
 func _o_predio_encara_uma_via() -> void:
 	var vias: Array = Mapa.mundo()["vias"]
+	var pisos: Array = Mapa.mundo()["piso"]
 	for construcao in Mapa.mundo()["construcoes"]:
 		var porta := Construcao.porta_de(construcao)
 		var normal := Construcao.normal_de(construcao)
@@ -305,14 +313,21 @@ func _o_predio_encara_uma_via() -> void:
 				achou = true
 				break
 		if not achou:
-			_erro("%s em %s: a porta (%s, olhando %s) nao encara via nenhuma a ate %.0f px"
+			for piso in pisos:
+				if (piso as Rect2).grow(1.0).intersects(raio):
+					achou = true
+					break
+		if not achou:
+			_erro("%s em %s: a porta (%s, olhando %s) nao encara via nem piso nenhum a ate %.0f px"
 				% [construcao["tipo"], construcao["rect"], porta, normal, RECUO_MAXIMO_DA_VIA])
 
 ## A entrada de carro tem que chegar em asfalto de verdade - nao pode acabar
 ## na grama. Criterio A: `entrada_de_carro(c)` cresce 1 px e tem que
-## interceptar alguma via reta.
+## interceptar alguma via reta **ou piso** - mesma excecao do condominio
+## murado que `_o_predio_encara_uma_via` aceita, e pelo mesmo motivo.
 func _a_entrada_de_carro_chega_na_via() -> void:
 	var vias: Array = Mapa.mundo()["vias"]
+	var pisos: Array = Mapa.mundo()["piso"]
 	for construcao in Mapa.mundo()["construcoes"]:
 		var entrada := Construcao.entrada_de_carro(construcao).grow(1.0)
 		var achou := false
@@ -321,7 +336,12 @@ func _a_entrada_de_carro_chega_na_via() -> void:
 				achou = true
 				break
 		if not achou:
-			_erro("%s em %s: a entrada de carro (%s) nao chega em via nenhuma"
+			for piso in pisos:
+				if (piso as Rect2).intersects(entrada):
+					achou = true
+					break
+		if not achou:
+			_erro("%s em %s: a entrada de carro (%s) nao chega em via nem piso nenhum"
 				% [construcao["tipo"], construcao["rect"], entrada])
 
 ## Nenhum predio pisa em via, calcada ou piso de concreto.
@@ -369,8 +389,9 @@ func _predio_dentro_do_lugar_e_do_mundo() -> void:
 			_erro("%s em %s nao cabe (nem com folga) em nenhum lugar do MUNDO" % [construcao["tipo"], r])
 
 ## Lugar cujo nome comeca com "mata" tem que ter densidade de mata (>= 0,4) -
-## senao o rotulo mente. **Nao corrige nada** (o rename floresta -> bosque /
-## mata / campo e P9): so acusa o que ja esta errado hoje.
+## senao o rotulo mente. Motivou o rename do tipo "floresta" para "mata" em
+## P10 (`Lugares._mata`, com anel de densidade perto da borda do MUNDO nas
+## tres que nao sao a mata do sul).
 func _mata_tem_nome_de_mata() -> void:
 	for lugar in Mapa.LUGARES:
 		if not (lugar["nome"] as String).begins_with("mata"):
