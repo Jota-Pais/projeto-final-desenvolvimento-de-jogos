@@ -706,9 +706,18 @@ static func _sitio(lugar: Dictionary, pecas: Dictionary) -> void:
 	var galpao_rect := Rect2(galpao_x, r.end.y - galpao.y - 260.0, galpao.x, galpao.y)
 	pecas["construcoes"].append({ "rect": galpao_rect, "porta": "sul", "tipo": "galpao" })
 
-	# O patio de terra batida na frente das duas, encostado na estrada de
+	# Um segundo galpao, entre os dois (17/09/2026, P21 - queixa do dono:
+	# "tem poucas casas, o mapa tem poucos detalhes... espacos sem nada"): a
+	# faixa entre a casa e o primeiro galpao media 960 px de capim vazio, e o
+	# MESMO patio ja alcanca os tres - nenhum patio novo precisou nascer.
+	var vao_do_meio := galpao_rect.position.x - casa_rect.end.x
+	var segundo_galpao_x := casa_rect.end.x + (vao_do_meio - galpao.x) / 2.0
+	var segundo_galpao_rect := Rect2(segundo_galpao_x, galpao_rect.position.y, galpao.x, galpao.y)
+	pecas["construcoes"].append({ "rect": segundo_galpao_rect, "porta": "sul", "tipo": "galpao" })
+
+	# O patio de terra batida na frente das tres, encostado na estrada de
 	# terra que chega em `lugar["acesso"]` (17/09/2026, P10 - novo): sem
-	# ele nenhuma das duas "encarava via" de verdade - a estrada de terra e
+	# ele nenhuma das tres "encarava via" de verdade - a estrada de terra e
 	# poligonal (`Vias.e_reta` recusa), entao so um retangulo de verdade na
 	# ponta dela resolve, o mesmo padrao que o patio da delegacia/mercado
 	# ja usa. So um retangulo (classe sem largura minima/maxima, ver
@@ -735,7 +744,13 @@ static func _sitio(lugar: Dictionary, pecas: Dictionary) -> void:
 	pecas["moveis_de_rua"].append({
 		"tipo": "lata", "pos": Vector2(r.end.x - 220.0, r.end.y - 80.0),
 	})
-	pecas["zumbis"].append(Vector2(r.get_center().x, r.end.y - 500.0))
+	# No patio da frente, nao mais perto da porta (17/09/2026, P21 - achado
+	# rodando o conferir_zumbi): a faixa entre a casa e o galpao, onde este
+	# zumbi nascia, virou o segundo galpao logo abaixo - o zumbi nascia em
+	# cima de parede. O quintal da frente da casa continua livre.
+	pecas["zumbis"].append(Vector2(r.get_center().x, r.position.y + 400.0))
+	# Um segundo, agora que sao tres predios em vez de dois (P21).
+	pecas["zumbis"].append(Vector2(segundo_galpao_rect.get_center().x, r.end.y - 700.0))
 
 # --- a lavoura --------------------------------------------------------------
 
@@ -769,6 +784,30 @@ static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
 		"rect": patio, "pontas": ["declarado:patio"],
 	})
 
+	# A casa de quem cuida da lavoura, no fundo do terreno - so o galpao de
+	# ferramenta fazia a lavoura inteira (9.000 x 4.600 px) parecer um deposito
+	# abandonado, sem ninguem morando (17/09/2026, P21 - queixa do dono: "tem
+	# poucas casas, o mapa tem poucos detalhes"). Longe do galpao de proposito
+	# (mais de 3.000 px), com patio proprio - nao ha via nenhuma perto o
+	# bastante do fundo do terreno para reusar.
+	var casa := Construcao.TAMANHOS["casa"]
+	var casa_rect := Rect2(acesso.x - casa.x * 0.5, r.end.y - casa.y - 300.0, casa.x, casa.y)
+	var casa_da_lavoura := { "rect": casa_rect, "porta": "sul", "tipo": "casa" }
+	pecas["construcoes"].append(casa_da_lavoura)
+	var patio_da_casa := Rect2(casa_rect.position.x - 80.0, casa_rect.end.y + 10.0,
+		casa_rect.size.x + 160.0, 300.0)
+	pecas["vias"].append({
+		"nome": "patio da casa da lavoura", "classe": "patio", "lugar": lugar["nome"],
+		"rect": patio_da_casa, "pontas": ["declarado:patio"],
+	})
+	pecas["moveis_de_rua"].append({
+		"tipo": "lata", "pos": Vector2(casa_rect.position.x - 60.0, casa_rect.end.y - 40.0),
+	})
+	# A sala, nao o centro do retangulo (achado rodando o conferir_zumbi): numa
+	# casa de tres quartos a divisoria interna passa quase no meio, e o zumbi
+	# nascia dentro da parede.
+	pecas["zumbis"].append(Construcao.quartos_de(casa_da_lavoura)[0].get_center())
+
 	var colunas := 3
 	var linhas := 2
 	var carreador := 240.0
@@ -785,7 +824,8 @@ static func _lavoura(lugar: Dictionary, pecas: Dictionary) -> void:
 				r.position.x + carreador + float(coluna) * (talhao.x + carreador),
 				r.position.y + carreador + float(linha) * (talhao.y + carreador),
 				talhao.x, talhao.y)
-			if pedaco.intersects(galpao_rect) or pedaco.intersects(patio):
+			if pedaco.intersects(galpao_rect) or pedaco.intersects(patio) \
+					or pedaco.intersects(casa_rect) or pedaco.intersects(patio_da_casa):
 				continue
 			pecas["lavoura"].append(pedaco)
 
