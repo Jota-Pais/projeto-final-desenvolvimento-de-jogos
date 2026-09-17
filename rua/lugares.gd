@@ -81,6 +81,22 @@ static func _bairro_rede() -> Array[Dictionary]:
 	fora.append_array(Vias.laco(Vector2(4700.0, 13800.0), Vector2(700.0, 900.0), 320.0,
 		"laco do poente"))
 
+	# Rua do Bairro (leste): continuacao a leste da Estrada do Bairro
+	# (17/09/2026, P18 - pedido do dono: uma quadra de esquina de verdade,
+	# com DUAS frentes perpendiculares na mesma quadra). O quarteirao entre
+	# a rodovia e esta rua, a leste da Estrada do Bairro, e o UNICO pedaco
+	# do bairro com folga de sobra nos dois eixos (~3000 px) para o
+	# RESERVA_DE_CANTO_MAXIMA de P16 nao zerar nenhuma das duas frentes -
+	# em todo o resto do bairro/da cidade, um dos dois eixos e raso demais
+	# (testado e descartado: ao sul da Rua do Norte cruzava QC-fita-centro,
+	# ao norte dela a via de apoio nem chegava la). Termina num laco, nunca
+	# bulbo solto.
+	fora.append({ "nome": "rua do bairro (leste)", "classe": "residencial", "lugar": "bairro",
+		"eixo": [Vector2(7000.0, 13800.0), Vector2(10140.0, 13800.0)],
+		"pontas": ["T:estrada do bairro", "laco:laço do bairro leste"] })
+	fora.append_array(Vias.laco(Vector2(10500.0, 13800.0), Vector2(400.0, 600.0), 320.0,
+		"laço do bairro leste"))
+
 	# Rua de Baixo, com o retorno em U na ponta oeste - o cul-de-sac que o PZ
 	# usa (nunca bulbo asfaltado solto). Vai ate x=9800, nao 8600 (17/09/2026,
 	# P9): QB-leste precisa da faixa dela para ter lote - encurtada em 8600,
@@ -229,6 +245,19 @@ static func _quadras_do_bairro() -> Array[Dictionary]:
 		# nasceria fora de qualquer lugar do MUNDO (achado rodando o
 		# conferir_mapa). Ganha UMA casa a mao em `_bairro`, com o bairro
 		# alargado o suficiente pra ela caber - ver `_casas_junto_a_via`.
+		#
+		# QB-canto (17/09/2026, P18): a primeira quadra do mapa com DUAS
+		# frentes perpendiculares de verdade - "sul" encara a Rua do Bairro
+		# (leste), "oeste" encara a Estrada do Bairro. Fundo generoso nos
+		# dois eixos (2600/2700 px) de proposito: e exatamente o caso que
+		# RESERVA_DE_CANTO_MAXIMA (P16) existe para proteger, e so funciona
+		# com folga real sobrando dos dois lados depois da reserva - por
+		# isso o quarteirao entre a rodovia e a Rua do Bairro (leste) foi
+		# escolhido (ver a rede acima).
+		{ "id": "QB-canto", "lugar": "bairro", "uso": "casa",
+			"entre": { "sul": "rua do bairro (leste)", "oeste": "estrada do bairro" },
+			"fundo": { "norte": 2600.0, "leste": 2700.0 },
+			"frentes": ["sul", "oeste"], "passo": 900.0 },
 	]
 
 ## O bairro (17/09/2026, P9 - arquitetura nova): quadra -> lote -> predio,
