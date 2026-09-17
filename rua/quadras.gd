@@ -299,7 +299,7 @@ static func predio_no_lote(lote: Dictionary, tipo: String, via: Dictionary,
 	# A entrada de carro tem que atravessar a grama e a calcada tambem, nao
 	# so o recuo - senao ela para na beira do proprio quintal, curta da
 	# calcada pelo tanto que a calcada mede (achado gerando os primeiros
-	# predios coma calcada de verdade, em P8: a Rua do Bairro e a Avenida
+	# predios com calcada de verdade, em P8: a Rua do Bairro e a Avenida
 	# sao as primeiras vias com calcada que ganham predio).
 	# O lado da via que da para o predio e o OPOSTO da porta (a via fica do
 	# lado de fora do lote, entao "porta sul" quer dizer "a via encara o

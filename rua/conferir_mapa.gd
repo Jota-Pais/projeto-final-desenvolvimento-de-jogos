@@ -121,7 +121,7 @@ func _erro(texto: String) -> void:
 #
 # **P7 trocou a rede de vias inteira** (bairro 100% ao sul da rodovia, cidade
 # 100% ao norte, as duas com layout novo) **sem tocar nas construcoes** - de
-# proposito: o objetivo de P7 e provar que a REDE fecha, nao que ela already
+# proposito: o objetivo de P7 e provar que a REDE fecha, nao que ela ja
 # bate com o predio. Por isso boa parte dos 64 originais mudou de forma (a
 # maioria das casas antigas passa a nao encarar via nenhuma da rede nova, ja
 # que a rede mudou de posicao debaixo delas) - **isso e esperado**, e e
@@ -233,9 +233,9 @@ func _a_rede_de_vias_fecha() -> void:
 	var nos: Dictionary = grafo["nos"]
 	var grau: Dictionary = grafo["grau"]
 	var incidencias: Dictionary = grafo["incidencias"]
-	var pontas_por_via := {}
+	var via_por_nome := {}
 	for via in vias:
-		pontas_por_via[(via as Dictionary)["nome"]] = (via as Dictionary).get("pontas", [])
+		via_por_nome[(via as Dictionary)["nome"]] = via
 
 	for nome in nos:
 		if int(grau[nome]) >= 2:
@@ -244,11 +244,20 @@ func _a_rede_de_vias_fecha() -> void:
 		if not Mapa.MUNDO.grow(-200.0).has_point(p):
 			continue  # perto da borda do mundo: fim legitimo
 		# So uma via incide neste no (grau 1) - ela declarou um tipo de ponta
-		# legitimo para ESTA ponta especifica?
+		# legitimo para ESTA ponta especifica, e nao so ALGUMA ponta sua em
+		# lugar nenhum (achado no cacador de furos de P15: uma via com duas
+		# pontas soltas, uma declarada "borda" e a outra sem declaracao
+		# nenhuma, passava batido - o codigo olhava "esta via tem ponta
+		# declarada?" pela lista inteira, sem checar QUAL indice de ponta e
+		# o que esta morrendo aqui).
 		var via_incidente: String = (incidencias[nome] as Array)[0]
+		var via_dict: Dictionary = via_por_nome.get(via_incidente, {})
+		var pontas_geo: Array[Vector2] = Vias.pontas_de(via_dict)
+		var pontas_decl: Array = via_dict.get("pontas", [])
 		var declarada := false
-		for tipo in (pontas_por_via.get(via_incidente, []) as Array):
-			if (tipo as String) != "":
+		for j in pontas_geo.size():
+			if pontas_geo[j].distance_to(p) <= Vias.PERTO \
+					and j < pontas_decl.size() and (pontas_decl[j] as String) != "":
 				declarada = true
 				break
 		if declarada:
@@ -494,7 +503,13 @@ func _dentro_de_cada_lugar() -> void:
 	var construcoes: Array = Mapa.mundo()["construcoes"]
 
 	for lugar in Mapa.LUGARES:
-		if lugar["tipo"] == "floresta":
+		# "mata", nao mais "floresta" (P10) - achado na revisao de P15: a
+		# comparacao ficou presa ao nome antigo, entao a passada fina parou
+		# de pular as quatro matas e passou a varrer 24 px por celula por
+		# cima de retangulos de dezenas de milhoes de px², sem nenhuma
+		# construcao para checar - exatamente o risco que o design original
+		# previa para um rename de tipo que escapasse de um dos dois sitios.
+		if lugar["tipo"] == "mata":
 			continue
 		var r: Rect2 = (lugar["rect"] as Rect2).grow(FOLGA_DO_LUGAR)
 		var livre := _onde_cabe(r, PASSO_FINO)

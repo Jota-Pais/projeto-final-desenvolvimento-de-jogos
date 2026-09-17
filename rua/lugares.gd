@@ -53,13 +53,10 @@ const BAIRRO_TAMANHO := Vector2(5760.0, 6800.0)
 ## Coordenadas em MUNDO, nao mais locais: como o bairro tem posicao fixa
 ## agora (ao contrario do design antigo, pensado para "boiar" em qualquer
 ## `origem`), escrever direto evita a volta de traduzir e destraduzir.
-## `_bairro()` NAO desloca isto por `origem` - so as construcoes/cercas/
-## bosques antigos continuam precisando disso.
 ##
-## As construcoes de `BAIRRO_CONSTRUCOES` continuam nascendo no lugar velho
-## (dentro do retangulo do lugar, que so moveu de posicao) - **de proposito**:
-## reescrever onde a casa fica e trabalho de P8/P9, sobre esta rede. Ate la,
-## a rua bate certo e a casa nao - e o esperado, nao um bug.
+## As construcoes do bairro nascem em cima desta rede desde P9
+## (`_quadras_do_bairro`/`_construir_quadra`) - o loteamento antigo
+## (`BAIRRO_CONSTRUCOES` e as constantes irmas) foi removido nesse passo.
 static func _bairro_rede() -> Array[Dictionary]:
 	var fora: Array[Dictionary] = []
 
@@ -295,9 +292,9 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 ## mais ao norte terminando num laco, um beco de servico atras da fita
 ## comercial, e um laco em cada ponta solta da avenida.
 ##
-## Coordenadas em MUNDO. As construcoes ainda nao usam esta rede - continuam
-## nascendo pela grade antiga (`_uma_quadra`), e por isso o layout vai
-## parecer errado ate P8/P9: e o esperado neste passo (P7 e so o esqueleto).
+## Coordenadas em MUNDO. As construcoes da cidade nascem em cima desta rede
+## desde P8 (`_quadras_da_cidade`/`_construir_quadra`) - a grade antiga
+## (`_uma_quadra`) foi removida nesse passo.
 static func _cidade_rede() -> Array[Dictionary]:
 	var fora: Array[Dictionary] = []
 
@@ -793,6 +790,16 @@ static func _mata(lugar: Dictionary, pecas: Dictionary) -> void:
 				PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
 			ralo = Rect2(fechada.position.x - PROFUNDIDADE_DO_BOSQUE_RALO, r.position.y,
 				PROFUNDIDADE_DO_BOSQUE_RALO, r.size.y)
+		"sul":
+			fechada = Rect2(r.position.x, r.end.y - PROFUNDIDADE_DA_MATA_FECHADA,
+				r.size.x, PROFUNDIDADE_DA_MATA_FECHADA)
+			ralo = Rect2(r.position.x, fechada.position.y - PROFUNDIDADE_DO_BOSQUE_RALO,
+				r.size.x, PROFUNDIDADE_DO_BOSQUE_RALO)
+		_:
+			# Nenhum lugar de hoje usa outro valor - falha alto em vez de
+			# silenciosamente dobrar "fechada" e "ralo" no retangulo inteiro
+			# (dois bosques cheios sobrepostos, achado na revisao de P15).
+			assert(false, "lado_da_mata desconhecido: '%s'" % lado)
 	pecas["bosques"].append({ "rect": fechada, "densidade": densidade })
 	pecas["bosques"].append({ "rect": ralo, "densidade": DENSIDADE_DO_BOSQUE_RALO })
 	_zumbis_da_mata(r, pecas)

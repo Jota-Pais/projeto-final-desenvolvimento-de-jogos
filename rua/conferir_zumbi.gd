@@ -411,8 +411,8 @@ func _preparar_horda() -> void:
 	# chamado.
 	# Num trecho aberto da rodovia, entre o bairro e a cidade: linha de visao
 	# limpa e sem arvore no meio. O x sai do MEIO dos dois acessos (nao um
-	# numero solto) - onde os dois lugares se comeca casaram do rodovia, o
-	# vao entre eles fica livre de construcao e de bosque.
+	# numero solto) - onde os dois lugares encostam na rodovia -, e o vao
+	# entre eles fica livre de construcao e de bosque.
 	#
 	# Era Vector2(2900, 1300), coordenada do bairro pequeno - que no mapa de
 	# 09/09 caiu dentro da mata do oeste, onde a arvore corta a visao. O teste

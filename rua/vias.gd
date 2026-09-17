@@ -81,11 +81,16 @@ const CLASSES := {
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
 		"recuo": Vector2(160.0, 620.0), "clareira": 80.0,
 	},
-	# As duas que fecham os criterios A e B sem clausula de excecao: a loja
-	# encara o estacionamento, o galpao do sitio encara o patio, e a estrada
-	# de terra termina numa INTERSECCAO com o patio em vez de morrer no
-	# talhao. Largura livre (vem do `rect` declarado), sem faixa e sem
-	# calcada.
+	# "patio" fecha os criterios A e B do sitio/da lavoura sem clausula de
+	# excecao: o galpao encara o patio, e a estrada de terra termina numa
+	# INTERSECCAO com ele em vez de morrer no talhao (`Lugares._sitio`/
+	# `_lavoura`, P10). "estacionamento" nasceu junto, pensada para o mesmo
+	# papel numa quadra comercial (a loja encarando vaga em vez de calcada) -
+	# **nenhuma via do mapa de hoje usa essa classe**: o posto e o mercado
+	# resolveram encarar "piso" pela excecao generica que
+	# `conferir_mapa._o_predio_encara_uma_via` ja aceita (P10), sem precisar
+	# de uma via propria. Fica declarada para quando essa quadra existir -
+	# largura livre (vem do `rect` declarado), sem faixa e sem calcada.
 	"estacionamento": {
 		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
@@ -106,9 +111,12 @@ const CLASSES := {
 ##  - `eixo` (Array[Vector2]): 2 pontos axiais (mesmo x ou mesmo y) para via
 ##    reta; 3+ pontos para polilinha (`rural`/`terra`, fora da cidade);
 ##  - `largura` (float, opcional): sobrescreve a da classe;
-##  - `rect` (Rect2, opcional): so para vias sem eixo (hoje: `laco`);
-##  - `pontas` (Array[String], 2): o TIPO da ponta - "borda", "T:<nome>",
-##    "emenda:<nome>", "laco", "u:<nome>" - nao a prova; a prova e o grafo;
+##  - `rect` (Rect2, opcional): so para vias sem eixo (hoje: `laco` e o
+##    `patio` do sitio/da lavoura);
+##  - `pontas` (Array[String]): o TIPO de cada ponta - "borda", "T:<nome>",
+##    "emenda:<nome>", "laco:<nome>", "u:<nome>", "declarado:<motivo>" - nao a
+##    prova, a prova e o grafo. Um elemento por ponta GEOMETRICA de `_pontas`:
+##    2 para via de eixo reto, 1 para via com `rect` (ela so tem um centro);
 ##  - `lugar` (String): quem gerou a via (vazio para as de `mapa.gd`).
 
 static func largura_de(via: Dictionary) -> float:
@@ -337,8 +345,12 @@ static func u(mae: Dictionary, a: Vector2, b: Vector2, fundo: Vector2, nome: Str
 
 ## As pontas de uma via: 1 para `rect` (nao tem direcao), 2 para `eixo`
 ## (primeiro e ultimo ponto - numa polilinha, so as pontas contam para o
-## grafo, os pontos do meio sao so desenho).
-static func _pontas(via: Dictionary) -> Array[Vector2]:
+## grafo, os pontos do meio sao so desenho). **Publica** (17/09/2026, P15):
+## `conferir_mapa.gd` precisa dela para achar QUAL ponta geometrica de uma
+## via corresponde a um no do grafo, e olhar por baixo do underscore de fora
+## do arquivo era o unico lugar do codigo que fazia isso (achado na revisao
+## adversarial).
+static func pontas_de(via: Dictionary) -> Array[Vector2]:
 	if via.has("rect"):
 		var r: Rect2 = via["rect"]
 		var fora: Array[Vector2] = [r.get_center()]
@@ -347,11 +359,13 @@ static func _pontas(via: Dictionary) -> Array[Vector2]:
 	var fora: Array[Vector2] = [eixo[0], eixo[eixo.size() - 1]]
 	return fora
 
-const _PERTO := 2.0
+## Distancia abaixo da qual duas pontas contam como o mesmo no do grafo -
+## publica pelo mesmo motivo de `pontas_de`.
+const PERTO := 2.0
 
 ## O grafo da rede: `{"nos": {nome_do_no: Vector2}, "grau": {nome_do_no: int},
 ## "incidencias": {nome_do_no: Array[String]}}`. Nos sao descobertos por
-## GEOMETRIA, nao por declaracao: duas pontas a menos de `_PERTO` px sao o
+## GEOMETRIA, nao por declaracao: duas pontas a menos de `PERTO` px sao o
 ## mesmo no. Uma ponta que cai dentro da `faixa_de` de OUTRA via tambem conta
 ## como incidente aquela via (a via e um cruzamento em T, mesmo sem a outra
 ## via "saber" disso) - e o que faz o grau de um no bater com o que se ve no
@@ -362,7 +376,7 @@ static func grafo(vias: Array) -> Dictionary:
 
 	var pontas_de_cada: Array = []
 	for via in vias:
-		pontas_de_cada.append(_pontas(via))
+		pontas_de_cada.append(pontas_de(via))
 
 	var no_de_ponta := {}  # "%d:%d" (indice da via, indice da ponta) -> nome do no
 	var proximo := 0
@@ -378,14 +392,14 @@ static func grafo(vias: Array) -> Dictionary:
 			nos[nome] = p
 			no_de_ponta[chave] = nome
 			incidencias[nome] = [(vias[i] as Dictionary)["nome"]]
-			# Junta toda outra ponta a menos de _PERTO px - o mesmo no.
+			# Junta toda outra ponta a menos de PERTO px - o mesmo no.
 			for k in vias.size():
 				for l in pontas_de_cada[k].size():
 					var outra_chave := "%d:%d" % [k, l]
 					if no_de_ponta.has(outra_chave):
 						continue
 					var q: Vector2 = pontas_de_cada[k][l]
-					if q.distance_to(p) <= _PERTO:
+					if q.distance_to(p) <= PERTO:
 						no_de_ponta[outra_chave] = nome
 						(incidencias[nome] as Array).append((vias[k] as Dictionary)["nome"])
 
