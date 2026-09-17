@@ -318,7 +318,12 @@ func _o_tiro_chama_a_horda() -> void:
 		_erro("o estrondo (%.0f) nao alcanca mais longe que o chamado de um zumbi (700)"
 			% Pistola.ALCANCE_DO_ESTRONDO)
 
-	_jogador.global_position = Mapa.RODOVIA.get_center() + Vector2(20000.0, 0.0)
+	# O x sai da mansao (17/09/2026, P12) - trecho aberto da rodovia por
+	# baixo dela, longe de bairro/cidade/posto, sem predio nem bosque no
+	# meio dos dois zumbis. Nao e a mansao em si (o zumbi fica ao SUL do
+	# muro, na faixa da propria rodovia).
+	var x_aberto: float = (Mapa.lugar("mansão murada")["rect"] as Rect2).get_center().x
+	_jogador.global_position = Vector2(x_aberto, Mapa.RODOVIA.get_center().y)
 	var perto := _um_zumbi_em(_jogador.global_position + Vector2(0.0, 1200.0))
 	var longe := _um_zumbi_em(_jogador.global_position
 		+ Vector2(0.0, Pistola.ALCANCE_DO_ESTRONDO + 900.0))

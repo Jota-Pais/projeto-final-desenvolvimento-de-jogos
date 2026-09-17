@@ -106,6 +106,23 @@ func _uma_construcao(tipo: String) -> Dictionary:
 			return construcao
 	return {}
 
+## A construcao do tipo pedido mais PERTO de um ponto, e nao so a primeira do
+## mapa inteiro (17/09/2026, P12) - use quando o teste depende de dois
+## predios estarem na mesma janela de navegacao. Sem isto, "mercadinho" ou
+## "galpao" podiam apontar para o outro lado do mapa toda vez que um lugar
+## novo passasse a ter um predio daquele tipo antes na lista.
+func _uma_construcao_perto(tipo: String, perto: Vector2) -> Dictionary:
+	var melhor := {}
+	var menor := INF
+	for construcao in Mapa.mundo()["construcoes"]:
+		if construcao["tipo"] != tipo or construcao.get("sua", false):
+			continue
+		var d: float = (construcao["rect"] as Rect2).get_center().distance_to(perto)
+		if d < menor:
+			menor = d
+			melhor = construcao
+	return melhor
+
 func _passar() -> void:
 	_fase += 1
 	_quadros = 0
@@ -162,11 +179,14 @@ func _navegacao() -> void:
 	# anda. Pedir a janela aqui, em vez de contar com o _process ja ter rodado,
 	# e o que faz esta conferencia medir a navegacao e nao o relogio de quadros.
 	_nav.remontar_em(rua)
+	# `_uma_construcao_perto`, e nao `_uma_construcao` (17/09/2026, P12): o
+	# comercio mais perto DESTA rua, e nao so o primeiro do mapa - o bairro
+	# tem um so, mas nada garante que continue sendo o primeiro da lista se
+	# um lugar novo nascer antes dele.
 	var alvos := {
 		"sala": Construcao.quartos_de(casa)[0].get_center(),
 		"quarto do fundo": Construcao.quartos_de(casa)[1].get_center(),
-		"galpao do quintal": Construcao.quartos_de(_uma_construcao("galpao"))[0].get_center(),
-		"mercadinho": Construcao.quartos_de(_uma_construcao("comercio"))[0].get_center(),
+		"mercadinho": Construcao.quartos_de(_uma_construcao_perto("comercio", rua))[0].get_center(),
 	}
 	for nome in alvos:
 		var caminho: PackedVector2Array = _nav.caminho(rua, alvos[nome])
@@ -178,6 +198,29 @@ func _navegacao() -> void:
 			_erro("caminho ate %s para a %.0f px do alvo" % [nome, erro])
 			continue
 		print("  rua -> %-18s %3d pontos, %.0f px" % [nome, caminho.size(), _tamanho(caminho)])
+
+	# O galpao mora no sitio e na lavoura, nao no bairro - nenhuma casa de
+	# bairro tem quintal com galpao, entao testar a partir da MESMA `rua` de
+	# cima nunca vai achar um perto o bastante (17/09/2026, P12: era assim
+	# que "_uma_construcao('galpao')" acabava pegando o galpao da lavoura, a
+	# 8 km da janela local, e "sem caminho" virava falha permanente, nao um
+	# bug de posicao). Testa a partir do proprio acesso do sitio do norte,
+	# que e onde o galpao dele encara a via (ver Lugares._sitio, P10).
+	var acesso_do_sitio: Vector2 = Mapa.lugar("sítio do norte")["acesso"]
+	var galpao := _uma_construcao_perto("galpao", acesso_do_sitio)
+	_nav.remontar_em(acesso_do_sitio)
+	var alvo_do_galpao := Construcao.quartos_de(galpao)[0].get_center()
+	var caminho_do_galpao: PackedVector2Array = _nav.caminho(acesso_do_sitio, alvo_do_galpao)
+	if caminho_do_galpao.is_empty():
+		_erro("sem caminho do acesso do sitio do norte ate o galpao")
+	else:
+		var erro_do_galpao: float = caminho_do_galpao[-1].distance_to(alvo_do_galpao)
+		if erro_do_galpao > 60.0:
+			_erro("caminho ate o galpao do sitio para a %.0f px do alvo" % erro_do_galpao)
+		else:
+			print("  sitio -> %-18s %3d pontos, %.0f px"
+				% ["galpao", caminho_do_galpao.size(), _tamanho(caminho_do_galpao)])
+	_nav.remontar_em(rua)
 
 	# De uma ponta a outra do bairro. Eram coordenadas do bairro pequeno ate
 	# 09/09/2026, e com o mapa novo elas cairam na mata do oeste - fora da
@@ -367,12 +410,15 @@ func _preparar_horda() -> void:
 	# Um que vai enxergar o jogador, e tres vagando dentro do alcance do
 	# chamado.
 	# Num trecho aberto da rodovia, entre o bairro e a cidade: linha de visao
-	# limpa e sem arvore no meio.
+	# limpa e sem arvore no meio. O x sai do MEIO dos dois acessos (nao um
+	# numero solto) - onde os dois lugares se comeca casaram do rodovia, o
+	# vao entre eles fica livre de construcao e de bosque.
 	#
 	# Era Vector2(2900, 1300), coordenada do bairro pequeno - que no mapa de
 	# 09/09 caiu dentro da mata do oeste, onde a arvore corta a visao. O teste
 	# passou a medir a mata em vez da horda, e acusou o zumbi de nao ver.
-	_jogador.global_position = Vector2(10500.0, Mapa.RODOVIA.get_center().y)
+	var x_aberto: float = (Mapa.lugar("bairro")["acesso"].x + Mapa.lugar("cidade")["acesso"].x) / 2.0
+	_jogador.global_position = Vector2(x_aberto, Mapa.RODOVIA.get_center().y)
 	_longe_do_teste(4)
 	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 300.0)
 	_zumbis[0]._estado = VAGANDO
