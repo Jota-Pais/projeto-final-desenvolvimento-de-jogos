@@ -141,8 +141,12 @@ const ESTRADAS_DE_TERRA := [
 ## a pista para ir da sua casa a cidade e um trecho de verdade do trajeto, e
 ## nao um detalhe que a rua ja resolvia sozinha.
 const LUGARES := [
+	# 4.200 de largura, nao 3.800 (17/09/2026, P20 - queixa do dono: "tem
+	# poucos detalhes... espacos sem nada"): a mata do oeste terminava 400 px
+	# antes do bairro comecar - uma faixa de nada que nao era mata nem
+	# bairro, so campo aberto sem razao de ser. Agora encosta.
 	{
-		"nome": "mata do oeste", "tipo": "mata", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0),
+		"nome": "mata do oeste", "tipo": "mata", "rect": Rect2(0.0, 0.0, 4200.0, 22000.0),
 		"densidade": 0.45, "lado_da_mata": "oeste",
 	},
 	# Ao SUL da rodovia (y >= 10840). O retangulo e o de Lugares.BAIRRO_TAMANHO,
@@ -180,8 +184,14 @@ const LUGARES := [
 	},
 	# Encolheu de 6900 para 3200 de altura: a cidade subiu para caber toda ao
 	# norte da rodovia, e passou a nascer onde a mata do norte terminava.
+	#
+	# 36.200 de largura, nao 24.000 (17/09/2026, P20): a mata do norte parava
+	# em x=27600, mas o sitio do leste fica em 26200-28600 e o MUNDO vai ate
+	# 40000 - o quadrante inteiro a nordeste da cidade (leste do sitio, ate a
+	# mansao) ficava sem lugar nenhum, nem mata nem nada. Agora a mata do
+	# norte cobre ate a mesma borda leste da mata do leste (39800).
 	{
-		"nome": "mata do norte", "tipo": "mata", "rect": Rect2(3600.0, 0.0, 24000.0, 3200.0),
+		"nome": "mata do norte", "tipo": "mata", "rect": Rect2(3600.0, 0.0, 36200.0, 3200.0),
 		"densidade": 0.45, "lado_da_mata": "norte",
 	},
 	# A mata do sul e a **fechada**: e nela que nao se ve o outro lado. Era um
@@ -190,13 +200,34 @@ const LUGARES := [
 	# Sem "lado_da_mata": e a unica cujo retangulo inteiro e fechado, nao so
 	# uma faixa de borda - ela nao encosta no limite do MUNDO dos dois lados
 	# como as outras tres, entao nao ha "fora" para deixar aberto.
+	#
+	# Cresceu para os quatro lados em 17/09/2026 (P20): encostava em nenhum
+	# vizinho - 1.200 px de nada ate a lavoura, 1.860 ate o posto, 1.000 ate o
+	# rio. Agora encosta nos tres (100 px de folga so contra o rio, que e
+	# agua e nao pode virar bosque).
 	{
 		"nome": "mata do sul", "tipo": "mata", "densidade": 0.55,
-		"rect": Rect2(23200.0, 14200.0, 5800.0, 7000.0),
+		"rect": Rect2(22000.0, 12340.0, 7900.0, 8860.0),
+	},
+	# Duas faixas novas ao sul do bairro e da lavoura (17/09/2026, P20): o
+	# proprio MUNDO ia ate y=22000 mas nenhum dos dois lugares descia tanto -
+	# 4.360 px de nada atras do bairro, 3.020 atras da lavoura. Duas em vez de
+	# uma so porque as bordas sul do bairro (y=17640) e da lavoura (y=18980)
+	# nao batem.
+	{
+		"nome": "mata do sul (bairro)", "tipo": "mata", "densidade": 0.45,
+		"rect": Rect2(4200.0, 17640.0, 6800.0, 4360.0),
+	},
+	{
+		"nome": "mata do sul (lavoura)", "tipo": "mata", "densidade": 0.45,
+		"rect": Rect2(11000.0, 18980.0, 11000.0, 3020.0),
 	},
 	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(32800.0, 5780.0, 4600.0, 4200.0) },
+	# Encostada no rio a oeste (31700, nao 32000) e na mansao ao norte (9980,
+	# nao 12380) desde P20: os dois eram 400 e 2.400 px de nada que sobravam
+	# entre lugares vizinhos de verdade.
 	{
-		"nome": "mata do leste", "tipo": "mata", "rect": Rect2(32000.0, 12380.0, 7800.0, 9400.0),
+		"nome": "mata do leste", "tipo": "mata", "rect": Rect2(31700.0, 9980.0, 8100.0, 11800.0),
 		"densidade": 0.45, "lado_da_mata": "leste",
 	},
 ]
