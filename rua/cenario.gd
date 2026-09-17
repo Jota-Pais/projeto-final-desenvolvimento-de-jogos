@@ -89,9 +89,22 @@ const RAIO_VIVO := 7000.0
 const RAIO_MORTO := 9800.0
 
 ## Orcamento de arvore e de mato para o mapa inteiro, distribuido pelos bosques
-## por area. Numero de no, nao de densidade: 1.200 arvores sao 2.400 nos.
+## por area.
+##
+## **Nao e mais "numero de no"** (17/09/2026, P11): ate entao cada arvore virava
+## o proprio StaticBody2D+CollisionShape2D+Polygon2D (3 nos por arvore - 3.000
+## arvores eram 9.000 nos so de arvore). Agora e um StaticBody2D POR BOSQUE
+## (~10 no mapa inteiro), com uma forma por arvore via shape_owner, e o
+## desenho e `draw_rect` em `_desenhar_arvores` - o mesmo padrao que o mato
+## (`_desenhar_mato`) ja usava, sem no nenhum. Ver `_adicionar_forma`.
 const ARVORES := 3000
 const TUFOS_DE_MATO := 5000
+
+## Teto de nos da cena inteira (P11): so um sino de alarme, nao trava nada. Se
+## este numero disparar de novo, e sinal de que algum gerador voltou a criar
+## um no por peca em vez de agrupar - o motivo de existir este arquivo de
+## conferencia embutido, e nao so o olho ver a cena ficar pesada.
+const ORCAMENTO_DE_NOS := 2000
 
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado.
@@ -155,6 +168,10 @@ var _moveis_ja_vazios := 0
 ## aqui ja sao retangulos conhecidos, entao nao ha o que descobrir depois.
 var _obstaculos: Array[Rect2] = []
 
+## Toda arvore plantada, so para o `_draw()` pintar - a colisao dela mora no
+## StaticBody2D do proprio bosque, nao aqui (P11).
+var _arvores: Array[Rect2] = []
+
 ## Os pontos de povoamento que ainda nao tem zumbi na arvore, e os que tem.
 var _pontos_de_zumbi: Array[Vector2] = []
 var _zumbis_vivos := {}
@@ -195,18 +212,32 @@ func _ready() -> void:
 	# povoamento, que depende de onde o jogador esta.
 	_por_no_lugar()
 
+	# Um StaticBody2D por PREDIO, nao por parede (P11) - ate 9 paredes (5
+	# externas + 4 internas da casa de 3 quartos) todas no mesmo corpo, via
+	# shape_owner. 91 predios eram, no pior caso, ate 819 corpos so de parede.
 	for construcao in mundo["construcoes"]:
+		var corpo_do_predio := StaticBody2D.new()
 		for parede in Construcao.paredes_externas(construcao):
-			_criar_corpo(parede)
+			_adicionar_forma(corpo_do_predio, parede)
 		for parede in Construcao.paredes_internas(construcao):
-			_criar_corpo(parede)
+			_adicionar_forma(corpo_do_predio, parede)
+		add_child(corpo_do_predio)
 		_povoar(construcao)
 
-	for cerca in mundo["cercas"]:
-		_criar_corpo(cerca)
+	# Mesma ideia para cerca e solido: um corpo so para cada lista inteira,
+	# nao um por retangulo - nenhum dos dois precisa ser distinguivel do
+	# vizinho, so solido.
+	if not (mundo["cercas"] as Array).is_empty():
+		var corpo_das_cercas := StaticBody2D.new()
+		for cerca in mundo["cercas"]:
+			_adicionar_forma(corpo_das_cercas, cerca)
+		add_child(corpo_das_cercas)
 	# Solido e nao desenhado: o rio dos dois lados da ponte.
-	for solido in mundo["solidos"]:
-		_criar_corpo(solido)
+	if not (mundo["solidos"] as Array).is_empty():
+		var corpo_dos_solidos := StaticBody2D.new()
+		for solido in mundo["solidos"]:
+			_adicionar_forma(corpo_dos_solidos, solido)
+		add_child(corpo_dos_solidos)
 
 	for movel in mundo["moveis_de_rua"]:
 		var chave := "rua/%s@%.0f,%.0f" % [movel["tipo"], (movel["pos"] as Vector2).x,
@@ -228,6 +259,27 @@ func _ready() -> void:
 	# A camera do jogador so fica corrente depois que a cena inteira entra na
 	# arvore, por isso o deferido.
 	_limitar_camera.call_deferred()
+
+	_conferir_orcamento_de_nos()
+
+## So um alarme (P11): imprime quantos nos o cenario criou GERANDO O MAPA
+## (predio, cerca, arvore, movel, zumbi - tudo que e filho dele; jogador,
+## HUD, mochila e relogio sao irmaos na cena e nao entram nesta conta) e
+## avisa se passar do teto. Nao trava nada, e nao existe teto de verdade a
+## cumprir (mobilia e zumbi ainda vao crescer) - serve para o numero aparecer
+## sozinho toda vez que o mapa monta, em vez de precisar abrir o profiler
+## para notar que agrupar corpo parou de acontecer em algum lugar.
+func _conferir_orcamento_de_nos() -> void:
+	var nos := _contar_nos(self)
+	print("cenario: %d nos, %d obstaculos (teto de no %d)" % [nos, _obstaculos.size(), ORCAMENTO_DE_NOS])
+	if nos > ORCAMENTO_DE_NOS:
+		push_warning("cenario: %d nos passa do teto de %d" % [nos, ORCAMENTO_DE_NOS])
+
+func _contar_nos(no: Node) -> int:
+	var total := 1
+	for filho in no.get_children():
+		total += _contar_nos(filho)
+	return total
 
 ## O jogador e a porta de casa, no lugar que o mapa diz. Sao irmaos do cenario
 ## na cena, e e o cenario que sabe ler o mapa.
@@ -306,6 +358,14 @@ func _draw() -> void:
 
 	for cerca in mundo["cercas"]:
 		draw_rect(cerca, COR_CERCA)
+
+	# Por cima de tudo, como as arvores sempre estiveram (eram no filho,
+	# desenhado depois do _draw() do pai - P11 so trocou o COMO, nao a ordem).
+	_desenhar_arvores()
+
+func _desenhar_arvores() -> void:
+	for area in _arvores:
+		draw_rect(area, COR_ARVORE)
 
 ## Faixa central tracejada em cada rua **cuja classe tem** (17/09/2026: antes
 ## era toda entrada de "ruas", sem distincao - agora o beco perde o tracejado
@@ -732,6 +792,13 @@ func _plantar_arvores() -> void:
 		var quantas := int(float(ARVORES) * (_peso_de(bosque) / peso_total))
 		var plantadas := 0
 		var tentativas := 0
+		# Um StaticBody2D por BOSQUE, nao por arvore (P11) - cada arvore vira
+		# uma forma no mesmo corpo, e o desenho sai de `_desenhar_arvores`
+		# (`draw_rect`, sem Polygon2D), o mesmo padrao que `_desenhar_mato` ja
+		# usa para o tufo. Antes: 3 nos por arvore (StaticBody2D +
+		# CollisionShape2D + Polygon2D) - com ARVORES=3000, ate 9.000 nos so
+		# de arvore, contra ~10 hoje (um por bosque).
+		var corpo := StaticBody2D.new()
 		while plantadas < quantas and tentativas < quantas * 6 + 40:
 			tentativas += 1
 			var lado := sorteio.randf_range(62.0, 98.0)
@@ -744,15 +811,13 @@ func _plantar_arvores() -> void:
 			var area := Rect2(posicao, Vector2(lado, lado))
 			if not _e_terreno(area.grow(50.0)):
 				continue
-			_criar_corpo(area)
-			var tronco := Polygon2D.new()
-			tronco.color = COR_ARVORE
-			tronco.polygon = PackedVector2Array([
-				area.position, Vector2(area.end.x, area.position.y), area.end,
-				Vector2(area.position.x, area.end.y)
-			])
-			add_child(tronco)
+			_adicionar_forma(corpo, area)
+			_arvores.append(area)
 			plantadas += 1
+		if plantadas > 0:
+			add_child(corpo)
+		else:
+			corpo.free()
 
 ## O peso de um bosque no orcamento: **area vezes densidade**, e nao area.
 ##
@@ -802,29 +867,41 @@ func _e_terreno(area: Rect2) -> bool:
 
 # --------------------------------------------------------------------- colisao
 
-func _criar_corpo(area: Rect2) -> void:
-	_obstaculos.append(area)
+## Um corpo solido novo com UMA forma so - para uma peca avulsa que nao
+## compartilha dono com nenhuma outra (hoje, nenhum chamador sobra: todo mundo
+## agrupa. Fica publica porque e o jeito mais simples de criar um corpo de
+## uma peca so, se um gerador novo precisar).
+func _criar_corpo(area: Rect2) -> StaticBody2D:
+	var corpo := StaticBody2D.new()
+	_adicionar_forma(corpo, area)
+	add_child(corpo)
+	return corpo
 
+## Acrescenta UMA forma retangular a um corpo que **ja existe**, via
+## shape_owner - sem CollisionShape2D filho, que seria outro no por forma
+## (P11: era exatamente isso que fazia todo predio, cerca e arvore do mapa
+## virar um StaticBody2D+CollisionShape2D proprio). Registra o retangulo em
+## `_obstaculos` do mesmo jeito de sempre, para a navegacao continuar vendo
+## tudo sem saber que a colisao mudou de forma por baixo.
+func _adicionar_forma(corpo: StaticBody2D, area: Rect2) -> void:
+	_obstaculos.append(area)
 	var forma := RectangleShape2D.new()
 	forma.size = area.size
-
-	var colisao := CollisionShape2D.new()
-	colisao.shape = forma
-	colisao.position = area.get_center()
-
-	var corpo := StaticBody2D.new()
-	corpo.add_child(colisao)
-	add_child(corpo)
+	var dono := corpo.create_shape_owner(corpo)
+	corpo.shape_owner_add_shape(dono, forma)
+	corpo.shape_owner_set_transform(dono, Transform2D(0.0, area.get_center()))
 
 ## Muros invisiveis na borda, para nao dar de sair do mundo e ficar olhando o
-## vazio.
+## vazio. Um corpo so, quatro formas (P11).
 func _criar_muros_do_mundo() -> void:
 	var mundo := Mapa.MUNDO
 	var e := ESPESSURA_DO_MURO
-	_criar_corpo(Rect2(mundo.position.x - e, mundo.position.y - e, mundo.size.x + e * 2.0, e))
-	_criar_corpo(Rect2(mundo.position.x - e, mundo.end.y, mundo.size.x + e * 2.0, e))
-	_criar_corpo(Rect2(mundo.position.x - e, mundo.position.y, e, mundo.size.y))
-	_criar_corpo(Rect2(mundo.end.x, mundo.position.y, e, mundo.size.y))
+	var corpo := StaticBody2D.new()
+	_adicionar_forma(corpo, Rect2(mundo.position.x - e, mundo.position.y - e, mundo.size.x + e * 2.0, e))
+	_adicionar_forma(corpo, Rect2(mundo.position.x - e, mundo.end.y, mundo.size.x + e * 2.0, e))
+	_adicionar_forma(corpo, Rect2(mundo.position.x - e, mundo.position.y, e, mundo.size.y))
+	_adicionar_forma(corpo, Rect2(mundo.end.x, mundo.position.y, e, mundo.size.y))
+	add_child(corpo)
 
 func _limitar_camera() -> void:
 	var camera := get_viewport().get_camera_2d()
