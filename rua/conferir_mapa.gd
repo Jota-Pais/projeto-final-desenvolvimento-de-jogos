@@ -111,38 +111,24 @@ func _erro(texto: String) -> void:
 # borda um do outro NAO sao sobreposicao), porque `Rect2.intersects()` do
 # Godot conta a borda como colisao.
 #
-# **Este e o portao que tem que ACUSAR o mapa de hoje.** Um validador que
-# aprova o mapa quebrado de hoje aprovaria o de amanha tambem - por isso ele
-# entra ANTES do layout ser reescrito (P5 em diante), contra o mapa como ele
-# esta agora. A lista abaixo e a linha de base MEDIDA (nao suposta) em
-# 17/09/2026, rodando esta mesma fase 0: **64 achados**. E exatamente o que o
-# layout novo (P5 em diante) tem que zerar - se um dia isto voltar a passar
-# vermelho com o layout novo no lugar, o validador ficou cego, nao o mapa
-# ficou bom.
+# **Este e o portao que tem que ACUSAR o mapa quebrado.** Um validador que
+# aprova o mapa quebrado aprovaria o bom tambem - por isso ele entra ANTES do
+# layout ser reescrito (P4), contra o mapa de entao. Naquele dia (17/09/2026,
+# antes de qualquer coisa de P5 em diante) ele acusou **64 problemas reais**:
+# a rua do fundo do bairro morrendo num toco, ~40 entradas de carro que nao
+# alcancavam via nenhuma, ~14 portas encarando o mato, o mercado invadindo a
+# rua vizinha, e tres lugares "mata" com densidade de bosque raro.
 #
-##  - a "rua do fundo" do bairro passa ~400 px alem da ultima vertical
-##    (`bairro rua leste`) e morre num toco, em (9600, 12780) - grau 1, sem
-##    ponta declarada;
-##  - **~40 casas e acessorios** tem a entrada de carro (comprimento fixo,
-##    `ENTRADA_DE_CARRO_COMPRIMENTO`) que nao alcanca asfalto nenhum - o recuo
-##    da casa (`RECUOS_DE_CASA`, ate 120 px) some da conta;
-##  - **~14 predios** tem a porta olhando para o mato, sem via nenhuma a
-##    400 px - sitios, mansao e as pontas de fileira do bairro;
-##  - o mercado (`CIDADE_ESPECIAIS`, quadra x=18400) invade 380 px a rua
-##    vertical a oeste dele - a conta de centralizacao usa o tamanho da vaga
-##    generica, nao o tamanho real do predio largo; a delegacia e um galpao
-##    do bairro tambem pisam na rua ao lado, e o posto pisa no proprio piso
-##    de concreto dele (a loja fica maior que a folga que sobrou);
-##  - tres dos quatro lugares tipo "floresta" chamados "mata" tem densidade
-##    0,03 (a de bosque raro) - so "mata do sul" tem densidade propria.
+# **P7 trocou a rede de vias inteira** (bairro 100% ao sul da rodovia, cidade
+# 100% ao norte, as duas com layout novo) **sem tocar nas construcoes** - de
+# proposito: o objetivo de P7 e provar que a REDE fecha, nao que ela already
+# bate com o predio. Por isso boa parte dos 64 originais mudou de forma (a
+# maioria das casas antigas passa a nao encarar via nenhuma da rede nova, ja
+# que a rede mudou de posicao debaixo delas) - **isso e esperado**, e e
+# trabalho de P8/P9 fechar, nao deste comentario.
 #
-# O bulbo de retorno do bairro (`BAIRRO_RETORNO`) fica de fora desta lista de
-# proposito: e uma area solida sem "direcao", nao um laco de verdade, mas
-# `Vias.grafo` aceita a ponta dele (classe `laco`, ponta declarada) - o anel
-# de verdade (`Vias.laco`) e tarefa de P7, quando o bairro for reescrito.
-#
-# Corrigir os achados acima e o proprio trabalho de P5 em diante; aqui so se
-# prova que o validador ENXERGA.
+# Corrigir os achados de cada dia e o trabalho do PROXIMO passo do plano;
+# aqui so se prova que o validador ENXERGA.
 func _a_geometria_fecha() -> void:
 	print("0. a geometria do dado")
 	var antes := _falhas
@@ -154,7 +140,82 @@ func _a_geometria_fecha() -> void:
 	_predio_nao_cruza_predio()
 	_predio_dentro_do_lugar_e_do_mundo()
 	_mata_tem_nome_de_mata()
+	_ha_segunda_rota_bairro_cidade()
 	print("  %d achado(s) nesta fase" % (_falhas - antes))
+
+## Critério F: existe uma rota entre o bairro e a cidade que NAO depende da
+## rodovia - a "segunda rota" (17/09/2026, P7). Tira toda via de classe
+## `rodovia` do grafo e confere que o `acesso` do bairro ainda alcanca o da
+## cidade pelas vias que sobraram (BFS). Bem mais simples que provar 2
+## caminhos aresta-disjuntos de verdade (precisaria partir a rodovia em
+## arestas finas nos cruzamentos, o que o grafo de hoje nao faz), mas prova
+## a mesma coisa que importa: o bairro nao fica isolado se a rodovia sumir.
+func _ha_segunda_rota_bairro_cidade() -> void:
+	var vias: Array = Mapa.mundo()["vias"]
+	var sem_rodovia := []
+	for via in vias:
+		if (via as Dictionary)["classe"] != "rodovia":
+			sem_rodovia.append(via)
+
+	var bairro: Dictionary = Mapa.lugar("bairro")
+	var cidade: Dictionary = Mapa.lugar("cidade")
+	if not (bairro.has("acesso") and cidade.has("acesso")):
+		_erro("bairro ou cidade sem 'acesso' declarado - a segunda rota nao tem de onde partir")
+		return
+
+	if not _alcancavel_no_grafo(sem_rodovia, bairro["acesso"], cidade["acesso"]):
+		_erro("sem a rodovia, o bairro (acesso %s) nao alcanca a cidade (acesso %s) por via nenhuma - so ha uma rota"
+			% [bairro["acesso"], cidade["acesso"]])
+
+## BFS sobre o grafo de `vias`, achando o no mais perto de `de` e de `ate` e
+## conferindo que estao no mesmo componente.
+func _alcancavel_no_grafo(vias: Array, de: Vector2, ate: Vector2) -> bool:
+	var grafo := Vias.grafo(vias)
+	var nos: Dictionary = grafo["nos"]
+	if nos.is_empty():
+		return false
+	var no_de := ""
+	var no_ate := ""
+	var perto_de := INF
+	var perto_ate := INF
+	for nome in nos:
+		var p: Vector2 = nos[nome]
+		var d1 := p.distance_to(de)
+		if d1 < perto_de:
+			perto_de = d1
+			no_de = nome
+		var d2 := p.distance_to(ate)
+		if d2 < perto_ate:
+			perto_ate = d2
+			no_ate = nome
+
+	var incidencias: Dictionary = grafo["incidencias"]
+	# Vizinhanca no->no, por via em comum.
+	var vizinhos := {}
+	for nome in nos:
+		vizinhos[nome] = []
+	for i in vias.size():
+		var nome_via: String = (vias[i] as Dictionary)["nome"]
+		var quem := []
+		for nome in nos:
+			if (incidencias[nome] as Array).has(nome_via):
+				quem.append(nome)
+		for a in quem:
+			for b in quem:
+				if a != b and not (vizinhos[a] as Array).has(b):
+					(vizinhos[a] as Array).append(b)
+
+	var visitados := { no_de: true }
+	var fila: Array = [no_de]
+	while not fila.is_empty():
+		var atual: String = fila.pop_back()
+		if atual == no_ate:
+			return true
+		for vizinho in (vizinhos[atual] as Array):
+			if not visitados.has(vizinho):
+				visitados[vizinho] = true
+				fila.append(vizinho)
+	return no_ate in visitados
 
 ## Sobreposicao de verdade: os dois cresceram -1, para dois retangulos so se
 ## tocando na borda nao contarem.

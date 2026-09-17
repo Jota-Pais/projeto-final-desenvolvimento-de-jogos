@@ -42,16 +42,23 @@ func _via(nome: String, classe: String, eixo: Array) -> Dictionary:
 
 ## Uma caixa de 4 vias residenciais em volta do retangulo dado, para servir
 ## de `entre` em todos os lados - poupa repetir a mesma armacao em cada teste.
+## O deslocamento e a METADE da largura da classe "residencial" - nao um
+## numero cravado -, para a borda util da via encostar exatamente na borda
+## do `r` dado. Cravado em 200 ate 17/09/2026 (P7), quebrou quando a classe
+## foi de 400 para 320 px: a conta dos testes passou a sobrar 40 px por
+## lado, e "vao 4080" onde devia dar "4000" - o proprio numero apontou o
+## motivo.
 func _caixa(r: Rect2) -> Dictionary:
+	var meio: float = Vias.CLASSES["residencial"]["largura"] / 2.0
 	return {
-		"norte": _via("norte", "residencial", [Vector2(r.position.x, r.position.y - 200.0),
-			Vector2(r.end.x, r.position.y - 200.0)]),
-		"sul": _via("sul", "residencial", [Vector2(r.position.x, r.end.y + 200.0),
-			Vector2(r.end.x, r.end.y + 200.0)]),
-		"leste": _via("leste", "residencial", [Vector2(r.end.x + 200.0, r.position.y),
-			Vector2(r.end.x + 200.0, r.end.y)]),
-		"oeste": _via("oeste", "residencial", [Vector2(r.position.x - 200.0, r.position.y),
-			Vector2(r.position.x - 200.0, r.end.y)]),
+		"norte": _via("norte", "residencial", [Vector2(r.position.x, r.position.y - meio),
+			Vector2(r.end.x, r.position.y - meio)]),
+		"sul": _via("sul", "residencial", [Vector2(r.position.x, r.end.y + meio),
+			Vector2(r.end.x, r.end.y + meio)]),
+		"leste": _via("leste", "residencial", [Vector2(r.end.x + meio, r.position.y),
+			Vector2(r.end.x + meio, r.end.y)]),
+		"oeste": _via("oeste", "residencial", [Vector2(r.position.x - meio, r.position.y),
+			Vector2(r.position.x - meio, r.end.y)]),
 	}
 
 func _sobrepoe(a: Rect2, b: Rect2) -> bool:

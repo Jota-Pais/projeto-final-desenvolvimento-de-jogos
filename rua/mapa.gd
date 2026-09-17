@@ -67,20 +67,24 @@ const VERSAO_DO_MAPA := 1
 ## que moveu o numero foi de proposito.
 const IMPRESSAO_ESPERADA := "7c38a223"
 
-## A rodovia leste-oeste, que e a espinha do mapa. No trecho do bairro e a rua
-## principal dele, e no trecho da cidade e a rua do meio da grade.
-## O trecho **reto** da rodovia: o que atravessa o bairro e a cidade.
+## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
+## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
+## O trecho **reto**: o que atravessa a faixa onde ficam os dois.
 ##
-## Reto de proposito, e so aqui: cidade nasce em trecho reto de estrada, e a
-## grade da cidade tem que se alinhar com ele. O resto da rodovia e torto - ver
-## ESTRADAS.
-const RODOVIA := Rect2(3600.0, 10200.0, 24000.0, 400.0)
+## Reto de proposito, e so aqui: cidade e bairro nascem em trecho reto de
+## estrada. O resto da rodovia e torto - ver ESTRADAS.
+##
+## **14 tiles (640 px), nao mais 10** (17/09/2026, P7 - arquitetura nova):
+## a largura de hoje media a mesma coisa que uma rua de bairro, e era metade
+## da queixa "o mapa inteiro se passa numa rua so". 640 e a Dixie Highway do
+## PZ. So a altura muda aqui - x e y continuam os mesmos.
+const RODOVIA := Rect2(3600.0, 10200.0, 24000.0, 640.0)
 
 ## O rio, de cima a baixo. Agua e solida aqui - nao se nada.
 const RIO := Rect2(30000.0, 0.0, 1600.0, 22000.0)
 
-## A ponte, onde a rodovia cruza o rio.
-const PONTE := Rect2(30000.0, 9980.0, 1600.0, 840.0)
+## A ponte, onde a rodovia cruza o rio - centralizada na rodovia mais alta.
+const PONTE := Rect2(30000.0, 10100.0, 1600.0, 840.0)
 
 ## **As estradas tortas, e por que elas existem.**
 ##
@@ -96,54 +100,82 @@ const PONTE := Rect2(30000.0, 9980.0, 1600.0, 840.0)
 ## que era estrada de terra em linha vertical virou uma estrada que serpenteia
 ## o norte inteiro ligando os dois sitios - e e ela que faz o norte deixar de
 ## ser campo com nada.
+## Recentralizadas em y 10520 (17/09/2026): o centro da rodovia subiu de
+## 10400 para 10520 quando ela engordou de 400 para 640 - a ponta de cada
+## estrada torta tem que continuar caindo dentro da faixa dela.
 const ESTRADAS := [
 	# A rodovia chegando do noroeste, antes do trecho reto.
 	[Vector2(0.0, 6800.0), Vector2(1200.0, 7600.0), Vector2(2200.0, 9000.0),
-		Vector2(3100.0, 10100.0), Vector2(3900.0, 10400.0)],
+		Vector2(3100.0, 10220.0), Vector2(3900.0, 10520.0)],
 	# E saindo do trecho reto para a ponte, com uma lombada.
-	[Vector2(27400.0, 10400.0), Vector2(28400.0, 9760.0), Vector2(29300.0, 9860.0),
-		Vector2(30100.0, 10400.0)],
+	[Vector2(27400.0, 10520.0), Vector2(28400.0, 9880.0), Vector2(29300.0, 9980.0),
+		Vector2(30100.0, 10520.0)],
 	# Depois da ponte, subindo para o nordeste.
-	[Vector2(31500.0, 10400.0), Vector2(33000.0, 10740.0), Vector2(34900.0, 10180.0),
-		Vector2(36800.0, 9300.0), Vector2(38400.0, 8500.0), Vector2(40000.0, 8100.0)],
+	[Vector2(31500.0, 10520.0), Vector2(33000.0, 10860.0), Vector2(34900.0, 10300.0),
+		Vector2(36800.0, 9420.0), Vector2(38400.0, 8620.0), Vector2(40000.0, 8220.0)],
 	# A entrada da mansao, saindo da estrada acima.
-	[Vector2(35100.0, 10200.0), Vector2(35100.0, 9900.0)],
+	[Vector2(35100.0, 10320.0), Vector2(35100.0, 10020.0)],
 ]
 
 ## As estradas de terra: sem asfalto e sem calcada, e as mais tortas de todas.
 const ESTRADAS_DE_TERRA := [
 	# Da rodovia ate o sitio do norte, serpenteando.
-	[Vector2(9400.0, 10300.0), Vector2(9000.0, 8600.0), Vector2(9600.0, 7000.0),
+	[Vector2(9400.0, 10520.0), Vector2(9000.0, 8600.0), Vector2(9600.0, 7000.0),
 		Vector2(8900.0, 5400.0), Vector2(8680.0, 3800.0)],
 	# E o ramal que corta o norte inteiro ate o sitio do leste.
 	[Vector2(9600.0, 7000.0), Vector2(13000.0, 6200.0), Vector2(17000.0, 5600.0),
 		Vector2(21000.0, 5000.0), Vector2(24500.0, 4800.0), Vector2(26680.0, 5300.0)],
-	# Da cidade ate a lavoura.
-	[Vector2(17150.0, 13200.0), Vector2(17600.0, 14000.0), Vector2(17200.0, 14600.0),
-		Vector2(17400.0, 15200.0)],
+	# Da rodovia ate a lavoura. Ate 17/09/2026 saia da cidade, que agora
+	# mudou de lugar (100% ao norte da rodovia) e deixou de estar perto -
+	# a estrada passou a sair da propria rodovia, mais a leste.
+	[Vector2(17400.0, 10520.0), Vector2(17500.0, 12500.0), Vector2(17200.0, 13800.0),
+		Vector2(17400.0, 14380.0)],
 ]
 
 ## Onde cada lugar fica.
 ##
-## A cidade e alinhada com o trecho reto da rodovia de proposito: a rua do meio
-## da grade **e** a rodovia (7.400 + 400 de rua + 2.400 de quadra = 10.200).
-## Mexer na altura da cidade sem mexer nisso descola a grade da estrada, e o
-## conferir_mapa acusa.
+## **A cidade fica 100% ao norte da rodovia, e o bairro 100% ao sul**
+## (17/09/2026, P7 - arquitetura nova; decisao de dono, default aplicado).
+## Ate aqui o bairro crescia por cima da rodovia (ela cortava o loteamento ao
+## meio) - a rodovia virava fronteira invisivel, nao costura. Agora atravessar
+## a pista para ir da sua casa a cidade e um trecho de verdade do trajeto, e
+## nao um detalhe que a rua ja resolvia sozinha.
 const LUGARES := [
 	{ "nome": "mata do oeste", "tipo": "floresta", "rect": Rect2(0.0, 0.0, 3800.0, 22000.0) },
-	# Cresceu para o sul em 16/09/2026, quando virou loteamento com rede de ruas
-	# propria. O tamanho e o do Lugares.BAIRRO_TAMANHO, e os dois tem que bater:
-	# o gerador desenha em coordenada local e este retangulo e a moldura.
-	{ "nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 8580.0, 5760.0, 6800.0) },
-	{ "nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 7400.0, 13200.0, 6000.0) },
-	{ "nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10600.0, 2200.0, 1500.0) },
-	{ "nome": "lavoura", "tipo": "lavoura", "rect": Rect2(13000.0, 14380.0, 9000.0, 4600.0) },
+	# Ao SUL da rodovia (y >= 10840). Tamanho inalterado desde 16/09 - o
+	# retangulo e o de Lugares.BAIRRO_TAMANHO, os dois tem que bater.
+	{
+		"nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 10840.0, 5760.0, 6800.0),
+		"acesso": Vector2(7000.0, 10520.0),
+	},
+	# Ao NORTE da rodovia, encostada nela (y ate 10200). Cresceu 1000 px pra
+	# leste (de 24400 para 24600) pra caber o laco do fim da Avenida.
+	{
+		"nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 3200.0, 13400.0, 7000.0),
+		"acesso": Vector2(17000.0, 10520.0),
+	},
+	{
+		"nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10840.0, 2200.0, 1500.0),
+		"acesso": Vector2(24800.0, 10840.0),
+	},
+	{
+		"nome": "lavoura", "tipo": "lavoura", "rect": Rect2(13000.0, 14380.0, 9000.0, 4600.0),
+		"acesso": Vector2(17400.0, 14380.0),
+	},
 	# Os dois sitios existem porque o norte era campo com nada - e campo com
 	# nada nao e mapa, e caminhada. No PZ o que enche o entorno da cidade sao
 	# exatamente casas de campo penduradas em estrada de terra.
-	{ "nome": "sítio do norte", "tipo": "sitio", "rect": Rect2(8200.0, 1900.0, 2400.0, 1900.0) },
-	{ "nome": "sítio do leste", "tipo": "sitio", "rect": Rect2(26200.0, 3400.0, 2400.0, 1900.0) },
-	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(4200.0, 0.0, 24000.0, 6900.0) },
+	{
+		"nome": "sítio do norte", "tipo": "sitio", "rect": Rect2(8200.0, 1900.0, 2400.0, 1900.0),
+		"acesso": Vector2(8680.0, 3800.0),
+	},
+	{
+		"nome": "sítio do leste", "tipo": "sitio", "rect": Rect2(26200.0, 3400.0, 2400.0, 1900.0),
+		"acesso": Vector2(26680.0, 5300.0),
+	},
+	# Encolheu de 6900 para 3200 de altura: a cidade subiu para caber toda ao
+	# norte da rodovia, e passou a nascer onde a mata do norte terminava.
+	{ "nome": "mata do norte", "tipo": "floresta", "rect": Rect2(3600.0, 0.0, 24000.0, 3200.0) },
 	# A mata do sul e a **fechada**: e nela que nao se ve o outro lado. Era um
 	# lugar proprio chamado "florestinha" ate 09/09 a noite, e virou redundante
 	# quando o mapa ganhou quatro matas - agora e uma densidade, e nao um lugar.
@@ -198,10 +230,20 @@ static func _montar() -> Dictionary:
 			"nome": "estrada rural %d" % i, "classe": "rural", "lugar": "",
 			"eixo": ESTRADAS[i], "pontas": ["borda", "borda"],
 		})
+	# Pontas declaradas por indice: as duas pontas que caem dentro da propria
+	# rodovia nao precisam - o grafo ja acha esse encontro por sobreposicao -,
+	# mas as que terminam num predio (sitio, ainda sem `patio` de verdade -
+	# isso e P10) nao tem outra via para se ligar, e sem a ponta declarada
+	# o grafo as acusaria como soltas.
+	const PONTAS_DA_TERRA := [
+		["", "declarado:sitio do norte"],
+		["", "declarado:sitio do leste"],
+		["", "declarado:lavoura"],
+	]
 	for i in ESTRADAS_DE_TERRA.size():
 		tudo["vias"].append({
 			"nome": "estrada de terra %d" % i, "classe": "terra", "lugar": "",
-			"eixo": ESTRADAS_DE_TERRA[i], "pontas": ["borda", "borda"],
+			"eixo": ESTRADAS_DE_TERRA[i], "pontas": PONTAS_DA_TERRA[i],
 		})
 
 	# O rio e solido dos dois lados da ponte. Nao ha como nadar, e nao ha outro

@@ -41,53 +41,69 @@ const BAIRRO_TAMANHO := Vector2(5760.0, 6800.0)
 # Agora os dois saem da propria construcao marcada como "sua": ver sua_casa()
 # abaixo, Mapa.onde_fica_a_porta_de_casa() e Mapa.onde_o_jogador_nasce().
 
-## **A rede de ruas do bairro** (16/09/2026). Antes eram duas: a rodovia, que
-## corta o bairro em y 1620, e uma transversal que atravessava o lote inteiro e
-## **acabava no mato nas duas pontas**. Rua que morre em campo aberto nao existe
-## em cidade nenhuma, e era a queixa.
+## A rede do loteamento (17/09/2026, P7 - arquitetura nova). Substitui as seis
+## de 16/09 (rua oeste/meio/leste + rua do fundo + saida sul + retorno): eram
+## um quarteirao fechado que nascia por cima da rodovia; agora o bairro fica
+## 100% ao sul dela, e a rede e a do PZ de verdade - rua principal com
+## calcada e comercio de esquina, laco de um lado, rua de baixo com um
+## retorno em U do outro, um beco de servico no meio, e uma segunda estrada
+## saindo para a cidade (a "Estrada Velha") que nao passa pela rodovia.
 ##
-## A regra que organiza estas seis: **toda rua termina em outra rua, no retorno,
-## ou na borda do mapa.** Nenhuma para no meio da grama.
+## Coordenadas em MUNDO, nao mais locais: como o bairro tem posicao fixa
+## agora (ao contrario do design antigo, pensado para "boiar" em qualquer
+## `origem`), escrever direto evita a volta de traduzir e destraduzir.
+## `_bairro()` NAO desloca isto por `origem` - so as construcoes/cercas/
+## bosques antigos continuam precisando disso.
 ##
-##     ════════════ rodovia ═══════════════   (atravessa o bairro)
-##       ║                ║              ║
-##     oeste            meio           leste
-##       ║                ║              ║
-##       ╚════════ rua do fundo ═════════╝
-##                        ║
-##                    saida sul
-##                        ║
-##                    ( retorno )
-##
-## As tres verticais saem da rodovia e morrem na rua do fundo: e um **quarteirao
-## fechado**, o desenho de loteamento que o PZ usa em Rosewood. A saida sul e a
-## unica que nao fecha, e por isso ela termina num **retorno** - o bulbo onde o
-## carro da a volta. E assim que cul-de-sac se resolve no mundo real, e e o
-## contrario de parar no mato: o retorno **e** o fim da rua, declarado.
-const BAIRRO_RUA_OESTE := Rect2(760.0, 2020.0, 400.0, 2380.0)
-const BAIRRO_RUA_MEIO := Rect2(2680.0, 2020.0, 400.0, 1980.0)
-const BAIRRO_RUA_LESTE := Rect2(4600.0, 2020.0, 400.0, 2380.0)
-const BAIRRO_RUA_DO_FUNDO := Rect2(760.0, 4000.0, 4640.0, 400.0)
-const BAIRRO_SAIDA_SUL := Rect2(2680.0, 4400.0, 400.0, 700.0)
-## O bulbo do retorno: mais largo que a rua, que e o que permite dar a volta.
-const BAIRRO_RETORNO := Rect2(2180.0, 5100.0, 1400.0, 800.0)
+## As construcoes de `BAIRRO_CONSTRUCOES` continuam nascendo no lugar velho
+## (dentro do retangulo do lugar, que so moveu de posicao) - **de proposito**:
+## reescrever onde a casa fica e trabalho de P8/P9, sobre esta rede. Ate la,
+## a rua bate certo e a casa nao - e o esperado, nao um bug.
+static func _bairro_rede() -> Array[Dictionary]:
+	var fora: Array[Dictionary] = []
 
-## As mesmas seis, agora como VIAS nomeadas (17/09/2026) - a rede continua
-## identica, so a representacao muda: antes eram `Rect2` soltos em "ruas", sem
-## nome nem classe; `Vias.via_do_rect` deriva o eixo do meio de cada retangulo.
-## O retorno e o unico que fica com `rect` (e classe `laco`): e um bulbo
-## solido, nao um segmento reto, e so vira anel de verdade quando o bairro for
-## reescrito (P7 em diante).
-static func _bairro_vias() -> Array[Dictionary]:
-	return [
-		Vias.via_do_rect("bairro rua oeste", "residencial", BAIRRO_RUA_OESTE, "bairro"),
-		Vias.via_do_rect("bairro rua meio", "residencial", BAIRRO_RUA_MEIO, "bairro"),
-		Vias.via_do_rect("bairro rua leste", "residencial", BAIRRO_RUA_LESTE, "bairro"),
-		Vias.via_do_rect("bairro rua do fundo", "residencial", BAIRRO_RUA_DO_FUNDO, "bairro"),
-		Vias.via_do_rect("bairro saida sul", "residencial", BAIRRO_SAIDA_SUL, "bairro"),
-		{ "nome": "bairro retorno", "classe": "laco", "rect": BAIRRO_RETORNO,
-			"lugar": "bairro", "pontas": ["laco:bairro retorno", "laco:bairro retorno"] },
-	]
+	# A espinha do bairro: sai da rodovia (y 10520) e desce ate a Rua de
+	# Baixo. O T com a Rua do Bairro (y 13800) e por sobreposicao - nasce sem
+	# precisar declarar dois segmentos.
+	fora.append({ "nome": "estrada do bairro", "classe": "residencial", "lugar": "bairro",
+		"eixo": [Vector2(7000.0, 10520.0), Vector2(7000.0, 15600.0)],
+		"pontas": ["emenda:rodovia", "T:rua de baixo"] })
+
+	# A Rua do Bairro: a UNICA do loteamento com calcada - ela carrega o
+	# comercio de esquina, e no PZ e assim que se decide qual rua de bairro
+	# merece passeio. Termina a oeste no Laco do Poente.
+	fora.append({ "nome": "rua do bairro", "classe": "principal", "lugar": "bairro",
+		"eixo": [Vector2(5210.0, 13800.0), Vector2(7000.0, 13800.0)], "calcada": "norte",
+		"pontas": ["laco:laco do poente", "T:estrada do bairro"] })
+	fora.append_array(Vias.laco(Vector2(4700.0, 13800.0), Vector2(700.0, 900.0), 320.0,
+		"laco do poente"))
+
+	# Rua de Baixo, com o retorno em U na ponta oeste - o cul-de-sac que o PZ
+	# usa (nunca bulbo asfaltado solto).
+	fora.append({ "nome": "rua de baixo", "classe": "residencial", "lugar": "bairro",
+		"eixo": [Vector2(5600.0, 15600.0), Vector2(8600.0, 15600.0)],
+		"pontas": ["u:retorno de baixo", "emenda:estrada velha"] })
+	fora.append_array(Vias.u(fora[-1], Vector2(5600.0, 15600.0), Vector2(6400.0, 15600.0),
+		Vector2(0.0, 16800.0), "retorno de baixo"))
+
+	# Beco dos Fundos: o corte de servico entre a Rua do Bairro e a Rua de
+	# Baixo - onde ficam as lixeiras, e o que quebra a leitura de quarteirao
+	# macico.
+	fora.append({ "nome": "beco dos fundos", "classe": "beco", "lugar": "bairro",
+		"eixo": [Vector2(7900.0, 13800.0), Vector2(7900.0, 15600.0)],
+		"pontas": ["T:rua do bairro", "T:rua de baixo"] })
+
+	# A Estrada Velha: a SEGUNDA rota ate a cidade, que nao usa a rodovia -
+	# critério F. Sobe e encontra a Rua do Correio da cidade exatamente no
+	# mesmo ponto (13000, 10520), dentro da propria rodovia.
+	fora.append({ "nome": "estrada velha", "classe": "residencial", "lugar": "bairro",
+		"eixo": [Vector2(8600.0, 15600.0), Vector2(13000.0, 15600.0)],
+		"pontas": ["emenda:rua de baixo", "emenda:estrada velha (subida)"] })
+	fora.append({ "nome": "estrada velha (subida)", "classe": "residencial", "lugar": "bairro",
+		"eixo": [Vector2(13000.0, 15600.0), Vector2(13000.0, 10520.0)],
+		"pontas": ["emenda:estrada velha", "emenda:rodovia"] })
+
+	return fora
 
 ## As construcoes do bairro, **uma fileira por rua**.
 ##
@@ -293,23 +309,6 @@ const CIDADE_ESPECIAIS := {
 	"18400,0,1,0": "mercado",
 }
 
-## Largura do beco de servico, em 5 m - metade de uma rua.
-const CIDADE_BECO := 200.0
-
-## Quais quadras tem beco, na chave `x da quadra, linha`.
-##
-## **Nem toda quadra do PZ e um bloco macico.** Algumas tem servidao no meio,
-## por onde se chega no fundo das lojas e onde ficam as lixeiras - e e o que
-## quebra a leitura de planilha que quatro quadras iguais dao.
-##
-## Ele corre **no vazio que os quintais ja deixavam**, entre as duas fileiras, e
-## termina nas duas ruas verticais que ladeiam a quadra. Nao inventa espaco e
-## nao morre no meio do quarteirao.
-##
-## Sao tres e nao as oito de proposito: beco em toda quadra e a mesma planilha,
-## so que com mais linha.
-const CIDADE_BECOS := ["11600,1", "18400,0", "21000,1"]
-
 static func _somar(construcao: Dictionary, origem: Vector2) -> Dictionary:
 	var copia := construcao.duplicate()
 	copia["rect"] = (construcao["rect"] as Rect2).grow(0.0)
@@ -337,9 +336,9 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 	for onde in BAIRRO_ZUMBIS:
 		pecas["zumbis"].append(onde + origem)
 
-	# A rua principal do bairro E a rodovia; o resto da rede e do loteamento.
-	for via in _bairro_vias():
-		pecas["vias"].append(Vias.deslocar(via, origem))
+	# Em coordenada de MUNDO ja - a rede nova nao "boia" mais com origem, ela
+	# tem posicao fixa (ver a docstring de _bairro_rede).
+	pecas["vias"].append_array(_bairro_rede())
 
 # --- a cidade ---------------------------------------------------------------
 
@@ -348,25 +347,75 @@ static func _bairro(lugar: Dictionary, pecas: Dictionary) -> void:
 ## A regra que da o desenho de rua principal do PZ e uma so: **a fileira que da
 ## na rodovia e comercio, o resto e casa.** Nao e lista - e regra, entao ela
 ## continua valendo se a cidade crescer.
+## A rede da cidade (17/09/2026, P7 - arquitetura nova): a Avenida Central,
+## a espinha comercial com um cotovelo no meio (estreita depois do trecho de
+## loja, como a Main de Rosewood faz), quatro verticais residenciais descendo
+## ate a rodovia (a que fica em x=13000 e a mesma "Rua do Correio" que a
+## Estrada Velha do bairro encontra - a segunda rota), uma rua transversal
+## mais ao norte terminando num laco, um beco de servico atras da fita
+## comercial, e um laco em cada ponta solta da avenida.
+##
+## Coordenadas em MUNDO. As construcoes ainda nao usam esta rede - continuam
+## nascendo pela grade antiga (`_uma_quadra`), e por isso o layout vai
+## parecer errado ate P8/P9: e o esperado neste passo (P7 e so o esqueleto).
+static func _cidade_rede() -> Array[Dictionary]:
+	var fora: Array[Dictionary] = []
+
+	# A espinha: comercial ate o cotovelo em x=19600, principal dali para
+	# leste - mais estreita, como a Main de Rosewood faz depois do comercio.
+	fora.append({ "nome": "avenida central (oeste)", "classe": "comercial", "lugar": "cidade",
+		"eixo": [Vector2(11710.0, 6900.0), Vector2(19600.0, 6900.0)], "calcada": "sul",
+		"pontas": ["laco:laco do oeste", "emenda:avenida central (cotovelo)"] })
+	fora.append({ "nome": "avenida central (cotovelo)", "classe": "principal", "lugar": "cidade",
+		"eixo": [Vector2(19600.0, 6900.0), Vector2(19600.0, 7200.0)],
+		"pontas": ["emenda:avenida central (oeste)", "emenda:avenida central (leste)"] })
+	fora.append({ "nome": "avenida central (leste)", "classe": "principal", "lugar": "cidade",
+		"eixo": [Vector2(19600.0, 7200.0), Vector2(24000.0, 7200.0)], "calcada": "sul",
+		"pontas": ["emenda:avenida central (cotovelo)", "laco:laco leste"] })
+	fora.append_array(Vias.laco(Vector2(11200.0, 6900.0), Vector2(700.0, 900.0), 320.0,
+		"laco do oeste"))
+	fora.append_array(Vias.laco(Vector2(24460.0, 7200.0), Vector2(600.0, 800.0), 320.0,
+		"laco leste"))
+
+	# Quatro verticais descendo da avenida ate a rodovia - Rua do Correio e
+	# a que a Estrada Velha do bairro encontra em (13000, 10520), a segunda
+	# rota da critério F. Rua da Delegacia sobe mais, ate o Laco do Norte.
+	fora.append({ "nome": "rua do poente", "classe": "residencial", "lugar": "cidade",
+		"eixo": [Vector2(12800.0, 6900.0), Vector2(12800.0, 10520.0)],
+		"pontas": ["T:avenida central (oeste)", "emenda:rodovia"] })
+	fora.append({ "nome": "rua do correio", "classe": "residencial", "lugar": "cidade",
+		"eixo": [Vector2(13000.0, 4500.0), Vector2(13000.0, 10520.0)],
+		"pontas": ["T:rua do norte", "emenda:estrada velha (subida)/rodovia"] })
+	fora.append({ "nome": "rua do mercado", "classe": "residencial", "lugar": "cidade",
+		"eixo": [Vector2(17000.0, 6900.0), Vector2(17000.0, 10520.0)],
+		"pontas": ["T:avenida central (oeste)", "emenda:rodovia"] })
+	fora.append({ "nome": "rua da delegacia", "classe": "residencial", "lugar": "cidade",
+		"eixo": [Vector2(21000.0, 4110.0), Vector2(21000.0, 10520.0)],
+		"pontas": ["laco:laco do norte", "emenda:rodovia"] })
+
+	fora.append({ "nome": "rua do norte", "classe": "residencial", "lugar": "cidade",
+		"eixo": [Vector2(13000.0, 4500.0), Vector2(21000.0, 4500.0)],
+		"pontas": ["emenda:rua do correio", "T:rua da delegacia"] })
+	fora.append_array(Vias.laco(Vector2(21000.0, 3500.0), Vector2(700.0, 900.0), 320.0,
+		"laco do norte"))
+
+	# O beco atras da fita comercial - onde ficam as lixeiras das lojas.
+	fora.append({ "nome": "beco do mercado", "classe": "beco", "lugar": "cidade",
+		"eixo": [Vector2(12800.0, 8000.0), Vector2(17000.0, 8000.0)],
+		"pontas": ["T:rua do poente", "T:rua do mercado"] })
+
+	return fora
+
 static func _cidade(lugar: Dictionary, pecas: Dictionary) -> void:
 	var r: Rect2 = lugar["rect"]
 
-	# As ruas verticais: uma a mais que o numero de quadras, porque ha rua nas
-	# duas bordas tambem. A posicao de cada uma sai da soma das larguras a
-	# esquerda dela - e por isso que quadra de largura diferente nao quebra nada.
-	var x := r.position.x
-	for coluna in CIDADE_LARGURAS.size() + 1:
-		pecas["vias"].append(Vias.via_do_rect("cidade vertical %d" % coluna, "residencial",
-			Rect2(x, r.position.y, CIDADE_RUA, r.size.y), "cidade"))
-		if coluna < CIDADE_LARGURAS.size():
-			x += CIDADE_RUA + CIDADE_LARGURAS[coluna]
+	# A rede nova (17/09/2026, P7) - substitui a grade uniforme de verticais/
+	# horizontais de 16/09. As construcoes ainda nascem na grade ANTIGA
+	# (ver _uma_quadra, abaixo) - de proposito: a rua bate certo e a casa
+	# nao, ate P8/P9 reescrever onde a casa fica sobre esta rede.
+	pecas["vias"].append_array(_cidade_rede())
 
-	for linha in CIDADE_LINHAS + 1:
-		pecas["vias"].append(Vias.via_do_rect("cidade horizontal %d" % linha, "residencial", Rect2(
-			r.position.x, r.position.y + float(linha) * (CIDADE_QUADRA.y + CIDADE_RUA),
-			r.size.x, CIDADE_RUA), "cidade"))
-
-	x = r.position.x + CIDADE_RUA
+	var x := r.position.x + CIDADE_RUA
 	for coluna in CIDADE_LARGURAS.size():
 		var largura: float = CIDADE_LARGURAS[coluna]
 		for linha in CIDADE_LINHAS:
@@ -447,17 +496,9 @@ static func _uma_quadra(cidade: Rect2, esquerda: float, largura: float,
 				mais_largo = maxi(mais_largo, int(ceil(tamanho.x / CIDADE_PASSO)))
 		vaga += mais_largo
 
-	if CIDADE_BECOS.has("%d,%d" % [int(esquerda), linha]):
-		var meio := canto.y + CIDADE_QUADRA.y * 0.5
-		pecas["vias"].append(Vias.via_do_rect("beco %d,%d" % [int(esquerda), linha], "beco",
-			Rect2(esquerda, meio - CIDADE_BECO * 0.5, largura, CIDADE_BECO), "cidade"))
-		# Lixeira no beco, que e onde ela fica: nos fundos, e nao na fachada.
-		pecas["moveis_de_rua"].append({
-			"tipo": "lata", "pos": Vector2(esquerda + largura * 0.3, meio),
-		})
-		pecas["moveis_de_rua"].append({
-			"tipo": "lata", "pos": Vector2(esquerda + largura * 0.7, meio),
-		})
+	# O beco de servico desta quadra (CIDADE_BECOS) saiu daqui em 17/09/2026:
+	# a rede nova (`_cidade_rede`) tem o seu proprio ("Beco do Mercado"), numa
+	# posicao que nao segue mais o meio de UMA quadra generica.
 
 	pecas["zumbis"].append(canto + Vector2(largura, CIDADE_QUADRA.y) * 0.5)
 

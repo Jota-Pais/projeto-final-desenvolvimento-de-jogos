@@ -15,48 +15,59 @@
 ## por coordenada), **classe** (de onde saem largura e regra de desenho) e
 ## **eixo** (2 pontos para via reta, 3+ para polilinha fora da cidade).
 ##
-## ## Esta primeira versao migra o mapa de hoje 1:1 (P3 do plano)
+## ## As classes finais da arquitetura nova (17/09/2026 - P7). Ate P6 esta
+## tabela usava os numeros de HOJE (o mapa antigo, 400 px de rua uniforme,
+## sem distincao); a partir daqui os numeros sao os do PZ de verdade (1 tile
+## = 40 px): rodovia 16 t (KY-60/Dixie); Main Street 15 t no trecho comercial,
+## 8 t no resto; residencial 8 t e SEM calcada nem faixa central - nenhuma
+## das quatro cidades de spawn do PZ tem; beco 4 t; laco de fim de rua 5 t.
 ##
-## Nenhuma rua muda de lugar nem de largura: as classes abaixo usam os numeros
-## de HOJE (rodovia e rua de bairro/cidade a 400 px, beco a 200), nao os da
-## arquitetura final (que so entram quando o layout for reescrito, em cima
-## desta infraestrutura). `minima`/`maxima` ja ficam largos o bastante para
-## cobrir os dois, para P4 em diante nao precisar mexer aqui de novo.
-##
-## `recuo` (Vector2 minimo/maximo, 17/09/2026 - P5) e `grama` chegam com
-## `quadras.gd`: quanto a fachada de um predio pode recuar da borda util da
-## via que o serve, e a faixa de verde entre calcada e pista (0 ate a fita
-## comercial existir, em P7). Ainda sem consumidor no mapa de hoje - so o
-## `conferir_quadras.tscn` sintetico usa.
+## `recuo` (Vector2 minimo/maximo, P5) e `grama` (faixa verde entre calcada e
+## pista, so onde ha calcada) alimentam `quadras.gd`.
 const CLASSES := {
 	"rodovia": {
-		"largura": 400.0, "minima": 320.0, "maxima": 800.0,
-		"calcada": 120.0, "grama": 0.0, "faixa": true, "sujeira": true, "lote": false,
+		"largura": 640.0, "minima": 560.0, "maxima": 800.0,
+		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": true, "lote": false,
 		"recuo": Vector2(400.0, 800.0),
 	},
-	# Toda rua de bairro e de cidade de hoje: sem nome proprio ainda (isso e
-	# tarefa de layout, P7 em diante), todas classificadas igual.
+	# O trecho alargado da Avenida Central, com a fita comercial - unica
+	# classe de rua da cidade com calcada, porque e a unica com loja.
+	"comercial": {
+		"largura": 600.0, "minima": 520.0, "maxima": 720.0,
+		"calcada": 120.0, "grama": 80.0, "faixa": true, "sujeira": false, "lote": true,
+		"recuo": Vector2(240.0, 720.0),
+	},
+	# O resto da Avenida Central e a Rua do Bairro (a unica do loteamento com
+	# calcada - ela carrega o comercio de esquina, e no PZ e assim que se
+	# decide qual rua de bairro merece passeio).
+	"principal": {
+		"largura": 320.0, "minima": 280.0, "maxima": 400.0,
+		"calcada": 120.0, "grama": 80.0, "faixa": true, "sujeira": false, "lote": true,
+		"recuo": Vector2(240.0, 520.0),
+	},
+	# Toda rua residencial comum, de bairro ou de cidade - o PZ nao poe
+	# calcada nem faixa central nelas fora da rua principal.
 	"residencial": {
-		"largura": 400.0, "minima": 160.0, "maxima": 800.0,
-		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": false, "lote": true,
+		"largura": 320.0, "minima": 240.0, "maxima": 400.0,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
 		"recuo": Vector2(240.0, 520.0),
 	},
 	"beco": {
-		"largura": 200.0, "minima": 120.0, "maxima": 240.0,
+		"largura": 160.0, "minima": 120.0, "maxima": 200.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
 		"recuo": Vector2(120.0, 360.0),
 	},
-	# O bulbo de retorno de hoje (`BAIRRO_RETORNO`) e uma area solida, nao um
-	# anel com ilha de verdade - por isso usa `rect` (como patio/estacionamento)
-	# em vez de `eixo`. Vira um laco de verdade (`Vias.laco`) quando o bairro
-	# for reescrito.
+	# O anel de fim de rua (loop + ilha). A largura do CLASS e so o piso; a
+	# largura de verdade de cada laco sai da via que ele fecha e fica
+	# gravada em `largura` (ver `Vias.laco`) - por isso minima/maxima cobrem
+	# residencial e principal, as duas classes que hoje terminam em laco.
 	"laco": {
-		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
-		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": false,
+		"largura": 200.0, "minima": 160.0, "maxima": 400.0,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
 		"recuo": Vector2(200.0, 400.0),
 	},
 	"rural": {
-		"largura": 400.0, "minima": 320.0, "maxima": 800.0,
+		"largura": 640.0, "minima": 400.0, "maxima": 800.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": true, "sujeira": false, "lote": false,
 		"recuo": Vector2(0.0, 0.0),
 	},
@@ -64,6 +75,21 @@ const CLASSES := {
 		"largura": 260.0, "minima": 200.0, "maxima": 320.0,
 		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
 		"recuo": Vector2(160.0, 620.0),
+	},
+	# As duas que fecham os criterios A e B sem clausula de excecao: a loja
+	# encara o estacionamento, o galpao do sitio encara o patio, e a estrada
+	# de terra termina numa INTERSECCAO com o patio em vez de morrer no
+	# talhao. Largura livre (vem do `rect` declarado), sem faixa e sem
+	# calcada.
+	"estacionamento": {
+		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"recuo": Vector2(0.0, 240.0), "piso": false,
+	},
+	"patio": {
+		"largura": 0.0, "minima": 0.0, "maxima": 0.0,
+		"calcada": 0.0, "grama": 0.0, "faixa": false, "sujeira": false, "lote": true,
+		"recuo": Vector2(0.0, 240.0), "piso": true,
 	},
 }
 
@@ -140,23 +166,31 @@ static func faixa_pintada(via: Dictionary) -> Array[Rect2]:
 			fora.append(Rect2(onde - Vector2.ONE * lado * 0.5, Vector2.ONE * lado))
 	return fora
 
-## A calcada de uma via, dos dois lados dela - 0, 1 ou 2 pedacos, so para via
-## reta cuja classe tem calcada (`CLASSES[classe].calcada > 0`). Via poligonal
-## e sem calcada por definicao (estrada de campo nao tem passeio).
+## A calcada de uma via, de UM lado so - o que `via["calcada"]` declara
+## ("norte"/"sul"/"leste"/"oeste") -, so para via reta cuja classe tem
+## calcada (`CLASSES[classe].calcada > 0`). Via poligonal e sem calcada por
+## definicao (estrada de campo nao tem passeio); via reta de classe com
+## calcada mas sem o lado declarado tambem fica sem - a via e que tem que
+## dizer de que lado.
+##
+## **So um lado, nunca dois** (17/09/2026, P7): antes desta correcao a
+## funcao dava calcada dos dois lados sempre que a classe tinha `calcada`,
+## ignorando o campo `via["calcada"]" por completo - o mesmo bug de sempre,
+## "toda entrada de uma lista ganha o mesmo tratamento sem olhar o dado".
 static func calcadas_de(via: Dictionary) -> Array[Rect2]:
 	var fora: Array[Rect2] = []
 	if not e_reta(via):
 		return fora
 	var calcada: float = CLASSES[via["classe"]]["calcada"]
-	if calcada <= 0.0:
+	var lado: String = via.get("calcada", "")
+	if calcada <= 0.0 or lado == "":
 		return fora
 	var r := faixa_de(via)
-	if r.size.x > r.size.y:
-		fora.append(Rect2(r.position.x, r.position.y - calcada, r.size.x, calcada))
-		fora.append(Rect2(r.position.x, r.end.y, r.size.x, calcada))
-	else:
-		fora.append(Rect2(r.position.x - calcada, r.position.y, calcada, r.size.y))
-		fora.append(Rect2(r.end.x, r.position.y, calcada, r.size.y))
+	match lado:
+		"norte": fora.append(Rect2(r.position.x, r.position.y - calcada, r.size.x, calcada))
+		"sul": fora.append(Rect2(r.position.x, r.end.y, r.size.x, calcada))
+		"leste": fora.append(Rect2(r.end.x, r.position.y, calcada, r.size.y))
+		_: fora.append(Rect2(r.position.x - calcada, r.position.y, calcada, r.size.y))  # oeste
 	return fora
 
 ## Onde um lote pode comecar, medido a partir do eixo: metade da largura mais
@@ -182,14 +216,13 @@ static func envelope_de(via: Dictionary) -> Rect2:
 ## A faixa aberta ao lado de uma via, sem arvore: o envelope inflado por uma
 ## folga.
 ##
-## **Nesta primeira versao (P3) a folga reproduz a de hoje**, cresce a FAIXA
-## crua - nao o envelope com calcada, que dobraria a folga na rodovia -: `120`
-## para toda via que vira `Rect2` (o antigo `rua.grow(Mapa.CALCADA)`, aplicado
-## a toda entrada de "ruas" sem distincao) e `0` para via poligonal (o antigo
-## `estrada`/`terra`, sem grow nenhum). O anel de verdade do criterio G - folga
-## por classe, maior na rodovia que no beco - e o `_plantar_arvores` sendo
-## reescrito em cima disto e tarefa de P6, nao desta migracao: aqui o objetivo
-## e o mapa ficar visualmente IDENTICO ao de hoje, so representado diferente.
+## **Desde a migracao de P3 a folga reproduz a de ENTAO**, cresce a FAIXA
+## crua - nao o envelope com calcada, que dobraria a folga na rodovia -:
+## `120` para toda via que vira `Rect2` e `0` para via poligonal. O anel de
+## verdade do criterio G - folga por classe, maior na rodovia que no beco - e
+## o `_plantar_arvores` sendo reescrito em cima disto e tarefa de P10 (o
+## rural e os aneis), nao daqui: ate la o objetivo e so nao piorar o que
+## ja tinha.
 static func aberto_de(via: Dictionary) -> Rect2:
 	return faixa_de(via).grow(120.0 if e_reta(via) else 0.0)
 
@@ -243,24 +276,32 @@ static func _subtrair_rect(a: Rect2, b: Rect2) -> Array[Rect2]:
 	return pedacos
 
 ## Um laco (anel de retorno com ilha) de verdade: 4 vias retas em volta de uma
-## ilha central. Ainda sem consumidor (o bairro de hoje usa `rect` cru) -
-## chega quando o bairro for reescrito em cima de `quadras.gd`.
+## ilha central, encostando exatamente nos 4 cantos - cada segmento e axial
+## (a v0.1 daqui tinha 8 cantos ligados em diagonal, o que violava a propria
+## regra de que via reta e sempre mesmo x ou mesmo y; o `conferir_construcao`
+## nao pegaria porque isso e geometria de VIA, nao de predio - achado na
+## revisao antes do primeiro uso real, em P7).
+##
+## A largura de CADA segmento e a `largura` dada (gravada como override, nao
+## a da classe "laco" generica) - e essa largura vem da via que o laco fecha
+## (residencial ou principal), nunca um numero fixo.
 static func laco(centro: Vector2, ilha: Vector2, largura: float, nome: String) -> Array[Dictionary]:
-	var fora: Array[Dictionary] = []
 	var meio_ilha := ilha / 2.0
-	var meio_fora := ilha / 2.0 + Vector2.ONE * largura
-	var cantos := [
-		centro + Vector2(-meio_fora.x, -meio_ilha.y), centro + Vector2(-meio_ilha.x, -meio_fora.y),
-		centro + Vector2(meio_ilha.x, -meio_fora.y), centro + Vector2(meio_fora.x, -meio_ilha.y),
-		centro + Vector2(meio_fora.x, meio_ilha.y), centro + Vector2(meio_ilha.x, meio_fora.y),
-		centro + Vector2(-meio_ilha.x, meio_fora.y), centro + Vector2(-meio_fora.x, meio_ilha.y),
-	]
-	for i in 4:
-		fora.append({
-			"nome": "%s %d" % [nome, i], "classe": "laco", "lugar": nome,
-			"eixo": [cantos[i * 2], cantos[i * 2 + 1]],
-			"pontas": ["laco:%s" % nome, "laco:%s" % nome],
-		})
+	var y_norte := centro.y - meio_ilha.y - largura / 2.0
+	var y_sul := centro.y + meio_ilha.y + largura / 2.0
+	var x_oeste := centro.x - meio_ilha.x - largura / 2.0
+	var x_leste := centro.x + meio_ilha.x + largura / 2.0
+	var ponta := "laco:%s" % nome
+
+	var fora: Array[Dictionary] = []
+	fora.append({ "nome": "%s norte" % nome, "classe": "laco", "lugar": nome, "largura": largura,
+		"eixo": [Vector2(x_oeste, y_norte), Vector2(x_leste, y_norte)], "pontas": [ponta, ponta] })
+	fora.append({ "nome": "%s sul" % nome, "classe": "laco", "lugar": nome, "largura": largura,
+		"eixo": [Vector2(x_oeste, y_sul), Vector2(x_leste, y_sul)], "pontas": [ponta, ponta] })
+	fora.append({ "nome": "%s leste" % nome, "classe": "laco", "lugar": nome, "largura": largura,
+		"eixo": [Vector2(x_leste, y_norte), Vector2(x_leste, y_sul)], "pontas": [ponta, ponta] })
+	fora.append({ "nome": "%s oeste" % nome, "classe": "laco", "lugar": nome, "largura": largura,
+		"eixo": [Vector2(x_oeste, y_norte), Vector2(x_oeste, y_sul)], "pontas": [ponta, ponta] })
 	return fora
 
 ## Uma volta em U: liga dois pontos de uma via mae por um terceiro lado, no
@@ -349,6 +390,39 @@ static func grafo(vias: Array) -> Dictionary:
 				continue
 			if faixa_de(via).grow(1.0).has_point(p):
 				(incidencias[nome] as Array).append(nome_via)
+
+	# Terceira passada: duas vias retas que se CRUZAM (uma horizontal, uma
+	# vertical, feito um "+"), continuando as duas para os dois lados - a
+	# Rua do Correio atravessando a Avenida Central, por exemplo. A segunda
+	# passada so pega quando a PONTA de uma cai dentro da outra; um
+	# cruzamento onde nenhuma das duas termina ali (as duas sao ponto
+	# interior para a outra) nao cria no nenhum nas duas primeiras passadas,
+	# e passava batido - achado ao ligar a rede da cidade em P7, quando a
+	# Avenida Central passou a ser atravessada por quatro verticais no meio
+	# do proprio trecho, nao nas pontas.
+	for i in vias.size():
+		if not e_reta(vias[i]):
+			continue
+		for j in range(i + 1, vias.size()):
+			if not e_reta(vias[j]):
+				continue
+			var a := faixa_de(vias[i]).grow(1.0)
+			var b := faixa_de(vias[j]).grow(1.0)
+			if not a.intersects(b):
+				continue
+			var nome_a: String = (vias[i] as Dictionary)["nome"]
+			var nome_b: String = (vias[j] as Dictionary)["nome"]
+			var ja_ligadas := false
+			for nome in nos:
+				if (incidencias[nome] as Array).has(nome_a) and (incidencias[nome] as Array).has(nome_b):
+					ja_ligadas = true
+					break
+			if ja_ligadas:
+				continue
+			var nome_no := "no%d" % proximo
+			proximo += 1
+			nos[nome_no] = a.intersection(b).get_center()
+			incidencias[nome_no] = [nome_a, nome_b]
 
 	var grau := {}
 	for nome in incidencias:
