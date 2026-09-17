@@ -915,20 +915,18 @@ static func _mansao(lugar: Dictionary, pecas: Dictionary) -> void:
 ## va junto com densidade >= 0,40 (mata fechada de verdade) - renomear o tipo
 ## e so acertar o codigo com o que o dado ja afirmava.
 ##
-## O bosque nao ocupa o retangulo inteiro - fica uma faixa livre na borda, para
-## a mata nunca fechar a passagem ao lado da estrada. Nas tres que encostam no
-## limite do MUNDO (`lado_da_mata`), sao DOIS aneis perto dessa borda, nao um
-## so: primeiro uma faixa de bosque **ralo** (a transicao), so depois a mata
-## FECHADA de verdade - o resto do retangulo fica aberto, sem bosque nenhum.
-## Sem o anel, dar densidade 0,45 ao retangulo INTEIRO (24.000 x 3.200 px, no
-## caso da mata do norte) tomaria a maior parte do orcamento fixo de arvores
-## do mapa inteiro, e o bairro/a mansao - que precisam de arvore para valer
-## como bosque - ficariam quase pelados (achado fazendo essa conta rodando
-## P10). E sem o bosque ralo entre o campo aberto e a mata fechada, a
-## transicao era um corte seco de zero arvore para mata cerrada, sem o
-## "aberto -> bosque -> mata" que a revisao visual de P13 foi olhar.
+## O bosque nao ocupa o retangulo inteiro do mesmo jeito em toda parte - so a
+## faixa mais perto do limite do MUNDO (`lado_da_mata`) e mata FECHADA de
+## verdade; o resto e bosque **ralo** (a transicao). **O ralo vai ate a outra
+## borda do lugar, nao uma faixa fixa** (17/09/2026, P19 - queixa do dono: "tem
+## poucas casas, o mapa tem poucos detalhes... esses lacos n fazem sentido" -
+## a mesma reclamação valia para a mata. Ate aqui o ralo tinha profundidade
+## fixa (900 px) e o que sobrava do retangulo ficava em aberto, sem bosque
+## nenhum - na mata do leste isso era 5.180 px (130 m!) de capim raso, maior
+## que a propria cidade. Dar essa folga ao ralo em vez de deixar aberto custa
+## arvore nenhuma a mais no orcamento fixo do mapa alem do que ja se pagava
+## por decisao anterior - so muda ATE ONDE o ralo se estende).
 const PROFUNDIDADE_DA_MATA_FECHADA := 1400.0
-const PROFUNDIDADE_DO_BOSQUE_RALO := 900.0
 const DENSIDADE_DO_BOSQUE_RALO := 0.15
 
 static func _mata(lugar: Dictionary, pecas: Dictionary) -> void:
@@ -945,20 +943,22 @@ static func _mata(lugar: Dictionary, pecas: Dictionary) -> void:
 	match lado:
 		"oeste":
 			fechada = Rect2(r.position.x, r.position.y, PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
-			ralo = Rect2(fechada.end.x, r.position.y, PROFUNDIDADE_DO_BOSQUE_RALO, r.size.y)
+			ralo = Rect2(fechada.end.x, r.position.y, r.size.x - PROFUNDIDADE_DA_MATA_FECHADA,
+				r.size.y)
 		"norte":
 			fechada = Rect2(r.position.x, r.position.y, r.size.x, PROFUNDIDADE_DA_MATA_FECHADA)
-			ralo = Rect2(r.position.x, fechada.end.y, r.size.x, PROFUNDIDADE_DO_BOSQUE_RALO)
+			ralo = Rect2(r.position.x, fechada.end.y, r.size.x,
+				r.size.y - PROFUNDIDADE_DA_MATA_FECHADA)
 		"leste":
 			fechada = Rect2(r.end.x - PROFUNDIDADE_DA_MATA_FECHADA, r.position.y,
 				PROFUNDIDADE_DA_MATA_FECHADA, r.size.y)
-			ralo = Rect2(fechada.position.x - PROFUNDIDADE_DO_BOSQUE_RALO, r.position.y,
-				PROFUNDIDADE_DO_BOSQUE_RALO, r.size.y)
+			ralo = Rect2(r.position.x, r.position.y, r.size.x - PROFUNDIDADE_DA_MATA_FECHADA,
+				r.size.y)
 		"sul":
 			fechada = Rect2(r.position.x, r.end.y - PROFUNDIDADE_DA_MATA_FECHADA,
 				r.size.x, PROFUNDIDADE_DA_MATA_FECHADA)
-			ralo = Rect2(r.position.x, fechada.position.y - PROFUNDIDADE_DO_BOSQUE_RALO,
-				r.size.x, PROFUNDIDADE_DO_BOSQUE_RALO)
+			ralo = Rect2(r.position.x, r.position.y, r.size.x,
+				r.size.y - PROFUNDIDADE_DA_MATA_FECHADA)
 		_:
 			# Nenhum lugar de hoje usa outro valor - falha alto em vez de
 			# silenciosamente dobrar "fechada" e "ralo" no retangulo inteiro
