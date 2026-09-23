@@ -294,7 +294,7 @@ func _um_fim_de_dia(motivo: int) -> void:
 func _a_casa_mostra_o_prejuizo(quantos_itens: int) -> void:
 	var casa := CENA_DA_CASA.instantiate()
 	add_child(casa)
-	var texto: String = (casa.get_node("Conteudo/Trouxe") as Label).text
+	var texto: String = casa.o_que_voltou()
 	if not texto.contains("Ficou na rua"):
 		_erro("a casa nao mostrou o prejuizo: \"%s\"" % texto)
 	elif not texto.contains(str(quantos_itens)):

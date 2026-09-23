@@ -69,6 +69,11 @@ var dia := 1
 var mochila: Array[String] = []
 var documentos: Array[String] = []
 
+## Quais dos documentos entregues ja foram estudados na casa. Atravessa as
+## noites porque estudar gasta energia - estudar de novo amanha seria pagar
+## duas vezes. **Nao entra na conta da cura** (ver a_cura_esta_pronta).
+var documentos_lidos: Array[String] = []
+
 ## A pistola e a municao. **Arma nao e loot, e equipamento** - e essa distincao
 ## nao e detalhe:
 ##
@@ -203,6 +208,7 @@ func recomecar() -> void:
 	_armar_para_teste()
 	mochila.clear()
 	documentos.clear()
+	documentos_lidos.clear()
 	moveis_vazios.clear()
 	itens_perdidos = 0
 	documentos_perdidos = 0

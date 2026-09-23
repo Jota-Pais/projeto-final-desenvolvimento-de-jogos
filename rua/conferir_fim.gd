@@ -80,10 +80,10 @@ func _limpar() -> void:
 ## A troca de cena arranca a cena atual da arvore na hora, e levaria esta
 ## ferramenta embora - o get_tree() seguinte viria nulo e o quit() nunca
 ## aconteceria. Sair de "cena atual" pelo tempo da chamada resolve.
-func _sem_ser_a_cena_atual(alvo: Node, evento: InputEvent) -> void:
+func _sem_ser_a_cena_atual(chamada: Callable) -> void:
 	var cena_atual := get_tree().current_scene
 	get_tree().current_scene = null
-	alvo._unhandled_input(evento)
+	chamada.call()
 	get_tree().current_scene = cena_atual
 	_limpar_a_raiz()
 
@@ -92,12 +92,6 @@ func _limpar_a_raiz() -> void:
 	for filho in get_tree().root.get_children():
 		if filho.name in ["Rua", "Casa", "FimDeJogo"]:
 			filho.free()
-
-func _tecla() -> InputEventAction:
-	var evento := InputEventAction.new()
-	evento.action = "vasculhar"
-	evento.pressed = true
-	return evento
 
 # --- 1. a partida da para ganhar --------------------------------------------
 
@@ -186,7 +180,7 @@ func _a_cura_e_a_vitoria() -> void:
 
 	var casa := CENA_DA_CASA.instantiate()
 	add_child(casa)
-	if (casa.get_node("Conteudo/Saida") as Label).text.contains("TERMINAR"):
+	if casa.oferece_terminar_a_cura():
 		_erro("a casa ofereceu terminar a cura faltando documento")
 	casa.free()
 
@@ -200,10 +194,9 @@ func _a_cura_e_a_vitoria() -> void:
 	Travessia.dia = Travessia.PRAZO_DA_CURA
 	casa = CENA_DA_CASA.instantiate()
 	add_child(casa)
-	if not (casa.get_node("Conteudo/Saida") as Label).text.contains("TERMINAR"):
-		_erro("com a cura pronta a casa nao ofereceu terminar: \"%s\""
-			% (casa.get_node("Conteudo/Saida") as Label).text)
-	_sem_ser_a_cena_atual(casa, _tecla())
+	if not casa.oferece_terminar_a_cura():
+		_erro("com a cura pronta a casa nao ofereceu terminar")
+	_sem_ser_a_cena_atual(casa.encerrar_a_noite)
 	casa.free()
 
 	if Travessia.desfecho != Travessia.Desfecho.VITORIA:
@@ -224,7 +217,7 @@ func _o_prazo_e_a_derrota() -> void:
 	var casa := CENA_DA_CASA.instantiate()
 	add_child(casa)
 	var dia_antes := Travessia.dia
-	_sem_ser_a_cena_atual(casa, _tecla())
+	_sem_ser_a_cena_atual(casa.encerrar_a_noite)
 	casa.free()
 
 	if Travessia.dia != dia_antes:
@@ -321,6 +314,8 @@ func _recomecar_zera_tudo() -> void:
 		sujo.append("%d itens" % Travessia.mochila.size())
 	if not Travessia.documentos.is_empty():
 		sujo.append("%d documentos" % Travessia.documentos.size())
+	if not Travessia.documentos_lidos.is_empty():
+		sujo.append("%d documentos lidos" % Travessia.documentos_lidos.size())
 	if not Travessia.moveis_vazios.is_empty():
 		sujo.append("%d moveis vazios" % Travessia.moveis_vazios.size())
 	if Travessia.itens_perdidos != 0:

@@ -36,14 +36,25 @@ O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de l
 de anoitecer e segure `E` nela: só entra em casa o que passou por ali. A cura
 precisa de 4 documentos e o prazo é de 30 dias.
 
+Dentro de casa é **só mouse**: o que dá para usar acende quando o mouse passa, e
+clicar numa porta leva ao cômodo dela. As bolinhas do canto são a energia da
+noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite.
+
 ## O que existe hoje
 
 - **A rua** é jogável de ponta a ponta: mapa de 1 km × 550 m, vasculhar, zumbi,
   relógio, mochila, pistola, e o dia fechando pela porta de casa.
-- **A casa** (`casa/casa.tscn`) é um **lugar reservado** — uma tela de texto que
-  fecha o ciclo enquanto a outra frente da equipe não começa. Quem for fazer essa
-  frente troca a cena e não precisa tocar em nada da rua.
-- **Sem arte e sem áudio**: tudo é retângulo de cor chapada.
+- **A casa** (`casa/casa.tscn`) é uma **beta**: ponto e clique em primeira
+  pessoa no molde de *No, I'm Not a Human* — cinco cômodos fixos (entrada, sala,
+  cozinha, quarto, porão), energia por noite, a TV, o rádio e o olho mágico da
+  porta, o quadro da pesquisa e o exame dela no porão, parte por parte, com o
+  close recortado. Tela em baixa resolução, com grão e a noite esverdeada.
+  **Quase tudo nela é proposta** (a planta, os 3 de energia, o que custa
+  energia), e o que é texto da narrativa aparece entre colchetes.
+- **Sem arte e sem áudio**: a rua é retângulo de cor chapada, e a casa é
+  greybox de polígono e traço. A arte da casa entra por `casa/arte/<cômodo>.png`
+  (640 × 360, em cor normal — o filtro leva para a noite) e substitui o greybox
+  sozinha.
 
 ## As regras que o código implementa
 
@@ -93,7 +104,11 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
 | `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
-| `casa/casa.gd` | o lugar reservado do modo Casa |
+| `casa/casa.gd` | o modo Casa: a fala, o clique, a energia e as regras da noite (cura, prazo) |
+| `casa/comodos.gd` | **onde** fica cada coisa clicável em cada cômodo — dado, não cena, como o mapa da rua |
+| `casa/desenho.gd` | o greybox de cada cômodo, o olho mágico e os closes do exame; sai do caminho quando há arte |
+| `casa/ela.gd` | o estágio da transformação dela ao longo do prazo, e o laudo de cada parte do corpo |
+| `casa/filtro.gdshader` | a noite esverdeada, o grão e a vinheta por cima da casa |
 | `fim_de_jogo.gd` | as duas telas de fim de partida |
 
 Mudar o mapa = mexer em `mapa.gd` e `lugares.gd` (que por sua vez montam em
@@ -139,6 +154,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | as vagas, o que atravessa o fim do dia, o mundo não repondo, o loot total e a HUD |
 | `rua/conferir_arma.tscn` | a pistola, a munição, o tiro chamando a horda |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
+| `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=bairro` (ou `centro`/`transicao`) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png` |
 
 Todos rodam por F6 no editor **e** headless, com código de saída (0 = passou,

@@ -460,13 +460,9 @@ func _o_prazo_se_esgota() -> void:
 	if Travessia.dias_restantes() != 0:
 		_erro("no ultimo dia, dias_restantes() = %d" % Travessia.dias_restantes())
 
-	# A casa e quem obedece a regra: no ultimo dia, apertar E nao devolve para a
+	# A casa e quem obedece a regra: no ultimo dia, dormir nao devolve para a
 	# rua. **O que acontece em vez disso e conferido no conferir_fim.tscn** -
 	# aqui interessa so que o dia nao anda, porque e o prazo que esta em jogo.
-	var evento := InputEventAction.new()
-	evento.action = "vasculhar"
-	evento.pressed = true
-
 	Travessia.desfecho = Travessia.Desfecho.VITORIA
 	var casa := CENA_DA_CASA.instantiate()
 	add_child(casa)
@@ -475,7 +471,7 @@ func _o_prazo_se_esgota() -> void:
 	# troca de cena, e a troca arranca a cena atual da arvore na hora.
 	var cena_atual := get_tree().current_scene
 	get_tree().current_scene = null
-	casa._unhandled_input(evento)
+	casa.encerrar_a_noite()
 	get_tree().current_scene = cena_atual
 
 	if Travessia.dia != dia_antes:
@@ -495,7 +491,7 @@ func _o_prazo_se_esgota() -> void:
 	add_child(casa)
 	cena_atual = get_tree().current_scene
 	get_tree().current_scene = null
-	casa._unhandled_input(evento)
+	casa.encerrar_a_noite()
 	get_tree().current_scene = cena_atual
 
 	if Travessia.dia != 3:
