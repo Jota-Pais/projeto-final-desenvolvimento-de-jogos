@@ -69,10 +69,8 @@ func _atencao(texto: String) -> void:
 
 func _limpar() -> void:
 	Travessia.dia = 1
-	Travessia.mochila.clear()
 	Travessia.documentos.clear()
 	Travessia.moveis_vazios.clear()
-	Travessia.itens_perdidos = 0
 	Travessia.documentos_perdidos = 0
 	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
 	Travessia.desfecho = Travessia.Desfecho.VITORIA
@@ -290,7 +288,7 @@ func _a_rua_piora_com_os_dias() -> void:
 func _recomecar_zera_tudo() -> void:
 	print("\n5. recomecar zera tudo")
 	Travessia.dia = 7
-	Travessia.mochila.append("lata de comida")
+	Travessia.municao = 3
 	Travessia.documentos.append(Construcao.DOCUMENTOS[0])
 	# Chave de texto, e nao indice cru (17/09/2026, P6): `moveis_vazios` e
 	# indexado por chave estavel agora. O valor exato nao importa aqui - o
@@ -298,7 +296,7 @@ func _recomecar_zera_tudo() -> void:
 	# isso uma chave generica serve, sem precisar instanciar uma rua so para
 	# perguntar a ela a chave de um movel de verdade.
 	Travessia.moveis_vazios["teste/valor-generico-de-sujeira"] = true
-	Travessia.itens_perdidos = 5
+	Travessia.documentos_perdidos = 5
 	Travessia.fim_do_dia = Travessia.FimDoDia.AMANHECEU_NA_RUA
 
 	var cena_atual := get_tree().current_scene
@@ -310,16 +308,16 @@ func _recomecar_zera_tudo() -> void:
 	var sujo := []
 	if Travessia.dia != 1:
 		sujo.append("dia %d" % Travessia.dia)
-	if not Travessia.mochila.is_empty():
-		sujo.append("%d itens" % Travessia.mochila.size())
+	if Travessia.municao != Travessia.BALAS_DE_COMECO:
+		sujo.append("%d balas (esperado %d)" % [Travessia.municao, Travessia.BALAS_DE_COMECO])
 	if not Travessia.documentos.is_empty():
 		sujo.append("%d documentos" % Travessia.documentos.size())
 	if not Travessia.documentos_lidos.is_empty():
 		sujo.append("%d documentos lidos" % Travessia.documentos_lidos.size())
 	if not Travessia.moveis_vazios.is_empty():
 		sujo.append("%d moveis vazios" % Travessia.moveis_vazios.size())
-	if Travessia.itens_perdidos != 0:
-		sujo.append("%d itens perdidos" % Travessia.itens_perdidos)
+	if Travessia.documentos_perdidos != 0:
+		sujo.append("%d documentos perdidos" % Travessia.documentos_perdidos)
 	if Travessia.fim_do_dia != Travessia.FimDoDia.PELA_PORTA:
 		sujo.append("fim do dia %d" % Travessia.fim_do_dia)
 

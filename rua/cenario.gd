@@ -1,22 +1,27 @@
 extends Node2D
 ## Greybox do mundo: desenha o chao no _draw() e gera no _ready() a colisao e os
-## moveis, tudo a partir do `rua/mapa.gd`. Retangulo de cor chapada, sem imagem
-## nenhuma e sem nada de binario para versionar.
+## moveis, tudo a partir do `rua/mapa.gd`. Poligono e retangulo de cor chapada,
+## sem imagem nenhuma e sem nada de binario para versionar.
 ##
-## O layout NAO esta aqui - esta no mapa.gd (onde as coisas ficam) e no
-## lugares.gd (do que cada lugar e feito). Aqui mora so a regra de como aquilo
-## virou pixel e corpo solido.
+## O layout NAO esta aqui - esta no mapa.gd, que le o tracado do desenho
+## (`rua/mapa_tracado.json`) e diz o que cada coisa e. Aqui mora so a regra de
+## como aquilo virou pixel e corpo solido.
 ##
-## ## O que mudou com o mapa grande (09/09/2026)
+## ## O que o mapa tracado muda aqui (30/09/2026)
 ##
-## O mundo passou de 5.760 x 3.600 para 57.600 x 36.000 - **100x a area**. Tres
-## coisas que funcionavam no bairro nao escalam, e estao resolvidas assim:
+## O chao deixou de ser lista de retangulos (rua, calcada, estrada de terra,
+## lavoura) e virou **poligono por classe** - grama, mata, pavimento, asfalto,
+## milho, terra, agua - pintado do maior para o menor, para o furo de um (a
+## praca dentro do pavimento, o patio dentro da prisao) sair por cima dele.
+## Arvore nasce dentro do poligono de mata, nao de um retangulo. O resto -
+## predio, parede, movel, zumbi por perto, navegacao - e o de sempre.
 ##
-##  - **zumbi** nao existe no mapa inteiro, so num raio em volta do jogador.
-##    Sao 13 vivos por perto em vez de centenas espalhadas, e e o que o PZ faz;
-##  - **arvore e mato** tem orcamento fixo, distribuido pelos bosques por area.
-##    Densidade constante num mapa 100x maior seria 100x o numero de nos;
-##  - **navegacao** nao cobre o mundo (2 milhoes de celulas). Ver navegacao.gd.
+## Tres coisas que funcionavam no bairro pequeno nao escalam, e continuam
+## resolvidas assim:
+##
+##  - **zumbi** nao existe no mapa inteiro, so num raio em volta do jogador;
+##  - **arvore e mato** tem orcamento por area de bosque, nao por no;
+##  - **navegacao** nao cobre o mundo. Ver navegacao.gd.
 ##
 ## Descartavel de proposito: existe para a mecanica de vasculhar ter onde ser
 ## testada. O TileSet e o level design de verdade entram quando o layout parar
@@ -24,7 +29,6 @@ extends Node2D
 
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
-const Vias := preload("res://rua/vias.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
 const Navegacao := preload("res://rua/navegacao.gd")
@@ -76,74 +80,69 @@ const MATO_A_MAIS_POR_DIA := 30
 
 ## **Zumbi so existe perto de voce.** Fora deste raio ele nem esta na arvore.
 ##
-## 7.000 px sao 175 m, umas cinco telas e meia - longe o bastante para nunca se
-## ver um aparecer do nada, e perto o bastante para nao haver centena de zumbi
-## processando raycast num mapa de 1,44 km.
+## 5.200 px sao 130 m, umas quatro telas - longe o bastante para nunca se ver um
+## aparecer do nada, e perto o bastante para nao haver dezenas de zumbis
+## processando raycast ao mesmo tempo. Era 7.000 no mapa de 1 km (30/09/2026):
+## este tem metade do tamanho e os pontos de zumbi ficaram mais densos, e com
+## 7.000 metade do mapa estaria sempre acordada.
 ##
 ## O preco: ir longe e voltar repovoa o lugar. Guardar zumbi por lugar entre as
 ## idas e vindas e o que o PZ faz de verdade, e nao vale o custo enquanto o mapa
 ## e greybox.
-const RAIO_VIVO := 7000.0
+const RAIO_VIVO := 5200.0
 ## Com folga para descarregar, senao um zumbi na fronteira nasce e morre todo
 ## quadro.
-const RAIO_MORTO := 9800.0
+const RAIO_MORTO := 7400.0
 
-## Orcamento de arvore e de mato para o mapa inteiro, distribuido pelos bosques
-## por area.
-##
-## **Nao e mais "numero de no"** (17/09/2026, P11): ate entao cada arvore virava
-## o proprio StaticBody2D+CollisionShape2D+Polygon2D (3 nos por arvore - 3.000
-## arvores eram 9.000 nos so de arvore). Agora e um StaticBody2D POR BOSQUE
-## (~10 no mapa inteiro), com uma forma por arvore via shape_owner, e o
-## desenho e `draw_rect` em `_desenhar_arvores` - o mesmo padrao que o mato
-## (`_desenhar_mato`) ja usava, sem no nenhum. Ver `_adicionar_forma`.
-const ARVORES := 3000
+## Quanto da area de cada bosque fica coberto por copa de arvore. Arvore e
+## solida: 0,22 deixa a mata fechada o bastante para nao se ver o outro lado,
+## e aberta o bastante para dar para atravessar com paciencia.
+const COBERTURA_DE_ARVORE := 0.22
+## Lado da copa, em px. A media (80) e o que a conta de cobertura usa.
+const COPA_MINIMA := 62.0
+const COPA_MAXIMA := 98.0
+## Orcamento de tufos de mato para o mapa inteiro, repartido pelos bosques por
+## area. Mato e so desenho.
 const TUFOS_DE_MATO := 5000
 
-## Teto de nos da cena inteira (P11): so um sino de alarme, nao trava nada. Se
-## este numero disparar de novo, e sinal de que algum gerador voltou a criar
-## um no por peca em vez de agrupar - o motivo de existir este arquivo de
-## conferencia embutido, e nao so o olho ver a cena ficar pesada.
+## Teto de nos da cena inteira: so um sino de alarme, nao trava nada. Se
+## este numero disparar, e sinal de que algum gerador voltou a criar um no por
+## peca em vez de agrupar.
 const ORCAMENTO_DE_NOS := 2000
 
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
-# ferrugem, verde-acinzentado, ceu lavado.
+# ferrugem, verde-acinzentado, ceu lavado. As cores do desenho de origem sao
+# vivas de proposito (e um mapa para ler); aqui cada classe recebe o tom da
+# paleta do jogo.
 const COR_GRAMA := Color("3b4438")
-const COR_ASFALTO := Color("34383b")
-const COR_CALCADA := Color("4d5154")
-const COR_ENTRADA_DE_CARRO := Color("474b4d")
-const COR_FAIXA := Color("6d6a55")
-const COR_SUJEIRA := Color("3f4346")
+const COR_POR_CLASSE := {
+	"gramado": Color("41503c"),
+	"mata": Color("33412f"),
+	"horta": Color("4c5b38"),
+	"pavimento": Color("4d5154"),
+	"asfalto": Color("34383b"),
+	"milho": Color("5f5634"),
+	"terra": Color("55503f"),
+	# O rio e a unica coisa fria de verdade do mapa - todo o resto e concreto e
+	# mato.
+	"agua": Color("2b3a44"),
+}
 const COR_MATO := Color("44513f")
 const COR_ARVORE := Color("323e2c")
-const COR_JUNTA := Color(0.0, 0.0, 0.0, 0.18)
 const COR_PISO := Color("46403a")
 const COR_PISO_SEU := Color("463a2e")
 const COR_PAREDE := Color("6b6154")
 const COR_CERCA := Color("5a5347")
-## O rio e a unica coisa fria de verdade do mapa - todo o resto e concreto e
-## mato. E o que faz a ponte se achar de longe.
-const COR_AGUA := Color("2b3a44")
-const COR_MARGEM := Color("3a4038")
-const COR_CONCRETO := Color("53565a")
-## Terra arada. E o marrom dos talhoes que no PZ faz o campo em volta da cidade
-## parecer campo de alguem, e nao grama infinita.
-const COR_LAVOURA := Color("4a3f31")
-## Estrada de terra: mais clara e mais amarelada que o asfalto, para se
-## distinguir dele de longe no retrato do mapa.
-const COR_TERRA := Color("55503f")
+const COR_OBSTACULO := Color("5a5347")
 
 var _sorteio := RandomNumberGenerator.new()
 var _moveis_gerados := 0
 
-## A identidade de cada movel gerado hoje, na ORDEM em que nasceram - e nao
-## mais o indice sozinho (17/09/2026, P6 da arquitetura nova).
+## A identidade de cada movel gerado hoje, na ORDEM em que nasceram.
 ##
-## Um indice de geracao aponta para outro movel assim que um gerador anterior
-## muda de tamanho - foi o defeito que o proprio rename do bairro (16/09)
-## quase escondeu. A chave e derivada de ONDE o movel esta (o predio dono,
-## pela posicao dele, mais o quarto e a vaga) - estavel mesmo que outro predio
-## nasca ou suma em outro lugar do mapa.
+## A chave e derivada de ONDE o movel esta (o predio dono, pela posicao dele,
+## mais o quarto e a vaga) - estavel mesmo que outro predio nasca ou suma em
+## outro lugar do mapa.
 var _chaves_dos_moveis: PackedStringArray = []
 var _indice_da_chave: Dictionary = {}
 
@@ -164,12 +163,11 @@ var _zumbis_da_noite := 0
 var _moveis_ja_vazios := 0
 
 ## Todo retangulo que bloqueia passagem, juntado enquanto a colisao e criada.
-## E a partir desta lista que a navegacao do zumbi e montada: os obstaculos
-## aqui ja sao retangulos conhecidos, entao nao ha o que descobrir depois.
+## E a partir desta lista que a navegacao do zumbi e montada.
 var _obstaculos: Array[Rect2] = []
 
 ## Toda arvore plantada, so para o `_draw()` pintar - a colisao dela mora no
-## StaticBody2D do proprio bosque, nao aqui (P11).
+## StaticBody2D do proprio bosque, nao aqui.
 var _arvores: Array[Rect2] = []
 
 ## Os pontos de povoamento que ainda nao tem zumbi na arvore, e os que tem.
@@ -186,10 +184,8 @@ var _jogador: Node2D
 ## A ferramenta de conferencia do zumbi desliga isto.
 ##
 ## Ela teleporta o jogador para montar cada cena de teste, e com o povoamento
-## ligado os zumbis que ela esta medindo sao liberados no meio da medicao - a
-## primeira rodada depois do mapa grande deu "Invalid access to property
-## '_estado' on a previously freed object" em loop. Desligado, o que nasceu no
-## _ready fica onde esta.
+## ligado os zumbis que ela esta medindo sao liberados no meio da medicao.
+## Desligado, o que nasceu no _ready fica onde esta.
 var povoa_por_proximidade := true
 
 func _ready() -> void:
@@ -199,9 +195,7 @@ func _ready() -> void:
 	# deles ainda nao tenha rodado.
 	_relogio = get_tree().get_first_node_in_group("relogio")
 	_mochila = get_tree().get_first_node_in_group("mochila")
-	# A mochila avisa o que saiu dela; quem sabe onde a coisa cai e daqui. Ela
-	# nao conhece o mundo, e o mundo nao mexe nela - mesmo arranjo do
-	# `vasculhado` do movel.
+	# A mochila avisa o que saiu dela; quem sabe onde a coisa cai e daqui.
 	if _mochila != null:
 		_mochila.largou.connect(_ao_largar)
 
@@ -212,9 +206,8 @@ func _ready() -> void:
 	# povoamento, que depende de onde o jogador esta.
 	_por_no_lugar()
 
-	# Um StaticBody2D por PREDIO, nao por parede (P11) - ate 9 paredes (5
-	# externas + 4 internas da casa de 3 quartos) todas no mesmo corpo, via
-	# shape_owner. 91 predios eram, no pior caso, ate 819 corpos so de parede.
+	# Um StaticBody2D por PREDIO, nao por parede - ate 9 paredes (5 externas
+	# + 4 internas da casa de 3 quartos) todas no mesmo corpo, via shape_owner.
 	for construcao in mundo["construcoes"]:
 		var corpo_do_predio := StaticBody2D.new()
 		for parede in Construcao.paredes_externas(construcao):
@@ -224,25 +217,19 @@ func _ready() -> void:
 		add_child(corpo_do_predio)
 		_povoar(construcao)
 
-	# Mesma ideia para cerca e solido: um corpo so para cada lista inteira,
-	# nao um por retangulo - nenhum dos dois precisa ser distinguivel do
-	# vizinho, so solido.
-	if not (mundo["cercas"] as Array).is_empty():
-		var corpo_das_cercas := StaticBody2D.new()
-		for cerca in mundo["cercas"]:
-			_adicionar_forma(corpo_das_cercas, cerca)
-		add_child(corpo_das_cercas)
-	# Solido e nao desenhado: o rio dos dois lados da ponte.
-	if not (mundo["solidos"] as Array).is_empty():
-		var corpo_dos_solidos := StaticBody2D.new()
-		for solido in mundo["solidos"]:
-			_adicionar_forma(corpo_dos_solidos, solido)
-		add_child(corpo_dos_solidos)
+	# Mesma ideia para cerca, bloco solido e agua: um corpo so para cada lista
+	# inteira - nenhum deles precisa ser distinguivel do vizinho, so solido.
+	_corpo_de(mundo["cercas"])
+	var blocos: Array[Rect2] = []
+	for obstaculo in mundo["obstaculos"]:
+		blocos.append(obstaculo["rect"])
+	_corpo_de(blocos)
+	_corpo_de(mundo["solidos"])
 
 	for movel in mundo["moveis_de_rua"]:
 		var chave := "rua/%s@%.0f,%.0f" % [movel["tipo"], (movel["pos"] as Vector2).x,
 			(movel["pos"] as Vector2).y]
-		_criar_movel(movel["tipo"], movel["pos"], chave)
+		_criar_movel(movel["tipo"], movel["pos"], chave, 0, movel.get("tamanho", Vector2.ZERO))
 
 	_plantar_arvores()
 	_criar_muros_do_mundo()
@@ -251,8 +238,7 @@ func _ready() -> void:
 	_preparar_povoamento()
 	# Povoa ja aqui, e nao so no primeiro _process: as ferramentas de
 	# conferencia leem a cena logo depois de montar, e um mapa sem zumbi nenhum
-	# passaria por engano. O jogador ja esta na arvore mesmo que o _ready dele
-	# ainda nao tenha rodado, porque o grupo vem do rua.tscn.
+	# passaria por engano.
 	_jogador = get_tree().get_first_node_in_group("jogador") as Node2D
 	if _jogador != null:
 		_povoar_em_volta()
@@ -262,16 +248,22 @@ func _ready() -> void:
 
 	_conferir_orcamento_de_nos()
 
-## So um alarme (P11): imprime quantos nos o cenario criou GERANDO O MAPA
-## (predio, cerca, arvore, movel, zumbi - tudo que e filho dele; jogador,
-## HUD, mochila e relogio sao irmaos na cena e nao entram nesta conta) e
-## avisa se passar do teto. Nao trava nada, e nao existe teto de verdade a
-## cumprir (mobilia e zumbi ainda vao crescer) - serve para o numero aparecer
-## sozinho toda vez que o mapa monta, em vez de precisar abrir o profiler
-## para notar que agrupar corpo parou de acontecer em algum lugar.
+## Um corpo solido com uma forma por retangulo da lista. Lista vazia nao cria
+## corpo nenhum.
+func _corpo_de(retangulos: Array) -> void:
+	if retangulos.is_empty():
+		return
+	var corpo := StaticBody2D.new()
+	for r in retangulos:
+		_adicionar_forma(corpo, r)
+	add_child(corpo)
+
+## So um alarme: imprime quantos nos o cenario criou GERANDO O MAPA e avisa se
+## passar do teto. Nao trava nada.
 func _conferir_orcamento_de_nos() -> void:
 	var nos := _contar_nos(self)
-	print("cenario: %d nos, %d obstaculos (teto de no %d)" % [nos, _obstaculos.size(), ORCAMENTO_DE_NOS])
+	print("cenario: %d nos, %d obstaculos, %d arvores (teto de no %d)" % [
+		nos, _obstaculos.size(), _arvores.size(), ORCAMENTO_DE_NOS])
 	if nos > ORCAMENTO_DE_NOS:
 		push_warning("cenario: %d nos passa do teto de %d" % [nos, ORCAMENTO_DE_NOS])
 
@@ -296,9 +288,8 @@ func _por_no_lugar() -> void:
 	porta.orientar(Mapa.lado_da_porta_de_casa())
 	porta.global_position = Mapa.onde_fica_a_porta_de_casa()
 	# A porta e solida e nao nasce aqui dentro, entao nao passa pelo
-	# _criar_corpo() - mas o zumbi tem que desviar dela igual, senao a
-	# navegacao acha que o vao da sua casa e passagem e manda a horda se
-	# amontoar na sua soleira.
+	# _adicionar_forma() - mas o zumbi tem que desviar dela igual, senao a
+	# navegacao acha que o vao da sua casa e passagem.
 	_obstaculos.append(Rect2(
 		porta.global_position - porta.TAMANHO / 2.0, porta.TAMANHO))
 
@@ -307,44 +298,27 @@ func _por_no_lugar() -> void:
 func _draw() -> void:
 	var mundo := Mapa.mundo()
 
-	# A grama e o fundo de tudo: o que nao e rua, calcada nem construcao e
-	# quintal, terreno e campo.
+	# A grama e o fundo de tudo: o que nao e outra classe de chao e campo.
 	draw_rect(Mapa.MUNDO, COR_GRAMA)
+
+	# O chao, do maior poligono para o menor (o mapa ja entrega nessa ordem):
+	# o furo de um e outro poligono menor, e sai por cima. Furo que nao e
+	# poligono nenhum (a grama do fundo cercada de mata, como o camping) e
+	# repintado de grama logo em seguida.
+	for poligono in mundo["poligonos"]:
+		var cor: Color = COR_POR_CLASSE.get(poligono["classe"], COR_GRAMA)
+		_desenhar_poligono(poligono["pontos"], cor)
+		for furo in poligono["furos"]:
+			_desenhar_poligono(furo, COR_GRAMA)
 	_desenhar_mato(mundo)
 
-	# O rio por baixo de tudo o que e feito de concreto, para a ponte aparecer
-	# em cima dele.
-	for agua in mundo["agua"]:
-		var r: Rect2 = agua
-		draw_rect(r.grow(40.0), COR_MARGEM)
-		draw_rect(r, COR_AGUA)
+	# O lote de cada predio: a mancha inteira que ele era no desenho, por
+	# baixo dos retangulos - o que sobrou do corte continua sendo patio dele.
+	for lote in mundo["lotes"]:
+		_desenhar_poligono(lote["pontos"], Mapa.CLASSE_DO_PREDIO[lote["classe"]]["lote"])
 
-	for construcao in mundo["construcoes"]:
-		draw_rect(Construcao.entrada_de_carro(construcao), COR_ENTRADA_DE_CARRO)
-
-	# Terra arada, por baixo do concreto e do asfalto: e chao, nao construcao.
-	for talhao in mundo["lavoura"]:
-		draw_rect(talhao, COR_LAVOURA)
-
-	# Piso de concreto: pista de posto, patio de delegacia, estacionamento de
-	# mercado, alameda da mansao e a ponte.
-	for piso in mundo["piso"]:
-		draw_rect(piso, COR_CONCRETO)
-
-	# As estradas de terra por baixo do asfalto: onde uma cruza a outra, quem
-	# manda e o asfalto.
-	for terra in mundo["terra"]:
-		draw_rect(terra, COR_TERRA)
-	for estrada in mundo["estradas"]:
-		draw_rect(estrada, COR_ASFALTO)
-	for rua in mundo["ruas"]:
-		draw_rect(rua, COR_ASFALTO)
-	_desenhar_sujeira(mundo)
-	_desenhar_faixas(mundo)
-
-	for calcada in Mapa.calcadas():
-		draw_rect(calcada, COR_CALCADA)
-		_desenhar_juntas(calcada)
+	for obstaculo in mundo["obstaculos"]:
+		draw_rect(obstaculo["rect"], COR_OBSTACULO)
 
 	# O piso e as paredes ficam escondidos pelo telhado enquanto o jogador
 	# estiver fora - ver rua/telhados.gd.
@@ -359,92 +333,38 @@ func _draw() -> void:
 	for cerca in mundo["cercas"]:
 		draw_rect(cerca, COR_CERCA)
 
-	# Por cima de tudo, como as arvores sempre estiveram (eram no filho,
-	# desenhado depois do _draw() do pai - P11 so trocou o COMO, nao a ordem).
+	# Por cima de tudo, como as arvores sempre estiveram.
 	_desenhar_arvores()
+
+## Um poligono de chao, concavo ou nao. O que nao triangula (poligono que se
+## cruza - nao deveria sair do tracador) vira o retangulo que o envolve, com
+## aviso, em vez de sumir em silencio.
+func _desenhar_poligono(pontos: PackedVector2Array, cor: Color) -> void:
+	if pontos.size() < 3:
+		return
+	if Geometry2D.triangulate_polygon(pontos).is_empty():
+		push_warning("cenario: poligono de %d pontos nao triangula, pintando o envelope" % pontos.size())
+		var envelope := Rect2(pontos[0], Vector2.ZERO)
+		for p in pontos:
+			envelope = envelope.expand(p)
+		draw_rect(envelope, cor)
+		return
+	draw_colored_polygon(pontos, cor)
 
 func _desenhar_arvores() -> void:
 	for area in _arvores:
 		draw_rect(area, COR_ARVORE)
 
-## Faixa central tracejada em cada rua **cuja classe tem** (17/09/2026: antes
-## era toda entrada de "ruas", sem distincao - agora o beco perde o tracejado
-## de avenida, que e uma das duas diferencas esperadas desta migracao). Nao e
-## enfeite: num asfalto liso o jogador parece parado, porque quem se mexe na
-## tela e o cenario.
-func _desenhar_faixas(mundo: Dictionary) -> void:
-	for via in mundo["vias"]:
-		if not Vias.e_reta(via) or not Vias.CLASSES[via["classe"]]["faixa"]:
-			continue
-		var r := Vias.faixa_de(via)
-		if r.size.x > r.size.y:
-			var y := r.get_center().y - 7.0
-			var x := r.position.x + 60.0
-			while x < r.end.x:
-				# Sem tracejado por cima do rio nem de outro cruzamento.
-				if not _sobre_agua(mundo, Vector2(x, y)):
-					draw_rect(Rect2(x, y, 100.0, 14.0), COR_FAIXA)
-				x += 180.0
-			continue
-		var cx := r.get_center().x - 7.0
-		var cy := r.position.y + 60.0
-		while cy < r.end.y:
-			if not Mapa.RODOVIA.has_point(Vector2(cx, cy)):
-				draw_rect(Rect2(cx, cy, 14.0, 100.0), COR_FAIXA)
-			cy += 180.0
-
-func _sobre_agua(mundo: Dictionary, ponto: Vector2) -> bool:
-	for agua in mundo["agua"]:
-		if (agua as Rect2).has_point(ponto):
-			return true
-	return false
-
-## Juntas do concreto, pelo mesmo motivo da faixa: referencia de movimento.
-func _desenhar_juntas(calcada: Rect2) -> void:
-	if calcada.size.x > calcada.size.y:
-		var x := calcada.position.x
-		while x <= calcada.end.x:
-			draw_line(Vector2(x, calcada.position.y), Vector2(x, calcada.end.y), COR_JUNTA, 2.0)
-			x += 130.0
-		return
-	var y := calcada.position.y
-	while y <= calcada.end.y:
-		draw_line(Vector2(calcada.position.x, y), Vector2(calcada.end.x, y), COR_JUNTA, 2.0)
-		y += 130.0
-
-## Semente fixa para o desenho ser o mesmo em toda execucao - sujeira que muda
-## de lugar a cada redraw pisca e atrapalha em vez de ajudar.
-##
-## Por classe (17/09/2026: so a rodovia tem `sujeira` hoje, mesma via de
-## sempre - generaliza sem mudar o resultado, para quando outra classe ganhar
-## sujeira nao precisar mexer aqui).
-func _desenhar_sujeira(mundo: Dictionary) -> void:
-	var sorteio := RandomNumberGenerator.new()
-	sorteio.seed = 20260907
-	for via in mundo["vias"]:
-		if not Vias.e_reta(via) or not Vias.CLASSES[via["classe"]]["sujeira"]:
-			continue
-		var rua := Vias.faixa_de(via)
-		for _pedaco in 900:
-			var lado := sorteio.randf_range(8.0, 30.0)
-			var posicao := Vector2(
-				sorteio.randf_range(rua.position.x, rua.end.x - lado),
-				sorteio.randf_range(rua.position.y, rua.end.y - lado)
-			)
-			draw_rect(Rect2(posicao, Vector2(lado, lado * sorteio.randf_range(0.4, 1.0))), COR_SUJEIRA)
-
-## Mato **dentro dos bosques**, e nao no mundo inteiro.
-##
-## Com 100x a area, densidade constante daria dezenas de milhares de retangulos
-## num unico canvas item, que o Godot desenha inteiro todo quadro. O orcamento e
-## fixo e se reparte pelos bosques por area: mata fechada, campo limpo - que
-## tambem le melhor do que tufo espalhado por igual.
+## Mato **dentro dos bosques**, e nao no mundo inteiro. O orcamento e fixo e se
+## reparte pelos bosques por area: mata fechada, campo limpo.
 func _desenhar_mato(mundo: Dictionary) -> void:
 	var bosques: Array = mundo["bosques"]
 	if bosques.is_empty():
 		return
-	var peso_total := _peso_dos_bosques(bosques)
-	if peso_total <= 0.0:
+	var area_total := 0.0
+	for bosque in bosques:
+		area_total += bosque["area"]
+	if area_total <= 0.0:
 		return
 
 	var sorteio := RandomNumberGenerator.new()
@@ -455,16 +375,29 @@ func _desenhar_mato(mundo: Dictionary) -> void:
 
 	for bosque in bosques:
 		var r: Rect2 = bosque["rect"]
-		var quantos := int(float(orcamento) * (_peso_de(bosque) / peso_total))
-		for _tufo in quantos:
+		var quantos := int(float(orcamento) * (bosque["area"] / area_total))
+		var tentativas := 0
+		var feitos := 0
+		while feitos < quantos and tentativas < quantos * 4:
+			tentativas += 1
 			var lado := sorteio.randf_range(14.0, 46.0)
-			if r.size.x <= lado or r.size.y <= lado:
-				continue
 			var posicao := Vector2(
 				sorteio.randf_range(r.position.x, r.end.x - lado),
 				sorteio.randf_range(r.position.y, r.end.y - lado)
 			)
+			if not _dentro_do_bosque(bosque, posicao + Vector2(lado, lado * 0.55) / 2.0):
+				continue
 			draw_rect(Rect2(posicao, Vector2(lado, lado * 0.55)), COR_MATO)
+			feitos += 1
+
+## Se um ponto esta dentro do poligono do bosque e fora dos furos dele.
+func _dentro_do_bosque(bosque: Dictionary, ponto: Vector2) -> bool:
+	if not Geometry2D.is_point_in_polygon(ponto, bosque["pontos"]):
+		return false
+	for furo in bosque["furos"]:
+		if Geometry2D.is_point_in_polygon(ponto, furo):
+			return false
+	return true
 
 # -------------------------------------------------------------------- geracao
 
@@ -479,42 +412,29 @@ func _povoar(construcao: Dictionary) -> void:
 	var vagas: Array = Construcao.MOVEIS_POR_QUARTO[construcao["tipo"]]
 	var chave_do_predio := _chave_da_construcao(construcao)
 
-	# O documento e um NUMERO agora (1..6, 17/09/2026), nao mais um booleano
-	# somado a um contador global (`_documentos_colocados % 6`, que trocava
-	# qual documento saia onde toda vez que um gerador anterior mudava de
-	# tamanho). Cai no **ultimo** quarto, que e o mais fundo, para o que custa
-	# mais chegar pagar mais. **Posicao provisoria**: onde documento fica nao
-	# foi decidido, e isto e so o lugar que existe para ele nascer.
+	# O documento e um NUMERO (1..6). Cai no **ultimo** quarto, que e o mais
+	# fundo, para o que custa mais chegar pagar mais. **Posicao provisoria**:
+	# onde documento fica nao foi decidido, e isto e so o lugar que existe para
+	# ele nascer.
 	var numero_do_documento: int = construcao.get("documento", 0)
 	var quarto_do_documento := -1
 	if numero_do_documento > 0:
 		quarto_do_documento = mini(quartos.size(), vagas.size()) - 1
-	# A pistola vai no mesmo lugar, pelo mesmo motivo: e a armaria da delegacia,
-	# e ela guarda os dois.
-	var quarto_da_arma := -1
-	if construcao.get("arma", false):
-		quarto_da_arma = mini(quartos.size(), vagas.size()) - 1
 
 	for i in quartos.size():
 		if i >= vagas.size():
 			break
 		var quarto: Rect2 = quartos[i]
 		var tipos: Array = vagas[i]
-		# `posicoes_de_movel` encosta cada movel na parede OPOSTA a fachada e
-		# espalha ao longo dela - escrito uma vez para as 4 orientacoes
-		# (17/09/2026); antes disto a conta vivia aqui dentro e so sabia
-		# fachada norte/sul.
 		var posicoes := Construcao.posicoes_de_movel(construcao, quarto, tipos)
 		for j in tipos.size():
 			var documento := numero_do_documento if (i == quarto_do_documento and j == 0) else 0
-			var com_arma := i == quarto_da_arma and j == 0
 			var chave := "%s#%d/%d" % [chave_do_predio, i, j]
-			_criar_movel(tipos[j], posicoes[j], chave, documento, com_arma,
+			_criar_movel(tipos[j], posicoes[j], chave, documento,
 				Construcao.tamanho_do_movel(construcao, tipos[j]))
 
 ## A chave estavel de uma construcao: tipo + a posicao dela, que nao muda a
-## menos que a propria construcao se mova - ao contrario de um indice de
-## geracao, que qualquer predio novo antes dela na lista desloca.
+## menos que a propria construcao se mova.
 func _chave_da_construcao(construcao: Dictionary) -> String:
 	var r: Rect2 = construcao["rect"]
 	return "%s@%.0f,%.0f" % [construcao["tipo"], r.position.x, r.position.y]
@@ -537,10 +457,18 @@ func _preparar_povoamento() -> void:
 	# E os que os dias trouxeram, espalhados pelos mesmos pontos - a rua fica
 	# mais cheia, e nao mais larga.
 	var a_mais := (Travessia.dia - 1) / UM_ZUMBI_A_MAIS_A_CADA
+	if _pontos_de_zumbi.is_empty() or a_mais <= 0:
+		return
+	# Perto de casa primeiro (30/09/2026): os pontos nascem na ordem dos
+	# predios do tracado, e os primeiros da lista sao os predios grandes do
+	# outro lado do mapa - a escalada existia no numero e nao na rua em volta
+	# de voce, que e onde ela tem que apertar.
+	var perto_de_casa := _pontos_de_zumbi.duplicate()
+	var casa := Mapa.onde_o_jogador_nasce()
+	perto_de_casa.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		return a.distance_to(casa) < b.distance_to(casa))
 	for i in a_mais:
-		if _pontos_de_zumbi.is_empty():
-			break
-		var base: Vector2 = _pontos_de_zumbi[i % _pontos_de_zumbi.size()]
+		var base: Vector2 = perto_de_casa[i % perto_de_casa.size()]
 		_pontos_de_zumbi.append(base + Vector2(
 			_sorteio.randf_range(-320.0, 320.0), _sorteio.randf_range(-320.0, 320.0)))
 
@@ -554,8 +482,7 @@ func _process(_delta: float) -> void:
 	_a_noite_traz_mais()
 
 ## Faz existir zumbi perto e deixa de fazer longe. E o que segura o custo num
-## mapa deste tamanho: sao ~13 zumbis vivos, como sempre foram, so que agora
-## eles sao os 13 que estao perto de voce.
+## mapa deste tamanho.
 func _povoar_em_volta() -> void:
 	var onde := _jogador.global_position
 	for i in _pontos_de_zumbi.size():
@@ -574,9 +501,8 @@ func _povoar_em_volta() -> void:
 ## A noite trazendo mais zumbi. Aqui nao se sabe que horas sao - le-se o
 ## noite() do relogio, que vai de 0 a 1 entre as 19:00 e as 05:00.
 ##
-## Eles nascem **num anel em volta do jogador**, e nao nas bordas do mapa: num
-## mundo de 1,44 km a borda esta a quilometros, e zumbi que nasce longe nunca
-## chega. O anel e maior que a tela, entao ninguem aparece do nada.
+## Eles nascem **num anel em volta do jogador**, e nao nas bordas do mapa. O
+## anel e maior que a tela, entao ninguem aparece do nada.
 func _a_noite_traz_mais() -> void:
 	if _relogio == null:
 		return
@@ -588,8 +514,8 @@ func _a_noite_traz_mais() -> void:
 ## Um ponto livre num anel em volta do jogador.
 ##
 ## Tenta varios: no anel cru, um em cada tres cai dentro de parede, de carro ou
-## do rio - e zumbi preso dentro de parede nao pressiona ninguem, so gasta
-## quadro. O anel e maior que a tela, entao ninguem aparece do nada.
+## de arvore - e zumbi preso dentro de parede nao pressiona ninguem, so gasta
+## quadro.
 func _um_lugar_livre_no_anel() -> Vector2:
 	var espaco := get_world_2d().direct_space_state
 	var forma := RectangleShape2D.new()
@@ -620,24 +546,22 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 		zumbi.morreu.connect(_anotar_ponto_limpo.bind(indice))
 	# Cada zumbi guarda a lista de corpos que a linha de visao dele ignora, e
 	# ela tem os outros zumbis dentro. Chegou um novo, todas as listas estao
-	# velhas - e um zumbi fora da lista corta a visao de quem esta atras dele,
-	# que e justamente a horda parando de funcionar quando se junta.
+	# velhas.
 	for outro in get_tree().get_nodes_in_group("zumbi"):
 		if outro != zumbi:
 			outro.esquecer_quem_ignorar()
 	return zumbi
 
-## `chave` e a identidade estavel do movel (17/09/2026, P6) - ela quem decide
-## se ele nasce vazio hoje (`Travessia.moveis_vazios`), nao mais o indice de
-## geracao. `documento` e 0 (nenhum) ou 1..6 (qual dos seis placeholders).
+## `chave` e a identidade estavel do movel - ela quem decide se ele nasce
+## vazio hoje (`Travessia.moveis_vazios`). `documento` e 0 (nenhum) ou 1..6
+## (qual dos seis placeholders).
 ##
 ## `tamanho_override` existe para o movel de dentro de uma casa de fachada
-## leste/oeste, que nasce transposto (`Construcao.tamanho_do_movel`) - senao a
-## geladeira "deitada" apareceria de lado dentro da parede. Deixado em zero,
-## usa o tamanho da tabela direto: e o caso do movel de rua, que nao pertence a
-## nenhuma construcao.
+## leste/oeste, que nasce transposto, e para o veiculo da rua, que vem com o
+## tamanho e a orientacao que o mapa deu. Deixado em zero, usa o tamanho da
+## tabela direto.
 func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
-		com_arma := false, tamanho_override := Vector2.ZERO) -> void:
+		tamanho_override := Vector2.ZERO) -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
 	var tamanho: Vector2 = tamanho_override if tamanho_override != Vector2.ZERO else ficha["tamanho"]
 	var movel := CENA_DO_MOVEL.instantiate()
@@ -653,7 +577,7 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
 	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
 	# outros.
-	movel.achados = _sortear_achados(tipo, documento, com_arma)
+	movel.achados = _sortear_achados(documento)
 	_indice_da_chave[chave] = _chaves_dos_moveis.size()
 	_chaves_dos_moveis.append(chave)
 	movel.nasce_vazio = Travessia.moveis_vazios.has(chave)
@@ -670,7 +594,7 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	movel.vasculhado.connect(_anotar_movel_vazio.bind(chave))
 
 	# O corpo solido do movel nasce dentro do vasculhavel, entao nao passa pelo
-	# _criar_corpo() - mas o zumbi tem que desviar dele igual.
+	# _adicionar_forma() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - tamanho / 2.0, tamanho))
 
@@ -691,12 +615,9 @@ func chaves_dos_moveis() -> PackedStringArray:
 
 ## O jogador tirou uma coisa da mochila: ela cai no chao onde ele esta.
 ##
-## **Largar nao destroi.** A alternativa era sumir com o item, e sumir faz a
-## escolha ser irreversivel por engano: quem larga a lata de comida para caber
-## o remedio quer poder voltar na lata se o remedio nao valer a viagem. Cair no
-## chao tambem e o que mantem a regra do mapa de pe - o mundo nao repoe, mas
-## tambem nao engole o que ja saiu de um movel.
-func _ao_largar(achado: String, _documento: bool) -> void:
+## **Largar nao destroi.** Cair no chao mantem a regra do mapa de pe - o mundo
+## nao repoe, mas tambem nao engole o que ja saiu de um movel.
+func _ao_largar(achado: String) -> void:
 	if _jogador == null:
 		_jogador = get_tree().get_first_node_in_group("jogador") as Node2D
 	if _jogador == null:
@@ -740,68 +661,43 @@ func _anotar_ponto_limpo(indice: int) -> void:
 func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], chave: String) -> void:
 	Travessia.moveis_vazios[chave] = true
 
-## O que sai do movel. Cada tipo tem a sua tabela, e o documento entra so onde o
-## mapa declarou que ha um. `documento` e 0 (nenhum) ou o NUMERO (1..6) do
-## placeholder - nao mais um booleano contra um contador global (17/09/2026,
-## P6): `_documentos_colocados % 6` trocava qual documento saia onde toda vez
-## que um gerador anterior mudava a quantidade de moveis que fazia nascer.
-func _sortear_achados(tipo: String, documento: int, com_arma := false) -> Array[String]:
+## O que sai do movel: o documento, onde o mapa declarou um, e **balas** -
+## zero, uma ou duas caixinhas (30/09/2026: era loot sorteado de uma tabela por
+## tipo de movel; o Joao tirou o loot generico do jogo). `documento` e 0
+## (nenhum) ou o NUMERO (1..6) do placeholder.
+##
+## Movel vazio existe de proposito: se todo movel desse algo, vasculhar
+## deixaria de ser aposta. A mesma semente todo dia, entao o mesmo movel rende
+## o mesmo sempre.
+func _sortear_achados(documento: int) -> Array[String]:
 	var achados: Array[String] = []
-	var tabela: Array = Construcao.CONTEUDO[tipo]
-
 	_moveis_gerados += 1
-	if com_arma:
-		# A unica pistola do mapa. Nao e sorteio: ou o jogador acha na armaria,
-		# ou nao acha nunca.
-		achados.append(Construcao.PISTOLA)
-		# E balas junto, tambem sem sorteio. Achar a unica arma do mapa sem uma
-		# bala dentro seria uma recompensa que nao recompensa nada - e a
-		# municao das outras tabelas e sorteada, entao podia nao vir nenhuma.
-		achados.append(Construcao.MUNICAO)
 	if documento > 0:
 		achados.append(Construcao.DOCUMENTOS[documento - 1])
-
-	# Movel vazio existe de proposito: se todo movel desse algo, vasculhar
-	# deixaria de ser aposta.
 	for _vez in _sorteio.randi_range(0, 2):
-		achados.append(tabela[_sorteio.randi_range(0, tabela.size() - 1)])
+		achados.append(Construcao.MUNICAO)
 	return achados
 
 
-## Arvores solidas, sorteadas **so dentro dos bosques** declarados no mapa.
+## Arvores solidas, sorteadas **so dentro dos poligonos de mata** do mapa.
 ##
-## Antes eram sorteadas no mundo inteiro recusando o que caia em rua, calcada ou
-## construcao - e mesmo assim uma tapou o beco entre duas casas e outra a porta
-## do galpao, deixando meio mapa inalcancavel. Arvore solida em area de
-## circulacao e armadilha silenciosa: o bosque e uma lista, nao um sorteio.
-##
-## O orcamento e fixo e se reparte pelos bosques por area, pelo mesmo motivo do
-## mato: densidade constante num mapa 100x maior seria 100x os nos.
+## Arvore solida em area de circulacao e armadilha silenciosa: o bosque e o
+## que o desenho pintou de mata, e so ele. Quantas sai da area de cada
+## bosque e de COBERTURA_DE_ARVORE; um StaticBody2D por bosque, uma forma por
+## arvore, e o desenho e `draw_rect` em `_desenhar_arvores`.
 func _plantar_arvores() -> void:
-	var bosques: Array = Mapa.mundo()["bosques"]
-	if bosques.is_empty():
-		return
-	var peso_total := _peso_dos_bosques(bosques)
-	if peso_total <= 0.0:
-		return
-
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 20260909
-	for bosque in bosques:
+	var copa_media := (COPA_MINIMA + COPA_MAXIMA) / 2.0
+	for bosque in Mapa.mundo()["bosques"]:
 		var r: Rect2 = bosque["rect"]
-		var quantas := int(float(ARVORES) * (_peso_de(bosque) / peso_total))
+		var quantas := int(bosque["area"] * COBERTURA_DE_ARVORE / (copa_media * copa_media))
 		var plantadas := 0
 		var tentativas := 0
-		# Um StaticBody2D por BOSQUE, nao por arvore (P11) - cada arvore vira
-		# uma forma no mesmo corpo, e o desenho sai de `_desenhar_arvores`
-		# (`draw_rect`, sem Polygon2D), o mesmo padrao que `_desenhar_mato` ja
-		# usa para o tufo. Antes: 3 nos por arvore (StaticBody2D +
-		# CollisionShape2D + Polygon2D) - com ARVORES=3000, ate 9.000 nos so
-		# de arvore, contra ~10 hoje (um por bosque).
 		var corpo := StaticBody2D.new()
-		while plantadas < quantas and tentativas < quantas * 6 + 40:
+		while plantadas < quantas and tentativas < quantas * 8 + 40:
 			tentativas += 1
-			var lado := sorteio.randf_range(62.0, 98.0)
+			var lado := sorteio.randf_range(COPA_MINIMA, COPA_MAXIMA)
 			if r.size.x <= lado or r.size.y <= lado:
 				break
 			var posicao := Vector2(
@@ -809,7 +705,9 @@ func _plantar_arvores() -> void:
 				sorteio.randf_range(r.position.y, r.end.y - lado)
 			)
 			var area := Rect2(posicao, Vector2(lado, lado))
-			if not _e_terreno(area.grow(50.0)):
+			if not _dentro_do_bosque(bosque, area.get_center()):
+				continue
+			if not _livre_para_arvore(area.grow(30.0)):
 				continue
 			_adicionar_forma(corpo, area)
 			_arvores.append(area)
@@ -819,47 +717,25 @@ func _plantar_arvores() -> void:
 		else:
 			corpo.free()
 
-## O peso de um bosque no orcamento: **area vezes densidade**, e nao area.
-##
-## Sem a densidade, uma mata de 200 milhoes de px² levava quase tudo e a
-## florestinha - que tem 9 milhoes - recebia arvore de menos para se ver. O
-## resultado era um mapa em que nenhuma mata parecia mata. Com o peso, a
-## florestinha e fechada e as matas de borda sao campo com arvore espalhada,
-## que e a diferenca que se queria.
-func _peso_de(bosque: Dictionary) -> float:
-	return (bosque["rect"] as Rect2).get_area() * float(bosque.get("densidade", 0.03))
-
-func _peso_dos_bosques(bosques: Array) -> float:
-	var total := 0.0
-	for bosque in bosques:
-		total += _peso_de(bosque)
-	return total
-
-## Se o retangulo esta em terreno livre - fora de rua, calcada, construcao,
-## entrada de carro, piso de concreto e agua.
-##
-## **Consulta `abertos`** (17/09/2026), e nao mais quatro listas separadas
-## (rua, estrada, terra, piso): `abertos` ja e essa uniao, derivada de `vias`
-## mais o piso - mesmo resultado, uma so varredura em vez de quatro.
-func _e_terreno(area: Rect2) -> bool:
+## Se o retangulo nao pisa em predio, bloco, agua, veiculo nem em ponto de
+## nascimento de zumbi. Mata nao se sobrepoe a rua nem a pavimento por
+## construcao (sao classes diferentes do desenho), entao isso nao se confere.
+func _livre_para_arvore(area: Rect2) -> bool:
 	var mundo := Mapa.mundo()
-	for aberto in mundo["abertos"]:
-		if (aberto as Rect2).intersects(area):
-			return false
-	for agua in mundo["agua"]:
-		if (agua as Rect2).grow(60.0).intersects(area):
-			return false
 	for construcao in mundo["construcoes"]:
 		if (construcao["rect"] as Rect2).grow(36.0).intersects(area):
 			return false
-		if Construcao.entrada_de_carro(construcao).intersects(area):
+	for obstaculo in mundo["obstaculos"]:
+		if (obstaculo["rect"] as Rect2).grow(20.0).intersects(area):
 			return false
-	for cerca in mundo["cercas"]:
-		if (cerca as Rect2).intersects(area):
+	for solido in mundo["solidos"]:
+		if (solido as Rect2).grow(40.0).intersects(area):
 			return false
-	# E nao em cima de onde nasce zumbi. Sem isto, arvore na mata fechada
-	# enterrava o zumbi da florestinha - e zumbi dentro de arvore fica preso, o
-	# que o conferir_zumbi pegou na primeira rodada com a mata densa.
+	for movel in mundo["moveis_de_rua"]:
+		var r := Rect2((movel["pos"] as Vector2) - (movel["tamanho"] as Vector2) / 2.0, movel["tamanho"])
+		if r.grow(30.0).intersects(area):
+			return false
+	# E nao em cima de onde nasce zumbi: zumbi dentro de arvore fica preso.
 	for onde in mundo["zumbis"]:
 		if area.grow(30.0).has_point(onde):
 			return false
@@ -867,21 +743,9 @@ func _e_terreno(area: Rect2) -> bool:
 
 # --------------------------------------------------------------------- colisao
 
-## Um corpo solido novo com UMA forma so - para uma peca avulsa que nao
-## compartilha dono com nenhuma outra (hoje, nenhum chamador sobra: todo mundo
-## agrupa. Fica publica porque e o jeito mais simples de criar um corpo de
-## uma peca so, se um gerador novo precisar).
-func _criar_corpo(area: Rect2) -> StaticBody2D:
-	var corpo := StaticBody2D.new()
-	_adicionar_forma(corpo, area)
-	add_child(corpo)
-	return corpo
-
 ## Acrescenta UMA forma retangular a um corpo que **ja existe**, via
-## shape_owner - sem CollisionShape2D filho, que seria outro no por forma
-## (P11: era exatamente isso que fazia todo predio, cerca e arvore do mapa
-## virar um StaticBody2D+CollisionShape2D proprio). Registra o retangulo em
-## `_obstaculos` do mesmo jeito de sempre, para a navegacao continuar vendo
+## shape_owner - sem CollisionShape2D filho, que seria outro no por forma.
+## Registra o retangulo em `_obstaculos`, para a navegacao continuar vendo
 ## tudo sem saber que a colisao mudou de forma por baixo.
 func _adicionar_forma(corpo: StaticBody2D, area: Rect2) -> void:
 	_obstaculos.append(area)
@@ -892,7 +756,7 @@ func _adicionar_forma(corpo: StaticBody2D, area: Rect2) -> void:
 	corpo.shape_owner_set_transform(dono, Transform2D(0.0, area.get_center()))
 
 ## Muros invisiveis na borda, para nao dar de sair do mundo e ficar olhando o
-## vazio. Um corpo so, quatro formas (P11).
+## vazio. Um corpo so, quatro formas.
 func _criar_muros_do_mundo() -> void:
 	var mundo := Mapa.MUNDO
 	var e := ESPESSURA_DO_MURO

@@ -303,19 +303,12 @@ func _televisao() -> void:
 	_desenho.tv_ligada = true
 	_falar("O boletim da noite, dia %d.\n\n[O que o noticiário diz é da equipe de narrativa.]" % Travessia.dia)
 
-## O que veio da rua e ficou guardado. A casa ainda nao consome nada disso:
-## o que cada item faz aqui dentro e decisao que nao foi tomada.
+## A geladeira. Ate 30/09/2026 listava o que veio da rua e ficou guardado;
+## desde que a rua so rende balas e documentos, nao chega nada para guardar
+## aqui. Fica clicavel porque a casa e ponto e clique, e o que ela diz e
+## [texto da narrativa].
 func _geladeira() -> void:
-	if Travessia.mochila.is_empty():
-		_falar("Vazia.")
-		return
-	var contagem := {}
-	for item in Travessia.mochila:
-		contagem[item] = contagem.get(item, 0) + 1
-	var linhas := []
-	for item in contagem:
-		linhas.append("  %s%s" % [item, "" if contagem[item] == 1 else "  ×%d" % contagem[item]])
-	_falar("O que veio da rua e está guardado:\n" + "\n".join(linhas))
+	_falar("Vazia.")
 
 func _pesquisa() -> void:
 	var tem := Travessia.documentos.size()
@@ -415,37 +408,24 @@ func _linha_do_dia() -> String:
 	elif faltam > 1:
 		quanto = "Faltam %d dias para o prazo." % faltam
 	var como := "Você trancou a porta."
-	if Travessia.fim_do_dia == Travessia.FimDoDia.AMANHECEU_NA_RUA:
-		como = "Amanheceu com você na rua."
+	match Travessia.fim_do_dia:
+		Travessia.FimDoDia.AMANHECEU_NA_RUA:
+			como = "Amanheceu com você na rua."
+		Travessia.FimDoDia.SEM_VIDA:
+			como = "Você não aguentou o dia."
 	return "Dia %d. %s %s" % [Travessia.dia, como, quanto]
 
 ## O que entrou em casa hoje - ou o que ficou na rua, se o dia acabou mal.
 func o_que_voltou() -> String:
 	if Travessia.fim_do_dia != Travessia.FimDoDia.PELA_PORTA:
-		var perdeu := Travessia.itens_perdidos + Travessia.documentos_perdidos
-		if perdeu == 0:
-			return "Você não estava carregando nada. Não havia o que perder."
-		var linha := "Ficou na rua: %d %s" % [
-			Travessia.itens_perdidos,
-			"item" if Travessia.itens_perdidos == 1 else "itens",
+		if Travessia.documentos_perdidos == 0:
+			return "Você não estava carregando documento nenhum. Não havia o que perder."
+		return "Ficou na rua: %d documento%s. Nada disso entrou em casa." % [
+			Travessia.documentos_perdidos,
+			"" if Travessia.documentos_perdidos == 1 else "s",
 		]
-		if Travessia.documentos_perdidos > 0:
-			linha += " e %d documento%s" % [
-				Travessia.documentos_perdidos,
-				"" if Travessia.documentos_perdidos == 1 else "s",
-			]
-		return linha + ". Nada disso entrou em casa."
-	if Travessia.mochila.is_empty() and Travessia.documentos.is_empty():
+	if Travessia.documentos.is_empty():
 		return "Da rua não veio nada."
-	var linhas := []
-	if not Travessia.mochila.is_empty():
-		linhas.append("%d coisa%s da rua guardada%s na cozinha." % [
-			Travessia.mochila.size(),
-			"" if Travessia.mochila.size() == 1 else "s",
-			"" if Travessia.mochila.size() == 1 else "s",
-		])
-	if not Travessia.documentos.is_empty():
-		linhas.append("%d documento%s no quadro da pesquisa." % [
-			Travessia.documentos.size(), "" if Travessia.documentos.size() == 1 else "s"
-		])
-	return "\n".join(linhas)
+	return "%d documento%s no quadro da pesquisa." % [
+		Travessia.documentos.size(), "" if Travessia.documentos.size() == 1 else "s"
+	]

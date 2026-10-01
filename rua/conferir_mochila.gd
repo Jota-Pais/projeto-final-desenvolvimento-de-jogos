@@ -1,32 +1,31 @@
 extends Node
-## Ferramenta. **Rode esta cena (F6) depois de mexer na mochila, no loot ou no
-## que atravessa o dia.**
+## Ferramenta. **Rode esta cena (F6) depois de mexer na mochila, no que sai
+## dos moveis ou no que atravessa o dia.**
 ##
-## Confere sete coisas:
+## Confere seis coisas:
 ##
-##  1. vasculhar enche a mochila, e **documento conta separado** de comida;
+##  1. vasculhar manda **documento para a mochila e balas para o cinto** - e
+##     nada mais existe para sair de um movel (30/09/2026);
 ##  2. **so entra em casa o que passou pela porta de casa** - amanhecer na rua
-##     deixa tudo na calcada, e a casa mostra o prejuizo;
+##     deixa os documentos na calcada, a casa mostra o prejuizo, e as balas
+##     ficam no cinto;
 ##  3. **o mundo esvazia e nao repoe**: movel vasculhado ontem nasce vazio hoje,
 ##     e so ele;
-##  4. o bairro inteiro tem loot suficiente para o prazo - e a leitura de escopo
-##     do passo 4;
-##  5. a HUD mostra o documento na linha propria dele;
-##  6. **a tela da mochila**: o que sai dela cai no chao e o chao devolve;
-##  7. **o que nao coube da para pegar depois**, no mesmo dia.
+##  4. quanto o mapa inteiro rende - leitura de escopo, com um unico erro
+##     possivel: mapa sem documento;
+##  5. a HUD mostra a Beretta e o documento carregado;
+##  6. **a tela da mochila**: o que sai dela cai no chao e o chao devolve.
 ##
 ## O item 2 e o que precisa de conferencia de verdade: a regra vive numa
 ## ligacao indireta (a mochila escuta o `chegou_em_casa` do Travessia e le o
 ## `fim_do_dia` para decidir), e quebra sem dar erro em tela.
 ##
-## Os itens 6 e 7 sao de 15/09/2026, e o 7 nasceu de um furo: "o que nao cabe
-## fica no movel, e da para voltar" estava escrito no README, no COMO-JOGAR e
-## nesta ferramenta, e **nao era verdade** - o movel virava vazio no mesmo
-## instante e nunca mais aceitava vasculho.
+## Ate 30/09/2026 havia mais duas (a mochila enche em 12 vagas; o que nao coube
+## fica no movel e da para voltar): sairam junto com o loot generico e a
+## capacidade.
 
 const Construcao := preload("res://rua/construcao.gd")
 const Mochila := preload("res://rua/mochila.gd")
-const Vasculhavel := preload("res://rua/vasculhavel.gd")
 const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
@@ -48,13 +47,12 @@ func _process(_delta: float) -> void:
 	_rodou = true
 	_dia_no_comeco = Travessia.dia
 
-	_vasculhar_enche_a_mochila()
+	_vasculhar_rende_documento_e_balas()
 	_so_entra_o_que_passou_pela_porta()
 	_o_mundo_nao_repoe()
-	_quanto_loot_o_bairro_tem()
-	_a_hud_mostra_o_documento()
+	_quanto_o_mapa_rende()
+	_a_hud()
 	_a_tela_da_mochila()
-	_a_sobra_da_para_pegar_depois()
 
 	_limpar_o_autoload()
 	Travessia.dia = _dia_no_comeco
@@ -66,10 +64,9 @@ func _erro(texto: String) -> void:
 	print("  FALHA: " + texto)
 
 func _limpar_o_autoload() -> void:
-	Travessia.mochila.clear()
+	Travessia.municao = Travessia.BALAS_DE_COMECO
 	Travessia.documentos.clear()
 	Travessia.moveis_vazios.clear()
-	Travessia.itens_perdidos = 0
 	Travessia.documentos_perdidos = 0
 	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
 
@@ -89,136 +86,76 @@ func _moveis_de(rua: Node) -> Array[Node]:
 			moveis.append(filho)
 	return moveis
 
-## O primeiro movel cujo conteudo tem documento. Sao os moveis 6, 12, 18... na
-## ordem de geracao, mas achar pelo conteudo nao depende dessa conta.
-func _um_movel_com_documento(rua: Node) -> Node:
+## Os moveis cujo conteudo tem documento, na ordem de geracao.
+func _moveis_com_documento(rua: Node) -> Array[Node]:
+	var lista: Array[Node] = []
 	for movel in _moveis_de(rua):
 		for achado in movel.achados:
 			if Construcao.e_documento(achado):
-				return movel
-	return null
+				lista.append(movel)
+				break
+	return lista
 
-# --- 1. vasculhar enche a mochila -------------------------------------------
+func _caixinhas_em(movel: Node) -> int:
+	var n := 0
+	for achado in movel.achados:
+		if achado == Construcao.MUNICAO:
+			n += 1
+	return n
 
-func _vasculhar_enche_a_mochila() -> void:
-	print("\n1. vasculhar enche a mochila")
+# --- 1. vasculhar rende documento e balas -----------------------------------
+
+func _vasculhar_rende_documento_e_balas() -> void:
+	print("\n1. vasculhar rende documento e balas")
 	_limpar_o_autoload()
 	var rua := _uma_rua()
 	var mochila := rua.get_node("Mochila") as Mochila
 
-	var com_documento := _um_movel_com_documento(rua)
-	if com_documento == null:
-		_erro("nenhum movel do bairro tem documento")
+	var com_documento := _moveis_com_documento(rua)
+	if com_documento.is_empty():
+		_erro("nenhum movel do mapa tem documento")
 		rua.free()
 		return
+	var movel: Node = com_documento[0]
 
-	if com_documento.get_signal_connection_list("vasculhado").is_empty():
+	if movel.get_signal_connection_list("vasculhado").is_empty():
 		_erro("o sinal `vasculhado` do movel nao esta ligado em nada - o cenario nao achou a mochila")
 		rua.free()
 		return
 
-	var esperados_documentos := 0
-	var esperados_itens := 0
-	for achado in com_documento.achados:
-		if Construcao.e_documento(achado):
-			esperados_documentos += 1
-		else:
-			esperados_itens += 1
-
-	com_documento._esvaziar()
-
-	if mochila.documentos.size() != esperados_documentos:
-		_erro("o movel tinha %d documento(s) e a mochila ficou com %d"
-			% [esperados_documentos, mochila.documentos.size()])
-	elif mochila.itens.size() != esperados_itens:
-		_erro("o movel tinha %d item(ns) comum(ns) e a mochila ficou com %d"
-			% [esperados_itens, mochila.itens.size()])
-	else:
-		print("  %s: %d item(ns) e %d documento(s), separados"
-			% [com_documento.rotulo, esperados_itens, esperados_documentos])
-
-	# Um movel comum nao pode virar documento no caminho, e vice-versa.
-	for movel in _moveis_de(rua):
-		if movel._vazio or mochila.esta_cheia():
-			continue
-		movel._esvaziar()
-	for achado in mochila.itens:
-		if Construcao.e_documento(achado):
-			_erro("\"%s\" entrou como item comum" % achado)
-			break
-	for achado in mochila.documentos:
-		if not Construcao.e_documento(achado):
-			_erro("\"%s\" entrou como documento" % achado)
-			break
-
-	# A capacidade, que e a quarta pressao sobre vasculhar.
-	if mochila.quantos() > mochila.CAPACIDADE:
-		_erro("a mochila passou da capacidade: %d de %d"
-			% [mochila.quantos(), mochila.CAPACIDADE])
-	elif not mochila.esta_cheia():
-		_erro("vasculhar o bairro inteiro nao enchia a mochila de %d - o teto"
-			% mochila.CAPACIDADE + " nao esta pressionando nada")
-	else:
-		print("  a mochila encheu em %d/%d vasculhando o bairro"
-			% [mochila.quantos(), mochila.CAPACIDADE])
-
-	# **O que nao cabe fica no movel.** E a regra que evita travar a core
-	# mechanic com a mochila cheia: da para voltar, e voltar gasta dia.
-	#
-	# Vasculha um movel com conteudo COM a mochila ja cheia, e confere que o
-	# conteudo continua nele. Nao serve olhar os moveis do laco acima: eles
-	# foram esvaziados enquanto ainda havia vaga.
-	var com_sobra: Node = null
-	for movel in _moveis_de(rua):
-		if not movel._vazio and not movel.achados.is_empty():
-			com_sobra = movel
-			break
-	if com_sobra == null:
-		_erro("nao achei movel cheio para conferir a sobra")
-	else:
-		var tinha: int = com_sobra.achados.size()
-		com_sobra._esvaziar()
-		if mochila.quantos() > mochila.CAPACIDADE:
-			_erro("a mochila cheia aceitou mais coisa")
-		elif com_sobra.achados.size() != tinha:
-			_erro("o movel perdeu %d coisa(s) que nao couberam na mochila"
-				% (tinha - com_sobra.achados.size()))
-		else:
-			print("  de mochila cheia, as %d coisa(s) do %s ficaram nele"
-				% [tinha, com_sobra.rotulo])
-
-	rua.free()
-	_o_documento_entra_primeiro()
-
-## Com uma vaga so na mochila e um movel com comida E documento, a vaga tem que
-## ir para o documento. E a recompensa que importa, e ninguem quer descobrir que
-## deixou o documento para tras porque uma lata de comida entrou na frente.
-func _o_documento_entra_primeiro() -> void:
-	_limpar_o_autoload()
-	var rua := _uma_rua()
-	var mochila := rua.get_node("Mochila") as Mochila
-	var com_documento := _um_movel_com_documento(rua)
-	if com_documento == null:
-		_erro("nenhum movel do mapa tem documento")
-		rua.free()
-		return
-
-	# Enche a mochila deixando uma vaga, e poe comida na frente do documento.
-	for i in mochila.CAPACIDADE - 1:
-		mochila.itens.append("lata de comida")
-	com_documento.achados = ["comida estragada", "pilha", "placeholder"] as Array[String]
-	for achado in Construcao.DOCUMENTOS:
-		com_documento.achados[2] = achado
-		break
-	com_documento._esvaziar()
+	var caixinhas := _caixinhas_em(movel)
+	var balas_antes := Travessia.municao
+	movel._esvaziar()
 
 	if mochila.documentos.size() != 1:
-		_erro("a ultima vaga nao foi para o documento: %d documento(s) na mochila"
-			% mochila.documentos.size())
-	elif com_documento.achados.size() != 2:
-		_erro("sobraram %d itens no movel, esperado 2" % com_documento.achados.size())
+		_erro("o movel tinha 1 documento e a mochila ficou com %d" % mochila.documentos.size())
+	elif Travessia.municao != balas_antes + caixinhas * Construcao.MUNICAO_POR_ACHADO:
+		_erro("o movel tinha %d caixinha(s) e o cinto foi de %d para %d balas"
+			% [caixinhas, balas_antes, Travessia.municao])
 	else:
-		print("  com uma vaga so, a vaga foi para o documento e a comida ficou")
+		print("  %s: 1 documento para a mochila, %d caixinha(s) para o cinto"
+			% [movel.rotulo, caixinhas])
+
+	# O mapa inteiro: so documento entra na mochila, e todo movel esvazia.
+	for outro in _moveis_de(rua):
+		if not outro._vazio:
+			outro._esvaziar()
+	for achado in mochila.tudo():
+		if not Construcao.e_documento(achado):
+			_erro("\"%s\" entrou na mochila, e so documento entra" % achado)
+			break
+	var cheios := 0
+	for outro in _moveis_de(rua):
+		if not outro._vazio or not outro.achados.is_empty():
+			cheios += 1
+	if cheios > 0:
+		_erro("%d moveis ficaram com coisa dentro depois de vasculhados" % cheios)
+	if mochila.quantos() != Construcao.DOCUMENTOS.size():
+		_erro("vasculhando o mapa inteiro a mochila ficou com %d documentos, e o mapa tem %d"
+			% [mochila.quantos(), Construcao.DOCUMENTOS.size()])
+	else:
+		print("  o mapa inteiro deixou %d documentos na mochila e %d balas no cinto"
+			% [mochila.quantos(), Travessia.municao])
 	rua.free()
 
 # --- 2. so entra o que passou pela porta ------------------------------------
@@ -228,7 +165,7 @@ func _so_entra_o_que_passou_pela_porta() -> void:
 	for caso in [
 		Travessia.FimDoDia.PELA_PORTA,
 		Travessia.FimDoDia.AMANHECEU_NA_RUA,
-
+		Travessia.FimDoDia.SEM_VIDA,
 	]:
 		_um_fim_de_dia(caso)
 
@@ -236,25 +173,18 @@ func _um_fim_de_dia(motivo: int) -> void:
 	_limpar_o_autoload()
 	var rua := _uma_rua()
 	var mochila := rua.get_node("Mochila") as Mochila
-	var com_documento := _um_movel_com_documento(rua)
-	if com_documento == null:
-		_erro("nenhum movel do bairro tem documento")
+	var com_documento := _moveis_com_documento(rua)
+	if com_documento.size() < 2:
+		_erro("o mapa tem %d movel(is) com documento; o teste precisa de dois" % com_documento.size())
 		rua.free()
 		return
-	com_documento._esvaziar()
-	# E comida junto, senao o prejuizo do dia perdido seria "0 itens" e a
-	# conferencia da tela da casa passaria sem provar nada.
-	for movel in _moveis_de(rua):
-		if mochila.itens.size() >= 3:
-			break
-		if not movel._vazio:
-			movel._esvaziar()
+	com_documento[0]._esvaziar()
+	com_documento[1]._esvaziar()
 
-	var carregava_itens := mochila.itens.size()
-	var carregava_documentos := mochila.documentos.size()
-	if carregava_documentos == 0 or carregava_itens == 0:
-		_erro("o teste comecou com %d itens e %d documentos - precisa dos dois"
-			% [carregava_itens, carregava_documentos])
+	var carregava := mochila.documentos.size()
+	var balas := Travessia.municao
+	if carregava != 2:
+		_erro("o teste comecou com %d documentos na mochila, esperado 2" % carregava)
 		rua.free()
 		return
 
@@ -265,40 +195,38 @@ func _um_fim_de_dia(motivo: int) -> void:
 	Travessia.entrar_em_casa(motivo)
 	get_tree().current_scene = cena_atual
 
-	var entregou := Travessia.mochila.size() + Travessia.documentos.size()
-	var nome: String = ["pela porta", "amanheceu na rua"][motivo]
-
+	var nome: String = ["pela porta", "amanheceu na rua", "sem vida"][motivo]
 	if motivo == Travessia.FimDoDia.PELA_PORTA:
-		if Travessia.documentos.size() != carregava_documentos:
+		if Travessia.documentos.size() != carregava:
 			_erro("voltando %s, chegaram %d de %d documentos"
-				% [nome, Travessia.documentos.size(), carregava_documentos])
-		elif Travessia.mochila.size() != carregava_itens:
-			_erro("voltando %s, chegaram %d de %d itens"
-				% [nome, Travessia.mochila.size(), carregava_itens])
+				% [nome, Travessia.documentos.size(), carregava])
 		else:
-			print("  %-18s entregou %d itens e %d documento(s)"
-				% [nome, carregava_itens, carregava_documentos])
+			print("  %-18s entregou %d documentos" % [nome, carregava])
 	else:
-		if entregou != 0:
-			_erro("acabando %s, %d coisa(s) entraram em casa mesmo assim" % [nome, entregou])
-		elif Travessia.documentos_perdidos != carregava_documentos:
+		if not Travessia.documentos.is_empty():
+			_erro("acabando %s, %d documento(s) entraram em casa mesmo assim"
+				% [nome, Travessia.documentos.size()])
+		elif Travessia.documentos_perdidos != carregava:
 			_erro("acabando %s, a casa nao registrou os %d documentos perdidos"
-				% [nome, carregava_documentos])
+				% [nome, carregava])
+		elif Travessia.municao != balas:
+			_erro("acabando %s, as balas foram de %d para %d - balas nao se perdem"
+				% [nome, balas, Travessia.municao])
 		else:
-			print("  %-18s perdeu %d itens e %d documento(s) na rua"
-				% [nome, Travessia.itens_perdidos, Travessia.documentos_perdidos])
-		_a_casa_mostra_o_prejuizo(carregava_itens)
+			print("  %-18s perdeu %d documentos na rua e ficou com as %d balas"
+				% [nome, Travessia.documentos_perdidos, balas])
+		_a_casa_mostra_o_prejuizo(carregava)
 
 	rua.free()
 
-func _a_casa_mostra_o_prejuizo(quantos_itens: int) -> void:
+func _a_casa_mostra_o_prejuizo(quantos_documentos: int) -> void:
 	var casa := CENA_DA_CASA.instantiate()
 	add_child(casa)
 	var texto: String = casa.o_que_voltou()
 	if not texto.contains("Ficou na rua"):
 		_erro("a casa nao mostrou o prejuizo: \"%s\"" % texto)
-	elif not texto.contains(str(quantos_itens)):
-		_erro("a casa nao disse quantos itens ficaram: \"%s\"" % texto)
+	elif not texto.contains(str(quantos_documentos)):
+		_erro("a casa nao disse quantos documentos ficaram: \"%s\"" % texto)
 	casa.free()
 
 # --- 3. o mundo esvazia e nao repoe -----------------------------------------
@@ -314,7 +242,7 @@ func _o_mundo_nao_repoe() -> void:
 		rua.free()
 		return
 
-	# Tres moveis pelo meio da lista, guardados pela posicao - o bairro nasce
+	# Tres moveis pelo meio da lista, guardados pela posicao - o mapa nasce
 	# igual todo dia, entao a posicao serve de nome.
 	var escolhidos := [moveis[0], moveis[moveis.size() / 2], moveis[-1]]
 	var onde := []
@@ -350,37 +278,44 @@ func _o_mundo_nao_repoe() -> void:
 			% [vazios, quantos_no_mundo, cheios])
 	amanha.free()
 
-# --- 4. quanto loot o bairro tem --------------------------------------------
+# --- 4. quanto o mapa rende ---------------------------------------------------
 
-## Leitura de escopo, nao falha - com uma excecao: se o bairro tiver menos
+## Leitura de escopo, nao falha - com uma excecao: se o mapa tiver menos
 ## documento do que o jogo precisa, a progressao nao fecha e isso e problema
 ## de verdade.
-func _quanto_loot_o_bairro_tem() -> void:
-	print("\n4. o loot do bairro inteiro")
+func _quanto_o_mapa_rende() -> void:
+	print("\n4. quanto o mapa inteiro rende")
 	_limpar_o_autoload()
 	var rua := _uma_rua()
 
-	var itens := 0
+	var caixinhas := 0
 	var documentos := 0
+	var vazios := 0
 	for movel in _moveis_de(rua):
+		var n := _caixinhas_em(movel)
+		caixinhas += n
+		if n == 0 and not movel.achados.is_empty():
+			pass
+		if movel.achados.is_empty():
+			vazios += 1
 		for achado in movel.achados:
 			if Construcao.e_documento(achado):
 				documentos += 1
-			else:
-				itens += 1
 
-	print("  %d itens comuns e %d documentos, em %d moveis"
-		% [itens, documentos, _moveis_de(rua).size()])
-	print("  %d documentos declarados no mapa, e o prazo sao %d dias"
-		% [documentos, Travessia.PRAZO_DA_CURA])
+	print("  %d moveis: %d documentos, %d caixinhas (%d balas), %d moveis vazios"
+		% [_moveis_de(rua).size(), documentos, caixinhas,
+			caixinhas * Construcao.MUNICAO_POR_ACHADO, vazios])
+	print("  a partida comeca com %d balas, e o prazo sao %d dias"
+		% [Travessia.BALAS_DE_COMECO, Travessia.PRAZO_DA_CURA])
 
-	if documentos == 0:
-		_erro("o mapa nao tem documento nenhum - a historia nao anda")
+	if documentos < Travessia.DOCUMENTOS_PARA_A_CURA:
+		_erro("o mapa tem %d documentos e a cura pede %d - a historia nao anda"
+			% [documentos, Travessia.DOCUMENTOS_PARA_A_CURA])
 	rua.free()
 
-# --- 5. a HUD mostra o documento --------------------------------------------
+# --- 5. a HUD -----------------------------------------------------------------
 
-func _a_hud_mostra_o_documento() -> void:
+func _a_hud() -> void:
 	print("\n5. a HUD")
 	_limpar_o_autoload()
 	var rua := _uma_rua()
@@ -388,33 +323,31 @@ func _a_hud_mostra_o_documento() -> void:
 	add_child(hud)
 
 	hud._process(0.0)
-	if not (hud.get_node("Direita") as Label).text.contains("0/"):
-		_erro("com a mochila vazia a HUD diz \"%s\"" % (hud.get_node("Direita") as Label).text)
-	if not (hud.get_node("Documentos") as Label).text.is_empty():
-		_erro("sem documento a linha de documento nao esta vazia")
+	var direita: String = (hud.get_node("Direita") as Label).text
+	var esquerda: String = (hud.get_node("Esquerda") as Label).text
+	if not direita.contains("vazia"):
+		_erro("com a mochila vazia a HUD diz \"%s\"" % direita)
+	if not esquerda.contains("Beretta") or not esquerda.contains(str(Travessia.BALAS_DE_COMECO)):
+		_erro("no comeco a HUD devia mostrar a Beretta com %d balas, e diz \"%s\""
+			% [Travessia.BALAS_DE_COMECO, esquerda])
 
-	var com_documento := _um_movel_com_documento(rua)
-	if com_documento != null:
-		com_documento._esvaziar()
+	var com_documento := _moveis_com_documento(rua)
+	if not com_documento.is_empty():
+		com_documento[0]._esvaziar()
 	hud._process(0.0)
 
-	var direita: String = (hud.get_node("Direita") as Label).text
-	var docs: String = (hud.get_node("Documentos") as Label).text
-	if not docs.contains("documento"):
-		_erro("com documento na mochila a linha de documento diz \"%s\"" % docs)
-	elif direita.contains("documento"):
-		_erro("o documento apareceu na linha da mochila tambem: \"%s\"" % direita)
+	direita = (hud.get_node("Direita") as Label).text
+	if not direita.contains("1 documento"):
+		_erro("com um documento na mochila a HUD diz \"%s\"" % direita)
 	else:
-		print("  \"%s\" em cima de \"%s\"" % [docs, direita])
+		print("  \"%s\"   e   \"%s\"" % [(hud.get_node("Esquerda") as Label).text, direita])
 
 	hud.free()
 	rua.free()
 
 # --- 6. a tela da mochila ---------------------------------------------------
 
-## A tela e a quarta pressao virando escolha: sem ela, a mochila cheia era um
-## teto, e com ela e uma decisao. O que precisa de conferencia e o caminho
-## inteiro - tirar da mochila, cair no chao, e o chao devolver -, porque ele
+## O caminho inteiro - tirar da mochila, cair no chao, e o chao devolver -
 ## passa por tres arquivos que nao se conhecem (tela -> mochila -> cenario) e
 ## quebra sem dar erro em tela.
 func _a_tela_da_mochila() -> void:
@@ -424,48 +357,34 @@ func _a_tela_da_mochila() -> void:
 	var mochila := rua.get_node("Mochila") as Mochila
 	var tela := rua.get_node("TelaDaMochila")
 
-	var com_documento := _um_movel_com_documento(rua)
-	if com_documento == null:
-		_erro("nenhum movel do mapa tem documento")
+	var com_documento := _moveis_com_documento(rua)
+	if com_documento.size() < 2:
+		_erro("o mapa tem %d movel(is) com documento; o teste precisa de dois" % com_documento.size())
 		rua.free()
 		return
-	com_documento._esvaziar()
-	# Comida junto: a lista tem duas cores, e o indice precisa ter o que separar.
-	for movel in _moveis_de(rua):
-		if mochila.itens.size() >= 3:
-			break
-		if not movel._vazio:
-			movel._esvaziar()
-
-	if mochila.itens.is_empty() or mochila.documentos.is_empty():
-		_erro("o teste precisa de item E documento na mochila para valer algo")
-		rua.free()
-		return
+	com_documento[0]._esvaziar()
+	com_documento[1]._esvaziar()
 
 	# tudo() e a ordem que a tela desenha e a ordem que largar() indexa. Se as
 	# duas se separarem, largar tira a linha errada - e nada avisa.
 	var tudo := mochila.tudo()
-	if tudo.size() != mochila.quantos():
-		_erro("tudo() tem %d linhas e a mochila carrega %d coisas"
-			% [tudo.size(), mochila.quantos()])
-	elif tudo[0] != mochila.documentos[0]:
-		_erro("tudo() nao comeca pelo documento: \"%s\"" % tudo[0])
+	if tudo.size() != 2:
+		_erro("tudo() tem %d linhas e a mochila carrega 2 documentos" % tudo.size())
 	else:
-		print("  %d linhas, documento em cima" % tudo.size())
+		print("  %d linhas, as duas documento" % tudo.size())
 
 	tela._abrir()
 	if not TelaDaMochila.aberta:
 		_erro("a tela nao abriu")
 
-	# Largar a linha 0, que e o documento. A tela nao protege ninguem disso de
-	# proposito - o que protege e o chao devolver.
+	# Largar a linha 0. A tela nao protege ninguem disso de proposito - o que
+	# protege e o chao devolver.
 	var o_documento: String = mochila.documentos[0]
-	var carregava := mochila.quantos()
 	tela._escolhida = 0
 	tela._largar()
 
-	if mochila.quantos() != carregava - 1:
-		_erro("largar tirou %d coisa(s) da mochila" % (carregava - mochila.quantos()))
+	if mochila.quantos() != 1:
+		_erro("largar deixou a mochila com %d documento(s), esperado 1" % mochila.quantos())
 	elif mochila.documentos.has(o_documento):
 		_erro("largou o documento e ele continua na mochila")
 
@@ -486,8 +405,7 @@ func _a_tela_da_mochila() -> void:
 	else:
 		print("  \"%s\" caiu aos pes do jogador" % o_documento)
 
-	# Largar outra coisa no mesmo lugar nao pode criar uma segunda pilha: doze
-	# quadradinhos no mesmo pixel nao sao uma escolha, sao um borrao.
+	# Largar outra coisa no mesmo lugar nao pode criar uma segunda pilha.
 	tela._escolhida = 0
 	tela._largar()
 	if get_tree().get_nodes_in_group("largado").size() != 1:
@@ -495,72 +413,18 @@ func _a_tela_da_mochila() -> void:
 	elif pilha.achados.size() != 2:
 		_erro("a pilha ficou com %d coisa(s), esperado 2" % pilha.achados.size())
 	else:
-		print("  a segunda coisa caiu na mesma pilha")
+		print("  o segundo documento caiu na mesma pilha")
 
 	# E o chao devolve: a pilha e um vasculhavel como outro qualquer.
-	var antes := mochila.quantos()
 	pilha._esvaziar()
 	if not mochila.documentos.has(o_documento):
 		_erro("pegar a pilha de volta nao devolveu o documento")
-	elif mochila.quantos() != antes + 2:
-		_erro("pegar a pilha devolveu %d coisa(s), esperado 2" % (mochila.quantos() - antes))
+	elif mochila.quantos() != 2:
+		_erro("pegar a pilha devolveu %d documento(s), esperado 2" % mochila.quantos())
 	else:
-		print("  pegar a pilha devolveu as duas, o documento como documento")
+		print("  pegar a pilha devolveu os dois")
 
 	tela._fechar()
 	if TelaDaMochila.aberta:
 		_erro("a tela continuou aberta depois de fechar")
-	rua.free()
-
-# --- 7. o que nao coube da para pegar depois --------------------------------
-
-## A promessa que estava escrita em todo lugar e nao era verdade ate 15/09/2026.
-## Com a mochila cheia o que sobra fica no movel - e o movel tem que continuar
-## aceitando vasculho, mais barato, ate nao sobrar nada.
-func _a_sobra_da_para_pegar_depois() -> void:
-	print("\n7. o que nao coube da para pegar depois")
-	_limpar_o_autoload()
-	var rua := _uma_rua()
-	var mochila := rua.get_node("Mochila") as Mochila
-
-	for i in mochila.CAPACIDADE:
-		mochila.itens.append("lata de comida")
-
-	var com_sobra: Node = null
-	for movel in _moveis_de(rua):
-		if not movel._vazio and not movel.achados.is_empty():
-			com_sobra = movel
-			break
-	if com_sobra == null:
-		_erro("nao achei movel cheio para conferir a sobra")
-		rua.free()
-		return
-
-	var duracao_cheia: float = com_sobra.duracao
-	com_sobra._esvaziar()
-
-	if com_sobra.achados.is_empty():
-		_erro("de mochila cheia o movel esvaziou mesmo assim")
-		rua.free()
-		return
-	if com_sobra._vazio:
-		_erro("o movel com sobra virou vazio - \"da para voltar\" continua mentira")
-	elif com_sobra.duracao != Vasculhavel.DURACAO_DA_SOBRA:
-		_erro("voltar no movel custa %.1fs, e a sobra devia custar %.1fs"
-			% [com_sobra.duracao, Vasculhavel.DURACAO_DA_SOBRA])
-	else:
-		print("  sobrou %d coisa(s); voltar custa %.1fs em vez de %.1fs"
-			% [com_sobra.achados.size(), com_sobra.duracao, duracao_cheia])
-
-	# Abre uma vaga e volta nele: e o ciclo inteiro da tela da mochila.
-	var largado := mochila.largar(0)
-	var tinha: int = com_sobra.achados.size()
-	com_sobra._esvaziar()
-
-	if com_sobra.achados.size() != tinha - 1:
-		_erro("com uma vaga aberta, voltar no movel trouxe %d coisa(s)"
-			% (tinha - com_sobra.achados.size()))
-	else:
-		print("  larguei \"%s\" e a vaga trouxe uma coisa que tinha ficado" % largado)
-
 	rua.free()

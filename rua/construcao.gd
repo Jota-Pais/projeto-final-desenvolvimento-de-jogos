@@ -1,9 +1,9 @@
 ## Uma construcao: a geometria dela por dentro, e o que tem dentro dela.
 ##
-## **Nao e o mapa.** Onde cada coisa fica esta no `rua/mapa.gd`, e do que cada
-## lugar e feito esta no `rua/lugares.gd`. Aqui moram as regras que valem para
-## qualquer predio do mapa - onde ficam as paredes, onde fica o vao da porta,
-## como o interior se parte em quartos - e as tabelas de loot.
+## **Nao e o mapa.** Onde cada coisa fica, e o que cada coisa e, esta no
+## `rua/mapa.gd`. Aqui moram as regras que valem para qualquer predio do mapa -
+## onde ficam as paredes, onde fica o vao da porta, como o interior se parte em
+## quartos, que movel vai em cada quarto - e o que sai de um movel.
 ##
 ## Ate 09/09/2026 este arquivo era o `bairro.gd` e era o mapa inteiro. O mapa
 ## cresceu 100x em area e ganhou seis tipos de lugar; o que sobrou aqui e o que
@@ -227,6 +227,47 @@ const QUARTOS_POR_TIPO := {
 	"armazem": 1,
 	"hospital": 3,
 	"bombeiros": 1,
+	# Os tipos do desenho de 30/09/2026 (ver mapa.gd, ROTULOS). Quantos
+	# quartos cada um tem e **proposta**: tres onde o predio e grande e tem
+	# fundo que vale a caminhada, um salao onde e loja ou galpao.
+	"escola": 3,
+	"igreja": 1,
+	"prefeitura": 3,
+	"prisao": 3,
+	"campo": 1,
+	"farmacia": 1,
+	"academia": 1,
+	"banco": 3,
+	"eta": 1,
+	"radio": 1,
+	"hotel": 3,
+	"bar": 1,
+	"restaurante": 1,
+	"lojas": 1,
+	"predio_em_construcao": 1,
+	"predio_abandonado": 3,
+	# O pedaco secundario de um predio que o tracador partiu em dois (uma
+	# asa, um puxado): um salao com uma caixa.
+	"anexo": 1,
+	# A casa rasa demais para a divisoria interna (ver UM_QUARTO_SO): um
+	# comodo so, com a comoda e a geladeira na parede do fundo.
+	"casa_pequena": 1,
+}
+
+## O tipo de um quarto so que substitui cada tipo de tres quartos quando o
+## predio e pequeno demais para a divisoria interna (ver
+## `Mapa._encolher_quem_nao_cabe`). Quem nao esta aqui vira "galpao".
+const UM_QUARTO_SO := {
+	"casa": "casa_pequena",
+	"delegacia": "comercio",
+	"mansao": "comercio",
+	"hospital": "farmacia",
+	"escola": "comercio",
+	"prefeitura": "radio",
+	"prisao": "anexo",
+	"banco": "anexo",
+	"hotel": "bar",
+	"predio_abandonado": "anexo",
 }
 
 ## Que movel entra em cada quarto, por tipo de construcao.
@@ -235,9 +276,9 @@ const QUARTOS_POR_TIPO := {
 ## **ultimo e o mais fundo** - o que custa mais para chegar. E onde vai o
 ## documento, quando o lugar tem um.
 ##
-## E aqui que a variedade do mapa vira variedade de mecanica: a delegacia paga
-## melhor que uma casa porque o quarto do fundo dela tem o armario de armas, que
-## e o movel mais caro de vasculhar que existe.
+## Desde 30/09/2026 todo movel rende a mesma coisa (balas), entao o que
+## diferencia um lugar do outro e quantos moveis ele tem e quanto cada um
+## custa de vasculho (`MOVEIS[tipo].duracao`) - nao mais o que sai deles.
 const MOVEIS_POR_QUARTO := {
 	"casa": [["estante"], ["comoda"], ["geladeira"]],
 	"comercio": [["armario", "armario", "geladeira", "caixa", "caixa"]],
@@ -253,6 +294,26 @@ const MOVEIS_POR_QUARTO := {
 	# mais para chegar, mesma regra da delegacia com o armario de armas.
 	"hospital": [["maca", "maca"], ["armario_de_remedios"], ["armario_de_seringas"]],
 	"bombeiros": [["armario_de_bombeiro", "armario_de_bombeiro"]],
+	# Os tipos do desenho de 30/09/2026, com os moveis que ja existem. O que
+	# cada lugar da e **proposta** - loot por lugar e assunto de mesa.
+	"escola": [["estante", "estante"], ["armario"], ["caixa", "estante"]],
+	"igreja": [["armario", "caixa"]],
+	"prefeitura": [["arquivo"], ["estante", "estante"], ["arquivo", "caixa"]],
+	"prisao": [["arquivo"], ["caixa", "caixa"], ["armario_de_armas"]],
+	"campo": [["armario", "caixa", "geladeira"]],
+	"farmacia": [["armario_de_remedios", "armario_de_remedios", "prateleira"]],
+	"academia": [["armario", "armario", "geladeira"]],
+	"banco": [["caixa"], ["arquivo"], ["armario"]],
+	"eta": [["caixa", "caixa", "prateleira"]],
+	"radio": [["estante", "arquivo"]],
+	"hotel": [["comoda"], ["comoda", "armario"], ["geladeira", "estante"]],
+	"bar": [["geladeira", "geladeira", "caixa", "armario"]],
+	"restaurante": [["geladeira", "geladeira", "prateleira", "caixa"]],
+	"lojas": [["armario", "prateleira", "caixa", "armario", "prateleira"]],
+	"predio_em_construcao": [["caixa", "caixa"]],
+	"predio_abandonado": [["caixa"], ["comoda"], ["estante"]],
+	"anexo": [["caixa"]],
+	"casa_pequena": [["comoda", "geladeira"]],
 }
 const MOVEIS := {
 	"geladeira": { "rotulo": "Geladeira", "duracao": 3.5, "tamanho": Vector2(72.0, 54.0), "cor": Color("6e7a76") },
@@ -261,6 +322,9 @@ const MOVEIS := {
 	"estante": { "rotulo": "Estante", "duracao": 4.0, "tamanho": Vector2(112.0, 38.0), "cor": Color("57452f") },
 	"caixa": { "rotulo": "Caixa", "duracao": 1.8, "tamanho": Vector2(56.0, 56.0), "cor": Color("6d5b45") },
 	"carro": { "rotulo": "Carro abandonado", "duracao": 3.0, "tamanho": Vector2(180.0, 80.0), "cor": Color("5c4a44") },
+	# O veiculo comprido do desenho (30/09/2026): os do camping de motorhomes
+	# e os onibus parados na rua. Mesmo loot de carro, mais comida.
+	"motorhome": { "rotulo": "Motorhome", "duracao": 3.5, "tamanho": Vector2(400.0, 170.0), "cor": Color("5c4a44") },
 	"lata": { "rotulo": "Lata de lixo", "duracao": 1.5, "tamanho": Vector2(48.0, 48.0), "cor": Color("4a4f45") },
 	# Os quatro que chegaram com os lugares novos de 09/09/2026. O armario de
 	# armas da delegacia e o movel mais caro do mapa: 5,5 s de vasculho
@@ -276,39 +340,19 @@ const MOVEIS := {
 	"armario_de_bombeiro": { "rotulo": "Armário de bombeiro", "duracao": 4.0, "tamanho": Vector2(104.0, 48.0), "cor": Color("6b3f3a") },
 }
 
-## Os dois achados que sao **equipamento e nao loot**: nao ocupam vaga na
-## mochila e nao se perdem no dia que deu errado. Ver rua/mochila.gd.
+## O que sai de um movel, desde 30/09/2026: **balas, e so balas** - mais o
+## documento, onde o mapa declarou um. O Joao tirou o loot generico do jogo
+## (lata de comida, pilha, pano sujo, as tabelas por tipo de movel) para
+## enxugar: voce comeca com a Beretta, e o que o vasculho rende e municao para
+## ela. A tabela CONTEUDO que vivia aqui esta no git.
 ##
-## A pistola nao esta em tabela nenhuma: ela e colocada em UM movel declarado -
-## a armaria da delegacia -, do mesmo jeito que o documento. Arma sorteada nao
-## serve: ou o jogador acha na primeira gaveta, ou nao acha nunca.
-const PISTOLA := "pistola"
-const MUNICAO := "munição"
+## As balas sao **equipamento e nao loot**: nao ocupam vaga na mochila e nao se
+## perdem no dia que deu errado. Ver rua/mochila.gd.
+const MUNICAO := "balas 9mm"
 
-## Quantas balas vem em cada achado de municao. E uma caixinha, nao uma bala.
+## Quantas balas vem em cada achado. E uma caixinha, nao uma bala. **Proposta**
+## - calibragem, junto com Travessia.BALAS_DE_COMECO.
 const MUNICAO_POR_ACHADO := 6
-
-## O que sai de cada movel. PZ tira o loot de uma tabela por tipo de movel, e o
-## conteudo combina com o quarto - mesma ideia aqui. Continua sendo texto solto:
-## item com peso, uso e valor e assunto de quem fizer o modo Casa, que e quem
-## consome.
-const CONTEUDO := {
-	"geladeira": ["lata de comida", "garrafa de água", "comida estragada"],
-	"armario": ["lata de comida", "fósforos", "pano limpo"],
-	"comoda": ["roupa", "remédio", "chave velha", MUNICAO],
-	"estante": ["livro de química", "pilha", "fita isolante"],
-	"caixa": ["ferramenta", "prego", "corda", MUNICAO],
-	"carro": ["chave de roda", "fita isolante", "gasolina"],
-	"lata": ["pano sujo", "garrafa vazia"],
-	"prateleira": ["lata de comida", "garrafa de água", "biscoito", "sabão"],
-	"bomba": ["gasolina", "mangueira", "galão vazio"],
-	"arquivo": ["papelada", "pasta com fichas", "grampeador"],
-	"armario_de_armas": ["algemas", "colete", "cassetete", MUNICAO],
-	"maca": ["atadura", "algodão", "soro fisiológico"],
-	"armario_de_remedios": ["remédio", "álcool", "gaze"],
-	"armario_de_seringas": ["seringa", "seringa", "anestésico"],
-	"armario_de_bombeiro": ["mangueira", "extintor", "capacete", "machadinha"],
-}
 
 
 
@@ -368,6 +412,14 @@ static func _frente(rect: Rect2, porta: String) -> float:
 
 static func _profundidade(rect: Rect2, porta: String) -> float:
 	return rect.size.x if (porta == "leste" or porta == "oeste") else rect.size.y
+
+## A frente e o fundo de uma construcao inteira, para quem esta fora deste
+## arquivo (o mapa decide por elas se o predio cabe tres quartos).
+static func frente_de(construcao: Dictionary) -> float:
+	return _frente(construcao["rect"], construcao["porta"])
+
+static func profundidade_de(construcao: Dictionary) -> float:
+	return _profundidade(construcao["rect"], construcao["porta"])
 
 ## Leva um ponto do referencial CANONICO (fachada sempre ao SUL, origem no
 ## canto onde fachada e fundo se encontram do lado "esquerdo") para o mundo.

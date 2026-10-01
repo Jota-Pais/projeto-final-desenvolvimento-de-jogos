@@ -8,14 +8,18 @@ extends Node
 ##
 ## Serve para tres coisas, e a terceira e a que paga:
 ##
-##  - ver de uma vez o que so se ve andando 1,4 km;
-##  - conferir a olho o que o `conferir_mapa.tscn` confere por numero;
+##  - ver de uma vez o que so se ve andando meio quilometro;
+##  - conferir a olho o que o `conferir_mapa.tscn` confere por numero - e,
+##    desde 30/09/2026, comparar lado a lado com o desenho de origem
+##    (`design/urussanga.png`), que e o que o mapa tem que parecer;
 ##  - **o GDD.** O criterio de maior peso dele (4 de 10) e "tem ilustracoes,
 ##    diagramas, desenhos, tabelas e recursos visuais que ajudam a explicar e a
 ##    consultar". Um mapa legendado e exatamente isso, e sai daqui de graca.
 ##
 ## **Nao roda em headless**: capturar a tela precisa de renderizador de verdade.
-## No editor e F6 e pronto.
+## No editor e F6 e pronto; na linha de comando, sem `--headless`:
+##
+##   Godot_v4.7.2-stable_win64_console.exe --path . res://rua/retratar_mapa.tscn
 
 const Mapa := preload("res://rua/mapa.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
@@ -33,14 +37,11 @@ const ARQUIVO := "res://design/mapa.png"
 ## na borda.
 const FOLGA := 1.06
 
-## Recorte por argumento (17/09/2026, P13): sem "--regiao=X" na linha de
-## comando (depois do "--" do Godot), retrata o MUNDO inteiro, como sempre -
-## e o que a revisao visual pede: `design/mapa.png` (mundo), mais tres perto
-## (`design/mapa-bairro.png`, `mapa-centro.png`, `mapa-transicao.png`), sem
-## precisar de tres ferramentas. Nomes validos: ver `_rect_da_regiao`.
-##
-## Cada regiao e um Rect2 **derivado** de `Mapa` (lugar ou coordenada ja
-## nomeada em `mapa.gd`/`lugares.gd`), nunca um numero solto sem fonte.
+## Recorte por argumento: sem "--regiao=X" na linha de comando (depois do "--"
+## do Godot), retrata o MUNDO inteiro em `design/mapa.png`. Com, retrata so
+## aquele pedaco em `design/mapa-<regiao>.png`. Nomes validos: "oeste",
+## "centro" e "leste" (os tercos do mundo) ou o nome de qualquer lugar de
+## `Mapa.lugares()` (com folga em volta).
 var _regiao := ""
 var _rect_do_retrato: Rect2
 var _arquivo := ARQUIVO
@@ -59,7 +60,7 @@ func _ready() -> void:
 	add_child(_rua)
 	_rect_do_retrato = _rect_da_regiao(_regiao)
 	if _regiao != "":
-		_arquivo = "res://design/mapa-%s.png" % _regiao
+		_arquivo = "res://design/mapa-%s.png" % _regiao.to_lower().replace(" ", "-")
 
 	# A figura e do mapa, nao do jogo rodando: sem HUD por cima, sem o dia
 	# passando e sem zumbi com cone de visao poluindo a geografia.
@@ -83,29 +84,27 @@ func _process(_delta: float) -> void:
 	_salvar()
 
 ## O retangulo de uma regiao nomeada, **derivado** de `Mapa` - nunca um
-## numero solto. "" (sem argumento) e o mundo inteiro, de sempre.
+## numero solto. "" (sem argumento) e o mundo inteiro.
 func _rect_da_regiao(nome: String) -> Rect2:
+	var terco := Mapa.MUNDO.size.x / 3.0
 	match nome:
-		"bairro":
-			# O loteamento inteiro (laco, U, beco, quadras) com folga de
-			# contexto - mostra a rede toda de uma vez.
-			return (Mapa.lugar("bairro")["rect"] as Rect2).grow(500.0)
-		"centro":
-			# O miolo comercial da cidade: cotovelo da Avenida Central
-			# (x 19600), a fita comercial ao norte dela e a delegacia/o
-			# mercado ao sul e a leste.
-			return Rect2(15800.0, 5900.0, 8200.0, 4800.0)
-		"transicao":
-			# Do sitio do norte (aberto, dentro do que e nominalmente "mata
-			# do norte") ate o anel fechado dela, mais ao norte - a mesma
-			# mata que P10 restringiu a uma faixa perto da borda do MUNDO.
-			return Rect2(6800.0, 0.0, 5200.0, 4200.0)
-		_:
+		"":
 			return Mapa.MUNDO
+		"oeste":
+			return Rect2(0.0, 0.0, terco, Mapa.MUNDO.size.y)
+		"centro":
+			return Rect2(terco, 0.0, terco, Mapa.MUNDO.size.y)
+		"leste":
+			return Rect2(terco * 2.0, 0.0, terco, Mapa.MUNDO.size.y)
+		_:
+			var lugar := Mapa.lugar(nome)
+			if lugar.is_empty():
+				push_error("regiao '%s' nao existe: use oeste/centro/leste ou o nome de um lugar" % nome)
+				return Mapa.MUNDO
+			return (lugar["rect"] as Rect2).grow(800.0)
 
 ## Afasta a camera ate a regiao pedida caber, seja qual for a resolucao da
-## janela. O zoom sai da conta, e nao de um numero escrito na mao: mudar o
-## tamanho do mundo (ou do recorte) ou da janela nao quebra a figura.
+## janela. O zoom sai da conta, e nao de um numero escrito na mao.
 func _afastar_a_camera() -> void:
 	var camera := get_viewport().get_camera_2d()
 	if camera == null:
@@ -124,6 +123,13 @@ func _afastar_a_camera() -> void:
 	camera.zoom = Vector2.ONE * zoom
 	# A camera e filha do jogador, entao quem se move e ele.
 	(_rua.get_node("Jogador") as Node2D).global_position = _rect_do_retrato.get_center()
+	# O centro do mundo pode cair dentro de um predio (no mapa tracado cai no
+	# Campo ANEV), e os telhados abririam o telhado dele como se o jogador
+	# estivesse la dentro. O retrato e do mapa, com todo telhado no lugar.
+	var telhados := _rua.get_node("Telhados")
+	telhados.set_process(false)
+	telhados._dentro_de = -1
+	telhados.queue_redraw()
 
 func _salvar() -> void:
 	var imagem := get_viewport().get_texture().get_image()
@@ -137,14 +143,14 @@ func _salvar() -> void:
 		push_error("nao deu para salvar %s (erro %d) - tente de novo" % [_arquivo, erro])
 	else:
 		print("mapa salvo em %s" % ProjectSettings.globalize_path(_arquivo))
-		print("%d x %d px, para uma area de %.2f km x %.2f km" % [
+		print("%d x %d px, para uma area de %.0f m x %.0f m" % [
 			imagem.get_width(), imagem.get_height(),
-			_rect_do_retrato.size.x / 40000.0, _rect_do_retrato.size.y / 40000.0])
+			_rect_do_retrato.size.x / 40.0, _rect_do_retrato.size.y / 40.0])
 	if not Engine.is_editor_hint():
 		get_tree().quit(0 if erro == OK else 1)
 
 ## A legenda vive numa CanvasLayer porque ela e desenhada em **coordenada de
-## tela**, e nao de mundo: com a camera afastada 30x, uma fonte de 14 px viraria
+## tela**, e nao de mundo: com a camera afastada 20x, uma fonte de 14 px viraria
 ## meio pixel. Ela converte a posicao de cada lugar pela transformada do canvas.
 func _montar_legenda() -> void:
 	var camada := CanvasLayer.new()

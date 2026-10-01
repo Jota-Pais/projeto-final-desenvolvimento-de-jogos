@@ -53,7 +53,7 @@ func _process(_delta: float) -> void:
 	var mochila := get_tree().get_first_node_in_group("mochila")
 
 	_topo.text = _linha_do_topo(relogio)
-	_esquerda.text = _linha_da_esquerda()
+	_esquerda.text = _linha_da_esquerda(get_tree().get_first_node_in_group("jogador"))
 	_direita.text = _linha_da_direita(mochila)
 	_documentos.text = _linha_dos_documentos(mochila)
 	_anoitecer.color.a = _quanto_escuro(relogio)
@@ -82,51 +82,42 @@ func _linha_do_topo(relogio: Relogio) -> String:
 	])
 	return "   ·   ".join(pedacos)
 
-## O canto inferior esquerdo. **Vida, fome e agua sairam em 16/09/2026** - as
-## tres eram a camada de sobrevivencia, e ela saiu do jogo por decisao de mesa.
-##
-## As duas ultimas nunca passaram de "—" na tela, e o campo vazio existia como
-## mapa do que faltava. Nao falta mais: campo de regra que nao existe e pior que
-## campo nenhum, porque promete ao jogador uma coisa que o jogo nao cobra.
-##
-## Sobrou a pistola, que so aparece depois de achada na armaria da delegacia.
-## Antes disso a linha nao existe, porque ela nao existe.
-func _linha_da_esquerda() -> String:
-	if not Travessia.tem_pistola:
-		return ""
+## O canto inferior esquerdo: o que voce leva no corpo. **A vida** (saiu em
+## 16/09/2026 por decisao de mesa e voltou em 30/09/2026 a pedido do Joao;
+## fome e agua continuam fora) e **a Beretta** com a conta de balas, que e o
+## que o vasculho rende. A barra de verdade fica em cima da cabeca do jogador,
+## que e onde ela importa na hora do aperto; aqui e o numero.
+func _linha_da_esquerda(jogador: Node) -> String:
+	var linhas := PackedStringArray()
+	if jogador != null and "vida" in jogador:
+		linhas.append("vida   %d/%d" % [roundi(jogador.get("vida")), roundi(jogador.VIDA_CHEIA)])
 	if Travessia.municao == 0:
-		return "pistola sem munição"
-	return "pistola %d" % Travessia.municao
+		linhas.append("Beretta 9mm   sem balas")
+	else:
+		linhas.append("Beretta 9mm   %d bala%s" % [Travessia.municao, "" if Travessia.municao == 1 else "s"])
+	return "\n".join(linhas)
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
-## Some tudo se voce nao voltar pela porta de casa.
-## "mochila 7/12" - o **espaco ja ocupado visivel** que o one-pager declara. O
-## numero conta documento junto, porque documento ocupa espaco igual: e nisso
-## que a escolha existe.
-## O "[Tab]" fica sempre na linha, e nao so com a mochila cheia: e a unica
-## pista de que existe uma tela para abrir, e o jogo nao tem tutorial. Quem
-## descobre a tecla so quando ja esta cheio descobre tarde.
+## Some tudo se voce nao voltar pela porta de casa. Desde 30/09/2026 ela so
+## carrega documento, entao a linha da mochila e a linha dos documentos viraram
+## uma so: e a unica coisa que voce traz que faz a historia andar.
+##
+## O "[Tab]" fica sempre na linha: e a unica pista de que existe uma tela para
+## abrir, e o jogo nao tem tutorial.
 func _linha_da_direita(mochila: Node) -> String:
 	if mochila == null:
 		return "mochila   —"
 	var quantos: int = mochila.quantos()
-	var cabe: int = mochila.CAPACIDADE
-	if quantos >= cabe:
-		return "mochila   %d/%d   CHEIA   [Tab]" % [quantos, cabe]
-	return "mochila   %d/%d   [Tab]" % [quantos, cabe]
-
-## O documento tem linha propria, acima da mochila e na cor dele. E o que o
-## one-pager pede - "conta separado" - e o que prova o eixo rua -> casa mesmo
-## sem a casa existir: e a unica coisa que voce traz que faz a historia andar.
-func _linha_dos_documentos(mochila: Node) -> String:
-	if mochila == null:
-		return ""
-	var quantos: int = mochila.documentos.size()
 	if quantos == 0:
-		return ""
-	if quantos == 1:
-		return "1 documento"
-	return "%d documentos" % quantos
+		return "mochila   vazia   [Tab]"
+	return "mochila   %d documento%s   [Tab]" % [quantos, "" if quantos == 1 else "s"]
+
+## A linha propria do documento, acima da mochila, ficou vazia desde que a
+## mochila so carrega documento (30/09/2026): dizer duas vezes a mesma conta
+## nao e "conta separado". O Label continua na cena para quem quiser por outra
+## coisa nele.
+func _linha_dos_documentos(_mochila: Node) -> String:
+	return ""
 
 ## O aviso vai piorando com a noite, e e ele que responde "e agora, o que eu
 ## faco?". Sem isso a noite so fica dificil e o jogador nao sabe por que.

@@ -92,19 +92,20 @@ func _physics_process(_delta: float) -> void:
 			print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 			get_tree().quit(0 if _falhas == 0 else 1)
 
-## A primeira construcao do tipo pedido, e nao a de um indice fixo.
-##
-## Ate 09/09/2026 estas conferencias apontavam para CONSTRUCOES[1], [6] e [10],
-## que eram a segunda casa, o mercadinho e um galpao do bairro. Com o mapa
-## grande a lista mudou de tamanho e de ordem, e indice fixo passou a apontar
-## para outro predio - buscar por tipo nao quebra quando o mapa cresce.
+## A construcao de teste do tipo pedido: a mais perto de onde o jogador nasce
+## com a frente da porta livre - sem carro, bloco, predio ou arvore a ate
+## 340 px do vao, e dentro do mundo (30/09/2026). Ate aqui era "a primeira da
+## lista", e no mapa tracado do desenho a primeira casa tinha um carro parado
+## na porta e a segunda dava de costas para a borda do mundo: a fase 2 media o
+## estacionamento, e a 5 mandava o zumbi para fora do mapa.
 ##
 ## Pula a sua casa: ela nao se vasculha e nao tem movel.
 func _uma_construcao(tipo: String) -> Dictionary:
-	for construcao in Mapa.mundo()["construcoes"]:
-		if construcao["tipo"] == tipo and not construcao.get("sua", false):
-			return construcao
-	return {}
+	var arvores: Array = _bairro.get_node("Cenario")._arvores
+	var achada := Mapa.construcao_com_a_frente_livre(tipo, Mapa.onde_o_jogador_nasce(), 340.0, 0.0, arvores)
+	if achada.is_empty():
+		_erro("nao ha %s nenhum(a) com a frente da porta livre para o teste" % tipo)
+	return achada
 
 ## A construcao do tipo pedido mais PERTO de um ponto, e nao so a primeira do
 ## mapa inteiro (17/09/2026, P12) - use quando o teste depende de dois
@@ -186,7 +187,6 @@ func _navegacao() -> void:
 	var alvos := {
 		"sala": Construcao.quartos_de(casa)[0].get_center(),
 		"quarto do fundo": Construcao.quartos_de(casa)[1].get_center(),
-		"mercadinho": Construcao.quartos_de(_uma_construcao_perto("comercio", rua))[0].get_center(),
 	}
 	for nome in alvos:
 		var caminho: PackedVector2Array = _nav.caminho(rua, alvos[nome])
@@ -199,44 +199,54 @@ func _navegacao() -> void:
 			continue
 		print("  rua -> %-18s %3d pontos, %.0f px" % [nome, caminho.size(), _tamanho(caminho)])
 
-	# O galpao mora no sitio e na lavoura, nao no bairro - nenhuma casa de
-	# bairro tem quintal com galpao, entao testar a partir da MESMA `rua` de
-	# cima nunca vai achar um perto o bastante (17/09/2026, P12: era assim
-	# que "_uma_construcao('galpao')" acabava pegando o galpao da lavoura, a
-	# 8 km da janela local, e "sem caminho" virava falha permanente, nao um
-	# bug de posicao). Testa a partir do proprio acesso do sitio do norte,
-	# que e onde o galpao dele encara a via (ver Lugares._sitio, P10).
-	var acesso_do_sitio: Vector2 = Mapa.lugar("sítio do norte")["acesso"]
-	var galpao := _uma_construcao_perto("galpao", acesso_do_sitio)
-	_nav.remontar_em(acesso_do_sitio)
+	# Um comercio, da frente da propria porta ate o salao - o mesmo criterio de
+	# frente livre da casa (30/09/2026): o mercadinho mais perto da casa de
+	# teste podia ter carro na porta ou estar fora da janela de navegacao.
+	var comercio := _uma_construcao("comercio")
+	var frente_do_comercio := Construcao.porta_de(comercio) + Construcao.normal_de(comercio) * 300.0
+	_nav.remontar_em(frente_do_comercio)
+	var alvo_do_comercio := Construcao.quartos_de(comercio)[0].get_center()
+	var caminho_do_comercio: PackedVector2Array = _nav.caminho(frente_do_comercio, alvo_do_comercio)
+	if caminho_do_comercio.is_empty():
+		_erro("sem caminho da frente do comercio ate dentro dele")
+	elif caminho_do_comercio[-1].distance_to(alvo_do_comercio) > 60.0:
+		_erro("caminho ate o comercio para a %.0f px do alvo" % caminho_do_comercio[-1].distance_to(alvo_do_comercio))
+	else:
+		print("  frente -> %-17s %3d pontos, %.0f px"
+			% ["comercio", caminho_do_comercio.size(), _tamanho(caminho_do_comercio)])
+	_nav.remontar_em(rua)
+
+	# O galpao, a partir da frente da PROPRIA porta dele (30/09/2026): o mapa
+	# tracado tem galpao na fazenda, no posto e na estrada de terra, e nenhum
+	# deles fica perto da casa de cima - testar a partir da mesma `rua` cairia
+	# fora da janela de navegacao e "sem caminho" viraria falha permanente.
+	var galpao := _uma_construcao("galpao")
+	var frente_do_galpao := Construcao.porta_de(galpao) + Construcao.normal_de(galpao) * 300.0
+	_nav.remontar_em(frente_do_galpao)
 	var alvo_do_galpao := Construcao.quartos_de(galpao)[0].get_center()
-	var caminho_do_galpao: PackedVector2Array = _nav.caminho(acesso_do_sitio, alvo_do_galpao)
+	var caminho_do_galpao: PackedVector2Array = _nav.caminho(frente_do_galpao, alvo_do_galpao)
 	if caminho_do_galpao.is_empty():
-		_erro("sem caminho do acesso do sitio do norte ate o galpao")
+		_erro("sem caminho da frente do galpao ate dentro dele")
 	else:
 		var erro_do_galpao: float = caminho_do_galpao[-1].distance_to(alvo_do_galpao)
 		if erro_do_galpao > 60.0:
-			_erro("caminho ate o galpao do sitio para a %.0f px do alvo" % erro_do_galpao)
+			_erro("caminho ate o galpao para a %.0f px do alvo" % erro_do_galpao)
 		else:
-			print("  sitio -> %-18s %3d pontos, %.0f px"
+			print("  frente -> %-17s %3d pontos, %.0f px"
 				% ["galpao", caminho_do_galpao.size(), _tamanho(caminho_do_galpao)])
 	_nav.remontar_em(rua)
 
-	# De uma ponta a outra do bairro. Eram coordenadas do bairro pequeno ate
-	# 09/09/2026, e com o mapa novo elas cairam na mata do oeste - fora da
-	# janela, e o teste passou a medir nada. Agora saem do proprio bairro.
-	# O alvo e a **soleira**, e nao a porta: desde 16/09/2026 a porta e um corpo
-	# solido, e o zumbi que persegue voce ate em casa para na calcada. Pedir
-	# caminho para dentro do obstaculo seria pedir o que nao existe.
+	# Da praca ate a porta de casa: um caminho longo, atravessando o miolo da
+	# cidade. O alvo e a **soleira**, e nao a porta: desde 16/09/2026 a porta e
+	# um corpo solido, e o zumbi que persegue voce ate em casa para na calcada.
 	var soleira := Mapa.onde_o_jogador_nasce()
-	var bairro := Mapa.lugar("bairro")["rect"] as Rect2
-	var canto := bairro.end - Vector2(400.0, 400.0)
-	_nav.remontar_em(bairro.get_center())
-	var longe: PackedVector2Array = _nav.caminho(canto, soleira)
+	var praca := (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
+	_nav.remontar_em((praca + soleira) / 2.0)
+	var longe: PackedVector2Array = _nav.caminho(praca, soleira)
 	if longe.is_empty():
-		_erro("sem caminho do canto sudeste do bairro ate a porta de casa")
+		_erro("sem caminho da praca ate a porta de casa")
 	else:
-		print("  canto do bairro -> casa   %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
+		print("  praca -> casa             %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
 	# Devolve a janela para onde o jogador esta, senao as fases seguintes medem
 	# perseguicao com a grade montada no lugar errado.
 	_nav.remontar_em(_jogador.global_position)
@@ -367,6 +377,7 @@ func _conferir_perseguicao() -> void:
 			print("  o toque zerou o vasculho (%.2f -> %.2f)" % [
 				_progresso_antes, _movel._progresso])
 		Input.action_release("vasculhar")
+		_o_toque_tira_vida_e_zerar_acaba_o_dia(zumbi)
 		_passar()
 		return
 
@@ -375,6 +386,36 @@ func _conferir_perseguicao() -> void:
 			zumbi.global_position.distance_to(_jogador.global_position), zumbi._estado])
 		Input.action_release("vasculhar")
 		_passar()
+
+## A vida (de volta em 30/09/2026): o toque que acabou de acontecer tirou
+## DANO, e zerar a vida acaba o dia na forca, com o jogador acordando em casa
+## de vida cheia e a mochila ficando na rua.
+func _o_toque_tira_vida_e_zerar_acaba_o_dia(zumbi: Node) -> void:
+	var esperada: float = _jogador.VIDA_CHEIA - zumbi.DANO
+	if not is_equal_approx(_jogador.vida, esperada):
+		_erro("um toque deixou a vida em %.0f, esperado %.0f" % [_jogador.vida, esperada])
+	else:
+		print("  o toque tirou %.0f de vida (%.0f/%.0f)" % [zumbi.DANO, _jogador.vida, _jogador.VIDA_CHEIA])
+
+	# Zerar: a Travessia troca de cena de verdade, entao a ferramenta sai de
+	# "cena atual" pelo tempo da chamada e desmonta a casa que nasceu na raiz.
+	_jogador.vida = zumbi.DANO
+	var cena_atual := get_tree().current_scene
+	get_tree().current_scene = null
+	_jogador.levar_dano(zumbi.DANO, Vector2.RIGHT)
+	get_tree().current_scene = cena_atual
+	for filho in get_tree().root.get_children():
+		if filho.name == "Casa":
+			filho.free()
+
+	if Travessia.fim_do_dia != Travessia.FimDoDia.SEM_VIDA:
+		_erro("zerar a vida nao acabou o dia como SEM_VIDA (fim_do_dia = %d)" % Travessia.fim_do_dia)
+	elif not is_equal_approx(_jogador.vida, _jogador.VIDA_CHEIA):
+		_erro("depois de cair a vida devia voltar cheia, e esta em %.0f" % _jogador.vida)
+	else:
+		print("  zerar a vida acabou o dia na forca, e a vida voltou cheia")
+	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
+	Travessia.documentos_perdidos = 0
 
 # --- 5. ele entra na casa atras de voce -------------------------------------
 
@@ -409,16 +450,9 @@ func _preparar_horda() -> void:
 	print("\n6. chamado da horda")
 	# Um que vai enxergar o jogador, e tres vagando dentro do alcance do
 	# chamado.
-	# Num trecho aberto da rodovia, entre o bairro e a cidade: linha de visao
-	# limpa e sem arvore no meio. O x sai do MEIO dos dois acessos (nao um
-	# numero solto) - onde os dois lugares encostam na rodovia -, e o vao
-	# entre eles fica livre de construcao e de bosque.
-	#
-	# Era Vector2(2900, 1300), coordenada do bairro pequeno - que no mapa de
-	# 09/09 caiu dentro da mata do oeste, onde a arvore corta a visao. O teste
-	# passou a medir a mata em vez da horda, e acusou o zumbi de nao ver.
-	var x_aberto: float = (Mapa.lugar("bairro")["acesso"].x + Mapa.lugar("cidade")["acesso"].x) / 2.0
-	_jogador.global_position = Vector2(x_aberto, Mapa.RODOVIA.get_center().y)
+	# No meio da praca (30/09/2026): gramado aberto de 48 x 66 m, sem arvore,
+	# sem predio e sem carro - linha de visao limpa para os quatro.
+	_jogador.global_position = (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
 	_longe_do_teste(4)
 	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 300.0)
 	_zumbis[0]._estado = VAGANDO

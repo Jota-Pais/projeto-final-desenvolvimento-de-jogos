@@ -416,9 +416,9 @@ func _a_hud_le_os_numeros() -> void:
 	relogio.encerra_o_dia = false
 	relogio.set_process(false)
 	relogio.gastar(Relogio.DURACAO_DO_DIA / 2.0)
-	# A pistola e o que sobrou no canto inferior esquerdo depois de vida, fome e
-	# agua sairem em 16/09/2026.
-	Travessia.tem_pistola = true
+	# A Beretta e o que sobrou no canto inferior esquerdo depois de vida, fome
+	# e agua sairem em 16/09/2026 - e desde 30/09/2026 ela esta la desde o
+	# comeco, com a conta de balas.
 	Travessia.municao = 7
 
 	hud._process(0.0)
@@ -428,15 +428,14 @@ func _a_hud_le_os_numeros() -> void:
 
 	if not topo.contains("13:00"):
 		_erro("na metade do dia o topo da HUD diz \"%s\"" % topo)
-	if not esquerda.contains("pistola 7"):
+	if not esquerda.contains("Beretta") or not esquerda.contains("7 balas"):
 		_erro("com 7 balas a HUD diz \"%s\"" % esquerda.replace("\n", " / "))
-	if not direita.contains("0/"):
+	if not direita.contains("vazia"):
 		_erro("com a mochila vazia a HUD diz \"%s\"" % direita)
 
 	print("  na rua: \"%s\" | %s | %s" % [topo, esquerda.replace("\n", " / "), direita])
 	# Teste nao deixa sujeira: o autoload sobrevive a esta cena.
-	Travessia.tem_pistola = false
-	Travessia.municao = 0
+	Travessia.municao = Travessia.BALAS_DE_COMECO
 	hud.free()
 	rua.free()
 

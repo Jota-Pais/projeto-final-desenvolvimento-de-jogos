@@ -12,6 +12,14 @@ extends Node
 ##
 ## Registrado como autoload em project.godot, entao se chama "Travessia" de
 ## qualquer lugar.
+##
+## ## O que a rua produz, desde 30/09/2026
+##
+## Duas coisas, e so duas: **documentos** (vao na mochila e para o quadro da
+## pesquisa) e **balas** (vao para o cinto). Lata de comida, pilha, pano sujo e
+## o resto do loot generico sairam do jogo a pedido do Joao, para enxugar: o
+## que se vascula rende balas para a Beretta, e o que a cura precisa sao os
+## documentos.
 
 signal chegou_em_casa
 signal saiu_para_a_rua
@@ -24,9 +32,8 @@ const CENA_DO_FIM := "res://fim_de_jogo.tscn"
 ##
 ## **Numero provisorio, e o que ele esta segurando e um buraco de papel.** A
 ## pesquisa da cura e do modo Casa: quem fizer aquela frente decide o que ela
-## consome, em que ordem e o que mais entra na conta (remedio? ferramenta?
-## tempo dentro de casa?). Isto existe para o ciclo do jogo fechar de ponta a
-## ponta enquanto essa decisao nao for tomada.
+## consome, em que ordem e o que mais entra na conta. Isto existe para o ciclo
+## do jogo fechar de ponta a ponta enquanto essa decisao nao for tomada.
 ##
 ## Sao 4 dos 6 placeholders que o mapa distribui, e a folga e de proposito: com
 ## 6 um unico dia perdido carregando documento deixaria a partida impossivel de
@@ -58,7 +65,8 @@ const PRAZO_DA_CURA := 30
 ## rua/relogio.gd.
 var dia := 1
 
-## O que o jogador **entregou** em casa, acumulado de todos os dias.
+## Os documentos que o jogador **entregou** em casa, acumulados de todos os
+## dias.
 ##
 ## Nao e o que ele carrega: isso e a mochila da rua (rua/mochila.gd), e so vira
 ## isto aqui quando o dia acaba pela porta de casa. Quem for pego pelo
@@ -66,7 +74,6 @@ var dia := 1
 ##
 ## A rua so acrescenta. **Quem constroi a casa decide o que e consumido** e
 ## esvazia o que gastou - por isso nada aqui se limpa sozinho.
-var mochila: Array[String] = []
 var documentos: Array[String] = []
 
 ## Quais dos documentos entregues ja foram estudados na casa. Atravessa as
@@ -74,86 +81,61 @@ var documentos: Array[String] = []
 ## duas vezes. **Nao entra na conta da cura** (ver a_cura_esta_pronta).
 var documentos_lidos: Array[String] = []
 
-## A pistola e a municao. **Arma nao e loot, e equipamento** - e essa distincao
-## nao e detalhe:
+## As balas da Beretta 9mm. **Voce comeca armado** (30/09/2026, regra do Joao):
+## a arma nao e loot nem recompensa, e o que voce tem desde o primeiro dia. O
+## que o vasculho rende sao as balas, e so elas - ver rua/pistola.gd para as
+## tres regras que mantem a arma servindo o vasculho em vez de virar um jogo de
+## tiro.
 ##
-##  - nao ocupam vaga na mochila, porque estao no cinto e nao no saco;
-##  - **nao se perdem no dia que deu errado.** Todo o resto se perde, e e o que
-##    faz a noite cobrar - mas o mapa nao repoe, e a pistola e uma so, na
-##    armaria da delegacia. Perde-la seria beco sem saida sem aviso.
-##
-## Ver rua/pistola.gd para as tres regras que a mantem servindo o vasculho em
-## vez de virar um jogo de tiro.
-var tem_pistola := false
-var municao := 0
+## As balas sao **equipamento, nao loot**: nao ocupam vaga na mochila (estao no
+## cinto) e **nao se perdem no dia que deu errado** - o mapa nao repoe, e
+## perder a municao inteira seria beco sem saida sem aviso.
+var municao := BALAS_DE_COMECO
 
-## **Facilidade de teste, e nada mais: comecar armado.**
-##
-## O desenho e o outro: a pistola esta na armaria da delegacia, a 479 m de casa,
-## e achar a arma e recompensa de vasculhar. Isto existe porque andar meio
-## quilometro toda vez que se quer testar o tiro nao e teste, e paciencia.
-##
-## **Desligar antes de entregar.** Com isto ligado o jogo contradiz a propria
-## progressao, e "coerente com o High Concept" vale 2 dos 10 pontos da Alfa. O
-## conferir_arma.tscn avisa em toda rodada enquanto estiver ligado - de
-## proposito, para ninguem esquecer.
-const COMECA_ARMADO := false
-const BALAS_DE_COMECO := 18
-
-func _ready() -> void:
-	_armar_para_teste()
-
-func _armar_para_teste() -> void:
-	if not COMECA_ARMADO:
-		return
-	tem_pistola = true
-	municao = BALAS_DE_COMECO
+## Com quantas balas a partida comeca: um pente de Beretta 92. **Proposta** -
+## o Joao pediu que se comece armado, e a quantidade e calibragem.
+const BALAS_DE_COMECO := 15
 
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
 ## voltado com a mochila vazia.
-var itens_perdidos := 0
 var documentos_perdidos := 0
 
-## Quais moveis do bairro ja foram vasculhados, por indice.
+## Quais moveis do mapa ja foram vasculhados, pela chave de cada um.
 ##
 ## **O mundo esvazia e nao repoe** - e o que o PZ faz e o que o High Concept
-## declara: "a geografia e fixa e o que muda e o estado do mundo". O bairro e
-## gerado sempre igual, de semente fixa, entao o indice de um movel e o mesmo
+## declara: "a geografia e fixa e o que muda e o estado do mundo". O mapa e
+## gerado sempre igual, de semente fixa, entao a chave de um movel e a mesma
 ## todo dia e serve de nome.
 ##
-## Vale mesmo no dia que deu errado: se voce tirou o loot do movel, ele saiu do
-## mundo, tenha voce chegado em casa ou nao. Gastar o dia numa casa custa
-## aquela casa amanha.
+## Vale mesmo no dia que deu errado: se voce tirou o que tinha do movel, ele
+## saiu do mundo, tenha voce chegado em casa ou nao.
 var moveis_vazios := {}
 
 ## Chamado pela mochila da rua quando o dia acaba pela porta de casa.
-func receber(itens: Array[String], docs: Array[String]) -> void:
-	mochila.append_array(itens)
+func receber(docs: Array[String]) -> void:
 	documentos.append_array(docs)
 
 ## Chamado pela mochila da rua quando o dia acaba de qualquer outro jeito.
-func perder_na_rua(quantos_itens: int, quantos_documentos: int) -> void:
-	itens_perdidos = quantos_itens
+func perder_na_rua(quantos_documentos: int) -> void:
 	documentos_perdidos = quantos_documentos
 
-## Como o dia na rua acabou. Sao dois jeitos, e eles NAO valem o mesmo:
+## Como o dia na rua acabou. Sao tres jeitos, e eles NAO valem o mesmo:
 ##
 ##  - PELA_PORTA - voce trancou a porta por vontade propria. E o unico bom;
-##  - AMANHECEU_NA_RUA - a noite passou por cima de voce e o dia virou a forca.
+##  - AMANHECEU_NA_RUA - a noite passou por cima de voce e o dia virou a forca;
+##  - SEM_VIDA - voce nao aguentou. Saiu em 16/09/2026 com a vida, e voltou
+##    com ela em 30/09/2026.
 ##
-## **Havia um terceiro, SEM_VIDA, e ele saiu em 16/09/2026** junto com a vida do
-## jogador: nao ha mais como cair na rua. O que o zumbi cobra agora e tempo.
-##
-## A diferenca vira consequencia na mochila: quem entra pela porta entrega o que
-## achou, quem nao entra volta de mao vazia. Por isso o motivo mora aqui, e nao
-## dentro da rua.
-enum FimDoDia { PELA_PORTA, AMANHECEU_NA_RUA }
+## A diferenca vira consequencia na mochila: quem entra pela porta entrega os
+## documentos, quem nao entra volta de mao vazia. Por isso o motivo mora aqui,
+## e nao dentro da rua.
+enum FimDoDia { PELA_PORTA, AMANHECEU_NA_RUA, SEM_VIDA }
 
 var fim_do_dia := FimDoDia.PELA_PORTA
 
 ## Chamado pela porta da sua casa, na rua - e tambem pelo relogio, quando o dia
-## acaba na forca, ao amanhecer.
+## acaba na forca ao amanhecer, e pelo jogador, quando a vida acaba.
 func entrar_em_casa(motivo := FimDoDia.PELA_PORTA) -> void:
 	fim_do_dia = motivo
 	chegou_em_casa.emit()
@@ -174,7 +156,6 @@ func e_o_ultimo_dia() -> bool:
 func sair_para_a_rua() -> void:
 	dia += 1
 	# O prejuizo de ontem ja foi mostrado; a mochila do dia novo nasce vazia.
-	itens_perdidos = 0
 	documentos_perdidos = 0
 	saiu_para_a_rua.emit()
 	get_tree().change_scene_to_file(CENA_DA_RUA)
@@ -200,17 +181,13 @@ func acabar_o_jogo(qual: Desfecho) -> void:
 	get_tree().change_scene_to_file(CENA_DO_FIM)
 
 ## Comeca outra partida do zero. Zera tudo o que atravessa o dia - inclusive os
-## moveis vazios, senao a segunda partida comecaria num bairro ja saqueado.
+## moveis vazios, senao a segunda partida comecaria num mapa ja saqueado.
 func recomecar() -> void:
 	dia = 1
-	tem_pistola = false
-	municao = 0
-	_armar_para_teste()
-	mochila.clear()
+	municao = BALAS_DE_COMECO
 	documentos.clear()
 	documentos_lidos.clear()
 	moveis_vazios.clear()
-	itens_perdidos = 0
 	documentos_perdidos = 0
 	fim_do_dia = FimDoDia.PELA_PORTA
 	get_tree().change_scene_to_file(CENA_DA_RUA)

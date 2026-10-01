@@ -65,8 +65,10 @@ Decidido em 03/09 e já implementado: os mesmos lugares todos os dias — a
 geografia é fixa e o que muda é o estado do mundo, que vai ficando mais
 apocalíptico. O tempo é contado em dias, com prazo (hoje 30 no protótipo).
 
-O mapa existe e é 1 km × 550 m: bairro, cidade com delegacia e mercado, posto,
-dois sítios, lavoura, rio com ponte e mansão murada. Descrito em
+O mapa existe e é 550 × 318 m, traçado do desenho do João (`urussanga.png`,
+30/09/2026): floresta, milharal e fazenda a oeste; hospital, posto, hotel,
+bar e parque industrial no meio; praça, igreja, escola, prefeitura, lojas e
+mercado no centro; prisão, delegacia e campo ao sul. Descrito em
 `../README.md`.
 
 ⬜ Época, país, o que aconteceu no mundo, e há quanto tempo.

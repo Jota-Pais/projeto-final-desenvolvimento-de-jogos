@@ -66,9 +66,9 @@ func _derrota_em_parodia() -> void:
 	rodape.add_theme_color_override("font_color", COR_GAME_OVER)
 
 func _os_numeros() -> String:
-	return "%d dias   ·   %d de %d documentos   ·   %d itens" % [
+	return "%d dias   ·   %d de %d documentos   ·   %d balas no cinto" % [
 		Travessia.dia,
 		Travessia.documentos.size(),
 		Travessia.DOCUMENTOS_PARA_A_CURA,
-		Travessia.mochila.size(),
+		Travessia.municao,
 	]

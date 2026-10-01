@@ -9,8 +9,9 @@ extends CharacterBody2D
 ##    dentro dela com ele tambem te encurrala;
 ##  - **horda** - quem enxerga voce chama quem esta perto. Um zumbi nao e
 ##    ameaca, tres sao;
-##  - **pressao sobre a mesma acao** - o toque dele interrompe o vasculho e te
-##    empurra. Nao existe atacar de volta; a resposta e sair de perto.
+##  - **pressao sobre a mesma acao** - o toque dele interrompe o vasculho, te
+##    empurra e tira vida (DANO por toque; a vida voltou em 30/09/2026). Nao
+##    existe atacar de volta; a resposta e sair de perto.
 ##
 ## Ele e **mais lento que voce andando** (165 contra 280, e 460 correndo). Da
 ## para sempre fugir, de proposito: o que ele tira nao e vida, e o tempo que
@@ -18,6 +19,27 @@ extends CharacterBody2D
 ##
 ## Nao reaproveita nada do `inimigo.gd` da cena de teste, que perseguia em
 ## linha reta a partir de qualquer distancia e atravessava o mapa inteiro.
+##
+## ## Ele nao te perde por ter te tocado (30/09/2026)
+##
+## Queixa do Joao: "quando eles me batem eles estao me perdendo". Era
+## verdade, e por tres motivos que se somavam:
+##
+##  - a cara dele seguia a velocidade. No toque os dois corpos se empurram, a
+##    velocidade dele vira para o lado, e voce saia do cone de 110 graus;
+##  - fora do cone ele passava a PROCURANDO, e como "onde viu por ultimo" era
+##    a 40 px dele, desistia no mesmo quadro - voltava a vagar com voce ao
+##    lado;
+##  - o empurrao te tira 65 px dele, o bastante para o cone sideways nao te
+##    pegar de novo.
+##
+## Agora quem persegue **olha para voce**, e nao para onde esta andando (o cone
+## so decide quem ainda nao te viu); quem acabou de te tocar continua sabendo
+## onde voce esta por MEMORIA_DO_TOQUE segundos, parede ou nao; e quem chega
+## onde te viu por ultimo e nao te acha **fica olhando em volta** por
+## SEGUNDOS_OLHANDO_EM_VOLTA antes de desistir. Perder ele continua possivel:
+## parede no meio e distancia. E o que o High Concept pede - entrar numa casa
+## quebra a perseguicao -, so que agora e a casa que quebra, nao o tapa.
 
 const TAMANHO := Vector2(30.0, 44.0)
 
@@ -58,7 +80,24 @@ const SEGUNDOS_SEM_PROGRESSO := 3.0
 ## Quanto ele tem que andar nesse tempo para nao ser considerado travado.
 const PASSO_MINIMO := 24.0
 
+## Quanto tempo ele fica parado olhando em volta quando chega onde te viu por
+## ultimo e nao te acha, antes de voltar a vagar (30/09/2026). Antes desistia
+## no mesmo quadro em que chegava - e como "onde viu por ultimo" ficava a
+## 40 px dele depois de um toque, desistia com voce do lado. Uma volta inteira
+## da cara neste tempo: quem estiver no alcance e sem parede no meio e visto.
+const SEGUNDOS_OLHANDO_EM_VOLTA := 2.0
+
+## Por quanto tempo quem acabou de te tocar continua sabendo onde voce esta,
+## mesmo sem te ver (30/09/2026). Quem encostou em voce nao precisa de olho:
+## e o empurrao, o carro no meio ou a quina da casa nao fazem ele esquecer
+## de uma vez.
+const MEMORIA_DO_TOQUE := 2.0
+
 const DISTANCIA_DO_TOQUE := 48.0
+## Quanto de vida cada toque tira. 12 em 100: nove toques derrubam, e com a
+## espera de 1,1 s entre toques um zumbi sozinho leva dez segundos para isso -
+## tempo de sobra para sair de perto. Tres zumbis, nao.
+const DANO := 12.0
 ## A espera continua existindo depois que a vida saiu (16/09/2026): sem ela o
 ## toque interromperia o vasculho todo quadro, e ficar encostado num zumbi seria
 ## indistinguivel de ficar longe dele - nos dois casos a barra nunca anda.
@@ -97,6 +136,10 @@ var _marca_do_progresso := Vector2.ZERO
 ## funcionar justamente quando se junta.
 var _ignorados: Array[RID] = []
 var _espera_do_toque := 0.0
+## Quanto ainda dura a memoria do ultimo toque (ver MEMORIA_DO_TOQUE).
+var _memoria_do_toque := 0.0
+## Ha quanto tempo ele esta parado olhando em volta onde te viu por ultimo.
+var _olhando_em_volta := 0.0
 
 var _caminho: PackedVector2Array
 var _passo := 0
@@ -130,6 +173,7 @@ func _physics_process(delta: float) -> void:
 				_ignorados.append((outro as CollisionObject2D).get_rid())
 
 	_espera_do_toque = maxf(0.0, _espera_do_toque - delta)
+	_memoria_do_toque = maxf(0.0, _memoria_do_toque - delta)
 	_decidir(delta)
 
 	var direcao := _direcao_do_estado(delta)
@@ -137,15 +181,36 @@ func _physics_process(delta: float) -> void:
 	velocity = direcao * velocidade
 	move_and_slide()
 
-	if velocity.length() > 4.0:
-		_olhando = velocity.normalized()
+	_virar(delta)
 	_tocar_no_jogador()
 	queue_redraw()
+
+## Para onde a cara aponta, por estado. **Quem persegue olha para voce**, e
+## nao para onde esta andando: ate 30/09/2026 a cara seguia a velocidade, e no
+## toque os dois corpos se empurram, a velocidade vira para o lado e voce saia
+## do cone - ele te perdia por ter te alcancado. Quem procura olha para onde
+## vai, e parado no lugar da volta na cara. Quem vaga olha para onde anda.
+func _virar(delta: float) -> void:
+	match _estado:
+		Estado.PERSEGUINDO:
+			_olhando = global_position.direction_to(_jogador.global_position)
+		Estado.PROCURANDO:
+			if _chegou_onde_viu():
+				_olhando = _olhando.rotated(TAU * delta / SEGUNDOS_OLHANDO_EM_VOLTA)
+			else:
+				_olhando = global_position.direction_to(_ultima_posicao)
+		_:
+			if velocity.length() > 4.0:
+				_olhando = velocity.normalized()
+
+func _chegou_onde_viu() -> bool:
+	return global_position.distance_to(_ultima_posicao) < 40.0
 
 # --------------------------------------------------------------------- decisao
 
 func _decidir(delta: float) -> void:
-	if _ve_o_jogador():
+	# Quem acabou de te tocar sabe onde voce esta, parede ou nao.
+	if _ve_o_jogador() or _memoria_do_toque > 0.0:
 		if _estado != Estado.PERSEGUINDO:
 			_chamar_a_horda()
 		_estado = Estado.PERSEGUINDO
@@ -160,9 +225,13 @@ func _decidir(delta: float) -> void:
 	if _estado != Estado.PROCURANDO:
 		return
 
-	if global_position.distance_to(_ultima_posicao) < 40.0:
-		# Chegou onde viu por ultimo e nao achou ninguem.
-		_desistir()
+	if _chegou_onde_viu():
+		# Chegou onde viu por ultimo e nao achou ninguem: olha em volta um
+		# pouco antes de desistir. A cara gira em `_virar`; aqui so se conta
+		# o tempo.
+		_olhando_em_volta += delta
+		if _olhando_em_volta > SEGUNDOS_OLHANDO_EM_VOLTA:
+			_desistir()
 		return
 	if global_position.distance_to(_marca_do_progresso) > PASSO_MINIMO:
 		_marca_do_progresso = global_position
@@ -175,6 +244,7 @@ func _decidir(delta: float) -> void:
 func _comecar_a_procurar() -> void:
 	_estado = Estado.PROCURANDO
 	_sem_progresso = 0.0
+	_olhando_em_volta = 0.0
 	_marca_do_progresso = global_position
 
 func _desistir() -> void:
@@ -249,6 +319,9 @@ func foi_chamado(onde: Vector2) -> void:
 func _direcao_do_estado(delta: float) -> Vector2:
 	if _estado == Estado.VAGANDO:
 		return _vaguear(delta)
+	if _estado == Estado.PROCURANDO and _chegou_onde_viu():
+		# Parado, olhando em volta.
+		return Vector2.ZERO
 	return _seguir(delta, _ultima_posicao)
 
 ## Arrasta-se sem rumo, mudando de alvo de vez em quando ou quando trava. Sem
@@ -284,15 +357,16 @@ func _seguir(delta: float, destino: Vector2) -> Vector2:
 
 # --------------------------------------------------------------------- toque
 
-## Nao existe atacar de volta. O toque empurra e interrompe o vasculho, e a
-## resposta e sair de perto.
+## Nao existe atacar de volta. O toque tira vida, empurra e interrompe o
+## vasculho, e a resposta e sair de perto.
 func _tocar_no_jogador() -> void:
 	if _espera_do_toque > 0.0:
 		return
 	if global_position.distance_to(_jogador.global_position) > DISTANCIA_DO_TOQUE:
 		return
 	_espera_do_toque = ESPERA_ENTRE_TOQUES
-	_jogador.foi_tocado(global_position.direction_to(_jogador.global_position))
+	_memoria_do_toque = MEMORIA_DO_TOQUE
+	_jogador.levar_dano(DANO, global_position.direction_to(_jogador.global_position))
 
 # -------------------------------------------------------------------- desenho
 

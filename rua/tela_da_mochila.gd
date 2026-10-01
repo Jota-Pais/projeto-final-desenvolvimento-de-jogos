@@ -1,13 +1,14 @@
 extends CanvasLayer
-## A mochila aberta: a tela onde o jogador escolhe o que continua carregando.
+## A mochila aberta: a tela onde o jogador ve os documentos que carrega e
+## decide se larga algum.
 ##
 ## **Tab abre e fecha. W/S escolhem a linha, E larga no chao.**
 ##
-## Ate 15/09/2026 a mochila era so um numero na HUD - "7/12" - e um teto: com
-## ela cheia, o que voce achasse ficava no movel e acabou. A quarta pressao
-## sobre vasculhar e a que **cobra escolha**, e escolha que nao se desfaz nao e
-## escolha: era um limite, nao uma decisao. Esta tela e o que faz a vaga virar
-## moeda - largo a comida estragada e levo o remedio, ou nao.
+## Nasceu em 15/09/2026 como a tela da escolha de carga, com 12 vagas e loot
+## de todo tipo. Desde 30/09/2026 a mochila so carrega documento (ver
+## rua/mochila.gd): a tela ficou menor, e continua existindo pelo que ela faz
+## de unico - largar um documento no chao e pegar de volta depois - e pelo
+## cinto, que e onde a Beretta e as balas aparecem.
 ##
 ## ## O mundo nao para
 ##
@@ -15,10 +16,6 @@ extends CanvasLayer
 ## dia corre, o zumbi anda, a noite chega. O jogador fica parado enquanto
 ## escolhe - nao anda, nao vascula, nao atira - e o toque do zumbi fecha a tela
 ## na hora, igual ao vasculho que se interrompe.
-##
-## Com pausa, largar sairia de graca: abrir, esvaziar o saco no chao, fechar, e
-## a mochila de 12 vagas nunca mais custaria nada a ninguem. A pressao nao esta
-## no limite de 12; esta em decidir com o dia correndo.
 ##
 ## ## Quem sabe que ela esta aberta
 ##
@@ -28,14 +25,12 @@ extends CanvasLayer
 ## ninguem procura node em grupo a cada quadro.
 ##
 ## **Versao beta**: funciona de ponta a ponta e ainda e texto puro, como o resto
-## da rua. Icone, arrastar com o mouse e ordenar por tipo sao polimento, e
-## polimento so depois de a equipe jogar isto e dizer se a escolha esta no lugar
-## certo.
+## da rua.
 
 const Mochila := preload("res://rua/mochila.gd")
 
 ## O ambar do documento, o mesmo do movel e da HUD. Em hexadecimal porque a
-## lista e BBCode: e o unico jeito de ter duas cores no mesmo bloco de texto.
+## lista e BBCode.
 const HEX_DOCUMENTO := "e8b061"
 const HEX_ESCOLHIDA := "f2ede2"
 const HEX_APAGADO := "8a857c"
@@ -116,8 +111,6 @@ func _mover(passo: int) -> void:
 	var quantas := _mochila.tudo().size()
 	if quantas == 0:
 		return
-	# Da volta nas duas pontas: com 12 linhas, subir da primeira e mais curto
-	# que descer onze vezes.
 	_escolhida = wrapi(_escolhida + passo, 0, quantas)
 	_escrever()
 
@@ -144,29 +137,21 @@ func _escrever() -> void:
 
 func _linha_do_titulo() -> String:
 	var quantos := _mochila.quantos()
-	var titulo := "MOCHILA   %d/%d" % [quantos, _mochila.CAPACIDADE]
-	if _mochila.esta_cheia():
-		titulo += "   CHEIA"
-	return titulo
+	if quantos == 0:
+		return "MOCHILA   vazia"
+	return "MOCHILA   %d documento%s" % [quantos, "" if quantos == 1 else "s"]
 
-## Documento em cima e em ambar, o resto embaixo. E a mesma ordem do
-## `Mochila.tudo()`, que e a que o indice da linha escolhida usa.
+## Um documento por linha, em ambar; a escolhida em claro.
 func _texto_da_lista() -> String:
 	var tudo := _mochila.tudo()
 	if tudo.is_empty():
-		return "[color=#%s]vazia — você não está carregando nada[/color]" % HEX_APAGADO
+		return "[color=#%s]vazia — você não está carregando documento nenhum[/color]" % HEX_APAGADO
 
-	var quantos_documentos := _mochila.documentos.size()
 	var linhas := PackedStringArray()
 	for i in tudo.size():
 		var linha := ("›  " if i == _escolhida else "    ") + tudo[i]
-		if i < quantos_documentos:
-			linha = "[color=#%s]%s[/color]" % [HEX_DOCUMENTO, linha]
-		elif i == _escolhida:
-			linha = "[color=#%s]%s[/color]" % [HEX_ESCOLHIDA, linha]
-		else:
-			linha = "[color=#%s]%s[/color]" % [HEX_APAGADO, linha]
-		linhas.append(linha)
+		var cor := HEX_ESCOLHIDA if i == _escolhida else HEX_DOCUMENTO
+		linhas.append("[color=#%s]%s[/color]" % [cor, linha])
 	return "\n".join(linhas)
 
 func _texto_do_rodape() -> String:
@@ -175,10 +160,10 @@ func _texto_do_rodape() -> String:
 	if not _ultimo_largado.is_empty():
 		linhas.append("largou: %s — está no chão, aos seus pés" % _ultimo_largado)
 
-	# O cinto existe para explicar por que a pistola nao aparece na lista: ela
-	# nao ocupa vaga e nao se perde no dia que deu errado.
-	if Travessia.tem_pistola:
-		linhas.append("no cinto: pistola · %d bala(s) — não ocupa vaga" % Travessia.municao)
+	# O cinto existe para explicar por que a arma nao aparece na lista: ela e
+	# as balas nao ocupam vaga e nao se perdem no dia que deu errado.
+	linhas.append("no cinto: Beretta 9mm · %d bala%s — não ocupa vaga" % [
+		Travessia.municao, "" if Travessia.municao == 1 else "s"])
 
 	linhas.append("W/S escolher   ·   E largar no chão   ·   Tab fechar")
 	linhas.append("o dia continua correndo enquanto você escolhe")

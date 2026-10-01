@@ -1,14 +1,16 @@
 extends Node2D
-## A pistola. **Ela existe para comprar tempo para o vasculho**, e nao para
+## A Beretta 9mm. **Ela existe para comprar tempo para o vasculho**, e nao para
 ## virar um jogo de tiro.
 ##
 ## Tres regras a mantem dentro da core mechanic em vez de competindo com ela:
 ##
-##  1. **voce nao comeca com ela.** A pistola esta na armaria da delegacia - o
-##     quarto mais fundo do lugar mais povoado do mapa. Achar a arma e
-##     recompensa de vasculhar;
-##  2. **a municao vem do vasculho.** Sai da armaria, das caixas e das comodas,
-##     e nao ha outra fonte. Atirar gasta o que voce vasculhou;
+##  1. **voce comeca com ela** (30/09/2026, regra do Joao - ate aqui ela
+##     estava na armaria da delegacia e achar a arma era recompensa de
+##     vasculhar). A arma nao e loot: e o que voce tem desde o primeiro dia,
+##     com um pente;
+##  2. **as balas vem do vasculho**, e so delas. Toda gaveta, caixa e geladeira
+##     do mapa pode render uma caixinha de balas, e nao ha outra fonte. Atirar
+##     gasta o que voce vasculhou;
 ##  3. **o tiro chama a horda**, e num raio muito maior que o chamado de um
 ##     zumbi que enxergou voce (1.800 contra 700 px). O tiro resolve um problema
 ##     e cria um maior - e a regra do PZ, e e o que faz a arma continuar sendo
@@ -51,9 +53,6 @@ func _process(delta: float) -> void:
 		_clarao = maxf(0.0, _clarao - delta)
 		queue_redraw()
 
-	if not Travessia.tem_pistola:
-		return
-
 	var para_o_mouse := get_global_mouse_position() - global_position
 	if para_o_mouse.length() > 1.0:
 		_mira = para_o_mouse.normalized()
@@ -70,7 +69,7 @@ func _atirar() -> void:
 	# A guarda mora aqui, e nao so no _process: a ferramenta de conferencia
 	# chama isto direto, e sem a guarda a municao ia para negativo. Regra que
 	# vive so em quem chama e regra que um chamador novo esquece.
-	if not Travessia.tem_pistola or Travessia.municao <= 0:
+	if Travessia.municao <= 0:
 		return
 
 	_espera = ESPERA
@@ -107,8 +106,6 @@ func _o_estrondo_chama() -> void:
 ## visao do zumbi: sem ver para onde a arma aponta nao da para entender por que
 ## o tiro pegou na parede.
 func _draw() -> void:
-	if not Travessia.tem_pistola:
-		return
 	if Travessia.municao > 0:
 		draw_line(Vector2.ZERO, _mira * ALCANCE, COR_DA_MIRA, 2.0)
 	if _clarao > 0.0:

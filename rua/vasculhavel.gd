@@ -3,12 +3,14 @@ extends Area2D
 ##
 ## Este arquivo e a core mechanic do jogo - "vasculhar sob pressao". Tudo o que
 ## vai pressionar o jogador mais adiante (o zumbi chegando, o prazo do dia, a
-## a escuridao) pressiona esta mesma acao, e nada disso precisa aparecer
+## escuridao) pressiona esta mesma acao, e nada disso precisa aparecer
 ## aqui: quem interrompe chama interromper().
 ##
 ## O que diferencia uma lata de lixo de uma porta de casa e so a "duracao" e o
-## que sai dentro. Mesmo verbo, custos e recompensas diferentes - e isso que a
-## Alfa cobra como "aplicabilidade da core mechanic".
+## que sai de dentro - e desde 30/09/2026 o que sai e sempre a mesma coisa,
+## balas para a Beretta (mais o documento, onde o mapa pos um). Mesmo verbo,
+## custos diferentes - e isso que a Alfa cobra como "aplicabilidade da core
+## mechanic".
 
 ## Le so a tabela de documentos, para saber qual achado desenhar com destaque.
 const Construcao := preload("res://rua/construcao.gd")
@@ -17,7 +19,7 @@ const Construcao := preload("res://rua/construcao.gd")
 const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 
 ## Emitido quando o vasculho termina. Quem escuta e a mochila da rua, e e ela
-## quem separa documento de comida.
+## quem separa documento de balas.
 signal vasculhado(rotulo: String, achados: Array[String])
 
 ## Emitido enquanto o vasculho avanca, com quanto ele avancou neste quadro.
@@ -31,9 +33,10 @@ signal vasculhando(segundos: float)
 @export var rotulo := "Caixa"
 ## Segundos de vasculho ininterrupto para esvaziar.
 @export var duracao := 3.0
-## O que sai daqui. Provisorio - texto solto so para o teste ter retorno.
+## O que sai daqui: balas (Construcao.MUNICAO, uma entrada por caixinha) e o
+## documento, onde o mapa declarou um.
 @export var achados: Array[String] = []
-## Se ele ja foi vasculhado num dia anterior. O mundo nao repoe loot, entao um
+## Se ele ja foi vasculhado num dia anterior. O mundo nao repoe, entao um
 ## movel esvaziado ontem nasce vazio hoje - quem sabe disso e o cenario, que le
 ## o Travessia.
 @export var nasce_vazio := false
@@ -61,43 +64,26 @@ const DECAIMENTO := 0.0
 ## dentro da zona - foi assim que a porta encostada na parede da casa ficou
 ## impossivel de vasculhar por uma janela de 2 px. Se o tamanho do jogador
 ## mudar, este numero muda junto.
-##
-## Subiu de 48 para 60 na ampliacao do bairro: com quarto maior da para ser mais
-## folgado, e a faixa onde o jogador consegue ficar de pe passou de 28 para
-## 40 px.
 const ALCANCE := 60.0
 
-## Quanto custa **voltar num movel ja vasculhado** para pegar o que nao coube
-## na mochila. Nao e a duracao original: a gaveta ja esta aberta, e cobrar os
-## 5,5 s do armario de armas de novo transformaria "da para voltar" em "nao
-## vale a pena voltar".
-const DURACAO_DA_SOBRA := 0.8
-
-## A cor do movel **ja vasculhado mas com sobra dentro**. Fica entre a cor dele
-## cheio e a de vazio: de longe da para ver que aquele ja foi mexido, e de perto
-## o "ficou:" diz o que sobrou.
-const COR_ABERTO := Color("4a443d")
 const COR_VAZIO := Color("34302d")
 const COR_BARRA := Color("c8b78a")
 const COR_FUNDO_DA_BARRA := Color("22201e")
 const COR_DO_AVISO := Color("e8e2d6")
 ## O documento tem cor propria, e a mesma do modo Casa. O one-pager pede que
 ## ele seja "visualmente distinto dos outros itens, com brilho": e o que a cura
-## conta, e no meio de lata de comida e pano sujo tem que dar para ver de longe
-## qual movel valeu a pena.
+## conta, e tem que dar para ver de longe qual movel valeu a pena.
 const COR_DO_DOCUMENTO := Color("e8b061")
 
 var _progresso := 0.0
 var _jogador_dentro := false
 
-## Sem nada dentro. **Nao e "ja foi vasculhado"** - um movel de onde a mochila
-## cheia so levou metade continua com a outra metade, e continua valendo a pena
-## voltar nele.
+## Sem nada dentro.
 var _vazio := false
 
-## Se ja foi aberto hoje. Muda a cor, o aviso e a duracao: o segundo vasculho
-## do mesmo movel custa DURACAO_DA_SOBRA.
-var _ja_vasculhado := false
+## O que saiu daqui quando foi vasculhado - para o movel vazio dizer o que
+## rendeu. E uma copia: `achados` e esvaziado por quem escuta o sinal.
+var _saiu: Array[String] = []
 
 func _ready() -> void:
 	if nasce_vazio:
@@ -114,8 +100,7 @@ func _process(delta: float) -> void:
 	if _vazio:
 		return
 	# Com a tela da mochila aberta o jogador esta escolhendo o que carrega, e
-	# nao vasculhando. Sem esta guarda o mesmo E faria as duas coisas, e largar
-	# uma lata em cima de um armario comecaria a abrir o armario.
+	# nao vasculhando. Sem esta guarda o mesmo E faria as duas coisas.
 	if TelaDaMochila.aberta:
 		return
 
@@ -133,70 +118,53 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 ## Zera o vasculho em andamento. Quem pressiona o jogador chama isto - o zumbi
-## do passo 2 e o primeiro cliente.
+## e o primeiro cliente.
 func interromper() -> void:
 	if _progresso == 0.0:
 		return
 	_progresso = 0.0
 	queue_redraw()
 
-## Fim do vasculho: quem escuta leva o que couber, e **o que nao couber fica
-## aqui e continua pegavel** (15/09/2026).
+## Fim do vasculho: quem escuta leva tudo - balas para o cinto, documento para
+## a mochila -, e o movel fica vazio. Para o dia seguinte ele conta como
+## vasculhado: quem anota e o cenario, no sinal, e o mundo nao repoe.
 ##
-## Ate esta data "o que nao cabe fica no movel" era meia verdade: ficava, e
-## aparecia escrito na tela, mas o movel virava `_vazio` no mesmo instante e
-## nunca mais aceitava vasculho. O README e o COMO-JOGAR ja prometiam "da para
-## voltar" - agora da.
-##
-## Ele so vira vazio de verdade quando nao sobra nada. Para o dia seguinte,
-## porem, ele conta como vasculhado de qualquer jeito: quem anota e o cenario,
-## no sinal, e o mundo nao repoe. **Sobra e coisa do dia de hoje** - deixar para
-## amanha e perder.
+## Ate 30/09/2026 existia "sobra": o que nao cabia na mochila de 12 vagas
+## ficava aqui e dava para voltar buscar. Sem vaga que falte (so documento
+## entra, e balas vao para o cinto), nao ha o que sobrar.
 func _esvaziar() -> void:
+	_saiu = achados.duplicate()
 	vasculhado.emit(rotulo, achados)
-	print("%s: %s" % [rotulo, "nada" if achados.is_empty() else ", ".join(achados)])
-
-	_ja_vasculhado = true
-	if achados.is_empty():
-		_vazio = true
-		_progresso = duracao
-	else:
-		duracao = DURACAO_DA_SOBRA
-		_progresso = 0.0
+	print("%s: %s" % [rotulo, "nada" if _saiu.is_empty() else ", ".join(_saiu)])
+	achados.clear()
+	_vazio = true
+	_progresso = duracao
 	queue_redraw()
 
 ## Poe uma coisa dentro deste ponto depois de ele ja existir na cena.
 ##
-## Quem chama e o cenario, quando o jogador larga algo no chao: a pilha do chao
-## e um vasculhavel como outro qualquer, e e assim que pegar de volta funciona
-## sem inventar um segundo tipo de objeto.
+## Quem chama e o cenario, quando o jogador larga um documento no chao: a pilha
+## do chao e um vasculhavel como outro qualquer, e e assim que pegar de volta
+## funciona sem inventar um segundo tipo de objeto.
 func receber(achado: String) -> void:
 	achados.append(achado)
+	_saiu = []
 	_vazio = false
 	_progresso = 0.0
 	queue_redraw()
 
-## As formas saem do "tamanho" em vez de estarem gravadas na cena, para cada
-## instancia se ajustar sozinha quando alguem mudar o tamanho no Inspetor.
-## Sao formas novas, nao as do .tscn - sub-recurso de cena e compartilhado
-## entre as instancias, e mexer nele mexeria em todas.
-## O que saiu do movel, depois de vasculhado. Documento em cima, na cor dele e
-## com uma marca ao lado; comida e traste embaixo, apagados. Sao duas linhas e
-## nao uma porque draw_string desenha numa cor so - e a cor e justamente o que
-## separa a recompensa que importa da que nao importa.
-##
-## `base` e a linha do "ficou:". No movel vazio ela fica em cima dele; no movel
-## com sobra fica embaixo, para nao brigar com a barra e com o aviso de E.
-func _desenhar_o_saldo(fonte: Font, esquerda: float, base: float) -> void:
-	var comuns: Array[String] = []
+## O que saiu do movel, escrito em cima dele depois de vasculhado. Documento em
+## cima, na cor dele e com uma marca ao lado; as balas embaixo, contadas.
+func _desenhar_o_que_saiu(fonte: Font, esquerda: float, base: float) -> void:
+	var caixinhas := 0
 	var achou_documento := false
-	for achado in achados:
+	for achado in _saiu:
 		if Construcao.e_documento(achado):
 			achou_documento = true
 			draw_string(fonte, Vector2(esquerda + 16.0, base - 18.0), achado,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_DOCUMENTO)
-		else:
-			comuns.append(achado)
+		elif achado == Construcao.MUNICAO:
+			caixinhas += 1
 
 	if achou_documento:
 		# A "marca com brilho" do one-pager, na medida do greybox: um quadrado
@@ -205,12 +173,16 @@ func _desenhar_o_saldo(fonte: Font, esquerda: float, base: float) -> void:
 		draw_rect(marca.grow(4.0), Color(COR_DO_DOCUMENTO, 0.22))
 		draw_rect(marca, COR_DO_DOCUMENTO)
 
-	# "ficou" e nao "achou": o que esta escrito aqui e o que a mochila NAO
-	# levou, porque nao caberia. Da para voltar buscar no mesmo dia.
-	var saldo := "vazio" if comuns.is_empty() else "ficou: " + ", ".join(comuns)
+	var saldo := "vazio"
+	if caixinhas > 0:
+		saldo = "%d balas" % (caixinhas * Construcao.MUNICAO_POR_ACHADO)
 	draw_string(fonte, Vector2(esquerda, base), saldo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
 
+## As formas saem do "tamanho" em vez de estarem gravadas na cena, para cada
+## instancia se ajustar sozinha quando alguem mudar o tamanho no Inspetor.
+## Sao formas novas, nao as do .tscn - sub-recurso de cena e compartilhado
+## entre as instancias, e mexer nele mexeria em todas.
 func _montar_formas() -> void:
 	var deteccao := RectangleShape2D.new()
 	deteccao.size = tamanho + Vector2.ONE * ALCANCE * 2.0
@@ -230,8 +202,8 @@ func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = true
-	# Enquanto ele estiver aqui, o toque do zumbi interrompe o vasculho. Este arquivo
-	# nao sabe que zumbi existe: escuta o jogador, que e quem apanha.
+	# Enquanto ele estiver aqui, o toque do zumbi interrompe o vasculho. Este
+	# arquivo nao sabe que zumbi existe: escuta o jogador, que e quem apanha.
 	if corpo.has_signal("atingido") and not corpo.atingido.is_connected(_ao_ser_atingido):
 		corpo.atingido.connect(_ao_ser_atingido)
 	queue_redraw()
@@ -249,8 +221,7 @@ func _ao_ser_atingido() -> void:
 
 func _draw() -> void:
 	var caixa := Rect2(-tamanho / 2.0, tamanho)
-	var cheio_ou_nao := COR_ABERTO if _ja_vasculhado else cor
-	draw_rect(caixa, COR_VAZIO if _vazio else cheio_ou_nao)
+	draw_rect(caixa, COR_VAZIO if _vazio else cor)
 	draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
 
 	var fonte := ThemeDB.fallback_font
@@ -258,13 +229,8 @@ func _draw() -> void:
 	var esquerda := -tamanho.x / 2.0
 
 	if _vazio:
-		_desenhar_o_saldo(fonte, esquerda, topo - 8.0)
+		_desenhar_o_que_saiu(fonte, esquerda, topo - 8.0)
 		return
-
-	# Ja aberto e com sobra: o que ficou aparece por baixo dele, para a barra e
-	# o aviso de E continuarem sendo o que se le em cima.
-	if _ja_vasculhado:
-		_desenhar_o_saldo(fonte, esquerda, -topo + 30.0)
 
 	if _progresso > 0.0:
 		var largura := maxf(tamanho.x, 76.0)
@@ -276,8 +242,5 @@ func _draw() -> void:
 		draw_rect(barra, Color(0.0, 0.0, 0.0, 0.5), false, 1.0)
 
 	if _jogador_dentro:
-		var aviso := "E  vasculhar %s (%.1fs)" % [rotulo, duracao]
-		if _ja_vasculhado:
-			aviso = "E  pegar o que ficou (%.1fs)" % duracao
-		draw_string(fonte, Vector2(esquerda, topo - 26.0), aviso,
+		draw_string(fonte, Vector2(esquerda, topo - 26.0), "E  vasculhar %s (%.1fs)" % [rotulo, duracao],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_AVISO)

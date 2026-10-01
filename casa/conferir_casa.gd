@@ -45,10 +45,8 @@ func _erro(texto: String) -> void:
 
 func _limpar() -> void:
 	Travessia.dia = 1
-	Travessia.mochila.clear()
 	Travessia.documentos.clear()
 	Travessia.documentos_lidos.clear()
-	Travessia.itens_perdidos = 0
 	Travessia.documentos_perdidos = 0
 	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
 

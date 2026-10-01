@@ -1,401 +1,222 @@
-## O mundo: onde fica cada coisa. **Fonte unica do mapa.**
+## O mundo: onde fica cada coisa. **Fonte única do mapa.**
 ##
-## Este arquivo diz ONDE; o `rua/lugares.gd` diz DO QUE cada lugar e feito, e o
-## `rua/construcao.gd` diz como uma construcao qualquer se desenha por dentro.
-## Quem quiser mudar o mapa mexe aqui.
+## ## De onde o mapa vem (30/09/2026)
 ##
-## ## A escala, e por que ela e essa
+## Do desenho do João, `design/urussanga.png`. O `design/tracar_desenho.js`
+## lê o PNG, separa cada cor numa classe de chão ou de prédio, apaga texto e
+## linha fina, e escreve `rua/mapa_tracado.json`: polígonos de chão,
+## retângulos de prédio, blocos sólidos e veículos, tudo em px do desenho.
+## Este arquivo diz o que cada coisa **é** (ROTULOS: nome, tipo, documento, a
+## sua casa), em que escala o desenho vira mundo (ESCALA) e monta o dicionário
+## que o cenário, os telhados e as ferramentas consomem.
 ##
-## **40 px = 1 metro** - o jogador tem 40 px de altura. O mundo tem
-## 40.000 x 22.000 px, ou seja **1 km x 550 m** - e o numero sai do MUNDO
-## abaixo, que e quem manda.
+##  - mudou o desenho: `node design/tracar_desenho.js`, e pronto;
+##  - mudou o que uma coisa é: ROTULOS, aqui.
 ##
-## Ele ja foi de 144 x 90 m (o bairro sozinho, ate 09/09/2026) e de 1,44 km x
-## 900 m (a primeira versao do mapa grande, no mesmo dia). **Encolheu para 1 km
-## x 550 m em 09/09 a noite**, e por um motivo: era campo vazio demais para
-## caminhada demais. Mapa grande nao e mapa bom - o que faz distancia valer algo
-## e ter coisa nas duas pontas.
+## O mapa anterior (bairro e cidade em grade, gerados por via, quadra e lote,
+## até 23/09/2026) saiu inteiro. `rua/vias.gd`, `rua/quadras.gd` e
+## `rua/lugares.gd` ficam no git, no commit anterior a este.
 ##
-## ## A forma e a de Rosewood, no Project Zomboid
+## ## A escala
 ##
-## O que a referencia mostra e o que faltava aqui: **um nucleo denso com grade de
-## ruas**, com dezenas de predios pequenos encostados na calcada, e campo em
-## volta. Nao lugares isolados pendurados numa rodovia.
+## **40 px = 1 metro** (o jogador tem 40 px de altura), como sempre. O desenho
+## entra com ESCALA px de mundo por px dele: a 24, um pixel do desenho é 0,6 m
+## e o mapa inteiro (917 x 530 px) tem 550 x 318 m. É o número que faz uma
+## rua de 13 px do desenho ter 7,8 m, um carro de 7 px ter 4,2 m e a praça
+## ter 48 x 66 m. **Proposta** - é uma constante só, e tudo escala junto.
 ##
-## De oeste para leste: mata, o **bairro** (onde fica a sua casa), a **cidade** -
-## oito quadras, a delegacia e o mercado dentro dela -, o **posto** na beira da
-## pista, a **lavoura**, o **rio** que corta o mapa e so se cruza pela **ponte**,
-## e a **mansao murada** do outro lado. Mata nas bordas.
+## ## O que é prédio e o que é chão
 ##
-## ## Os tamanhos sao de gente
-##
-## Em 09/09 a noite todo predio grande foi remedido, porque estavam absurdos: o
-## mercado tinha 105 x 55 m e a delegacia 90 x 65 m - um hipermercado e um forum,
-## nao um mercadinho e uma delegacia de cidade pequena. Agora saem da tabela
-## TAMANHOS do construcao.gd, em metros de gente.
-##
-## ## Um documento por lugar
-##
-## Os seis documentos placeholder saem em seis predios declarados em vez de
-## sorteados, para o mapa espalhar a progressao em vez de amontoa-la. **Quais
-## lugares, e o que cada documento e, nao foi decidido pela equipe** - a divisao
-## de hoje existe so para a partida ter como ser ganha.
+## Vermelho, marrom e cinza do desenho são prédio: cada mancha vira um ou
+## mais retângulos axiais (o jogo só sabe prédio axial - parede, quarto,
+## móvel e telhado contam com isso), e a mancha inteira continua pintada por
+## baixo como "lote". Prédio torto no desenho vira um reto do mesmo tamanho no
+## mesmo centro. O resto (grama, mata, pavimento, asfalto, milho, terra, água)
+## é polígono pintado; mata ganha árvore sólida, água ganha colisão.
 
-const Lugares := preload("res://rua/lugares.gd")
-## So para a porta de casa: a fachada de uma construcao e regra do Construcao,
-## e o mapa nao tem por que saber onde fica o vao.
 const Construcao := preload("res://rua/construcao.gd")
-## O que uma via e por fora - largura, calcada, grafo. Ver a docstring de
-## `vias.gd` para o porque desta entidade existir.
-const Vias := preload("res://rua/vias.gd")
 
-const MUNDO := Rect2(0.0, 0.0, 40000.0, 22000.0)
+const ARQUIVO_DO_TRACADO := "res://rua/mapa_tracado.json"
 
-## A versao do mapa - sobe toda vez que a IDENTIDADE dos moveis (a lista de
-## chaves, na ordem de geracao) muda de proposito. So serve de carimbo no
-## relatorio do conferir_mapa; quem prova de verdade e IMPRESSAO_ESPERADA.
-const VERSAO_DO_MAPA := 1
+## px de mundo por px do desenho.
+const ESCALA := 24.0
 
-## Hash (8 digitos hex) da lista de chaves de todo movel gerado num dia
-## comum, na ordem em que nascem - commitada aqui e COMPARADA pelo
-## conferir_mapa (17/09/2026, P6), nao so impressa. Imprimir nao e
-## checagem: um numero que so aparece no console e que ninguem confere
-## nunca falha, e a identidade podia embaralhar em silencio de novo.
+## O mundo: o recorte do desenho (917 x 530 px) vezes ESCALA. Const porque
+## meio jogo lê `Mapa.MUNDO`; `_montar` confere que bate com o JSON.
+const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
+
+## A versão do mapa - sobe toda vez que a IDENTIDADE dos móveis (a lista de
+## chaves, na ordem de geração) muda de propósito. Carimbo do relatório do
+## conferir_mapa; quem prova é IMPRESSAO_ESPERADA.
+const VERSAO_DO_MAPA := 2
+
+## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
+## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
+## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
+## depois de conferir que a mudança foi de propósito.
+const IMPRESSAO_ESPERADA := "06d4b6dc"
+
+## Os rótulos do desenho: o que cada mancha é.
 ##
-## Recalcula rodando `conferir_mapa.tscn` e copiando o valor que ele imprime
-## em "IMPRESSAO DIGITAL DOS MOVEIS" - so depois de conferir que a mudanca
-## que moveu o numero foi de proposito.
-const IMPRESSAO_ESPERADA := "5c124aa9"
-
-## A rodovia leste-oeste, que e a espinha do mapa - a costura entre a cidade
-## (100% ao norte dela, a partir de 17/09/2026) e o bairro (100% ao sul).
-## O trecho **reto**: o que atravessa a faixa onde ficam os dois.
+## `ponto` é em px do PNG original (1920 x 1080), do jeito que um editor de
+## imagem mostra - a conversão para o recorte e para o mundo é daqui. O rótulo
+## cai no prédio (retângulo traçado) que contém o ponto. Se não cai em prédio
+## nenhum, é um **lugar** (zona): usa `rect` (também em px do PNG) ou o
+## polígono de chão que contém o ponto.
 ##
-## Reto de proposito, e so aqui: cidade e bairro nascem em trecho reto de
-## estrada. O resto da rodovia e torto - ver ESTRADAS.
+## `tipo` é a chave de `Construcao.QUARTOS_POR_TIPO` (quantos quartos, que
+## móvel) para prédio, e "zona" para lugar. `documento` 1..6 põe um dos seis
+## placeholders no quarto mais fundo; `sua` marca a sua casa (uma só). A arma
+## não mora em lugar nenhum do mapa: você começa com ela (30/09/2026).
 ##
-## **14 tiles (640 px), nao mais 10** (17/09/2026, P7 - arquitetura nova):
-## a largura de hoje media a mesma coisa que uma rua de bairro, e era metade
-## da queixa "o mapa inteiro se passa numa rua so". 640 e a Dixie Highway do
-## PZ. So a altura muda aqui - x e y continuam os mesmos.
-const RODOVIA := Rect2(3600.0, 10200.0, 24000.0, 640.0)
-
-## O rio, de cima a baixo. Agua e solida aqui - nao se nada.
-const RIO := Rect2(30000.0, 0.0, 1600.0, 22000.0)
-
-## A ponte, onde a rodovia cruza o rio - centralizada na rodovia mais alta.
-const PONTE := Rect2(30000.0, 10100.0, 1600.0, 840.0)
-
-## **As estradas tortas, e por que elas existem.**
+## ⬜ **Três decisões aqui são provisórias, à espera do João/da equipe:**
 ##
-## Ate 09/09/2026 a noite o mapa inteiro passava por uma linha reta so, de ponta
-## a ponta - e cidade nao e assim. Estrada de verdade contorna, sobe e desce.
-##
-## Dava para consertar barato porque **estrada nao tem colisao**: e chao
-## pintado, e o custo de fazer ela torta e desenho, nao fisica nem navegacao.
-## Cada polilinha aqui vira uma VIA de classe `rural`/`terra` (17/09/2026: antes
-## virava direto uma fila de retangulos; `Vias.faixa_pintada` desenha agora).
-##
-## O trecho reto do meio continua reto, e e onde ficam o bairro e a cidade. O
-## que era estrada de terra em linha vertical virou uma estrada que serpenteia
-## o norte inteiro ligando os dois sitios - e e ela que faz o norte deixar de
-## ser campo com nada.
-## Recentralizadas em y 10520 (17/09/2026): o centro da rodovia subiu de
-## 10400 para 10520 quando ela engordou de 400 para 640 - a ponta de cada
-## estrada torta tem que continuar caindo dentro da faixa dela.
-const ESTRADAS := [
-	# A rodovia chegando do noroeste, antes do trecho reto.
-	[Vector2(0.0, 6800.0), Vector2(1200.0, 7600.0), Vector2(2200.0, 9000.0),
-		Vector2(3100.0, 10220.0), Vector2(3900.0, 10520.0)],
-	# E saindo do trecho reto para a ponte, com uma lombada.
-	[Vector2(27400.0, 10520.0), Vector2(28400.0, 9880.0), Vector2(29300.0, 9980.0),
-		Vector2(30100.0, 10520.0)],
-	# Depois da ponte, subindo para o nordeste.
-	[Vector2(31500.0, 10520.0), Vector2(33000.0, 10860.0), Vector2(34900.0, 10300.0),
-		Vector2(36800.0, 9420.0), Vector2(38400.0, 8620.0), Vector2(40000.0, 8220.0)],
-	# A entrada da mansao, saindo da estrada acima.
-	[Vector2(35100.0, 10320.0), Vector2(35100.0, 10020.0)],
+##  - **qual casa é a sua.** O desenho não marca nenhuma; está numa casa sem
+##    nome do miolo (entre a Prefeitura, a Praça e as Lojas), por ser central;
+##  - **onde ficam os seis documentos** (Hospital, Prefeitura, Escola,
+##    Delegacia, Mansão, Casa do fazendeiro) - espalhados, como antes, só para
+##    a partida ter como ser ganha;
+##  - **os rótulos miúdos do desenho não dão para ler** (três casas na estrada
+##    de terra do sudoeste, os dois anexos do posto, os dois veículos da
+##    fazenda): estão com nome de lugar, não de dono.
+const ROTULOS := [
+	# --- prédios ---------------------------------------------------------
+	{ "nome": "Hospital", "ponto": Vector2(760.0, 440.0), "tipo": "hospital", "documento": 1 },
+	{ "nome": "Escola", "ponto": Vector2(1350.0, 300.0), "tipo": "escola", "documento": 3 },
+	{ "nome": "Prefeitura / Biblioteca", "ponto": Vector2(1115.0, 470.0), "tipo": "prefeitura", "documento": 2 },
+	{ "nome": "Delegacia", "ponto": Vector2(1122.0, 712.0), "tipo": "delegacia", "documento": 4 },
+	{ "nome": "Mansão", "ponto": Vector2(888.0, 290.0), "tipo": "mansao", "documento": 5 },
+	{ "nome": "Casa do fazendeiro", "ponto": Vector2(742.0, 254.0), "tipo": "casa", "documento": 6 },
+	{ "nome": "sua casa", "ponto": Vector2(1210.0, 480.0), "tipo": "casa", "sua": true },
+	{ "nome": "Campo ANEV (norte)", "ponto": Vector2(950.0, 455.0), "tipo": "campo" },
+	{ "nome": "Campo ANEV (sul)", "ponto": Vector2(1376.0, 700.0), "tipo": "campo" },
+	{ "nome": "Prisão", "ponto": Vector2(1005.0, 670.0), "tipo": "prisao" },
+	{ "nome": "Igreja", "ponto": Vector2(1330.0, 455.0), "tipo": "igreja" },
+	{ "nome": "Mercado", "ponto": Vector2(1330.0, 548.0), "tipo": "mercado" },
+	{ "nome": "Lojas", "ponto": Vector2(1208.0, 543.0), "tipo": "lojas" },
+	{ "nome": "Mercadinho", "ponto": Vector2(1068.0, 400.0), "tipo": "comercio" },
+	{ "nome": "Loja", "ponto": Vector2(611.0, 413.0), "tipo": "comercio" },
+	{ "nome": "Farmácia", "ponto": Vector2(872.0, 540.0), "tipo": "farmacia" },
+	{ "nome": "Academia", "ponto": Vector2(1045.0, 540.0), "tipo": "academia" },
+	{ "nome": "Banco", "ponto": Vector2(1038.0, 588.0), "tipo": "banco" },
+	{ "nome": "ETA", "ponto": Vector2(1082.0, 598.0), "tipo": "eta" },
+	{ "nome": "Rádio", "ponto": Vector2(1252.0, 252.0), "tipo": "radio" },
+	{ "nome": "Hotel", "ponto": Vector2(632.0, 545.0), "tipo": "hotel" },
+	{ "nome": "Bar do Zé", "ponto": Vector2(724.0, 563.0), "tipo": "bar" },
+	{ "nome": "Casa do Zé", "ponto": Vector2(727.0, 592.0), "tipo": "casa" },
+	# Retangulo a mao: a mancha e torta e o nome escrito em cima dela, em fonte
+	# miuda, parte a mancha ao meio para o tracador. A porta olha para a rua.
+	{ "nome": "Restaurante", "ponto": Vector2(1200.0, 740.0), "tipo": "restaurante",
+		"rect": Rect2(1170.0, 737.0, 50.0, 16.0), "porta": "norte" },
+	{ "nome": "Posto", "ponto": Vector2(715.0, 508.0), "tipo": "posto" },
+	{ "nome": "Posto (anexo 1)", "ponto": Vector2(712.0, 528.0), "tipo": "galpao" },
+	{ "nome": "Posto (anexo 2)", "ponto": Vector2(735.0, 525.0), "tipo": "galpao" },
+	{ "nome": "Prédio em construção", "ponto": Vector2(785.0, 560.0), "tipo": "predio_em_construcao" },
+	{ "nome": "Prédio abandonado", "ponto": Vector2(1293.0, 640.0), "tipo": "predio_abandonado" },
+	{ "nome": "Parque industrial (galpão 1)", "ponto": Vector2(727.0, 633.0), "tipo": "armazem" },
+	{ "nome": "Parque industrial (galpão 2)", "ponto": Vector2(727.0, 690.0), "tipo": "armazem" },
+	{ "nome": "Parque industrial (galpão 3)", "ponto": Vector2(727.0, 727.0), "tipo": "armazem" },
+	{ "nome": "Galpão da fazenda", "ponto": Vector2(768.0, 296.0), "tipo": "galpao" },
+	{ "nome": "Casa da estrada (1)", "ponto": Vector2(556.0, 707.0), "tipo": "casa" },
+	{ "nome": "Casa da estrada (2)", "ponto": Vector2(529.0, 720.0), "tipo": "casa" },
+	{ "nome": "Casa da estrada (3)", "ponto": Vector2(640.0, 740.0), "tipo": "galpao" },
+	# --- lugares (zonas sem prédio próprio) --------------------------------
+	{ "nome": "Floresta", "ponto": Vector2(560.0, 500.0), "tipo": "zona" },
+	{ "nome": "Milho", "ponto": Vector2(650.0, 275.0), "tipo": "zona" },
+	{ "nome": "Fazenda", "rect": Rect2(700.0, 236.0, 95.0, 105.0), "tipo": "zona" },
+	{ "nome": "Horta", "ponto": Vector2(748.0, 323.0), "tipo": "zona" },
+	{ "nome": "Praça", "ponto": Vector2(1262.0, 440.0), "tipo": "zona" },
+	{ "nome": "Cemitério", "ponto": Vector2(1150.0, 410.0), "tipo": "zona" },
+	{ "nome": "Campinho", "rect": Rect2(1054.0, 310.0, 30.0, 40.0), "tipo": "zona" },
+	{ "nome": "Estacionamento", "rect": Rect2(1075.0, 520.0, 40.0, 45.0), "tipo": "zona" },
+	{ "nome": "Camping Motorhomes", "rect": Rect2(812.0, 600.0, 105.0, 145.0), "tipo": "zona" },
+	{ "nome": "Parque industrial", "rect": Rect2(688.0, 605.0, 85.0, 152.0), "tipo": "zona" },
 ]
 
-## As estradas de terra: sem asfalto e sem calcada, e as mais tortas de todas.
-const ESTRADAS_DE_TERRA := [
-	# Da rodovia ate o sitio do norte, serpenteando.
-	[Vector2(9400.0, 10520.0), Vector2(9000.0, 8600.0), Vector2(9600.0, 7000.0),
-		Vector2(8900.0, 5400.0), Vector2(8680.0, 3800.0)],
-	# E o ramal que corta o norte inteiro ate o sitio do leste.
-	[Vector2(9600.0, 7000.0), Vector2(13000.0, 6200.0), Vector2(17000.0, 5600.0),
-		Vector2(21000.0, 5000.0), Vector2(24500.0, 4800.0), Vector2(26680.0, 5300.0)],
-	# Da rodovia ate a lavoura. Ate 17/09/2026 saia da cidade, que agora
-	# mudou de lugar (100% ao norte da rodovia) e deixou de estar perto -
-	# a estrada passou a sair da propria rodovia, mais a leste.
-	[Vector2(17400.0, 10520.0), Vector2(17500.0, 12500.0), Vector2(17200.0, 13800.0),
-		Vector2(17400.0, 14380.0)],
+## Zumbis soltos na rua, em px do PNG - cruzamentos, o camping, a mata. Todo
+## prédio ainda ganha um na frente da porta (ver `_zumbis`). **Proposta**,
+## como sempre foi: onde zumbi nasce não foi decidido pela equipe.
+const ZUMBIS_NA_RUA := [
+	Vector2(640.0, 480.0), Vector2(690.0, 700.0), Vector2(560.0, 600.0), Vector2(598.0, 300.0),
+	Vector2(900.0, 512.0), Vector2(1150.0, 512.0), Vector2(1300.0, 512.0), Vector2(1250.0, 650.0),
+	Vector2(870.0, 690.0), Vector2(1012.0, 606.0), Vector2(1250.0, 420.0), Vector2(1255.0, 600.0),
+	Vector2(1040.0, 330.0), Vector2(960.0, 300.0), Vector2(640.0, 250.0), Vector2(1200.0, 330.0),
 ]
 
-## Onde cada lugar fica.
+## Quanto o jogador nasce afastado da porta, para fora. Maior que a meia
+## altura da zona de detecção da porta (80 px), senão o dia começaria com
+## você já dentro dela.
+const RECUO_DO_NASCIMENTO := 110.0
+
+## Quanto um zumbi nasce afastado da porta de cada prédio.
+const RECUO_DO_ZUMBI := 260.0
+
+## O tamanho (em px de mundo) do lugar de uma zona sem `rect` próprio: uma
+## janela em volta do ponto do rótulo, cortada pela mancha de chão que o
+## contém. 100 x 60 px do desenho.
+const ZONA_EM_VOLTA_DO_ROTULO := Vector2(2400.0, 1440.0)
+
+## Prédio com menos do que isto de frente ou de fundo (em px de mundo) não
+## cabe três quartos com móvel dentro: vira o tipo de um quarto só.
 ##
-## **A cidade fica 100% ao norte da rodovia, e o bairro 100% ao sul**
-## (17/09/2026, P7 - arquitetura nova; decisao de dono, default aplicado).
-## Ate aqui o bairro crescia por cima da rodovia (ela cortava o loteamento ao
-## meio) - a rodovia virava fronteira invisivel, nao costura. Agora atravessar
-## a pista para ir da sua casa a cidade e um trecho de verdade do trajeto, e
-## nao um detalhe que a rua ja resolvia sozinha.
-const LUGARES := [
-	# 4.200 de largura, nao 3.800 (17/09/2026, P20 - queixa do dono: "tem
-	# poucos detalhes... espacos sem nada"): a mata do oeste terminava 400 px
-	# antes do bairro comecar - uma faixa de nada que nao era mata nem
-	# bairro, so campo aberto sem razao de ser. Agora encosta.
-	{
-		"nome": "mata do oeste", "tipo": "mata", "rect": Rect2(0.0, 0.0, 4200.0, 22000.0),
-		"densidade": 0.45, "lado_da_mata": "oeste",
-	},
-	# Ao SUL da rodovia (y >= 10840). O retangulo e o de Lugares.BAIRRO_TAMANHO,
-	# os dois tem que bater. Cresceu 1040 px para o leste em P16, para a
-	# Estrada Velha ganhar uma casa sem sair do MUNDO (ver a docstring de
-	# BAIRRO_TAMANHO).
-	{
-		"nome": "bairro", "tipo": "bairro", "rect": Rect2(4200.0, 10840.0, 6800.0, 6800.0),
-		"acesso": Vector2(7000.0, 10520.0),
-	},
-	# Ao NORTE da rodovia, encostada nela (y ate 10200). Cresceu 1000 px pra
-	# leste (de 24400 para 24600) pra caber o laco do fim da Avenida.
-	{
-		"nome": "cidade", "tipo": "cidade", "rect": Rect2(11200.0, 3200.0, 13400.0, 7000.0),
-		"acesso": Vector2(17000.0, 10520.0),
-	},
-	# 3.000 de largura, nao 2.200 (17/09/2026, P22 - queixa do dono: "poucos
-	# detalhes"): a pista de concreto ja cobria o lugar inteiro por baixo da
-	# loja, entao nao sobrava nenhum canto livre para outro predio. A faixa
-	# nova (leste) ganha uma oficina - ver `_posto`.
-	{
-		"nome": "posto", "tipo": "posto", "rect": Rect2(24800.0, 10840.0, 3000.0, 1500.0),
-		"acesso": Vector2(24800.0, 10840.0),
-	},
-	{
-		"nome": "lavoura", "tipo": "lavoura", "rect": Rect2(13000.0, 14380.0, 9000.0, 4600.0),
-		"acesso": Vector2(17400.0, 14380.0),
-	},
-	# Os dois sitios existem porque o norte era campo com nada - e campo com
-	# nada nao e mapa, e caminhada. No PZ o que enche o entorno da cidade sao
-	# exatamente casas de campo penduradas em estrada de terra.
-	{
-		"nome": "sítio do norte", "tipo": "sitio", "rect": Rect2(8200.0, 1900.0, 2400.0, 1900.0),
-		"acesso": Vector2(8680.0, 3800.0),
-	},
-	{
-		"nome": "sítio do leste", "tipo": "sitio", "rect": Rect2(26200.0, 3400.0, 2400.0, 1900.0),
-		"acesso": Vector2(26680.0, 5300.0),
-	},
-	# Encolheu de 6900 para 3200 de altura: a cidade subiu para caber toda ao
-	# norte da rodovia, e passou a nascer onde a mata do norte terminava.
-	#
-	# 36.200 de largura, nao 24.000 (17/09/2026, P20): a mata do norte parava
-	# em x=27600, mas o sitio do leste fica em 26200-28600 e o MUNDO vai ate
-	# 40000 - o quadrante inteiro a nordeste da cidade (leste do sitio, ate a
-	# mansao) ficava sem lugar nenhum, nem mata nem nada. Agora a mata do
-	# norte cobre ate a mesma borda leste da mata do leste (39800).
-	{
-		"nome": "mata do norte", "tipo": "mata", "rect": Rect2(3600.0, 0.0, 36200.0, 3200.0),
-		"densidade": 0.45, "lado_da_mata": "norte",
-	},
-	# A mata do sul e a **fechada**: e nela que nao se ve o outro lado. Era um
-	# lugar proprio chamado "florestinha" ate 09/09 a noite, e virou redundante
-	# quando o mapa ganhou quatro matas - agora e uma densidade, e nao um lugar.
-	# Sem "lado_da_mata": e a unica cujo retangulo inteiro e fechado, nao so
-	# uma faixa de borda - ela nao encosta no limite do MUNDO dos dois lados
-	# como as outras tres, entao nao ha "fora" para deixar aberto.
-	#
-	# Cresceu para os quatro lados em 17/09/2026 (P20): encostava em nenhum
-	# vizinho - 1.200 px de nada ate a lavoura, 1.860 ate o posto, 1.000 ate o
-	# rio. Agora encosta nos tres (100 px de folga so contra o rio, que e
-	# agua e nao pode virar bosque).
-	{
-		"nome": "mata do sul", "tipo": "mata", "densidade": 0.55,
-		"rect": Rect2(22000.0, 12340.0, 7900.0, 8860.0),
-	},
-	# Duas faixas novas ao sul do bairro e da lavoura (17/09/2026, P20): o
-	# proprio MUNDO ia ate y=22000 mas nenhum dos dois lugares descia tanto -
-	# 4.360 px de nada atras do bairro, 3.020 atras da lavoura. Duas em vez de
-	# uma so porque as bordas sul do bairro (y=17640) e da lavoura (y=18980)
-	# nao batem.
-	{
-		"nome": "mata do sul (bairro)", "tipo": "mata", "densidade": 0.45,
-		"rect": Rect2(4200.0, 17640.0, 6800.0, 4360.0),
-	},
-	{
-		"nome": "mata do sul (lavoura)", "tipo": "mata", "densidade": 0.45,
-		"rect": Rect2(11000.0, 18980.0, 11000.0, 3020.0),
-	},
-	{ "nome": "mansão murada", "tipo": "mansao", "rect": Rect2(32800.0, 5780.0, 4600.0, 4200.0) },
-	# Encostada no rio a oeste (31700, nao 32000) e na mansao ao norte (9980,
-	# nao 12380) desde P20: os dois eram 400 e 2.400 px de nada que sobravam
-	# entre lugares vizinhos de verdade.
-	{
-		"nome": "mata do leste", "tipo": "mata", "rect": Rect2(31700.0, 9980.0, 8100.0, 11800.0),
-		"densidade": 0.45, "lado_da_mata": "leste",
-	},
-]
+## O fundo sai da conta da sala: ela tem 45% do interior menos a divisória
+## (20), e o móvel dela encosta na divisória ocupando 46 px; o que sobra até
+## a fachada tem que caber o corpo do jogador (40) com folga para a grade de
+## 24 px do conferir_mapa achar uma fileira (e a de 32 px da navegação do
+## zumbi também): 0,45 x (fundo - 40) - 20 - 46 >= 64 dá fundo >= 329.
+## Com 312 (13 px do desenho) a estante da sala fechava a casa inteira.
+const FRENTE_MINIMA_PARA_TRES_QUARTOS := 300.0
+const FUNDO_MINIMO_PARA_TRES_QUARTOS := 340.0
 
-const CALCADA := 120.0
+## Tons de telhado e de lote por classe do desenho - o cenário e os telhados
+## leem daqui para o vermelho do desenho continuar lendo como "importante".
+const CLASSE_DO_PREDIO := {
+	"vermelho": { "telhado": Color("3a2c2c"), "lote": Color("4a3b3b") },
+	"marrom": { "telhado": Color("2a2e31"), "lote": Color("463f36") },
+	"cinza": { "telhado": Color("30343a"), "lote": Color("474a4e") },
+}
 
 static var _montado: Dictionary = {}
+static var _sua_casa: Dictionary = {}
+static var _lugares: Array = []
+static var _recorte := Rect2()
 
 ## O mundo montado, em coordenada de mundo. Montado uma vez e guardado: o
-## cenario, os telhados e as ferramentas leem todos daqui, e todos tem que ver o
-## mesmo mapa.
+## cenário, os telhados e as ferramentas leem todos daqui, e todos têm que ver
+## o mesmo mapa.
 static func mundo() -> Dictionary:
 	if _montado.is_empty():
 		_montado = _montar()
 	return _montado
 
-static func _montar() -> Dictionary:
-	var tudo := {
-		"construcoes": [],
-		"cercas": [],
-		"bosques": [],
-		"moveis_de_rua": [],
-		"zumbis": [],
-		# "vias" e a rede inteira, com nome e classe (17/09/2026) - a fonte.
-		# "ruas", "estradas", "terra", "calcadas" e "abertos" viram DERIVADAS
-		# dela mais abaixo; nenhum consumidor delas muda de comportamento.
-		"vias": [
-			{
-				"nome": "rodovia", "classe": "rodovia", "lugar": "",
-				"eixo": [Vector2(RODOVIA.position.x, RODOVIA.get_center().y),
-					Vector2(RODOVIA.end.x, RODOVIA.get_center().y)],
-				"pontas": ["emenda:estrada do noroeste", "emenda:estrada do nordeste"],
-			},
-		],
-		"piso": [PONTE],
-		"agua": [RIO],
-		# Terra arada: so chao pintado, sem colisao. E a textura de campo do PZ.
-		"lavoura": [],
-		# Solido mas nao desenhado: o desenho e a agua, a colisao e isto.
-		"solidos": [],
-	}
+## Os lugares com nome, cada um com `nome`, `tipo` e `rect` (mundo). É o que
+## a legenda escreve e o que o conferir_mapa cobra que se alcance a pé.
+static func lugares() -> Array:
+	mundo()
+	return _lugares
 
-	for i in ESTRADAS.size():
-		tudo["vias"].append({
-			"nome": "estrada rural %d" % i, "classe": "rural", "lugar": "",
-			"eixo": ESTRADAS[i], "pontas": ["borda", "borda"],
-		})
-	# Pontas declaradas por indice: as duas pontas que caem dentro da propria
-	# rodovia nao precisam - o grafo ja acha esse encontro por sobreposicao -,
-	# mas as que terminam num predio (sitio, ainda sem `patio` de verdade -
-	# isso e P10) nao tem outra via para se ligar, e sem a ponta declarada
-	# o grafo as acusaria como soltas.
-	const PONTAS_DA_TERRA := [
-		["", "declarado:sitio do norte"],
-		["", "declarado:sitio do leste"],
-		["", "declarado:lavoura"],
-	]
-	for i in ESTRADAS_DE_TERRA.size():
-		tudo["vias"].append({
-			"nome": "estrada de terra %d" % i, "classe": "terra", "lugar": "",
-			"eixo": ESTRADAS_DE_TERRA[i], "pontas": PONTAS_DA_TERRA[i],
-		})
-
-	# O rio e solido dos dois lados da ponte. Nao ha como nadar, e nao ha outro
-	# atravessadouro - e o que faz a mansao ser longe de verdade.
-	tudo["solidos"].append(Rect2(RIO.position,
-		Vector2(RIO.size.x, PONTE.position.y - RIO.position.y)))
-	tudo["solidos"].append(Rect2(Vector2(RIO.position.x, PONTE.end.y),
-		Vector2(RIO.size.x, RIO.end.y - PONTE.end.y)))
-
-	for lugar in LUGARES:
-		var pecas := Lugares.montar(lugar)
-		for chave in pecas:
-			(tudo[chave] as Array).append_array(pecas[chave])
-
-	# Derivadas, todas a partir de "vias" - e por isso que so existe UMA fonte
-	# de verdade sobre largura, classe e calcada de cada rua (17/09/2026).
-	tudo["ruas"] = _ruas_de(tudo["vias"])
-	tudo["estradas"] = _pintadas_de(tudo["vias"], "rural")
-	tudo["terra"] = _pintadas_de(tudo["vias"], "terra")
-	tudo["calcadas"] = _calcadas_de(tudo["vias"])
-	tudo["abertos"] = _abertos_de(tudo["vias"], tudo["piso"])
-
-	return tudo
-
-## As vias que resolvem para UM retangulo (reta ou `rect` declarado) - o que
-## `cenario._draw` pinta na camada de asfalto comum, e o que sempre teve
-## calcada nos dois lados ate esta reescrita.
-static func _ruas_de(vias: Array) -> Array[Rect2]:
-	var fora: Array[Rect2] = []
-	for via in vias:
-		if Vias.e_reta(via):
-			fora.append(Vias.faixa_de(via))
-	return fora
-
-## As vias poligonais (3+ pontos, sem `rect`) de uma classe, ja como fila de
-## quadrados pintados - o que era `ESTRADAS`/`ESTRADAS_DE_TERRA` viravam direto
-## antes desta reescrita.
-static func _pintadas_de(vias: Array, classe: String) -> Array[Rect2]:
-	var fora: Array[Rect2] = []
-	for via in vias:
-		if via["classe"] == classe and not Vias.e_reta(via):
-			fora.append_array(Vias.faixa_pintada(via))
-	return fora
-
-## Calcada de toda via cuja classe tem (`CLASSES[classe].calcada > 0`) -
-## **so a rodovia, por enquanto** (17/09/2026): antes toda entrada de "ruas"
-## ganhava calcada dos dois lados, residencial e beco inclusive; a fita
-## comercial do bairro que vai merecer calcada de verdade so nasce em P7 em
-## diante, quando o layout for reescrito.
-static func _calcadas_de(vias: Array) -> Array[Rect2]:
-	var fora: Array[Rect2] = []
-	for via in vias:
-		for calcada in Vias.calcadas_de(via):
-			fora.append_array(Vias.recortar(calcada, vias))
-	return fora
-
-## A faixa aberta ao lado de toda via, mais o piso crescido - onde
-## `cenario._e_terreno` recusa arvore. Substitui varrer `ruas`, `estradas`,
-## `terra` e `piso` como quatro listas separadas: com o mapa 100x maior isso
-## economiza consulta, e o resultado e o mesmo (17/09/2026).
-##
-## Via poligonal (rural/terra) usa a fila de quadrados pintados, sem grow -
-## `aberto_de` sozinha devolveria o envelope (retangulo que cobre TODOS os
-## pontos da curva), que para uma estrada serpenteando e muito maior que a
-## faixa real e fecharia a arvore fora de area que deveria estar livre.
-static func _abertos_de(vias: Array, pisos: Array) -> Array[Rect2]:
-	var fora: Array[Rect2] = []
-	for via in vias:
-		if Vias.e_reta(via):
-			fora.append(Vias.aberto_de(via))
-		else:
-			fora.append_array(Vias.faixa_pintada(via))
-	for piso in pisos:
-		fora.append((piso as Rect2).grow(80.0))
-	return fora
-
-## Calcada dos dois lados de cada rua. **Derivada de `vias`** (17/09/2026) -
-## antes calculava direto de `mundo()["ruas"]`, sem olhar a classe.
-static func calcadas() -> Array[Rect2]:
-	return mundo()["calcadas"]
-
-## Uma via pelo nome. Mesma regra de `lugar()`: por nome, nunca por indice.
-static func via(nome: String) -> Dictionary:
-	for qual in mundo()["vias"]:
+## Um lugar pelo nome. Use isto, e não um índice: a lista muda de ordem a cada
+## rótulo novo.
+static func lugar(nome: String) -> Dictionary:
+	for qual in lugares():
 		if qual["nome"] == nome:
 			return qual
 	return {}
 
-## As vias que um lugar gerou.
-static func vias_do_lugar(nome_do_lugar: String) -> Array:
-	var fora := []
-	for qual in mundo()["vias"]:
-		if qual.get("lugar", "") == nome_do_lugar:
-			fora.append(qual)
-	return fora
+## O lugar em que o ponto está - o **menor** que o contém, para um prédio
+## dentro de uma zona responder o prédio. "" se não está em nenhum.
+static func lugar_em(ponto: Vector2) -> String:
+	var melhor := ""
+	var menor := INF
+	for qual in lugares():
+		var r: Rect2 = qual["rect"]
+		if r.has_point(ponto) and r.get_area() < menor:
+			menor = r.get_area()
+			melhor = qual["nome"]
+	return melhor
 
-## Um ponto sobre uma via, por nome - para ponto de teste que nao quebra
-## quando o layout muda de numero. Ainda sem consumidor (chega em P7).
-static func ponto_na_via(nome: String, t: float) -> Vector2:
-	return Vias.ponto_em(via(nome), t)
-
-## Em qual construcao esta o ponto, ou -1. Os telhados usam para esconder o
-## telhado de quem esta dentro.
+## Em qual construção está o ponto, ou -1. Os telhados usam para esconder o
+## telhado de quem está dentro.
 static func construcao_em(ponto: Vector2) -> int:
 	var construcoes: Array = mundo()["construcoes"]
 	for i in construcoes.size():
@@ -403,70 +224,358 @@ static func construcao_em(ponto: Vector2) -> int:
 			return i
 	return -1
 
-## O lugar em que o ponto esta, ou uma string vazia. E o que a HUD usa para
-## dizer onde voce esta num mapa em que "a rua" nao quer mais dizer nada.
-static func lugar_em(ponto: Vector2) -> String:
-	for lugar in LUGARES:
-		if (lugar["rect"] as Rect2).has_point(ponto):
-			return lugar["nome"]
-	if RODOVIA.grow(CALCADA).has_point(ponto):
-		return "rodovia"
-	return "estrada de terra"
+## A sua casa: a única construção marcada com "sua". Não se vasculha, e é a
+## fachada dela que tem a porta por onde o dia acaba.
+static func sua_casa() -> Dictionary:
+	mundo()
+	return _sua_casa
 
-## Um lugar pelo nome. **Use isto, e nao LUGARES[n]:** a lista muda de ordem a
-## cada lugar novo, e indice fixo passa a apontar para outro lugar sem avisar -
-## foi o que aconteceu com as conferencias do zumbi quando o mapa cresceu.
-static func lugar(nome: String) -> Dictionary:
-	for qual in LUGARES:
-		if qual["nome"] == nome:
-			return qual
-	return {}
-
-## Quanto o jogador nasce afastado da porta, para fora.
-##
-## Tem que ser maior que a meia altura da zona de deteccao da porta (80 px),
-## senao o dia comecaria com voce ja dentro dela: quem sai de casa segurando E
-## para vasculhar a primeira lata voltaria para dentro sem entender por que.
-const RECUO_DO_NASCIMENTO := 110.0
-
-## Onde o jogador nasce: **na calcada, em frente a porta de casa** - ele acabou
-## de sair. Antes ele nascia na sala, e nascer la dentro deixou de ser possivel
-## em 16/09/2026, quando a porta virou a unica entrada da casa e passou a ser
-## solida: seria nascer trancado.
-##
-## Sai da porta, que sai do proprio predio - ninguem precisa lembrar de mexer
-## aqui se a casa mudar de lugar. A posicao ja esteve escrita a mao no rua.tscn
-## e ja esteve escrita a mao no lugares.gd, e as duas vezes ela ficou para tras
-## quando o mapa mudou. Nao da erro nenhum: o jogador so aparece no lugar
-## errado.
-##
-## **O cenario posiciona ele por aqui**, e nao o rua.tscn.
+## Onde o jogador nasce: na calçada, em frente à porta de casa.
 static func onde_o_jogador_nasce() -> Vector2:
-	var casa := Lugares.sua_casa()
-	# `normal_de`, e nao um sinal em y (17/09/2026): a porta em 4 direcoes
-	# manda a direcao "para fora" certa, seja a fachada norte, sul, leste ou
-	# oeste.
+	var casa := sua_casa()
 	return onde_fica_a_porta_de_casa() + Construcao.normal_de(casa) * RECUO_DO_NASCIMENTO
 
-## A porta de casa, que e por onde o dia acaba.
-##
-## **E a porta da fachada, e nao uma posicao escrita a mao** (15/09/2026). Ate
-## entao ela ficava num quarto do fundo: voce voltava da rua, atravessava a
-## sala e o corredor e so entao acabava o dia. Chegar em casa e o momento de
-## alivio do ciclo, e cobrar uma travessia de comodo depois dele so adiava o
-## alivio - com zumbi atras, adiava dentro de casa.
-##
-## Sai do proprio predio, pelo mesmo `porta_de()` que abre o vao na fachada de
-## qualquer construcao do mapa. Se a sua casa mudar de lugar ou de tamanho, a
-## porta vai junto e ninguem precisa lembrar de mexer aqui.
-##
-## Sem soma de origem (17/09/2026, P9): `Lugares.sua_casa()` ja nasce em
-## coordenada de MUNDO, porque o bairro inteiro passou a nascer assim.
+## A porta de casa, que é por onde o dia acaba: o vão da fachada, pelo mesmo
+## `porta_de()` de qualquer prédio.
 static func onde_fica_a_porta_de_casa() -> Vector2:
-	return Construcao.porta_de(Lugares.sua_casa())
+	return Construcao.porta_de(sua_casa())
 
-## Para que lado a porta da sua casa olha - "norte", "sul", "leste" ou
-## "oeste". E o que `rua/entrada_de_casa.gd` usa para saber se o vao dela e
-## deitado ou em pe.
+## Para que lado a porta da sua casa olha - "norte", "sul", "leste" ou "oeste".
 static func lado_da_porta_de_casa() -> String:
-	return Lugares.sua_casa()["porta"]
+	return sua_casa()["porta"]
+
+## Uma construcao do tipo pedido, a mais perto de `de`, com a frente da porta
+## livre: nada solido (outro predio, bloco, agua, veiculo, nem os retangulos
+## extras que quem chama passar - arvores, por exemplo) a ate `alcance` px do
+## vao, e com pelo menos `frente_minima` de fachada. `{}` se nao houver.
+##
+## E o que as ferramentas de conferencia usam para escolher a casa de teste
+## (30/09/2026): o desenho tem carro parado na porta de meia cidade e casa de
+## costas para a borda do mundo, e "a primeira casa da lista" media o
+## estacionamento em vez do zumbi.
+static func construcao_com_a_frente_livre(tipo: String, de: Vector2, alcance: float,
+		frente_minima: float, extras: Array = []) -> Dictionary:
+	var candidatas: Array = []
+	for c in mundo()["construcoes"]:
+		if c["tipo"] == tipo and not c.get("sua", false):
+			candidatas.append(c)
+	candidatas.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return (a["rect"] as Rect2).get_center().distance_to(de) \
+			< (b["rect"] as Rect2).get_center().distance_to(de))
+	for c in candidatas:
+		if Construcao.frente_de(c) < frente_minima:
+			continue
+		var porta := Construcao.porta_de(c)
+		var frente := Rect2(porta, Vector2.ZERO).expand(porta + Construcao.normal_de(c) * alcance).grow(60.0)
+		if not MUNDO.encloses(frente):
+			continue
+		if _tem_algo_solido_em(frente, c, extras):
+			continue
+		return c
+	return {}
+
+static func _tem_algo_solido_em(area: Rect2, menos: Dictionary, extras: Array) -> bool:
+	var tudo := mundo()
+	for outra in tudo["construcoes"]:
+		if outra != menos and (outra["rect"] as Rect2).intersects(area):
+			return true
+	for obstaculo in tudo["obstaculos"]:
+		if (obstaculo["rect"] as Rect2).intersects(area):
+			return true
+	for solido in tudo["solidos"]:
+		if (solido as Rect2).intersects(area):
+			return true
+	for movel in tudo["moveis_de_rua"]:
+		var r := Rect2((movel["pos"] as Vector2) - (movel["tamanho"] as Vector2) / 2.0, movel["tamanho"])
+		if r.intersects(area):
+			return true
+	for extra in extras:
+		if (extra as Rect2).intersects(area):
+			return true
+	return false
+
+## Um ponto do PNG original (px, como um editor de imagem mostra) em
+## coordenada de mundo - para ferramenta que quer apontar um lugar do desenho.
+static func ponto_do_png(ponto: Vector2) -> Vector2:
+	mundo()
+	return _do_png(ponto, _recorte)
+
+## Calçada não existe mais como peça própria: o pavimento do desenho é chão
+## pintado. Fica pela compatibilidade de quem perguntava.
+static func calcadas() -> Array[Rect2]:
+	var nada: Array[Rect2] = []
+	return nada
+
+# ------------------------------------------------------------------ montagem
+
+## Um ponto do PNG original para o mundo.
+static func _do_png(ponto: Vector2, recorte: Rect2) -> Vector2:
+	return (ponto - recorte.position) * ESCALA
+
+static func _rect_do_png(rect: Rect2, recorte: Rect2) -> Rect2:
+	return Rect2(_do_png(rect.position, recorte), rect.size * ESCALA)
+
+## Um retângulo do JSON (px do recorte) para o mundo.
+static func _rect_do_tracado(lista: Array) -> Rect2:
+	return Rect2(float(lista[0]) * ESCALA, float(lista[1]) * ESCALA,
+		float(lista[2]) * ESCALA, float(lista[3]) * ESCALA)
+
+static func _pontos_do_tracado(lista: Array) -> PackedVector2Array:
+	var fora := PackedVector2Array()
+	for p in lista:
+		fora.append(Vector2(float(p[0]) * ESCALA, float(p[1]) * ESCALA))
+	return fora
+
+static func _ler_tracado() -> Dictionary:
+	var texto := FileAccess.get_file_as_string(ARQUIVO_DO_TRACADO)
+	assert(texto != "", "nao achei %s - rode node design/tracar_desenho.js" % ARQUIVO_DO_TRACADO)
+	var dado = JSON.parse_string(texto)
+	assert(dado is Dictionary, "%s nao e JSON valido" % ARQUIVO_DO_TRACADO)
+	return dado
+
+static func _montar() -> Dictionary:
+	var tracado := _ler_tracado()
+	var recorte_lista: Array = tracado["recorte"]
+	var recorte := Rect2(float(recorte_lista[0]), float(recorte_lista[1]),
+		float(recorte_lista[2]), float(recorte_lista[3]))
+	_recorte = recorte
+	assert(is_equal_approx(recorte.size.x * ESCALA, MUNDO.size.x)
+		and is_equal_approx(recorte.size.y * ESCALA, MUNDO.size.y),
+		"MUNDO (%s) nao bate com o recorte do desenho (%s x %s) vezes ESCALA - o desenho mudou de tamanho?"
+		% [MUNDO.size, recorte.size.x, recorte.size.y])
+
+	var tudo := {
+		"construcoes": [],
+		"lotes": [],
+		"poligonos": [],
+		"bosques": [],
+		"obstaculos": [],
+		"moveis_de_rua": [],
+		"zumbis": [],
+		"agua": [],
+		"solidos": [],
+		# Peças que o mapa anterior tinha e o cenário ainda sabe ler. Vazias.
+		"cercas": [],
+		"piso": [],
+		"lavoura": [],
+	}
+
+	# O chão: todo polígono, com os furos, em ordem de área (quem pinta
+	# pinta nesta ordem, então o furo de um sai por cima dele).
+	for p in tracado["poligonos"]:
+		var poligono := {
+			"classe": p["classe"],
+			"pontos": _pontos_do_tracado(p["pontos"]),
+			"furos": [],
+			"area": float(p["area"]) * ESCALA * ESCALA,
+			"rect": _rect_do_tracado(p["bbox"]),
+		}
+		for furo in p["furos"]:
+			(poligono["furos"] as Array).append(_pontos_do_tracado(furo))
+		tudo["poligonos"].append(poligono)
+		if p["classe"] == "mata":
+			tudo["bosques"].append(poligono)
+		elif p["classe"] == "agua":
+			tudo["agua"].append(poligono)
+			tudo["solidos"].append(poligono["rect"])
+
+	# Os prédios: cada mancha vira um lote pintado e um ou mais retângulos.
+	for i in (tracado["predios"] as Array).size():
+		var predio: Dictionary = tracado["predios"][i]
+		tudo["lotes"].append({
+			"classe": predio["classe"],
+			"pontos": _pontos_do_tracado(predio["pontos"]),
+			"rect": _rect_do_tracado(predio["bbox"]),
+		})
+		var rects: Array = predio["rects"]
+		for j in rects.size():
+			var rect := _rect_do_tracado(rects[j]["rect"])
+			var construcao := {
+				"rect": rect, "porta": rects[j]["porta"], "classe": predio["classe"],
+				"lote": i, "anexo": j > 0,
+				"tipo": _tipo_padrao(predio["classe"], rect, j > 0),
+				"nome": "",
+			}
+			tudo["construcoes"].append(construcao)
+
+	for o in tracado["obstaculos"]:
+		tudo["obstaculos"].append({ "classe": o["classe"], "rect": _rect_do_tracado(o["rect"]) })
+
+	for v in tracado["veiculos"]:
+		var comprido: bool = v.get("comprido", false)
+		var deitado: bool = v.get("deitado", true)
+		var tipo := "motorhome" if comprido else "carro"
+		var tamanho: Vector2 = Construcao.MOVEIS[tipo]["tamanho"]
+		if not deitado:
+			tamanho = Vector2(tamanho.y, tamanho.x)
+		tudo["moveis_de_rua"].append({
+			"tipo": tipo, "tamanho": tamanho,
+			"pos": Vector2(float(v["pos"][0]) * ESCALA, float(v["pos"][1]) * ESCALA),
+		})
+
+	_rotular(tudo, tracado, recorte)
+	_encolher_quem_nao_cabe(tudo)
+	_zumbis(tudo, recorte)
+	return tudo
+
+## O tipo de um prédio que o desenho não nomeou, pela cor e pelo tamanho.
+static func _tipo_padrao(classe: String, rect: Rect2, anexo: bool) -> String:
+	if anexo:
+		return "anexo"
+	match classe:
+		"marrom":
+			return "casa" if minf(rect.size.x, rect.size.y) >= FRENTE_MINIMA_PARA_TRES_QUARTOS else "galpao"
+		"cinza":
+			return "comercio"
+		_:
+			return "comercio"
+
+## Casa os ROTULOS com o traçado: prédio ganha nome, tipo e extras; o que não
+## cai em prédio vira lugar. Todo prédio nomeado também vira um lugar (o
+## retângulo da mancha inteira), para a legenda e o conferir.
+static func _rotular(tudo: Dictionary, tracado: Dictionary, recorte: Rect2) -> void:
+	_lugares = []
+	_sua_casa = {}
+	var predios: Array = tracado["predios"]
+	for rotulo in ROTULOS:
+		var nome: String = rotulo["nome"]
+		if rotulo["tipo"] == "zona" and rotulo.has("rect"):
+			_lugares.append({ "nome": nome, "tipo": "zona",
+				"rect": _rect_do_png(rotulo["rect"], recorte) })
+			continue
+		var ponto: Vector2 = rotulo["ponto"] - recorte.position  # px do recorte
+		# A mancha MAIS JUSTA que contem o ponto - a caixa de uma mancha grande
+		# (a Escola) cobre a caixa de uma vizinha pequena (a Radio), e o
+		# primeiro que aparecesse levaria o nome errado. Mancha cujo retangulo
+		# cortado contem o ponto ganha de mancha que so o contem na caixa.
+		var achou := -1
+		var melhor_nota := -INF
+		for i in predios.size():
+			var b: Array = predios[i]["bbox"]
+			var caixa := Rect2(float(b[0]), float(b[1]), float(b[2]), float(b[3]))
+			if not caixa.has_point(ponto):
+				continue
+			var nota := -caixa.get_area()
+			for r in predios[i]["rects"]:
+				var lista: Array = r["rect"]
+				if Rect2(float(lista[0]), float(lista[1]), float(lista[2]), float(lista[3])).has_point(ponto):
+					nota += 1000000.0
+					break
+			if nota > melhor_nota:
+				melhor_nota = nota
+				achou = i
+		if achou < 0:
+			# Zona: o polígono de chão que contém o ponto.
+			var no_mundo := ponto * ESCALA
+			var dono := {}
+			for poligono in tudo["poligonos"]:
+				if Geometry2D.is_point_in_polygon(no_mundo, poligono["pontos"]):
+					if dono.is_empty() or poligono["area"] < dono["area"]:
+						dono = poligono
+			assert(not dono.is_empty(), "o rotulo '%s' nao cai em predio nem em chao nenhum" % nome)
+			# O lugar e uma janela em volta do PONTO do rotulo, dentro da caixa
+			# do poligono - nao a caixa inteira: a da Floresta cobre meio mapa
+			# (as manchas de mata se tocam), e "Floresta" cairia no meio da
+			# cidade, com meia cidade respondendo "Floresta" em `lugar_em`.
+			var caixa: Rect2 = dono["rect"]
+			var janela := Rect2(no_mundo - ZONA_EM_VOLTA_DO_ROTULO / 2.0, ZONA_EM_VOLTA_DO_ROTULO)
+			_lugares.append({ "nome": nome, "tipo": rotulo["tipo"], "rect": janela.intersection(caixa) })
+			continue
+		# Prédio: o retângulo da mancha que contém o ponto, senão o principal.
+		var alvo := {}
+		for construcao in tudo["construcoes"]:
+			if construcao["lote"] != achou:
+				continue
+			if alvo.is_empty() or (construcao["rect"] as Rect2).has_point(ponto * ESCALA):
+				alvo = construcao
+				if (construcao["rect"] as Rect2).has_point(ponto * ESCALA):
+					break
+		assert(not alvo.is_empty(), "o rotulo '%s' caiu numa mancha sem retangulo" % nome)
+		if alvo["nome"] != "":
+			push_warning("o rotulo '%s' caiu no mesmo predio que '%s' - dois nomes para uma mancha so"
+				% [nome, alvo["nome"]])
+		alvo["nome"] = nome
+		alvo["tipo"] = rotulo["tipo"]
+		if rotulo.has("rect"):
+			# Retangulo escrito a mao (px do PNG), para a mancha que o tracador
+			# nao corta bem - o Restaurante, torto e com o nome escrito em cima.
+			alvo["rect"] = _rect_do_png(rotulo["rect"], recorte)
+		if rotulo.has("porta"):
+			alvo["porta"] = rotulo["porta"]
+		if rotulo.has("documento"):
+			alvo["documento"] = rotulo["documento"]
+		if rotulo.get("sua", false):
+			alvo["sua"] = true
+			_sua_casa = alvo
+		var rect_do_lugar := _rect_do_tracado(predios[achou]["bbox"])
+		if rotulo.has("rect"):
+			rect_do_lugar = alvo["rect"]
+		_lugares.append({ "nome": nome, "tipo": rotulo["tipo"],
+			"rect": rect_do_lugar.grow(ESCALA * 2.0) })
+	# Os anexos herdam o nome do dono.
+	for construcao in tudo["construcoes"]:
+		if not construcao["anexo"]:
+			continue
+		for outra in tudo["construcoes"]:
+			if outra["lote"] == construcao["lote"] and not outra["anexo"] and outra["nome"] != "":
+				construcao["nome"] = "%s (anexo)" % outra["nome"]
+				break
+	assert(not _sua_casa.is_empty(), "nenhum rotulo tem \"sua\": true - o jogador nao tem onde nascer")
+
+## Prédio pequeno demais para três quartos com móvel dentro vira o tipo de um
+## quarto só do mesmo gênero. Sem isto a divisória interna nasceria em cima do
+## móvel e o quarto do fundo ficaria sem passagem - o conferir_mapa pega, mas
+## a regra é melhor que o achado.
+static func _encolher_quem_nao_cabe(tudo: Dictionary) -> void:
+	for construcao in tudo["construcoes"]:
+		if Construcao.QUARTOS_POR_TIPO[construcao["tipo"]] < 3:
+			continue
+		var r: Rect2 = construcao["rect"]
+		var frente := Construcao.frente_de(construcao)
+		var fundo := Construcao.profundidade_de(construcao)
+		if frente < FRENTE_MINIMA_PARA_TRES_QUARTOS or fundo < FUNDO_MINIMO_PARA_TRES_QUARTOS:
+			construcao["tipo"] = Construcao.UM_QUARTO_SO.get(construcao["tipo"], "galpao")
+			if construcao.get("sua", false):
+				push_warning("a sua casa (%s) e pequena demais para tres quartos" % r)
+
+## Onde zumbi nasce: um na frente de cada prédio que não é anexo, mais um na
+## sala dos prédios importantes (vermelho), mais os soltos de ZUMBIS_NA_RUA.
+## Ponto que cai dentro de parede, água ou outro prédio é pulado.
+static func _zumbis(tudo: Dictionary, recorte: Rect2) -> void:
+	for construcao in tudo["construcoes"]:
+		if construcao["anexo"] or construcao.get("sua", false):
+			continue
+		var achou := false
+		for distancia in [RECUO_DO_ZUMBI, RECUO_DO_ZUMBI * 0.6, RECUO_DO_ZUMBI * 1.5]:
+			var onde := Construcao.em_frente(construcao, 0.5, distancia)
+			if _da_para_nascer(tudo, onde):
+				tudo["zumbis"].append(onde)
+				achou = true
+				break
+		if construcao["classe"] == "vermelho":
+			tudo["zumbis"].append(Construcao.quartos_de(construcao)[0].get_center())
+	for ponto in ZUMBIS_NA_RUA:
+		var onde := _do_png(ponto, recorte)
+		if _da_para_nascer(tudo, onde):
+			tudo["zumbis"].append(onde)
+		else:
+			push_warning("zumbi solto em %s (png) nasceria em cima de algo - pulado" % ponto)
+
+static func _da_para_nascer(tudo: Dictionary, onde: Vector2) -> bool:
+	if not MUNDO.grow(-200.0).has_point(onde):
+		return false
+	var corpo := Rect2(onde - Vector2(40.0, 40.0), Vector2(80.0, 80.0))
+	for construcao in tudo["construcoes"]:
+		if (construcao["rect"] as Rect2).grow(20.0).intersects(corpo):
+			return false
+	for obstaculo in tudo["obstaculos"]:
+		if (obstaculo["rect"] as Rect2).grow(20.0).intersects(corpo):
+			return false
+	for solido in tudo["solidos"]:
+		if (solido as Rect2).grow(20.0).intersects(corpo):
+			return false
+	for movel in tudo["moveis_de_rua"]:
+		var r := Rect2((movel["pos"] as Vector2) - (movel["tamanho"] as Vector2) / 2.0, movel["tamanho"])
+		if r.grow(20.0).intersects(corpo):
+			return false
+	return true

@@ -3,22 +3,19 @@ extends Control
 ## escala e a distancia de casa. Ver `rua/retratar_mapa.gd`.
 ##
 ## Desenha em **coordenada de tela** e nao de mundo. Com a camera afastada umas
-## 30 vezes para o mundo caber, texto desenhado no mundo sairia com meio pixel
+## 20 vezes para o mundo caber, texto desenhado no mundo sairia com meio pixel
 ## de altura - entao aqui se converte a posicao de cada lugar pela transformada
 ## do canvas e escreve por cima, em tamanho de leitura.
 
 const Mapa := preload("res://rua/mapa.gd")
-const Vias := preload("res://rua/vias.gd")
 
 const COR_DO_NOME := Color("f0e8d8")
 const COR_DA_SOMBRA := Color(0.0, 0.0, 0.0, 0.75)
-const COR_DA_MATA := Color("9db28f")
+const COR_DA_ZONA := Color("9db28f")
 const COR_DO_TITULO := Color("e8b061")
 const COR_DA_ESCALA := Color("d8cbb6")
-const COR_DO_NOME_DA_VIA := Color("b8ab8e")
 
-## Onde fica a porta de casa, para medir a distancia de cada lugar. Sai do
-## mapa, e nao do node: a legenda nao depende da cena estar montada.
+## Onde fica a porta de casa, para medir a distancia de cada lugar.
 var _de_casa := Vector2.ZERO
 
 func _ready() -> void:
@@ -37,54 +34,23 @@ func _draw() -> void:
 
 	_desenhar_titulo(fonte)
 
-	for lugar in Mapa.LUGARES:
-		var r: Rect2 = lugar["rect"]
-		var na_tela: Vector2 = transformada * r.get_center()
-		var e_mata: bool = lugar["tipo"] == "mata"
-		var corpo := 15 if e_mata else 18
-		var cor := COR_DA_MATA if e_mata else COR_DO_NOME
-		var nome: String = lugar["nome"]
-
-		# Retangulo do lugar, para o nome nao ficar solto no verde.
-		if not e_mata:
-			var caixa := Rect2(transformada * r.position, r.size * transformada.get_scale())
-			draw_rect(caixa, Color(COR_DO_NOME, 0.14), false, 1.0)
-
-		_escrever_centrado(fonte, nome, na_tela, corpo, cor)
-		if not e_mata:
-			var longe := _de_casa.distance_to(r.get_center()) / 40.0
-			_escrever_centrado(fonte, "%.0f m" % longe,
-				na_tela + Vector2(0.0, 17.0), 13, Color(cor, 0.7))
-
-	_desenhar_nomes_das_vias(fonte, transformada)
-
-	# O rio e a ponte nao sao lugares, mas sao o que parte o mapa em dois.
-	_escrever_centrado(fonte, "rio", transformada * (Mapa.RIO.get_center()
-		+ Vector2(0.0, -9000.0)), 16, COR_DA_MATA)
-	_escrever_centrado(fonte, "ponte", transformada * Mapa.PONTE.get_center()
-		+ Vector2(0.0, -22.0), 15, COR_DO_TITULO)
-	_escrever_centrado(fonte, "rodovia", transformada * (Mapa.RODOVIA.get_center()
-		+ Vector2(-20000.0, 0.0)) + Vector2(0.0, -20.0), 14, Color(COR_DA_ESCALA, 0.75))
+	# Zonas primeiro e predios depois, para o nome do predio ficar por cima.
+	for passada in ["zona", "predio"]:
+		for lugar in Mapa.lugares():
+			var e_zona: bool = lugar["tipo"] == "zona"
+			if (passada == "zona") != e_zona:
+				continue
+			var r: Rect2 = lugar["rect"]
+			var na_tela: Vector2 = transformada * r.get_center()
+			var corpo := 15 if e_zona else 11
+			var cor := COR_DA_ZONA if e_zona else COR_DO_NOME
+			_escrever_centrado(fonte, lugar["nome"], na_tela, corpo, cor)
+			if not e_zona:
+				var longe := _de_casa.distance_to(r.get_center()) / 40.0
+				_escrever_centrado(fonte, "%.0f m" % longe,
+					na_tela + Vector2(0.0, 12.0), 9, Color(cor, 0.7))
 
 	_desenhar_escala(fonte, transformada)
-
-## O nome de cada via reta ao longo do proprio eixo (17/09/2026, P15 -
-## achado na revisao adversarial: o mapa geral so rotulava LUGAR, nenhuma
-## rua tinha nome escrito, e "parece PZ?" cobra rua nomeada tanto quanto
-## quadra e laco). So via reta - a poligonal (`rural`/`terra`) e uma curva
-## inteira, um rotulo num ponto so nao ajudaria a ler ela. Pula a rodovia,
-## que ja tem o proprio rotulo dedicado mais abaixo.
-func _desenhar_nomes_das_vias(fonte: Font, transformada: Transform2D) -> void:
-	for via in Mapa.mundo()["vias"]:
-		var dado: Dictionary = via
-		if not Vias.e_reta(dado) or dado["nome"] == "rodovia":
-			continue
-		var pontas := Vias.pontas_de(dado)
-		if pontas.size() < 2:
-			continue
-		var meio: Vector2 = (pontas[0] + pontas[1]) / 2.0
-		_escrever_centrado(fonte, dado["nome"], transformada * meio, 11,
-			Color(COR_DO_NOME_DA_VIA, 0.8))
 
 func _desenhar_titulo(fonte: Font) -> void:
 	var titulo := "Você me amaria se eu fosse um zumbi?  —  mapa da rua"
@@ -93,17 +59,17 @@ func _desenhar_titulo(fonte: Font) -> void:
 	draw_string(fonte, Vector2(22.0, 34.0), titulo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 22, COR_DO_TITULO)
 
-	var abaixo := "%.2f km x %.2f km  ·  greybox  ·  distâncias a pé desde a porta de casa" % [
-		Mapa.MUNDO.size.x / 40000.0, Mapa.MUNDO.size.y / 40000.0]
+	var abaixo := "%.0f m x %.0f m  ·  greybox traçado de design/urussanga.png  ·  distâncias a pé desde a porta de casa" % [
+		Mapa.MUNDO.size.x / 40.0, Mapa.MUNDO.size.y / 40.0]
 	draw_string(fonte, Vector2(23.0, 58.0), abaixo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DA_SOMBRA)
 	draw_string(fonte, Vector2(22.0, 57.0), abaixo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(COR_DA_ESCALA, 0.85))
 
-## Barra de escala de 200 m, no canto. Sem ela a figura nao diz nada sobre
+## Barra de escala de 100 m, no canto. Sem ela a figura nao diz nada sobre
 ## tamanho, e tamanho e justamente o assunto deste mapa.
 func _desenhar_escala(fonte: Font, transformada: Transform2D) -> void:
-	var metros := 200.0
+	var metros := 100.0
 	var largura := metros * 40.0 * transformada.get_scale().x
 	var canto := Vector2(24.0, size.y - 34.0)
 

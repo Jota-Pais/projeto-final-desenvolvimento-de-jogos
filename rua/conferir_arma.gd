@@ -1,14 +1,15 @@
 extends Node
-## Ferramenta. **Rode esta cena (F6) depois de mexer na pistola, na municao ou
-## no loot da delegacia.**
+## Ferramenta. **Rode esta cena (F6) depois de mexer na Beretta, nas balas ou
+## no que sai dos moveis.**
 ##
 ## Confere as seis coisas que fazem a arma **servir** a core mechanic em vez de
 ## competir com ela:
 ##
-##  1. voce **nao comeca com ela** - a pistola esta na armaria da delegacia, e e
-##     a unica do mapa;
-##  2. pistola e municao sao **equipamento e nao loot**: nao ocupam vaga na
-##     mochila e nao se perdem no dia que deu errado;
+##  1. voce **comeca com ela** (30/09/2026): a Beretta nao esta em movel nenhum
+##     do mapa, a partida abre com um pente, e as balas estao espalhadas por
+##     muitos moveis;
+##  2. balas sao **equipamento e nao loot**: vao para o cinto, nao ocupam vaga
+##     na mochila e nao se perdem no dia que deu errado;
 ##  3. **sem municao nao atira**, e atirar gasta;
 ##  4. o tiro mata de uma vez, e **parede corta o tiro**;
 ##  5. o tiro **chama a horda** num raio maior que o chamado de um zumbi;
@@ -26,11 +27,6 @@ const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
 
 var _falhas := 0
-
-## Problema de DESENHO, nao de codigo - mesma categoria do conferir_fim. Nao
-## reprova a rodada, mas aparece no fim, porque e o tipo de coisa que embarca
-## calada.
-var _atencoes := 0
 
 var _quadros := 0
 var _feito := false
@@ -70,8 +66,8 @@ func _physics_process(_delta: float) -> void:
 
 	match _fase:
 		0:
-			_nao_se_comeca_com_ela()
-			_e_equipamento_nao_loot()
+			_comeca_com_ela()
+			_balas_sao_equipamento()
 			_sem_municao_nao_atira()
 			_passar()
 		1: _preparar_o_tiro(); _passar()
@@ -88,8 +84,6 @@ func _physics_process(_delta: float) -> void:
 			_feito = true
 			_limpar()
 			print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
-			if _atencoes > 0:
-				print("%d ponto(s) de ATENCAO - desenho, nao codigo" % _atencoes)
 			get_tree().quit(0 if _falhas == 0 else 1)
 	if _fase in [2, 3, 6, 7]:
 		_passar()
@@ -101,16 +95,12 @@ func _erro(texto: String) -> void:
 	_falhas += 1
 	print("  FALHA: " + texto)
 
-func _atencao(texto: String) -> void:
-	_atencoes += 1
-	print("  ATENCAO: " + texto)
-
+## O estado de comeco de partida, que e o que o Travessia tem ao nascer.
 func _limpar() -> void:
-	Travessia.tem_pistola = false
-	Travessia.municao = 0
-	Travessia.mochila.clear()
+	Travessia.municao = Travessia.BALAS_DE_COMECO
 	Travessia.documentos.clear()
 	Travessia.moveis_vazios.clear()
+	Travessia.documentos_perdidos = 0
 	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
 
 func _moveis() -> Array[Node]:
@@ -120,84 +110,79 @@ func _moveis() -> Array[Node]:
 			lista.append(filho)
 	return lista
 
-# --- 1. voce nao comeca com ela ---------------------------------------------
+func _caixinhas_em(movel: Node) -> int:
+	var n := 0
+	for achado in movel.achados:
+		if achado == Construcao.MUNICAO:
+			n += 1
+	return n
 
-func _nao_se_comeca_com_ela() -> void:
-	print("\n1. onde esta a pistola")
-	# O `_limpar()` do _ready ja zerou o equipamento, entao aqui se pergunta a
-	# CONSTANTE e nao o estado: e a facilidade de teste que precisa ser vista.
-	if Travessia.COMECA_ARMADO:
-		_atencao("COMECA_ARMADO esta ligado: o jogo comeca com a pistola e %d balas."
-			% Travessia.BALAS_DE_COMECO
-			+ " E facilidade de teste, contradiz a progressao e tem que ser"
-			+ " desligada antes de entregar (Travessia.COMECA_ARMADO = false)")
+# --- 1. voce comeca com ela -------------------------------------------------
 
-	var onde: Array[String] = []
-	var quantas := 0
-	for movel in _moveis():
-		for achado in movel.achados:
-			if achado != Construcao.PISTOLA:
-				continue
-			quantas += 1
-			onde.append("%s, na %s" % [Mapa.lugar_em(movel.position), movel.rotulo])
-
-	if quantas == 0:
-		_erro("nao ha pistola nenhuma no mapa - a promessa de luta do High Concept nao existe")
-	elif quantas > 1:
-		_erro("ha %d pistolas no mapa; devia ser uma so" % quantas)
+func _comeca_com_ela() -> void:
+	print("\n1. voce comeca com ela")
+	if Travessia.BALAS_DE_COMECO <= 0:
+		_erro("a partida comeca com %d balas - a arma nasce inutil" % Travessia.BALAS_DE_COMECO)
 	else:
-		print("  uma pistola, em %s" % onde[0])
-		var longe := (_rua.get_node("EntradaDeCasa") as Node2D).position
-		for movel in _moveis():
-			if movel.achados.has(Construcao.PISTOLA):
-				print("  a %.0f m de casa - achar a arma e recompensa de vasculhar"
-					% (longe.distance_to(movel.position) / 40.0))
+		print("  a partida abre com a Beretta e %d balas" % Travessia.BALAS_DE_COMECO)
 
-	# E municao em mais de um lugar: com a armaria como fonte unica, um dia
-	# perdido deixaria a arma inutil para sempre.
-	var com_municao := 0
+	# A HUD mostra a arma desde o primeiro quadro, sem precisar achar nada.
+	var hud := CENA_DA_HUD.instantiate()
+	add_child(hud)
+	hud._process(0.0)
+	var esquerda: String = (hud.get_node("Esquerda") as Label).text
+	if not esquerda.contains("Beretta"):
+		_erro("a HUD nao mostra a Beretta desde o comeco: \"%s\"" % esquerda)
+	else:
+		print("  a HUD diz \"%s\"" % esquerda)
+	hud.free()
+
+	# Nenhum movel tem a arma, nem nada que nao seja bala ou documento - o loot
+	# generico saiu do jogo em 30/09/2026.
+	var com_balas := 0
+	var estranhos := {}
 	for movel in _moveis():
-		if movel.achados.has(Construcao.MUNICAO):
-			com_municao += 1
-	print("  municao em %d moveis do mapa" % com_municao)
-	if com_municao < 2:
-		_erro("a municao tem menos de duas fontes no mapa")
+		if _caixinhas_em(movel) > 0:
+			com_balas += 1
+		for achado in movel.achados:
+			if achado != Construcao.MUNICAO and not Construcao.e_documento(achado):
+				estranhos[achado] = true
+	if not estranhos.is_empty():
+		_erro("ha item que nao e bala nem documento no mapa: %s" % ", ".join(estranhos.keys()))
+	print("  balas em %d de %d moveis" % [com_balas, _moveis().size()])
+	if com_balas < 2:
+		_erro("as balas tem menos de duas fontes no mapa")
 
-# --- 2. equipamento e nao loot ----------------------------------------------
+# --- 2. balas sao equipamento, nao loot ------------------------------------
 
-func _e_equipamento_nao_loot() -> void:
-	print("\n2. equipamento e nao loot")
-	var armaria: Node = null
+func _balas_sao_equipamento() -> void:
+	print("\n2. balas sao equipamento, nao loot")
+	var com_balas: Node = null
 	for movel in _moveis():
-		if movel.achados.has(Construcao.PISTOLA):
-			armaria = movel
+		if _caixinhas_em(movel) > 0:
+			com_balas = movel
 			break
-	if armaria == null:
+	if com_balas == null:
 		return
 
+	var caixinhas := _caixinhas_em(com_balas)
+	var balas_antes := Travessia.municao
 	var vagas_antes := _mochila.quantos()
-	armaria._esvaziar()
+	com_balas._esvaziar()
 
-	if not Travessia.tem_pistola:
-		_erro("vasculhar a armaria nao deu a pistola")
-	elif _mochila.itens.has(Construcao.PISTOLA):
-		_erro("a pistola foi para a mochila e ocupou vaga")
+	var esperado := balas_antes + caixinhas * Construcao.MUNICAO_POR_ACHADO
+	if Travessia.municao != esperado:
+		_erro("vasculhar %d caixinha(s) levou as balas de %d para %d, esperado %d"
+			% [caixinhas, balas_antes, Travessia.municao, esperado])
+	elif _mochila.quantos() != vagas_antes:
+		_erro("as balas foram para a mochila")
+	elif not com_balas.achados.is_empty():
+		_erro("ficou coisa no movel depois do vasculho: %s" % ", ".join(com_balas.achados))
 	else:
-		print("  a pistola foi para o cinto, e a mochila continua em %d/%d"
-			% [_mochila.quantos(), _mochila.CAPACIDADE])
+		print("  %s: %d caixinha(s) viraram %d balas no cinto, e a mochila continua com %d"
+			% [com_balas.rotulo, caixinhas, caixinhas * Construcao.MUNICAO_POR_ACHADO, _mochila.quantos()])
 
-	# A armaria da documento e loot comum, e esses ocupam vaga. **O que nao pode
-	# e a pistola ou a municao ocuparem** - e so isso que se confere aqui. A
-	# versao anterior contava vagas e reprovava quando a armaria sorteou dois
-	# itens, o que era certo do jogo e errado do teste.
-	if _mochila.itens.has(Construcao.MUNICAO) or _mochila.documentos.has(Construcao.PISTOLA):
-		_erro("pistola ou municao foram para a mochila em vez do cinto")
-	elif Travessia.municao <= 0:
-		_erro("a armaria nao deu municao junto com a pistola")
-	else:
-		print("  a armaria deu %d balas, e elas nao ocuparam vaga" % Travessia.municao)
-
-	# E o dia que deu errado nao tira a arma.
+	# E o dia que deu errado nao tira as balas.
 	Travessia.municao = 12
 	var cena_atual := get_tree().current_scene
 	get_tree().current_scene = null
@@ -207,16 +192,16 @@ func _e_equipamento_nao_loot() -> void:
 		if filho.name == "Casa":
 			filho.free()
 
-	if not Travessia.tem_pistola or Travessia.municao != 12:
-		_erro("o dia que deu errado tirou a arma - o mapa nao repoe, isso e beco sem saida")
+	if Travessia.municao != 12:
+		_erro("o dia que deu errado mexeu nas balas (%d) - o mapa nao repoe, isso e beco sem saida"
+			% Travessia.municao)
 	else:
-		print("  morrer na rua perdeu a mochila e **nao** a arma")
+		print("  amanhecer na rua perdeu a mochila e **nao** as balas")
 
 # --- 3. sem municao nao atira -----------------------------------------------
 
 func _sem_municao_nao_atira() -> void:
 	print("\n3. a municao")
-	Travessia.tem_pistola = true
 	Travessia.municao = 0
 	_pistola._espera = 0.0
 	_pistola._atirar()
@@ -231,19 +216,17 @@ func _sem_municao_nao_atira() -> void:
 	if Travessia.municao != 2:
 		_erro("um tiro gastou %d balas" % (3 - Travessia.municao))
 	else:
-		print("  um tiro gasta uma bala; %d balas por achado de municao"
+		print("  um tiro gasta uma bala; %d balas por caixinha achada"
 			% Construcao.MUNICAO_POR_ACHADO)
 
 # --- 4. o tiro mata, e a parede corta ---------------------------------------
 
 var _alvo: Node2D
 
-## Os dois **no mesmo quarto**, separados na horizontal: o quarto tem 610 px de
-## largura e uns 230 de altura, e afastar na vertical punha o jogador do outro
-## lado da parede.
+## Os dois **no mesmo quarto**, separados na horizontal: afastar na vertical
+## poria o jogador do outro lado da parede.
 func _preparar_o_tiro() -> void:
 	print("\n4. o tiro")
-	Travessia.tem_pistola = true
 	Travessia.municao = 9
 	var casa := _uma_casa()
 	if casa.is_empty():
@@ -263,8 +246,7 @@ func _conferir_o_tiro() -> void:
 	_pistola._atirar()
 	# `is_queued_for_deletion` e nao `is_instance_valid`: o zumbi morre com
 	# queue_free(), que so libera no fim do quadro - dentro do mesmo quadro ele
-	# continua valido. A primeira versao deste teste conferia is_instance_valid e
-	# acusava a pistola de nao matar quando ela matava.
+	# continua valido.
 	if not _alvo.is_queued_for_deletion():
 		_erro("o tiro na mira, a 220 px e sem parede, nao matou")
 		_alvo.queue_free()
@@ -291,11 +273,13 @@ func _conferir_a_parede() -> void:
 		print("  atras de duas paredes: o tiro para na primeira")
 		_alvo.queue_free()
 
+## A casa de teste: a mais perto de onde o jogador nasce com a frente livre e
+## com pelo menos 560 px de fachada - o tiro da fase 4 e dado de 220 px de
+## lado dentro da sala, e numa casa estreita o jogador nasceria dentro da
+## parede.
 func _uma_casa() -> Dictionary:
-	for construcao in Mapa.mundo()["construcoes"]:
-		if construcao["tipo"] == "casa" and not construcao.get("sua", false):
-			return construcao
-	return {}
+	var arvores: Array = _cenario._arvores
+	return Mapa.construcao_com_a_frente_livre("casa", Mapa.onde_o_jogador_nasce(), 340.0, 560.0, arvores)
 
 func _um_zumbi_em(onde: Vector2) -> Node2D:
 	var zumbi = _cenario._criar_zumbi(onde)
@@ -318,12 +302,10 @@ func _o_tiro_chama_a_horda() -> void:
 		_erro("o estrondo (%.0f) nao alcanca mais longe que o chamado de um zumbi (700)"
 			% Pistola.ALCANCE_DO_ESTRONDO)
 
-	# O x sai da mansao (17/09/2026, P12) - trecho aberto da rodovia por
-	# baixo dela, longe de bairro/cidade/posto, sem predio nem bosque no
-	# meio dos dois zumbis. Nao e a mansao em si (o zumbi fica ao SUL do
-	# muro, na faixa da propria rodovia).
-	var x_aberto: float = (Mapa.lugar("mansão murada")["rect"] as Rect2).get_center().x
-	_jogador.global_position = Vector2(x_aberto, Mapa.RODOVIA.get_center().y)
+	# No meio da praca: o estrondo e so um raio, nao precisa de linha de visao,
+	# mas o jogador e os dois zumbis tem que nascer em chao livre, e a praca e
+	# o maior gramado aberto do mapa.
+	_jogador.global_position = (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
 	var perto := _um_zumbi_em(_jogador.global_position + Vector2(0.0, 1200.0))
 	var longe := _um_zumbi_em(_jogador.global_position
 		+ Vector2(0.0, Pistola.ALCANCE_DO_ESTRONDO + 900.0))
