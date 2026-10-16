@@ -196,6 +196,40 @@ function rotular(classe, W, H, aceita) {
   return { rotulo, componentes };
 }
 
+/**
+ * O chão continua por baixo dos veículos (15/10/2026, João: "sempre onde tem
+ * um carro parado tem grama em volta mesmo que não faça sentido"): o azul do
+ * carro no desenho abria um furo no pavimento, e o furo virava grama. Devolve
+ * uma cópia em que cada pixel de veículo recebe a classe mais comum entre os
+ * vizinhos que não são veículo, de fora para dentro, até não sobrar nenhum.
+ */
+function preencherVeiculos(classe, W, H) {
+  const chao = Int8Array.from(classe);
+  const veiculo = INDICE.veiculo;
+  for (let rodada = 0; rodada < 64; rodada++) {
+    const trocas = [];
+    for (let i = 0; i < W * H; i++) {
+      if (chao[i] !== veiculo) continue;
+      const x = i % W, y = (i - x) / W;
+      const votos = new Map();
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const c = chao[ny * W + nx];
+        if (c < 0 || c === veiculo || DE_PREDIO.has(CLASSES[c])) continue;
+        votos.set(c, (votos.get(c) || 0) + 1);
+      }
+      let melhor = -1, mais = 0;
+      for (const [c, n] of votos) if (n > mais) { mais = n; melhor = c; }
+      if (melhor >= 0) trocas.push([i, melhor]);
+    }
+    if (trocas.length === 0) break;
+    for (const [i, c] of trocas) chao[i] = c;
+  }
+  return chao;
+}
+
 /** Onde o 3x3 centrado no pixel é inteiro da classe dele. */
 function nucleoDe(classe, W, H) {
   const nucleo = new Uint8Array(W * H);
@@ -727,8 +761,15 @@ function principal() {
 
   const distAsfalto = distanciaAte(classe, W, H, 'asfalto');
 
-  const { componentes } = rotular(classe, W, H, () => true);
-  console.error(`${componentes.length} componentes`);
+  // Veículos e prédios saem da classificação como está; o chão sai de uma
+  // cópia em que o veículo não existe (ver preencherVeiculos), para o
+  // pavimento passar inteiro por baixo do carro.
+  const { componentes: componentesComoEsta } = rotular(classe, W, H, () => true);
+  const classeChao = preencherVeiculos(classe, W, H);
+  const { componentes: componentesDoChao } = rotular(classeChao, W, H, () => true);
+  const eDeCima = (c) => c.classe === 'veiculo' || DE_PREDIO.has(c.classe);
+  const componentes = componentesComoEsta.filter(eDeCima).concat(componentesDoChao.filter((c) => !eDeCima(c)));
+  console.error(`${componentes.length} componentes (${componentesComoEsta.length} como está, chão sem veículo: ${componentesDoChao.length})`);
 
   const poligonos = [], predios = [], obstaculos = [], veiculos = [];
   let maiorGrama = null;
@@ -739,6 +780,15 @@ function principal() {
   }
 
   const TOLERANCIA_DO_TRACO = 0.75;
+  // O chão feito pelo homem (calçada, rua, gramado de lote) sai com traço
+  // reto: o desenho é pixel a pixel e a diagonal vira escada de 1 px, que a
+  // tolerância de 0,75 não alisa (15/10/2026, João: "as ruas na diagonal
+  // estão todas tortas"). A tolerância maior come só a escada e as
+  // lasquinhas; esquinas de verdade ficam, porque se afastam muito da corda.
+  // Mata, terra, milho, água e horta continuam no traço fino: são
+  // naturais, e no jogo viram tile, não polígono.
+  const TOLERANCIA_DO_TRACO_RETO = 1.6;
+  const TRACO_RETO = new Set(['pavimento', 'asfalto', 'grama']);
   const LADO_MINIMO_DE_PREDIO = 9;      // px do desenho: abaixo disso é bloco sólido, não prédio
   const AREA_MINIMA_DE_PREDIO = 110;
 
@@ -750,8 +800,9 @@ function principal() {
       .sort((a, b) => b.area - a.area);
     if (lacos.length === 0) continue;
     const externo = lacos[0].pontos;
-    const furos = lacos.slice(1).filter((l) => l.area >= 6).map((l) => simplificarLaco(l.pontos, TOLERANCIA_DO_TRACO));
-    const pontos = simplificarLaco(externo, TOLERANCIA_DO_TRACO);
+    const tolerancia = TRACO_RETO.has(comp.classe) ? TOLERANCIA_DO_TRACO_RETO : TOLERANCIA_DO_TRACO;
+    const furos = lacos.slice(1).filter((l) => l.area >= 6).map((l) => simplificarLaco(l.pontos, tolerancia));
+    const pontos = simplificarLaco(externo, tolerancia);
     const registro = {
       classe: comp.classe, area, bbox: [comp.bbox.x, comp.bbox.y, comp.bbox.w, comp.bbox.h],
       centro: comp.centroide.map((v) => +v.toFixed(1)), pontos, furos,
