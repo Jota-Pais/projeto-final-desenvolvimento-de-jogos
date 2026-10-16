@@ -282,6 +282,9 @@ function apagarFinos(classe, W, H) {
   let apagados = 0;
   for (const comp of componentes) {
     if (comp.pixels.some((i) => nucleo[i])) continue;
+    // Veiculo nao e traco fino: a caminhonete da fazenda tem 4 px no desenho
+    // e nao cabe um nucleo 3x3 nela (15/10/2026).
+    if (comp.classe === 'veiculo') continue;
     for (const i of comp.pixels) classe[i] = INCERTO;
     apagados++;
   }
@@ -809,18 +812,37 @@ function principal() {
     };
 
     if (comp.classe === 'veiculo') {
-      if (area < 6) continue;
+      // 3 px bastam (15/10/2026): as caminhonetes da fazenda e do galpao do
+      // velho louco tem 4 ou 5 px no desenho e nao passavam em 6.
+      if (area < 3) continue;
       const comprido = Math.max(comp.bbox.w, comp.bbox.h) >= 15;
       veiculos.push({ pos: registro.centro, bbox: registro.bbox, deitado: comp.bbox.w >= comp.bbox.h, comprido });
       continue;
     }
     if (DE_PREDIO.has(comp.classe)) {
+      const ondeNoPng = Math.round(comp.centroide[0] + rec.x) + ',' + Math.round(comp.centroide[1] + rec.y);
       if (Math.min(comp.bbox.w, comp.bbox.h) < LADO_MINIMO_DE_PREDIO || area < AREA_MINIMA_DE_PREDIO) {
+        console.error('bloco solido em ' + ondeNoPng + ' (' + comp.bbox.w + 'x' + comp.bbox.h + ', ' + area + ' px): pequeno demais para predio');
         obstaculos.push({ classe: comp.classe, rect: registro.bbox, centro: registro.centro });
         continue;
       }
-      const partes = retangulosDoPredio(comp, W, externo, { ladoMinimo: LADO_MINIMO_DE_PREDIO, ladoMinimoDoAnexo: 11, cobertura: 0.85, maximo: 4 });
+      // Mancha pequena e torta (a barraca do vendedor de melancia, a segunda
+      // casa abandonada) aceita um retangulo que cubra menos: e um comodo so,
+      // e o erro de um canto nao aparece (15/10/2026).
+      // O lado minimo nao afrouxa nem para a mancha pequena: 9 px sao os 200
+      // de frente que o jogo exige de um predio (conferir_mapa reprova menos).
+      const pequena = area < 200;
+      let partes = retangulosDoPredio(comp, W, externo, {
+        ladoMinimo: LADO_MINIMO_DE_PREDIO, ladoMinimoDoAnexo: 11, cobertura: pequena ? 0.6 : 0.85, maximo: 4,
+      });
+      if (partes.rects.length === 0 && pequena && area / (comp.bbox.w * comp.bbox.h) >= 0.6) {
+        // Mancha pequena e torta que enche a propria caixa (a barraca do
+        // vendedor de melancia, desenhada inclinada): a caixa serve de predio
+        // de um comodo so - melhor que virar bloco sem nome (15/10/2026).
+        partes = { modo: 'caixa', graus: 0, rects: [{ x: comp.bbox.x, y: comp.bbox.y, w: comp.bbox.w, h: comp.bbox.h }] };
+      }
       if (partes.rects.length === 0) {
+        console.error('bloco solido em ' + ondeNoPng + ' (' + comp.bbox.w + 'x' + comp.bbox.h + ', ' + area + ' px): nenhum retangulo cobre a mancha');
         obstaculos.push({ classe: comp.classe, rect: registro.bbox, centro: registro.centro });
         continue;
       }

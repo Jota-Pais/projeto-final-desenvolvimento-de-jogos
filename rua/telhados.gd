@@ -46,6 +46,9 @@ const TEXTURA_POR_CLASSE := {
 	"cinza": preload("res://rua/arte/predios/laje.png"),
 }
 const TEXTURA_SUA := preload("res://rua/arte/predios/telha.png")
+## A casa queimada (Joao, 15/10/2026, no desenho: "queimadas melhor ainda"):
+## telha carbonizada, com buracos. Marcada por `queimada` no rotulo (mapa.gd).
+const TEXTURA_QUEIMADA := preload("res://rua/arte/predios/telha-queimada.png")
 ## Porta e janela, vistas de cima, na linha da fachada: a porta onde a marca
 ## sempre esteve, e as janelas a cada ESPACO_DAS_JANELAS px ao longo da
 ## fachada, pulando a porta (Joao, 14/10: "tem que ter janelas nos predios").
@@ -96,6 +99,8 @@ func _desenhar(construcao: Dictionary) -> void:
 	# (hospital, escola, prisao...) continua lendo como "importante" de longe.
 	var classe: String = construcao.get("classe", "")
 	var textura: Texture2D = TEXTURA_SUA if sua else TEXTURA_POR_CLASSE.get(classe, TEXTURA_POR_CLASSE["marrom"])
+	if construcao.get("queimada", false):
+		textura = TEXTURA_QUEIMADA
 	draw_texture_rect(textura, r, true)
 
 	# Duas aguas e beiral, para o telhado nao ser um retangulo chapado e dar

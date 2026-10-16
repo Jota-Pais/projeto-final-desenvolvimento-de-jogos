@@ -167,3 +167,43 @@ class Tela {
   for (let y = 0; y < a; y++) { t.set(0, y, hex('#2f2a25')); t.set(l - 1, y, hex('#2f2a25')); }
   t.png(path.join(pastaObjetos, 'caixa.png'));
 }
+
+// --- queimados (15/10/2026): telha, parede e piso carbonizados, para a casa
+// abandonada da estrada ("queimadas melhor ainda", escreveu o Joao no
+// desenho). Marcada por `queimada` no rotulo (rua/mapa.gd).
+{
+  const r = rng(6); const t = new Tela(64, 64, hex('#2b2826'));
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
+    const fila = Math.floor(y / 8); const dentro = y % 8;
+    const desloc = fila % 2 === 0 ? 0 : 8; const col = ((x + desloc) % 16);
+    let cor = hex('#2f2b28');
+    if (dentro === 0) cor = hex('#1e1c1a');
+    else if (dentro === 1) cor = hex('#383330');
+    else if (dentro >= 6) cor = hex('#282523');
+    if (col === 0) cor = [cor[0] - 8, cor[1] - 8, cor[2] - 8];
+    t.set(x, y, cor);
+  }
+  t.ruido(r, 5);
+  for (let i = 0; i < 5; i++) t.mancha(Math.floor(r() * 64), Math.floor(r() * 64), 5 + Math.floor(r() * 7), 0.35); // buracos no telhado
+  for (let i = 0; i < 3; i++) t.risco(r, Math.floor(r() * 64), Math.floor(r() * 64), 10 + Math.floor(r() * 10), hex('#141211'));
+  t.png(path.join(pasta, 'telha-queimada.png'));
+}
+{
+  const r = rng(7); const t = new Tela(64, 64, hex('#3a3734'));
+  t.ruido(r, 6);
+  for (let i = 0; i < 8; i++) { // linguas de fuligem subindo
+    const x = Math.floor(r() * 64), y = Math.floor(r() * 64), alt = 6 + Math.floor(r() * 14);
+    for (let k = 0; k < alt; k++) for (let dx = -2; dx <= 2; dx++) {
+      const c = t.get(x + dx, y - k); const f = (1 - k / alt) * (1 - Math.abs(dx) / 3);
+      t.set(x + dx, y - k, [c[0] * (1 - 0.6 * f), c[1] * (1 - 0.6 * f), c[2] * (1 - 0.6 * f)]);
+    }
+  }
+  t.png(path.join(pasta, 'parede-queimada.png'));
+}
+{
+  const r = rng(8); const t = new Tela(64, 64, hex('#2e2b28'));
+  t.ruido(r, 5);
+  for (let i = 0; i < 6; i++) t.mancha(Math.floor(r() * 64), Math.floor(r() * 64), 8 + Math.floor(r() * 8), 0.3);
+  for (let k = 0; k < 64; k++) { t.set(k, 0, hex('#262321')); t.set(k, 32, hex('#262321')); t.set(0, k, hex('#262321')); t.set(32, k, hex('#262321')); }
+  t.png(path.join(pasta, 'piso-queimado.png'));
+}

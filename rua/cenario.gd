@@ -147,6 +147,8 @@ const ARVORES := [
 ]
 ## A seca sai uma vez a cada tantas: bosque morto inteiro e outro clima.
 const UMA_SECA_A_CADA := 3
+## Quanto da copa e tronco, para a colisao (ver _plantar_arvores).
+const TRONCO := 0.3
 ## Os desenhos dos moveis ficam em rua/arte/objetos/<tipo>.png; o movel em
 ## pe (carro atravessado numa rua norte-sul) procura <tipo>-em-pe.png antes de
 ## girar o deitado. Carregados uma vez por tipo, aqui.
@@ -164,6 +166,9 @@ const COR_PAREDE := Color("6b6154")
 ## quente, para continuar diferente das outras.
 const TEXTURA_PISO := preload("res://rua/arte/predios/piso.png")
 const TEXTURA_PAREDE := preload("res://rua/arte/predios/parede.png")
+## A casa queimada (15/10/2026; `queimada` no rotulo, rua/mapa.gd).
+const TEXTURA_PISO_QUEIMADO := preload("res://rua/arte/predios/piso-queimado.png")
+const TEXTURA_PAREDE_QUEIMADA := preload("res://rua/arte/predios/parede-queimada.png")
 const COR_PISO_SEU_TINTA := Color(1.08, 0.98, 0.86)
 const COR_CERCA := Color("5a5347")
 ## Os blocos solidos (manchas marrons do desenho pequenas demais para virar
@@ -385,11 +390,15 @@ func _draw() -> void:
 		# desenhada por regra em design/desenhar_texturas.js. A sua casa tem o
 		# piso um tom mais quente, como a cor chapada tinha.
 		var tom := COR_PISO_SEU_TINTA if construcao.get("sua", false) else Color.WHITE
-		draw_texture_rect(TEXTURA_PISO, Construcao.interior_de(construcao), true, tom)
+		# A casa queimada (15/10/2026) tem piso e parede carbonizados.
+		var queimada: bool = construcao.get("queimada", false)
+		var piso: Texture2D = TEXTURA_PISO_QUEIMADO if queimada else TEXTURA_PISO
+		var parede_textura: Texture2D = TEXTURA_PAREDE_QUEIMADA if queimada else TEXTURA_PAREDE
+		draw_texture_rect(piso, Construcao.interior_de(construcao), true, tom)
 		for parede in Construcao.paredes_externas(construcao):
-			draw_texture_rect(TEXTURA_PAREDE, parede, true)
+			draw_texture_rect(parede_textura, parede, true)
 		for parede in Construcao.paredes_internas(construcao):
-			draw_texture_rect(TEXTURA_PAREDE, parede, true)
+			draw_texture_rect(parede_textura, parede, true)
 
 	for cerca in mundo["cercas"]:
 		draw_rect(cerca, COR_CERCA)
@@ -844,7 +853,13 @@ func _plantar_arvores() -> void:
 				continue
 			if not _livre_para_arvore(area.grow(30.0)):
 				continue
-			_adicionar_forma(corpo, area)
+			# So o TRONCO bloqueia (15/10/2026): a copa e desenho, e se anda por
+			# baixo dela. O tronco e um quadrado de TRONCO da copa, encostado
+			# na borda de baixo, onde o sprite planta o pe.
+			var tronco := lado * TRONCO
+			_adicionar_forma(corpo, Rect2(
+				Vector2(area.get_center().x - tronco / 2.0, area.end.y - tronco),
+				Vector2(tronco, tronco)))
 			_arvores.append(area)
 			_criar_arvore(area)
 			plantadas += 1

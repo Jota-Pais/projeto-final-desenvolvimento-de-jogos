@@ -51,13 +51,16 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## Versão 3 (15/10/2026): os rótulos lidos nos prints do Canva mudaram o
 ## tipo de dois prédios (Conveniência virou comércio, Casa abandonada) e um
 ## veículo virou trator - a lista de móveis mudou de propósito.
-const VERSAO_DO_MAPA := 3
+## Versão 4 (15/10/2026, mais tarde): o traçador passou a achar os veículos
+## miúdos (duas caminhonetes e mais cinco carros) e as manchas pequenas e
+## tortas (a segunda casa abandonada e o vendedor de melancia viraram prédio).
+const VERSAO_DO_MAPA := 4
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "4a4081ea"
+const IMPRESSAO_ESPERADA := "19256eac"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
@@ -75,9 +78,9 @@ const IMPRESSAO_ESPERADA := "4a4081ea"
 ## ⬜ **Três decisões aqui são provisórias, à espera do João/da equipe**
 ## (respostas dele em 15/10/2026 entre parênteses):
 ##
-##  - **qual casa é a sua.** O desenho não marca nenhuma; está numa casa sem
-##    nome do miolo (entre a Prefeitura, a Praça e as Lojas), por ser central
-##    ("ainda vou decidir");
+##  - ~~qual casa é a sua~~ **confirmada em 15/10/2026**: a casa sem nome do
+##    miolo (entre a Prefeitura, a Praça e as Lojas) é a do desenho mesmo
+##    ("minha casa tava no desenho, acho que é a mesma que já tá no jogo");
 ##  - **onde ficam os seis documentos** (Hospital, Prefeitura, Escola,
 ##    Delegacia, Mansão, Casa do fazendeiro) - espalhados, como antes, só para
 ##    a partida ter como ser ganha ("os documentos não são mecânica oficial do
@@ -135,7 +138,11 @@ const ROTULOS := [
 	# uma virou predio; a outra e bloco solido, pequena demais no desenho.
 	{ "nome": "Galpão dele", "ponto": Vector2(556.0, 707.0), "tipo": "galpao" },
 	{ "nome": "Casa afastada do velho louco", "ponto": Vector2(529.0, 720.0), "tipo": "casa" },
-	{ "nome": "Casa abandonada", "ponto": Vector2(640.0, 740.0), "tipo": "predio_abandonado" },
+	{ "nome": "Casa abandonada", "ponto": Vector2(640.0, 740.0), "tipo": "predio_abandonado", "queimada": true },
+	{ "nome": "Casa abandonada", "ponto": Vector2(624.0, 743.0), "tipo": "predio_abandonado", "queimada": true },
+	# A barraca do vendedor de melancia, na beira da rua ao sul do Hotel: a
+	# mancha e inclinada e o tracador a aceita pela caixa (prints de 15/10).
+	{ "nome": "Vendedor de melancia", "ponto": Vector2(664.0, 657.0), "tipo": "comercio" },
 	# --- lugares (zonas sem prédio próprio) --------------------------------
 	{ "nome": "Floresta", "ponto": Vector2(560.0, 500.0), "tipo": "zona" },
 	{ "nome": "Milho", "ponto": Vector2(650.0, 275.0), "tipo": "zona" },
@@ -439,6 +446,8 @@ static func _montar() -> Dictionary:
 ## RAIO_DO_VEICULO_ROTULADO px dele.
 const VEICULOS_ROTULADOS := [
 	{ "ponto": Vector2(712.0, 258.0), "tipo": "trator" },  # fazenda, à esquerda da casa
+	{ "ponto": Vector2(748.0, 271.0), "tipo": "caminhonete" },  # fazenda, abaixo da casa
+	{ "ponto": Vector2(570.0, 712.0), "tipo": "caminhonete" },  # ao lado do galpão do velho louco
 ]
 const RAIO_DO_VEICULO_ROTULADO := 8.0
 
@@ -540,6 +549,10 @@ static func _rotular(tudo: Dictionary, tracado: Dictionary, recorte: Rect2) -> v
 		if rotulo.get("sua", false):
 			alvo["sua"] = true
 			_sua_casa = alvo
+		if rotulo.get("queimada", false):
+			# Casa queimada (15/10/2026): telhado, parede e piso carbonizados
+			# (rua/telhados.gd e rua/cenario.gd); o anexo herda abaixo.
+			alvo["queimada"] = true
 		var rect_do_lugar := _rect_do_tracado(predios[achou]["bbox"])
 		if rotulo.has("rect"):
 			rect_do_lugar = alvo["rect"]
@@ -552,6 +565,8 @@ static func _rotular(tudo: Dictionary, tracado: Dictionary, recorte: Rect2) -> v
 		for outra in tudo["construcoes"]:
 			if outra["lote"] == construcao["lote"] and not outra["anexo"] and outra["nome"] != "":
 				construcao["nome"] = "%s (anexo)" % outra["nome"]
+				if outra.get("queimada", false):
+					construcao["queimada"] = true
 				break
 	assert(not _sua_casa.is_empty(), "nenhum rotulo tem \"sua\": true - o jogador nao tem onde nascer")
 

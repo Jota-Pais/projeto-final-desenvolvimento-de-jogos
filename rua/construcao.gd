@@ -328,6 +328,8 @@ const MOVEIS := {
 	# O trator da fazenda (rotulo lido no desenho em 15/10/2026; ver
 	# Mapa.VEICULOS_ROTULADOS). Numeros proposta; sprite trator-em-pe.png.
 	"trator": { "rotulo": "Trator", "duracao": 2.5, "tamanho": Vector2(110.0, 70.0), "cor": Color("5a5444") },
+	# As caminhonetes (fazenda e galpao do velho louco), idem.
+	"caminhonete": { "rotulo": "Caminhonete", "duracao": 3.0, "tamanho": Vector2(200.0, 84.0), "cor": Color("4f5560") },
 	"lata": { "rotulo": "Lata de lixo", "duracao": 1.5, "tamanho": Vector2(48.0, 48.0), "cor": Color("4a4f45") },
 	# Os quatro que chegaram com os lugares novos de 09/09/2026. O armario de
 	# armas da delegacia e o movel mais caro do mapa: 5,5 s de vasculho
