@@ -17,6 +17,8 @@ extends CanvasLayer
 ## HUD pode entrar em qualquer cena de teste sem arrastar o resto.
 
 const Relogio := preload("res://rua/relogio.gd")
+## So para o nome da municao do calibre da arma na mao.
+const Construcao := preload("res://rua/construcao.gd")
 
 ## O escurecer da tarde e da noite. **Contido de proposito** (decisao de
 ## direcao, 09/09/2026): a rua tem que ficar noturna sem virar tela preta - da
@@ -84,17 +86,22 @@ func _linha_do_topo(relogio: Relogio) -> String:
 
 ## O canto inferior esquerdo: o que voce leva no corpo. **A vida** (saiu em
 ## 16/09/2026 por decisao de mesa e voltou em 30/09/2026 a pedido do Joao;
-## fome e agua continuam fora) e **a Beretta** com a conta de balas, que e o
-## que o vasculho rende. A barra de verdade fica em cima da cabeca do jogador,
-## que e onde ela importa na hora do aperto; aqui e o numero.
+## fome e agua continuam fora) e **a arma na mao** (`Travessia.arma`; a Beretta
+## no comeco) com a conta de balas, que e o que o vasculho rende. A barra de
+## verdade fica em cima da cabeca do jogador, que e onde ela importa na hora
+## do aperto; aqui e o numero.
 func _linha_da_esquerda(jogador: Node) -> String:
 	var linhas := PackedStringArray()
 	if jogador != null and "vida" in jogador:
 		linhas.append("vida   %d/%d" % [roundi(jogador.get("vida")), roundi(jogador.VIDA_CHEIA)])
+	# As balas do calibre da arma na mao, com o nome da municao ("15 balas
+	# 9mm", "8 cartuchos calibre 12"); os outros calibres estao na tela da
+	# mochila.
+	var municao: String = Construcao.MUNICOES[Travessia.calibre_da_arma()]
 	if Travessia.municao == 0:
-		linhas.append("Beretta 9mm   sem balas")
+		linhas.append("%s   sem %s" % [Travessia.arma, municao])
 	else:
-		linhas.append("Beretta 9mm   %d bala%s" % [Travessia.municao, "" if Travessia.municao == 1 else "s"])
+		linhas.append("%s   %d %s" % [Travessia.arma, Travessia.municao, municao])
 	return "\n".join(linhas)
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.

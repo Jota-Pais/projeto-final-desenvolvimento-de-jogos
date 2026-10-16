@@ -1,12 +1,20 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://rua/zumbi.gd" id="1_zumbi"]
+[ext_resource type="Script" path="res://rua/boneco.gd" id="2_boneco"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
 size = Vector2(30, 44)
 
 [node name="Zumbi" type="CharacterBody2D"]
 script = ExtResource("1_zumbi")
+
+[node name="Boneco" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+script = ExtResource("2_boneco")
+folha = "res://rua/arte/zumbi/Zumbi_rua-Idle.json"
+pe = 22.0
+quadros_por_segundo = 8.0
 
 [node name="Colisao" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_corpo")

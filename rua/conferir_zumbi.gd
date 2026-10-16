@@ -412,10 +412,32 @@ func _o_toque_tira_vida_e_zerar_acaba_o_dia(zumbi: Node) -> void:
 		_erro("zerar a vida nao acabou o dia como SEM_VIDA (fim_do_dia = %d)" % Travessia.fim_do_dia)
 	elif not is_equal_approx(_jogador.vida, _jogador.VIDA_CHEIA):
 		_erro("depois de cair a vida devia voltar cheia, e esta em %.0f" % _jogador.vida)
+	elif Travessia.desfecho == Travessia.Desfecho.CAIU_NA_RUA:
+		_erro("na campanha, cair na rua acabou a PARTIDA, e devia custar so o dia")
 	else:
-		print("  zerar a vida acabou o dia na forca, e a vida voltou cheia")
+		print("  campanha: zerar a vida acabou o dia na forca, e a vida voltou cheia")
 	Travessia.fim_do_dia = Travessia.FimDoDia.PELA_PORTA
 	Travessia.documentos_perdidos = 0
+
+	# No hardcore (Joao, 15/10/2026) cair e o fim da partida: a Travessia vai
+	# para a tela do fim com o desfecho CAIU_NA_RUA, e nao para a casa.
+	Travessia.modo = Travessia.Modo.HARDCORE
+	_jogador.vida = zumbi.DANO
+	get_tree().current_scene = null
+	_jogador.levar_dano(zumbi.DANO, Vector2.RIGHT)
+	get_tree().current_scene = cena_atual
+	for filho in get_tree().root.get_children():
+		if filho.name in ["Casa", "FimDeJogo"]:
+			filho.free()
+	if Travessia.desfecho != Travessia.Desfecho.CAIU_NA_RUA:
+		_erro("no hardcore, zerar a vida nao acabou a partida (desfecho = %d)" % Travessia.desfecho)
+	elif Travessia.fim_do_dia == Travessia.FimDoDia.SEM_VIDA:
+		_erro("no hardcore, zerar a vida tambem mandou para casa")
+	else:
+		print("  hardcore: zerar a vida acabou a partida, sem passar pela casa")
+	Travessia.modo = Travessia.Modo.CAMPANHA
+	Travessia.desfecho = Travessia.Desfecho.VITORIA
+	_jogador.vida = _jogador.VIDA_CHEIA
 
 # --- 5. ele entra na casa atras de voce -------------------------------------
 

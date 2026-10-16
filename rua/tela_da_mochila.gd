@@ -28,6 +28,8 @@ extends CanvasLayer
 ## da rua.
 
 const Mochila := preload("res://rua/mochila.gd")
+## So para os nomes das municoes no cinto.
+const Construcao := preload("res://rua/construcao.gd")
 
 ## O ambar do documento, o mesmo do movel e da HUD. Em hexadecimal porque a
 ## lista e BBCode.
@@ -162,8 +164,15 @@ func _texto_do_rodape() -> String:
 
 	# O cinto existe para explicar por que a arma nao aparece na lista: ela e
 	# as balas nao ocupam vaga e nao se perdem no dia que deu errado.
-	linhas.append("no cinto: Beretta 9mm · %d bala%s — não ocupa vaga" % [
-		Travessia.municao, "" if Travessia.municao == 1 else "s"])
+	# Todos os calibres, nao so o da arma na mao: e aqui que se ve o que se
+	# juntou para as outras armas.
+	var cinto := PackedStringArray()
+	for calibre in Travessia.balas:
+		var quantas: int = Travessia.balas[calibre]
+		if quantas > 0:
+			cinto.append("%d %s" % [quantas, Construcao.MUNICOES[calibre]])
+	linhas.append("no cinto: %s · %s — não ocupa vaga" % [
+		Travessia.arma, " · ".join(cinto) if not cinto.is_empty() else "sem balas"])
 
 	linhas.append("W/S escolher   ·   E largar no chão   ·   Tab fechar")
 	linhas.append("o dia continua correndo enquanto você escolhe")

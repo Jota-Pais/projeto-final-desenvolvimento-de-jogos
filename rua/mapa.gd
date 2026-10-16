@@ -69,16 +69,20 @@ const IMPRESSAO_ESPERADA := "06d4b6dc"
 ## placeholders no quarto mais fundo; `sua` marca a sua casa (uma só). A arma
 ## não mora em lugar nenhum do mapa: você começa com ela (30/09/2026).
 ##
-## ⬜ **Três decisões aqui são provisórias, à espera do João/da equipe:**
+## ⬜ **Três decisões aqui são provisórias, à espera do João/da equipe**
+## (respostas dele em 15/10/2026 entre parênteses):
 ##
 ##  - **qual casa é a sua.** O desenho não marca nenhuma; está numa casa sem
-##    nome do miolo (entre a Prefeitura, a Praça e as Lojas), por ser central;
+##    nome do miolo (entre a Prefeitura, a Praça e as Lojas), por ser central
+##    ("ainda vou decidir");
 ##  - **onde ficam os seis documentos** (Hospital, Prefeitura, Escola,
 ##    Delegacia, Mansão, Casa do fazendeiro) - espalhados, como antes, só para
-##    a partida ter como ser ganha;
+##    a partida ter como ser ganha ("os documentos não são mecânica oficial do
+##    jogo ainda": a cura por documentos continua provisória, não é decisão);
 ##  - **os rótulos miúdos do desenho não dão para ler** (três casas na estrada
 ##    de terra do sudoeste, os dois anexos do posto, os dois veículos da
-##    fazenda): estão com nome de lugar, não de dono.
+##    fazenda): estão com nome de lugar, não de dono (ele mandou um link do
+##    Canva com o desenho legível, que exige login; falta exportar o PNG).
 const ROTULOS := [
 	# --- prédios ---------------------------------------------------------
 	{ "nome": "Hospital", "ponto": Vector2(760.0, 440.0), "tipo": "hospital", "documento": 1 },

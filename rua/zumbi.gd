@@ -40,6 +40,24 @@ extends CharacterBody2D
 ## SEGUNDOS_OLHANDO_EM_VOLTA antes de desistir. Perder ele continua possivel:
 ## parede no meio e distancia. E o que o High Concept pede - entrar numa casa
 ## quebra a perseguicao -, so que agora e a casa que quebra, nao o tapa.
+##
+## ## A vida dele (03/10/2026)
+##
+## Pedido do Joao: "zumbi sofrendo dano e morrendo, eles devem ter uma vida".
+## Ate aqui o tiro derrubava de uma vez (ver arma.gd). Agora ele tem
+## VIDA_CHEIA, cada projetil tira o `dano` da arma (a Beretta, 20: cinco tiros
+## "por enquanto", Joao, 05/10/2026 - vida e dano em unidade de vida, nao em
+## balas), o tiro que nao mata o faz recuar e mostrar o dano, e o que mata o
+## derruba. O corpo fica no chao SEGUNDOS_NO_CHAO e some - **a nao ser que ele
+## carregue algo** (`inventario`): ai fica ate o fim do dia (regra dele,
+## 05/10). **O corpo se vasculha** como um movel (segure E): o inventario dele
+## e o `achados` de um vasculhavel que nasce em cima do corpo - hoje vazio,
+## porque o que um zumbi carrega e decisao de mesa. As animacoes `dano`,
+## `morrer` e `toque` entram pela folha (rua/boneco.gd, `tocar()`); enquanto
+## nao existem, o codigo mostra um clarao vermelho, a queda de lado (parado na
+## pose, nao andando - Joao, 05/10: "nao so ficar caminhando de lado no chao")
+## e uma investida de INVESTIDA px no toque. Em 05/10 ele pediu as animacoes
+## de ataque e de morto de verdade; ver design/arte-rua.md.
 
 const TAMANHO := Vector2(30.0, 44.0)
 
@@ -94,6 +112,13 @@ const SEGUNDOS_OLHANDO_EM_VOLTA := 2.0
 const MEMORIA_DO_TOQUE := 2.0
 
 const DISTANCIA_DO_TOQUE := 48.0
+## O golpe: ele para SEGUNDOS_DO_GOLPE para bater (e a animacao `toque`, ou a
+## investida de codigo: o boneco avanca INVESTIDA px e volta em
+## SEGUNDOS_DA_INVESTIDA). Proposta de 05/10/2026 - a parada e o que faz o
+## golpe se ler como golpe, e e uma brecha de 0,3 s para sair de perto.
+const SEGUNDOS_DO_GOLPE := 0.3
+const INVESTIDA := 8.0
+const SEGUNDOS_DA_INVESTIDA := 0.25
 ## Quanto de vida cada toque tira. 12 em 100: nove toques derrubam, e com a
 ## espera de 1,1 s entre toques um zumbi sozinho leva dez segundos para isso -
 ## tempo de sobra para sair de perto. Tres zumbis, nao.
@@ -103,6 +128,31 @@ const DANO := 12.0
 ## indistinguivel de ficar longe dele - nos dois casos a barra nunca anda.
 const ESPERA_ENTRE_TOQUES := 1.1
 
+## A vida dele (03/10/2026), em unidade de vida. Ver o cabecalho; o dano de
+## cada arma esta na ficha dela, em arma.gd.
+const VIDA_CHEIA := 100.0
+## O corpo como vasculhavel: quanto tempo leva para vasculhar (proposta) e o
+## tamanho da zona em volta dele, mais ou menos o boneco deitado.
+const SEGUNDOS_PARA_VASCULHAR_O_CORPO := 2.0
+const TAMANHO_DO_CORPO := Vector2(70.0, 30.0)
+const CENA_DO_VASCULHAVEL := preload("res://rua/vasculhavel.tscn")
+## O tiro que nao mata: o quanto ele e jogado para tras (some em
+## ESPERA_DO_RECUO s) e por quanto tempo fica vermelho.
+const FORCA_DO_RECUO := 160.0
+const ESPERA_DO_RECUO := 0.2
+const SEGUNDOS_DO_DANO := 0.15
+const COR_DO_DANO := Color(1.0, 0.35, 0.35)
+## A morte: quanto demora a tombar, quanto tempo o corpo fica no chao (Joao,
+## 05/10/2026: 60 s; com algo no `inventario`, ate o fim do dia) e quanto
+## demora a sumir.
+const SEGUNDOS_CAINDO := 0.3
+const SEGUNDOS_NO_CHAO := 60.0
+const SEGUNDOS_SUMINDO := 1.0
+const COR_NO_CHAO := Color(0.55, 0.55, 0.55)
+## A barra de vida: as mesmas cores da do jogador (jogador.gd), para ler igual.
+const COR_DA_VIDA := Color("c0463c")
+const COR_FUNDO_DA_VIDA := Color("241d1c")
+
 const SEGUNDOS_ENTRE_RECALCULOS := 0.4
 const TOLERANCIA_DO_PASSO := 26.0
 
@@ -110,13 +160,14 @@ const TOLERANCIA_DO_PASSO := 26.0
 ## design: sem ver o cone nao da para entender por que ele te viu ou nao.
 const MOSTRAR_A_VISTA := true
 
-# Verde doente parado, ambar aceso perseguindo. O ambar ja foi marrom e ficava
-# quase igual ao carro abandonado: no meio da rua nao dava para saber o que era
-# zumbi e o que era cenario.
-const COR := Color("4c5c44")
-const COR_PERSEGUINDO := Color("8a7a3e")
-const COR_DA_CARA := Color("9aa88f")
 const COR_DA_VISTA := Color(0.85, 0.75, 0.45, 0.07)
+
+## O boneco (rua/boneco.gd) desenha o zumbi desde 02/10/2026; ate entao era um
+## retangulo verde que ficava ambar perseguindo. A cor saiu junto com ele:
+## perseguir agora se ve no passo, que e o mesmo arrastar acelerado (ver
+## _animar).
+const Boneco := preload("res://rua/boneco.gd")
+
 
 enum Estado { VAGANDO, PERSEGUINDO, PROCURANDO }
 
@@ -138,6 +189,8 @@ var _ignorados: Array[RID] = []
 var _espera_do_toque := 0.0
 ## Quanto ainda dura a memoria do ultimo toque (ver MEMORIA_DO_TOQUE).
 var _memoria_do_toque := 0.0
+## Quanto falta do golpe em andamento (ver SEGUNDOS_DO_GOLPE): parado batendo.
+var _golpeando := 0.0
 ## Ha quanto tempo ele esta parado olhando em volta onde te viu por ultimo.
 var _olhando_em_volta := 0.0
 
@@ -146,6 +199,20 @@ var _passo := 0
 var _recalcular := 0.0
 var _alvo_de_vaguear := Vector2.ZERO
 var _tempo_vagando := 0.0
+
+var vida := VIDA_CHEIA
+## Levou o tiro que mata: e um corpo no chao, fora do grupo "zumbi" e da fisica.
+var morto := false
+## O que ele carrega. Um corpo com algo aqui fica ate o fim do dia em vez de
+## sumir em SEGUNDOS_NO_CHAO (Joao, 05/10/2026), e e isto que sai quando se
+## vascula o corpo. **Nada enche isto ainda**: o que um zumbi carrega e
+## decisao de mesa.
+var inventario: Array[String] = []
+var _recuo := Vector2.ZERO
+var _clarao_do_dano: Tween
+
+@onready var _boneco: Boneco = $Boneco
+
 
 func _ready() -> void:
 	add_to_group("zumbi")
@@ -174,14 +241,17 @@ func _physics_process(delta: float) -> void:
 
 	_espera_do_toque = maxf(0.0, _espera_do_toque - delta)
 	_memoria_do_toque = maxf(0.0, _memoria_do_toque - delta)
+	_golpeando = maxf(0.0, _golpeando - delta)
 	_decidir(delta)
 
 	var direcao := _direcao_do_estado(delta)
 	var velocidade := VELOCIDADE_VAGANDO if _estado == Estado.VAGANDO else VELOCIDADE_PERSEGUINDO
-	velocity = direcao * velocidade
+	velocity = direcao * velocidade + _recuo
 	move_and_slide()
+	_recuo = _recuo.move_toward(Vector2.ZERO, FORCA_DO_RECUO / ESPERA_DO_RECUO * delta)
 
 	_virar(delta)
+	_animar()
 	_tocar_no_jogador()
 	queue_redraw()
 
@@ -203,7 +273,19 @@ func _virar(delta: float) -> void:
 			if velocity.length() > 4.0:
 				_olhando = velocity.normalized()
 
+## O que o boneco mostra: o `vagar` olhando para `_olhando`, no ritmo da
+## velocidade - perseguir e o mesmo arrastar acelerado (decidido 30/09/2026;
+## se nao bastar, `scary-walk` custa 8 geracoes). Parado, olhando em volta onde
+## te viu por ultimo, e a rotacao parada, que gira junto com a cara.
+func _animar() -> void:
+	var rapidez := velocity.length()
+	if rapidez < 4.0:
+		_boneco.mostrar("parado", _olhando)
+		return
+	_boneco.mostrar("vagar", _olhando, rapidez / VELOCIDADE_VAGANDO)
+
 func _chegou_onde_viu() -> bool:
+
 	return global_position.distance_to(_ultima_posicao) < 40.0
 
 # --------------------------------------------------------------------- decisao
@@ -290,16 +372,116 @@ func _chamar_a_horda() -> void:
 			continue
 		outro.foi_chamado(_jogador.global_position)
 
-## Emitido ao levar um tiro. O cenario escuta para nao fazer nascer outro no
-## mesmo lugar hoje - senao atirar seria inutil.
+## Emitido quando o tiro que mata acerta. O cenario escuta para nao fazer
+## nascer outro no mesmo lugar hoje - senao atirar seria inutil.
 signal morreu
 
-## Levou um tiro. **Nao existe estado de ferido**: o tiro derruba de uma vez, e
-## o recurso caro e a municao. Um zumbi que aguentasse tres tiros so
-## multiplicaria o estrondo, que e o custo de verdade de atirar.
-func levar_tiro() -> void:
+## Levou um tiro: tira `quanto` da vida. `direcao_do_tiro` e para onde a bala
+## ia, e e para la que ele recua ou tomba. O tiro que nao mata mostra o dano, o
+## que mata derruba (ver "A vida dele" no cabecalho). Um corpo no chao nao leva
+## tiro: saiu do grupo "zumbi" e da fisica.
+func levar_tiro(quanto: float, direcao_do_tiro := Vector2.ZERO) -> void:
+	if morto:
+		return
+	vida = maxf(0.0, vida - quanto)
+	if vida > 0.0:
+		_sofrer(direcao_do_tiro)
+	else:
+		_morrer(direcao_do_tiro)
+
+## O tiro que nao mata: recua um pouco e mostra o dano - a animacao `dano` se
+## a folha tiver, senao o clarao vermelho que volta ao normal em
+## SEGUNDOS_DO_DANO (proposta de 03/10/2026). Ele nao precisa "saber" que foi
+## baleado: o estrondo ja chama todo mundo, ele incluido.
+func _sofrer(direcao_do_tiro: Vector2) -> void:
+	_recuo = direcao_do_tiro * FORCA_DO_RECUO
+	queue_redraw()
+	if _boneco.tocar("dano", _olhando):
+		return
+	if _clarao_do_dano != null:
+		_clarao_do_dano.kill()
+	_boneco.modulate = COR_DO_DANO
+	_clarao_do_dano = create_tween()
+	_clarao_do_dano.tween_property(_boneco, "modulate", Color.WHITE, SEGUNDOS_DO_DANO)
+
+## O tiro que mata. Ele vira corpo: sai do grupo "zumbi" (ninguem mais o chama,
+## conta ou acerta), a colisao some (o raio da arma e a linha de visao dos
+## outros passam por cima, e o jogador anda por cima dele) e a fisica para. A
+## animacao `morrer` toca se a folha tiver; senao ele tomba (`_cair`). Depois
+## de SEGUNDOS_NO_CHAO o corpo some em SEGUNDOS_SUMINDO - se nao carrega nada;
+## com algo no `inventario` fica ate a cena da rua acabar com o dia. O tween e
+## do no: morre com ele se a cena trocar antes.
+##
+## O corpo e vasculhavel (05/10/2026, Joao: "faz com que tenha como acessar o
+## inventario dele"): nasce um `Vasculhavel` em cima dele com `achados` sendo
+## o proprio `inventario` - o mesmo objeto, nao copia -, sem caixa desenhada
+## (o desenho e o boneco caido) e sem corpo solido (anda-se por cima). Quem o
+## liga a mochila e ao relogio e o cenario, no sinal `morreu`, como faz com os
+## moveis - por isso o corpo nasce antes do sinal.
+func _morrer(direcao_do_tiro: Vector2) -> void:
+	morto = true
+	remove_from_group("zumbi")
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector2.ZERO
+	set_physics_process(false)
+	queue_redraw()
+	var corpo := CENA_DO_VASCULHAVEL.instantiate()
+	corpo.name = "Corpo"
+	corpo.rotulo = "corpo"
+	corpo.duracao = SEGUNDOS_PARA_VASCULHAR_O_CORPO
+	corpo.tamanho = TAMANHO_DO_CORPO
+	corpo.solido = false
+	corpo.desenhar_caixa = false
+	corpo.achados = inventario
+	add_child(corpo)
 	morreu.emit()
-	queue_free()
+	if _clarao_do_dano != null:
+		_clarao_do_dano.kill()
+	var queda := create_tween()
+	if not _boneco.tocar("morrer", _olhando):
+		# Sem `morrer` na folha, o corpo para na pose parada antes de tombar:
+		# tombar com o `vagar` rodando deixava o morto "caminhando de lado no
+		# chao" (Joao, 05/10/2026).
+		_boneco.mostrar("parado", _olhando)
+		_cair(queda, direcao_do_tiro)
+		queda.tween_callback(_deitar)
+	if not inventario.is_empty():
+		return
+	queda.tween_interval(SEGUNDOS_NO_CHAO)
+	queda.tween_property(_boneco, "modulate:a", 0.0, SEGUNDOS_SUMINDO)
+	queda.tween_callback(queue_free)
+
+## A queda de codigo, enquanto nao ha `morrer` na folha: o boneco tomba de lado
+## em SEGUNDOS_CAINDO (a cabeca vai para onde a bala ia) e escurece. Boneco em
+## pe deitado a 90 graus e o truque de sempre do top-down; de frente ou de
+## costas nao ha como deitar sem desenho novo, entao tiro vindo do norte ou do
+## sul tomba para um lado qualquer.
+func _cair(queda: Tween, direcao_do_tiro: Vector2) -> void:
+	var lado := signf(direcao_do_tiro.x)
+	if absf(direcao_do_tiro.x) < 0.3:
+		lado = 1.0 if randf() < 0.5 else -1.0
+	_lado_da_queda = lado
+	queda.tween_property(_boneco, "rotation", lado * TAU / 4.0, SEGUNDOS_CAINDO).set_ease(Tween.EASE_IN)
+	queda.parallel().tween_property(_boneco, "modulate", COR_NO_CHAO, SEGUNDOS_CAINDO)
+
+## Para que lado a queda de codigo tombou: +1 cabeca para a direita, -1 para a
+## esquerda.
+var _lado_da_queda := 1.0
+
+## No fim da queda de codigo, se a folha tem o morto no chao - o ultimo quadro
+## do `morrer` no sul (gerado em 05/10/2026) -, o boneco passa a ser esse
+## quadro: um corpo deitado vale para as oito direcoes, porque no chao nao ha
+## perspectiva nova. Esse quadro deita com a cabeca para a esquerda; se a
+## queda tombou para a direita, espelha. A rotacao da queda volta a zero,
+## porque o quadro ja esta deitado. Sem ele, fica a pose parada deitada.
+## Desde 14/10/2026 o `morrer` existe nas oito direcoes, entao isto so roda
+## com uma folha que nao o tenha (uma variante do Renan ainda sem a queda).
+func _deitar() -> void:
+	if not _boneco.ultimo_quadro("morrer", Vector2.DOWN):
+		return
+	_boneco.rotation = 0.0
+	_boneco.flip_h = _lado_da_queda > 0.0
 
 ## Chamado pelo cenario quando nasce zumbi novo - a noite traz mais. A lista se
 ## refaz no proximo quadro de fisica.
@@ -317,6 +499,9 @@ func foi_chamado(onde: Vector2) -> void:
 # ------------------------------------------------------------------ movimento
 
 func _direcao_do_estado(delta: float) -> Vector2:
+	if _golpeando > 0.0:
+		# Parado batendo (ver SEGUNDOS_DO_GOLPE).
+		return Vector2.ZERO
 	if _estado == Estado.VAGANDO:
 		return _vaguear(delta)
 	if _estado == Estado.PROCURANDO and _chegou_onde_viu():
@@ -367,20 +552,43 @@ func _tocar_no_jogador() -> void:
 	_espera_do_toque = ESPERA_ENTRE_TOQUES
 	_memoria_do_toque = MEMORIA_DO_TOQUE
 	_jogador.levar_dano(DANO, global_position.direction_to(_jogador.global_position))
+	_golpear()
+
+## O golpe que se ve: ele para por SEGUNDOS_DO_GOLPE e toca a animacao
+## `toque` se a folha tiver (pedida pelo Joao em 05/10/2026: "uma animacao de
+## ataque pro zumbi"); senao, a investida de codigo - o boneco avanca INVESTIDA
+## px na direcao da cara e volta.
+func _golpear() -> void:
+	_golpeando = SEGUNDOS_DO_GOLPE
+	if _boneco.tocar("toque", _olhando):
+		return
+	var investida := create_tween()
+	investida.tween_property(_boneco, "position", _olhando * INVESTIDA, SEGUNDOS_DA_INVESTIDA / 2.0) \
+		.set_ease(Tween.EASE_OUT)
+	investida.tween_property(_boneco, "position", Vector2.ZERO, SEGUNDOS_DA_INVESTIDA / 2.0)
 
 # -------------------------------------------------------------------- desenho
 
+## O cone de visao e a barra de vida: o corpo e a cara sao o boneco. O cone
+## continua sendo auxilio de prototipo (MOSTRAR_A_VISTA). Um corpo no chao nao
+## desenha nada.
 func _draw() -> void:
+	if morto:
+		return
 	if MOSTRAR_A_VISTA and _estado != Estado.PERSEGUINDO:
 		_desenhar_o_cone()
+	if vida < VIDA_CHEIA:
+		_desenhar_a_vida()
 
-	var caixa := Rect2(-TAMANHO / 2.0, TAMANHO)
-	draw_rect(caixa, COR_PERSEGUINDO if _estado == Estado.PERSEGUINDO else COR)
-	draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
+## Barra de vida em cima da cabeca, so depois do primeiro tiro - a mesma do
+## jogador, no mesmo lugar (proposta de 03/10/2026).
+func _desenhar_a_vida() -> void:
+	var barra := Rect2(-16.0, -66.0, 32.0, 5.0)
+	draw_rect(barra, COR_FUNDO_DA_VIDA)
+	var cheio := barra
+	cheio.size.x = barra.size.x * (vida / VIDA_CHEIA)
+	draw_rect(cheio, COR_DA_VIDA)
 
-	# A cara, para dar para ver para onde ele esta olhando.
-	var frente := _olhando.rotated(-rotation) * (TAMANHO.y / 2.0 - 6.0)
-	draw_circle(frente, 5.0, COR_DA_CARA)
 
 func _desenhar_o_cone() -> void:
 	var meio := _olhando.rotated(-rotation).angle()

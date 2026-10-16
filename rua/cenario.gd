@@ -107,8 +107,10 @@ const TUFOS_DE_MATO := 5000
 
 ## Teto de nos da cena inteira: so um sino de alarme, nao trava nada. Se
 ## este numero disparar, e sinal de que algum gerador voltou a criar um no por
-## peca em vez de agrupar.
-const ORCAMENTO_DE_NOS := 2000
+## peca em vez de agrupar. Subiu de 2000 para 4000 em 14/10/2026: as 1.763
+## arvores viraram um no cada, de proposito, para entrar no Y-sort com o
+## jogador (um no por arvore e o preco de a copa cobrir quem passa atras).
+const ORCAMENTO_DE_NOS := 4000
 
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado. As cores do desenho de origem sao
@@ -127,15 +129,53 @@ const COR_POR_CLASSE := {
 	# mato.
 	"agua": Color("2b3a44"),
 }
-const COR_MATO := Color("44513f")
-const COR_ARVORE := Color("323e2c")
+## O mato dos bosques e um sprite gerado (rua/arte/objetos/mato.png, fase 4,
+## 14/10/2026), esticado ao tamanho sorteado e espelhado por sorteio. Fica no
+## _draw do cenario, por baixo de quem anda, porque e rasteiro.
+const MATO := preload("res://rua/arte/objetos/mato.png")
+## O patio de cada predio e so uma tinta por cima do terreno em tiles, nao
+## mais uma mancha chapada (14/10/2026). Leve: com as ruas em textura
+## (15/10) a 30 % virava uma mancha escura por cima da calcada.
+const ALFA_DO_LOTE := 0.15
+## As copas geradas (design/arte-rua.md, fase 4, 14/10/2026): uma viva e uma
+## seca. `base` e a linha do pe do tronco no PNG, medida na imagem - e o que
+## encosta no chao. Qual sai em cada arvore e sorteio da posicao, para o mesmo
+## bosque nao trocar de arvore de um dia para o outro.
+const ARVORES := [
+	{ "textura": preload("res://rua/arte/objetos/arvore-a.png"), "base": 88.0 },
+	{ "textura": preload("res://rua/arte/objetos/arvore-b.png"), "base": 81.0 },
+]
+## A seca sai uma vez a cada tantas: bosque morto inteiro e outro clima.
+const UMA_SECA_A_CADA := 3
+## Os desenhos dos moveis ficam em rua/arte/objetos/<tipo>.png; o movel em
+## pe (carro atravessado numa rua norte-sul) procura <tipo>-em-pe.png antes de
+## girar o deitado. Carregados uma vez por tipo, aqui.
+const PASTA_DOS_DESENHOS := "res://rua/arte/objetos/"
+## O giro do movel de dentro conforme a porta da construcao: ele encosta na
+## parede OPOSTA a fachada (Construcao.posicoes_de_movel) com a frente para a
+## sala. Porta ao norte fica sem giro: girar 180 graus poria a face da frente
+## em cima, onde a vista de cima inclinada nao mostra face nenhuma.
+const GIRO_POR_PORTA := { "norte": 0.0, "sul": 0.0, "leste": -PI / 2.0, "oeste": PI / 2.0 }
 const COR_PISO := Color("46403a")
 const COR_PISO_SEU := Color("463a2e")
 const COR_PAREDE := Color("6b6154")
+## As texturas dos predios (fase 3 da arte, 14/10/2026): piso e parede
+## repetidos nos retangulos de sempre. A sua casa leva o piso tingido de
+## quente, para continuar diferente das outras.
+const TEXTURA_PISO := preload("res://rua/arte/predios/piso.png")
+const TEXTURA_PAREDE := preload("res://rua/arte/predios/parede.png")
+const COR_PISO_SEU_TINTA := Color(1.08, 0.98, 0.86)
 const COR_CERCA := Color("5a5347")
-const COR_OBSTACULO := Color("5a5347")
+## Os blocos solidos (manchas marrons do desenho pequenas demais para virar
+## predio: galpoezinhos, containers) levam o zinco dos galpoes e um beiral,
+## para nao serem um retangulo chapado no meio da arte (14/10/2026).
+const TEXTURA_BLOCO := preload("res://rua/arte/predios/zinco.png")
+const COR_BEIRAL_DO_BLOCO := Color(0.0, 0.0, 0.0, 0.45)
 
 var _sorteio := RandomNumberGenerator.new()
+## So para o calibre de cada caixinha (05/10/2026): um gerador a parte, para
+## nao mexer em quantas caixinhas cada movel ja rendia.
+var _sorteio_de_calibre := RandomNumberGenerator.new()
 var _moveis_gerados := 0
 
 ## A identidade de cada movel gerado hoje, na ORDEM em que nasceram.
@@ -190,6 +230,7 @@ var povoa_por_proximidade := true
 
 func _ready() -> void:
 	_sorteio.seed = 20260907
+	_sorteio_de_calibre.seed = 20261005
 	# Antes de criar movel: e o _criar_movel que pendura os sinais nele. Os
 	# grupos vem declarados no rua.tscn, entao ja existem mesmo que o _ready
 	# deles ainda nao tenha rodado.
@@ -229,7 +270,17 @@ func _ready() -> void:
 	for movel in mundo["moveis_de_rua"]:
 		var chave := "rua/%s@%.0f,%.0f" % [movel["tipo"], (movel["pos"] as Vector2).x,
 			(movel["pos"] as Vector2).y]
-		_criar_movel(movel["tipo"], movel["pos"], chave, 0, movel.get("tamanho", Vector2.ZERO))
+		var tamanho: Vector2 = movel.get("tamanho", Vector2.ZERO)
+		# Em pe no desenho = atravessado numa rua norte-sul. Quando so existe
+		# o desenho da outra orientacao, ele gira 90 graus - para que lado, e
+		# o espelho, sao sorteio da chave, para a fila do camping nao ser o
+		# mesmo carro oito vezes.
+		var sorteio := hash(chave)
+		var giro := 0.0
+		var transposto: bool = tamanho != (Construcao.MOVEIS[movel["tipo"]]["tamanho"] as Vector2)
+		if _desenho_de(movel["tipo"], transposto) == null:
+			giro = PI / 2.0 if sorteio % 4 < 2 else -PI / 2.0
+		_criar_movel(movel["tipo"], movel["pos"], chave, 0, tamanho, giro, sorteio % 2 == 1)
 
 	_plantar_arvores()
 	_criar_muros_do_mundo()
@@ -298,43 +349,52 @@ func _por_no_lugar() -> void:
 func _draw() -> void:
 	var mundo := Mapa.mundo()
 
-	# A grama e o fundo de tudo: o que nao e outra classe de chao e campo.
-	draw_rect(Mapa.MUNDO, COR_GRAMA)
+	# Desde 14/10/2026 o chao e o TileMap `Chao` (rua/chao.gd), que vem antes
+	# deste no na cena. O cinza dos poligonos fica so para cena sem ele (as
+	# ferramentas de conferencia que montam o cenario sozinho).
+	if get_tree().get_first_node_in_group("chao") == null:
+		# A grama e o fundo de tudo: o que nao e outra classe de chao e campo.
+		draw_rect(Mapa.MUNDO, COR_GRAMA)
 
-	# O chao, do maior poligono para o menor (o mapa ja entrega nessa ordem):
-	# o furo de um e outro poligono menor, e sai por cima. Furo que nao e
-	# poligono nenhum (a grama do fundo cercada de mata, como o camping) e
-	# repintado de grama logo em seguida.
-	for poligono in mundo["poligonos"]:
-		var cor: Color = COR_POR_CLASSE.get(poligono["classe"], COR_GRAMA)
-		_desenhar_poligono(poligono["pontos"], cor)
-		for furo in poligono["furos"]:
-			_desenhar_poligono(furo, COR_GRAMA)
+		# O chao, do maior poligono para o menor (o mapa ja entrega nessa
+		# ordem): o furo de um e outro poligono menor, e sai por cima. Furo que
+		# nao e poligono nenhum (a grama do fundo cercada de mata, como o
+		# camping) e repintado de grama logo em seguida.
+		for poligono in mundo["poligonos"]:
+			var cor: Color = COR_POR_CLASSE.get(poligono["classe"], COR_GRAMA)
+			_desenhar_poligono(poligono["pontos"], cor)
+			for furo in poligono["furos"]:
+				_desenhar_poligono(furo, COR_GRAMA)
 	_desenhar_mato(mundo)
 
 	# O lote de cada predio: a mancha inteira que ele era no desenho, por
 	# baixo dos retangulos - o que sobrou do corte continua sendo patio dele.
 	for lote in mundo["lotes"]:
-		_desenhar_poligono(lote["pontos"], Mapa.CLASSE_DO_PREDIO[lote["classe"]]["lote"])
+		var cor_do_lote: Color = Mapa.CLASSE_DO_PREDIO[lote["classe"]]["lote"]
+		_desenhar_poligono(lote["pontos"], Color(cor_do_lote, ALFA_DO_LOTE))
 
 	for obstaculo in mundo["obstaculos"]:
-		draw_rect(obstaculo["rect"], COR_OBSTACULO)
+		draw_texture_rect(TEXTURA_BLOCO, obstaculo["rect"], true)
+		draw_rect(obstaculo["rect"], COR_BEIRAL_DO_BLOCO, false, 3.0)
 
 	# O piso e as paredes ficam escondidos pelo telhado enquanto o jogador
 	# estiver fora - ver rua/telhados.gd.
 	for construcao in mundo["construcoes"]:
-		var piso := COR_PISO_SEU if construcao.get("sua", false) else COR_PISO
-		draw_rect(Construcao.interior_de(construcao), piso)
+		# Piso e paredes com textura repetida (design/arte-rua.md, fase 3,
+		# 14/10/2026): os retangulos sao os mesmos de sempre; a textura e
+		# desenhada por regra em design/desenhar_texturas.js. A sua casa tem o
+		# piso um tom mais quente, como a cor chapada tinha.
+		var tom := COR_PISO_SEU_TINTA if construcao.get("sua", false) else Color.WHITE
+		draw_texture_rect(TEXTURA_PISO, Construcao.interior_de(construcao), true, tom)
 		for parede in Construcao.paredes_externas(construcao):
-			draw_rect(parede, COR_PAREDE)
+			draw_texture_rect(TEXTURA_PAREDE, parede, true)
 		for parede in Construcao.paredes_internas(construcao):
-			draw_rect(parede, COR_PAREDE)
+			draw_texture_rect(TEXTURA_PAREDE, parede, true)
 
 	for cerca in mundo["cercas"]:
 		draw_rect(cerca, COR_CERCA)
-
-	# Por cima de tudo, como as arvores sempre estiveram.
-	_desenhar_arvores()
+	# As arvores nao sao mais pintadas aqui: sao nos (ver _plantar_arvores),
+	# para entrarem no Y-sort com o jogador e os zumbis (14/10/2026).
 
 ## Um poligono de chao, concavo ou nao. O que nao triangula (poligono que se
 ## cruza - nao deveria sair do tracador) vira o retangulo que o envolve, com
@@ -351,9 +411,32 @@ func _desenhar_poligono(pontos: PackedVector2Array, cor: Color) -> void:
 		return
 	draw_colored_polygon(pontos, cor)
 
-func _desenhar_arvores() -> void:
-	for area in _arvores:
-		draw_rect(area, COR_ARVORE)
+## Quanto o pe de um boneco fica abaixo da origem dele (a caixa do jogador e
+## 28 x 40, centrada: o pe esta em +20). A origem de todo no alto fica a essa
+## distancia acima do pe, para o Y-sort comparar pe com pe.
+const PE := 20.0
+
+## Uma arvore como no, com a origem a PE px acima da borda de baixo da copa:
+## e assim que ela entra no Y-sort - quem tem o pe mais embaixo na tela
+## desenha na frente. O sprite e escalado pela largura da copa sorteada (a
+## `area` continua sendo o que bloqueia) e o pe do tronco cai na borda de
+## baixo dela.
+func _criar_arvore(area: Rect2) -> void:
+	var arvore := Sprite2D.new()
+	var sorteio := hash(Vector2i(area.position))
+	var ficha: Dictionary = ARVORES[1] if sorteio % UMA_SECA_A_CADA == 0 else ARVORES[0]
+	var textura: Texture2D = ficha["textura"]
+	var escala := area.size.x / textura.get_width()
+	arvore.position = Vector2(area.get_center().x, area.end.y - PE)
+	arvore.texture = textura
+	arvore.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	arvore.centered = false
+	arvore.flip_h = (sorteio / UMA_SECA_A_CADA) % 2 == 1
+	arvore.scale = Vector2.ONE * escala
+	# O offset e em pixels da textura, antes da escala: a linha `base` tem
+	# que cair PE px abaixo da origem.
+	arvore.offset = Vector2(-textura.get_width() / 2.0, PE / escala - float(ficha["base"]))
+	add_child(arvore)
 
 ## Mato **dentro dos bosques**, e nao no mundo inteiro. O orcamento e fixo e se
 ## reparte pelos bosques por area: mata fechada, campo limpo.
@@ -385,9 +468,13 @@ func _desenhar_mato(mundo: Dictionary) -> void:
 				sorteio.randf_range(r.position.x, r.end.x - lado),
 				sorteio.randf_range(r.position.y, r.end.y - lado)
 			)
-			if not _dentro_do_bosque(bosque, posicao + Vector2(lado, lado * 0.55) / 2.0):
+			var tamanho := Vector2(lado, lado * MATO.get_height() / MATO.get_width())
+			if not _dentro_do_bosque(bosque, posicao + tamanho / 2.0):
 				continue
-			draw_rect(Rect2(posicao, Vector2(lado, lado * 0.55)), COR_MATO)
+			var espelho := -1.0 if sorteio.randi() % 2 == 1 else 1.0
+			draw_set_transform(posicao + tamanho / 2.0, 0.0, Vector2(espelho, 1.0))
+			draw_texture_rect(MATO, Rect2(-tamanho / 2.0, tamanho), false)
+			draw_set_transform(Vector2.ZERO)
 			feitos += 1
 
 ## Se um ponto esta dentro do poligono do bosque e fora dos furos dele.
@@ -431,7 +518,8 @@ func _povoar(construcao: Dictionary) -> void:
 			var documento := numero_do_documento if (i == quarto_do_documento and j == 0) else 0
 			var chave := "%s#%d/%d" % [chave_do_predio, i, j]
 			_criar_movel(tipos[j], posicoes[j], chave, documento,
-				Construcao.tamanho_do_movel(construcao, tipos[j]))
+				Construcao.tamanho_do_movel(construcao, tipos[j]),
+				GIRO_POR_PORTA.get(construcao["porta"], 0.0))
 
 ## A chave estavel de uma construcao: tipo + a posicao dela, que nao muda a
 ## menos que a propria construcao se mova.
@@ -542,8 +630,7 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 	var zumbi := CENA_DO_ZUMBI.instantiate()
 	zumbi.position = onde
 	add_child(zumbi)
-	if indice >= 0:
-		zumbi.morreu.connect(_anotar_ponto_limpo.bind(indice))
+	zumbi.morreu.connect(_ao_morrer_o_zumbi.bind(zumbi, indice))
 	# Cada zumbi guarda a lista de corpos que a linha de visao dele ignora, e
 	# ela tem os outros zumbis dentro. Chegou um novo, todas as listas estao
 	# velhas.
@@ -561,7 +648,7 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 ## tamanho e a orientacao que o mapa deu. Deixado em zero, usa o tamanho da
 ## tabela direto.
 func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
-		tamanho_override := Vector2.ZERO) -> void:
+		tamanho_override := Vector2.ZERO, giro := 0.0, espelhado := false) -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
 	var tamanho: Vector2 = tamanho_override if tamanho_override != Vector2.ZERO else ficha["tamanho"]
 	var movel := CENA_DO_MOVEL.instantiate()
@@ -573,6 +660,23 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	movel.tamanho = tamanho
 	movel.cor = ficha["cor"]
 	movel.solido = tipo != "lata"
+	# `<tipo>.png` e a pegada da ficha; `<tipo>-em-pe.png` e a pegada
+	# transposta. Girado 90 graus, o desenho que serve e o da outra pegada:
+	# o movel de dentro com tamanho transposto gira e usa o da ficha; o carro
+	# atravessado na rua usa o em pe, que e o unico que existe (vista pura de
+	# cima gira sem perder nada).
+	var transposto := tamanho != (ficha["tamanho"] as Vector2)
+	var girado := absf(sin(giro)) > 0.5
+	movel.desenho = _desenho_de(tipo, transposto != girado)
+	movel.giro = giro
+	movel.espelhado = espelhado
+	# Sprite partilhado entre tipos (os armarios especiais, `"desenho"` na
+	# ficha): a cor da ficha vira tinta, normalizada ao brilho 1 para tingir
+	# sem escurecer o desenho.
+	if ficha.has("desenho"):
+		var cor: Color = ficha["cor"]
+		var brilho := maxf(cor.r, maxf(cor.g, cor.b))
+		movel.tinta = Color(cor.r / brilho, cor.g / brilho, cor.b / brilho)
 
 	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
 	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
@@ -597,6 +701,18 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	# _adicionar_forma() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - tamanho / 2.0, tamanho))
+
+## O desenho de um tipo de movel, se ja existe um gerado em PASTA_DOS_DESENHOS
+## (<tipo>.png, ou <tipo>-em-pe.png com `em_pe`; a ficha pode apontar outro
+## nome em `"desenho"`, para tipos que partilham o sprite) - senao null, e o
+## movel fica na caixa do greybox. Carregado uma vez por nome.
+var _desenhos := {}
+func _desenho_de(tipo: String, em_pe: bool) -> Texture2D:
+	var nome := str(Construcao.MOVEIS[tipo].get("desenho", tipo)) + ("-em-pe" if em_pe else "")
+	if not _desenhos.has(nome):
+		var caminho := PASTA_DOS_DESENHOS + nome + ".png"
+		_desenhos[nome] = load(caminho) if ResourceLoader.exists(caminho) else null
+	return _desenhos[nome]
 
 ## A chave do movel de indice `i`, na ordem em que nasceu hoje - ou "" se `i`
 ## for invalido. `indice_do_movel` faz o caminho contrario.
@@ -654,6 +770,21 @@ func _criar_pilha(onde: Vector2, achado: String) -> void:
 	if _mochila != null:
 		pilha.vasculhado.connect(_mochila.ao_vasculhar)
 
+## O zumbi morreu: o ponto dele fica limpo hoje (se nasceu de um ponto), e o
+## corpo, que e um vasculhavel (zumbi.gd, 05/10/2026), entra no mesmo circuito
+## dos moveis - relogio e mochila. Nao se anota movel vazio: corpo nao tem
+## chave e nao atravessa o dia.
+func _ao_morrer_o_zumbi(zumbi: Node, indice: int) -> void:
+	if indice >= 0:
+		_anotar_ponto_limpo(indice)
+	var corpo := zumbi.get_node_or_null("Corpo")
+	if corpo == null:
+		return
+	if _relogio != null:
+		corpo.vasculhando.connect(_relogio.ao_vasculhar)
+	if _mochila != null:
+		corpo.vasculhado.connect(_mochila.ao_vasculhar)
+
 func _anotar_ponto_limpo(indice: int) -> void:
 	_pontos_limpos[indice] = true
 	_zumbis_vivos.erase(indice)
@@ -674,8 +805,12 @@ func _sortear_achados(documento: int) -> Array[String]:
 	_moveis_gerados += 1
 	if documento > 0:
 		achados.append(Construcao.DOCUMENTOS[documento - 1])
+	# Cada caixinha e de um calibre sorteado, com peso igual (05/10/2026:
+	# municao por calibre; raridade e decisao de mesa).
+	var calibres: Array = Construcao.MUNICOES.keys()
 	for _vez in _sorteio.randi_range(0, 2):
-		achados.append(Construcao.MUNICAO)
+		var calibre: String = calibres[_sorteio_de_calibre.randi_range(0, calibres.size() - 1)]
+		achados.append(Construcao.MUNICOES[calibre])
 	return achados
 
 
@@ -684,7 +819,7 @@ func _sortear_achados(documento: int) -> Array[String]:
 ## Arvore solida em area de circulacao e armadilha silenciosa: o bosque e o
 ## que o desenho pintou de mata, e so ele. Quantas sai da area de cada
 ## bosque e de COBERTURA_DE_ARVORE; um StaticBody2D por bosque, uma forma por
-## arvore, e o desenho e `draw_rect` em `_desenhar_arvores`.
+## arvore, e o desenho e um no por arvore (`_criar_arvore`), para o Y-sort.
 func _plantar_arvores() -> void:
 	var sorteio := RandomNumberGenerator.new()
 	sorteio.seed = 20260909
@@ -711,6 +846,7 @@ func _plantar_arvores() -> void:
 				continue
 			_adicionar_forma(corpo, area)
 			_arvores.append(area)
+			_criar_arvore(area)
 			plantadas += 1
 		if plantadas > 0:
 			add_child(corpo)

@@ -64,7 +64,10 @@ var TAMANHO := Vector2(100.0, 40.0)
 
 # Tom quente, que e a cor do modo Casa na direcao de arte. Numa rua inteira
 # cinza e a pista mais barata de "e aqui que voce volta".
-const COR_DA_PORTA := Color("8a5a2b")
+const PORTA := preload("res://rua/arte/predios/porta.png")
+const ESCALA_DA_PORTA := 2.0
+const TINTA_DA_PORTA := Color(1.25, 1.05, 0.8)
+const COR_DA_SOLEIRA := Color(0.0, 0.0, 0.0, 0.25)
 const COR_DA_LUZ := Color(0.95, 0.72, 0.38, 0.16)
 const COR_DA_BARRA := Color("e8b061")
 const COR_FUNDO_DA_BARRA := Color("2a211a")
@@ -143,9 +146,16 @@ func _draw() -> void:
 	else:
 		draw_rect(Rect2(TAMANHO.x / 2.0 - 4.0, -TAMANHO.y, 90.0, TAMANHO.y * 2.0), COR_DA_LUZ)
 
+	# A soleira e uma sombra sobre o vao, e a porta e a mesma dos outros
+	# predios (rua/arte/predios/porta.png, a do telhado), so que maior e
+	# tingida de quente - o retangulo laranja chapado saiu em 14/10/2026.
 	var caixa := Rect2(-TAMANHO / 2.0, TAMANHO)
-	draw_rect(caixa, COR_DA_PORTA)
+	draw_rect(caixa, COR_DA_SOLEIRA)
 	draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
+	var porta := PORTA.get_size() * ESCALA_DA_PORTA
+	draw_set_transform(Vector2.ZERO, 0.0 if TAMANHO.x > TAMANHO.y else PI / 2.0)
+	draw_texture_rect(PORTA, Rect2(-porta / 2.0, porta), false, TINTA_DA_PORTA)
+	draw_set_transform(Vector2.ZERO)
 
 	var fonte := ThemeDB.fallback_font
 	var topo := -TAMANHO.y / 2.0

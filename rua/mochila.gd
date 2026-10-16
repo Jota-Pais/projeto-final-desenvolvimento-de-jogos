@@ -53,15 +53,16 @@ func ao_vasculhar(_rotulo: String, achados: Array[String]) -> void:
 	_guardar_os_documentos(achados)
 
 ## As balas saem da lista e **nao vao para a mochila**: sao equipamento, ficam
-## no cinto, nao ocupam vaga e nao se perdem no dia que deu errado. Ver o
-## Travessia.municao.
+## no cinto, nao ocupam vaga e nao se perdem no dia que deu errado. Cada
+## caixinha vai para o calibre dela (Travessia.balas; 05/10/2026).
 func _pegar_as_balas(achados: Array[String]) -> void:
 	var i := 0
 	while i < achados.size():
-		if achados[i] == Construcao.MUNICAO:
-			Travessia.municao += Construcao.MUNICAO_POR_ACHADO
+		var achado: String = achados[i]
+		if Construcao.e_municao(achado):
+			Travessia.guardar_balas(Construcao.calibre_de(achado), Construcao.MUNICAO_POR_ACHADO)
 			achados.remove_at(i)
-			guardou.emit(Construcao.MUNICAO)
+			guardou.emit(achado)
 		else:
 			i += 1
 

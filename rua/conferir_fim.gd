@@ -50,6 +50,7 @@ func _process(_delta: float) -> void:
 	_a_partida_da_para_ganhar()
 	_a_cura_e_a_vitoria()
 	_o_prazo_e_a_derrota()
+	_cair_no_hardcore_tambem_e_parodia()
 	_a_rua_piora_com_os_dias()
 	_recomecar_zera_tudo()
 
@@ -238,6 +239,25 @@ func _o_prazo_e_a_derrota() -> void:
 			<= (fim.get_node("Conteudo/Rodape") as Label).get_theme_font_size("font_size"):
 		_erro("o \"game over\" nao esta menor que o final feliz")
 	fim.free()
+
+## O terceiro desfecho (15/10/2026, modo hardcore): cair na rua. A tela segue
+## a mesma regra da derrota - final feliz em cima, game over na letra miuda.
+## Quem decide que cair acaba a partida e o jogador (rua/jogador.gd), e isso
+## o conferir_zumbi confere; aqui e so a tela.
+func _cair_no_hardcore_tambem_e_parodia() -> void:
+	print("\n3b. cair na rua no hardcore e derrota, e tambem parodia")
+	_limpar()
+	Travessia.modo = Travessia.Modo.HARDCORE
+	Travessia.desfecho = Travessia.Desfecho.CAIU_NA_RUA
+	var fim := _a_tela_do_fim("SEPARE", "game over")
+	if fim != null:
+		var titulo: String = (fim.get_node("Conteudo/Titulo") as Label).text
+		if titulo.to_lower().contains("derrota") or titulo.to_lower().contains("perdeu") \
+				or titulo.to_lower().contains("game over"):
+			_erro("o titulo da queda entregou o jogo: \"%s\"" % titulo)
+		fim.free()
+	Travessia.modo = Travessia.Modo.CAMPANHA
+	Travessia.desfecho = Travessia.Desfecho.VITORIA
 
 ## Monta a tela do fim e confere que ela diz o que devia. Devolve a tela ainda
 ## na arvore quando quem chamou quiser olhar mais - senao ja libera.

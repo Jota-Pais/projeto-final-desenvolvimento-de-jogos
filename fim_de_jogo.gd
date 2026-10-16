@@ -23,10 +23,13 @@ const COR_LETRA_MIUDA := Color("8a7f70")
 const COR_GAME_OVER := Color("c0463c")
 
 func _ready() -> void:
-	if Travessia.desfecho == Travessia.Desfecho.VITORIA:
-		_vitoria()
-	else:
-		_derrota_em_parodia()
+	match Travessia.desfecho:
+		Travessia.Desfecho.VITORIA:
+			_vitoria()
+		Travessia.Desfecho.CAIU_NA_RUA:
+			_caiu_na_rua_em_parodia()
+		_:
+			_derrota_em_parodia()
 	($Conteudo/Numeros as Label).text = _os_numeros()
 
 func _unhandled_input(evento: InputEvent) -> void:
@@ -65,10 +68,27 @@ func _derrota_em_parodia() -> void:
 	rodape.text = "game over — o prazo da cura se esgotou"
 	rodape.add_theme_color_override("font_color", COR_GAME_OVER)
 
+## O terceiro desfecho, so do modo hardcore (15/10/2026): cair na rua. O mesmo
+## truque da derrota - voto de casamento em cima, game over na letra miuda.
+## O texto e proposta minha; a narrativa e da equipe.
+func _caiu_na_rua_em_parodia() -> void:
+	var titulo := $Conteudo/Titulo as Label
+	titulo.text = "ATÉ QUE A MORTE OS SEPARE"
+	titulo.add_theme_color_override("font_color", COR_FELIZ)
+
+	($Conteudo/Corpo as Label).text = (
+		"Você caiu na rua e não voltou.\n\n"
+		+ "Ela continua no porão, esperando o único que sabia o caminho de casa."
+	)
+
+	var rodape := $Conteudo/Rodape as Label
+	rodape.text = "game over — você caiu na rua, e no modo hardcore ninguém acorda em casa"
+	rodape.add_theme_color_override("font_color", COR_GAME_OVER)
+
 func _os_numeros() -> String:
 	return "%d dias   ·   %d de %d documentos   ·   %d balas no cinto" % [
 		Travessia.dia,
 		Travessia.documentos.size(),
 		Travessia.DOCUMENTOS_PARA_A_CURA,
-		Travessia.municao,
+		Travessia.total_de_balas(),
 	]

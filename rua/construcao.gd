@@ -332,27 +332,55 @@ const MOVEIS := {
 	"prateleira": { "rotulo": "Prateleira", "duracao": 3.2, "tamanho": Vector2(156.0, 42.0), "cor": Color("6b6152") },
 	"bomba": { "rotulo": "Bomba de combustível", "duracao": 4.0, "tamanho": Vector2(56.0, 86.0), "cor": Color("7a5a4a") },
 	"arquivo": { "rotulo": "Arquivo", "duracao": 4.2, "tamanho": Vector2(88.0, 52.0), "cor": Color("5a5f63") },
-	"armario_de_armas": { "rotulo": "Armário de armas", "duracao": 5.5, "tamanho": Vector2(108.0, 50.0), "cor": Color("4e5a55") },
+	# Os quatro armarios especiais partilham o sprite do armario de metal
+	# (`"desenho"`, rua/arte/objetos/armario-de-metal.png) tingido pela `cor`
+	# - design/arte-rua.md, fase 4, 14/10/2026.
+	"armario_de_armas": { "rotulo": "Armário de armas", "duracao": 5.5, "tamanho": Vector2(108.0, 50.0), "cor": Color("4e5a55"), "desenho": "armario-de-metal" },
 	# Hospital e corpo de bombeiros (17/09/2026, P16).
 	"maca": { "rotulo": "Maca", "duracao": 2.8, "tamanho": Vector2(90.0, 42.0), "cor": Color("8a9a94") },
-	"armario_de_remedios": { "rotulo": "Armário de remédios", "duracao": 3.2, "tamanho": Vector2(84.0, 44.0), "cor": Color("7d8a84") },
-	"armario_de_seringas": { "rotulo": "Armário de seringas", "duracao": 4.5, "tamanho": Vector2(70.0, 40.0), "cor": Color("6f7d76") },
-	"armario_de_bombeiro": { "rotulo": "Armário de bombeiro", "duracao": 4.0, "tamanho": Vector2(104.0, 48.0), "cor": Color("6b3f3a") },
+	"armario_de_remedios": { "rotulo": "Armário de remédios", "duracao": 3.2, "tamanho": Vector2(84.0, 44.0), "cor": Color("7d8a84"), "desenho": "armario-de-metal" },
+	"armario_de_seringas": { "rotulo": "Armário de seringas", "duracao": 4.5, "tamanho": Vector2(70.0, 40.0), "cor": Color("6f7d76"), "desenho": "armario-de-metal" },
+	"armario_de_bombeiro": { "rotulo": "Armário de bombeiro", "duracao": 4.0, "tamanho": Vector2(104.0, 48.0), "cor": Color("6b3f3a"), "desenho": "armario-de-metal" },
 }
 
 ## O que sai de um movel, desde 30/09/2026: **balas, e so balas** - mais o
 ## documento, onde o mapa declarou um. O Joao tirou o loot generico do jogo
 ## (lata de comida, pilha, pano sujo, as tabelas por tipo de movel) para
-## enxugar: voce comeca com a Beretta, e o que o vasculho rende e municao para
-## ela. A tabela CONTEUDO que vivia aqui esta no git.
+## enxugar: voce comeca com a Beretta, e o que o vasculho rende e municao. A
+## tabela CONTEUDO que vivia aqui esta no git.
 ##
 ## As balas sao **equipamento e nao loot**: nao ocupam vaga na mochila e nao se
 ## perdem no dia que deu errado. Ver rua/mochila.gd.
-const MUNICAO := "balas 9mm"
+##
+## **Um tipo de municao por calibre** (05/10/2026, Joao: "faz um tipo de
+## municao pra cada"): calibre -> o nome do achado que sai do movel. Cada arma
+## usa a municao do calibre dela (`municao` na ficha, rua/arma.gd): a Beretta
+## e a Fireagle dividem o 9mm, a Doze e a Benelli o calibre 12. Cada caixinha
+## do vasculho sai de um calibre sorteado com peso igual (rua/cenario.gd) -
+## raridade por calibre e decisao de mesa.
+const MUNICOES := {
+	".38": "balas .38",
+	"9mm": "balas 9mm",
+	"12": "cartuchos calibre 12",
+	".40": "balas .40",
+	"7,62": "balas 7,62",
+	"5,56": "balas 5,56",
+}
 
-## Quantas balas vem em cada achado. E uma caixinha, nao uma bala. **Proposta**
-## - calibragem, junto com Travessia.BALAS_DE_COMECO.
+## Quantas balas vem em cada achado, de qualquer calibre. E uma caixinha, nao
+## uma bala. **Proposta** - calibragem, junto com Travessia.BALAS_DE_COMECO.
 const MUNICAO_POR_ACHADO := 6
+
+## Se um achado e municao (de qualquer calibre).
+static func e_municao(achado: String) -> bool:
+	return MUNICOES.values().has(achado)
+
+## O calibre de um achado de municao; "" se nao for municao.
+static func calibre_de(achado: String) -> String:
+	for calibre in MUNICOES:
+		if MUNICOES[calibre] == achado:
+			return calibre
+	return ""
 
 
 

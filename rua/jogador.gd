@@ -35,6 +35,35 @@ const VELOCIDADE_CORRENDO := 460.0
 ## linha em vez de andar.
 const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 
+## O boneco e o no que desenha o jogador (rua/boneco.gd); ver _animar().
+const Boneco := preload("res://rua/boneco.gd")
+
+## Por quanto tempo, depois de apertar o tiro, ele continua olhando para o
+## mouse em vez de para onde anda.
+const SEGUNDOS_DE_MIRA := 0.5
+
+## A arma e filha dele (rua/arma.gd): o sinal `atirou` dela e o que faz o
+## boneco reagir ao disparo (ver _ao_atirar), e e ela que desenha a arma na
+## mao - este script so diz para onde ele olha e se a arma fica na frente ou
+## atras do corpo.
+const Arma := preload("res://rua/arma.gd")
+
+## Olhando mais para cima que isto (y negativo e para longe da camera), a arma
+## passa para tras do corpo.
+const OLHANDO_PARA_LONGE := -0.3
+
+## O recuo de codigo do disparo: o boneco da um passo contra o tiro e volta
+## em SEGUNDOS_DO_RECUO. O passo e RECUO px mais o `coice` da arma (a ficha
+## em rua/arma.gd: pistola 2-3, escopeta 5-6), para a Doze sacudir mais que
+## a Beretta. **E o definitivo** (Joao, 15/10/2026, "faz o recuo em codigo"):
+## a animacao `atirar` na folha foi tentada duas vezes no PixelLab e
+## reprovada - na vista de cima, "bracos para a frente" e para a camera e o
+## modelo nao encurta o braco (design/arte-rua.md). O `tocar("atirar")` fica
+## so por garantia, se um dia a folha tiver.
+const RECUO := 2.0
+const SEGUNDOS_DO_RECUO := 0.1
+
+
 ## Emitido ao ser tocado. O Vasculhavel escuta para interromper o vasculho, e a
 ## tela da mochila para se fechar - quem apanha para de arrumar a mochila.
 signal atingido()
@@ -55,6 +84,16 @@ var vida := VIDA_CHEIA
 
 var _empurrao := Vector2.ZERO
 
+@onready var _boneco: Boneco = $Boneco
+@onready var _arma: Arma = $Arma
+## Para onde ele esta olhando: comeca de frente para a tela.
+var _olhando := Vector2.DOWN
+var _mirando := 0.0
+
+
+func _ready() -> void:
+	_arma.atirou.connect(_ao_atirar)
+
 func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
 		"andar_esquerda", "andar_direita", "andar_cima", "andar_baixo"
@@ -71,6 +110,59 @@ func _physics_process(delta: float) -> void:
 	_empurrao = _empurrao.move_toward(
 		Vector2.ZERO, FORCA_DO_EMPURRAO / ESPERA_DO_EMPURRAO * delta)
 
+	_animar(direcao, velocidade, delta)
+
+## Para onde ele olha, e o que o boneco mostra. **Olha para onde anda, e para o
+## mouse so com a arma na mao** (decidido 30/09/2026). "Na mao" aqui e
+## enquanto o tiro esta apertado e por SEGUNDOS_DE_MIRA depois: nao existe
+## sacar e guardar a arma, voce comeca com ela. **Proposta** - se a equipe
+## quiser um botao de mirar, e um estado a mais aqui.
+##
+## O boneco segue a direcao das teclas, nao a velocidade: empurrado por um
+## zumbi ele fica parado olhando para onde olhava, em vez de "andar" para tras.
+## Correr e o mesmo andar mais rapido (decidido 30/09; animacao de corrida so
+## com assinatura).
+func _animar(direcao: Vector2, velocidade: float, delta: float) -> void:
+	if Input.is_action_pressed("atirar") and not TelaDaMochila.aberta:
+		_mirando = SEGUNDOS_DE_MIRA
+	else:
+		_mirando = maxf(0.0, _mirando - delta)
+	if _mirando > 0.0:
+		var para_o_mouse := get_global_mouse_position() - global_position
+		if para_o_mouse.length() > 1.0:
+			_olhando = para_o_mouse.normalized()
+	elif direcao != Vector2.ZERO:
+		_olhando = direcao
+	var acao := "parado" if direcao == Vector2.ZERO else "andar"
+	_boneco.mostrar(acao, _olhando, velocidade / VELOCIDADE)
+	_segurar_a_arma()
+
+## A arma na mao aponta para onde ele olha. Olhando para longe da camera
+## (norte), ela fica atras do corpo: o no da arma passa para antes do boneco
+## na arvore, que e a ordem de desenho. Sempre na mao - nao existe guardar a
+## arma (ver _animar).
+func _segurar_a_arma() -> void:
+	_arma.apontar(_olhando)
+	var atras := _olhando.y < OLHANDO_PARA_LONGE
+	var esta_atras := _arma.get_index() < _boneco.get_index()
+	if atras != esta_atras:
+		move_child(_arma, 0 if atras else get_child_count() - 1)
+
+## A arma disparou para `direcao`. Ele olha para la e o boneco mostra o tiro
+## com o recuo de codigo (ver RECUO); o clarao do cano e o coice da arma na
+## mao e a arma quem desenha (rua/arma.gd), entao o tiro le em tres partes:
+## clarao, arma que pula para tras, corpo que da o passo.
+func _ao_atirar(direcao: Vector2) -> void:
+	_olhando = direcao
+	_mirando = SEGUNDOS_DE_MIRA
+	if _boneco.tocar("atirar", direcao):
+		return
+	var passo := RECUO + float(_arma.ficha()["coice"])
+	_boneco.position = -direcao * passo
+	create_tween().tween_property(_boneco, "position", Vector2.ZERO, SEGUNDOS_DO_RECUO) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+
+
 ## Chamado pelo zumbi que tocou nele: tira `quanto` de vida, empurra e
 ## interrompe o que ele estava fazendo.
 ##
@@ -84,24 +176,27 @@ func levar_dano(quanto: float, de_onde: Vector2) -> void:
 
 	if vida > 0.0:
 		return
-	# **Cair custa o dia, e nao a partida.** O High Concept declara dois
-	# desfechos, a cura a tempo e o prazo esgotado, e cair na rua nao e nenhum
-	# dos dois. Voce acorda em casa sem nada do que carregava, e o preco e um
-	# dia do prazo - que e o recurso caro do jogo.
-	#
-	# Se a equipe quiser que cair acabe a partida, e uma linha: trocar por
-	# Travessia.acabar_o_jogo(). Mas ai o jogo passa a ter um game over que o
-	# documento nao previu.
+	# O que cair custa depende do modo (Joao, 15/10/2026 - ver Travessia.Modo):
+	# no **hardcore**, a partida; na **campanha**, o dia - voce acorda em casa
+	# sem nada do que carregava, e o preco e um dia do prazo, que e o recurso
+	# caro do jogo.
+	if Travessia.modo == Travessia.Modo.HARDCORE:
+		print("Sem vida - modo hardcore, a partida acaba")
+		Travessia.acabar_o_jogo(Travessia.Desfecho.CAIU_NA_RUA)
+		return
 	print("Sem vida - o dia acaba na forca")
 	vida = VIDA_CHEIA
 	Travessia.entrar_em_casa(Travessia.FimDoDia.SEM_VIDA)
 
 ## Barra de vida em cima da cabeca, so quando falta alguma: e onde ela importa
-## na hora do aperto. A HUD mostra o numero no canto.
+## na hora do aperto. A HUD mostra o numero no canto. Fica acima do boneco (o
+## pe esta em +20 e ele tem uns 75 px de altura), porque o corpo desenha antes
+## dos filhos: em cima do sprite ela sumiria atras dele.
 func _draw() -> void:
 	if is_equal_approx(vida, VIDA_CHEIA):
 		return
-	var barra := Rect2(-16.0, -34.0, 32.0, 5.0)
+	var barra := Rect2(-16.0, -66.0, 32.0, 5.0)
+
 	draw_rect(barra, COR_FUNDO_DA_VIDA)
 	var cheio := barra
 	cheio.size.x = barra.size.x * (vida / VIDA_CHEIA)

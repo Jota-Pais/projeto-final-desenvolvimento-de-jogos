@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Você me amaria se eu fosse um zumbi?"
-run/main_scene="res://rua/rua.tscn"
+run/main_scene="res://titulo.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]

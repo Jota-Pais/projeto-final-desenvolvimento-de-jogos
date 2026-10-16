@@ -1,0 +1,231 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://titulo.gd" id="1_titulo"]
+[ext_resource type="Texture2D" path="res://arte/titulo/capa.png" id="2_capa"]
+[ext_resource type="FontFile" path="res://arte/titulo/Creepster-Regular.ttf" id="3_fonte"]
+
+[sub_resource type="StyleBoxFlat" id="botao_normal"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.0941176, 0.0784314, 0.0666667, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.541176, 0.498039, 0.439216, 0.7)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="botao_hover"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.156863, 0.129412, 0.109804, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.909804, 0.690196, 0.380392, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="botao_foco"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.909804, 0.690196, 0.380392, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="Theme" id="tema_do_menu"]
+Button/colors/font_color = Color(0.909804, 0.870588, 0.796078, 1)
+Button/colors/font_focus_color = Color(0.976471, 0.858824, 0.631373, 1)
+Button/colors/font_hover_color = Color(0.976471, 0.858824, 0.631373, 1)
+Button/colors/font_pressed_color = Color(0.909804, 0.690196, 0.380392, 1)
+Button/styles/focus = SubResource("botao_foco")
+Button/styles/hover = SubResource("botao_hover")
+Button/styles/normal = SubResource("botao_normal")
+Button/styles/pressed = SubResource("botao_hover")
+
+[node name="Titulo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_titulo")
+
+[node name="Capa" type="TextureRect" parent="."]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_capa")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Faixa" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 0.56
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.0470588, 0.0392157, 0.0352941, 0.72)
+
+[node name="Nome" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 80.0
+offset_top = 36.0
+offset_right = -80.0
+offset_bottom = 150.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.909804, 0.690196, 0.380392, 1)
+theme_override_colors/font_outline_color = Color(0.0470588, 0.0392157, 0.0352941, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 10
+theme_override_constants/shadow_offset_x = 4
+theme_override_constants/shadow_offset_y = 6
+theme_override_fonts/font = ExtResource("3_fonte")
+theme_override_font_sizes/font_size = 68
+text = "Você me amaria se eu fosse um zumbi?"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Conteudo" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+theme = SubResource("tema_do_menu")
+anchor_top = 0.56
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 140.0
+offset_top = 16.0
+offset_right = -140.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Principal" type="VBoxContainer" parent="Conteudo"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Jogar" type="Button" parent="Conteudo/Principal"]
+custom_minimum_size = Vector2(320, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Jogar"
+
+[node name="ComoSeJoga" type="Button" parent="Conteudo/Principal"]
+custom_minimum_size = Vector2(320, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Como se joga"
+
+[node name="Sair" type="Button" parent="Conteudo/Principal"]
+custom_minimum_size = Vector2(320, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Sair"
+
+[node name="Modos" type="VBoxContainer" parent="Conteudo"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Pergunta" type="Label" parent="Conteudo/Modos"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.847059, 0.796078, 0.713725, 1)
+theme_override_font_sizes/font_size = 18
+text = "Escolha como vai sair de casa:"
+horizontal_alignment = 1
+
+[node name="Botoes" type="HBoxContainer" parent="Conteudo/Modos"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Campanha" type="Button" parent="Conteudo/Modos/Botoes"]
+custom_minimum_size = Vector2(360, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "CAMPANHA
+
+cair na rua custa o dia: você acorda
+em casa sem o que carregava"
+
+[node name="Hardcore" type="Button" parent="Conteudo/Modos/Botoes"]
+custom_minimum_size = Vector2(360, 100)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "HARDCORE
+
+cair na rua acaba a partida"
+
+[node name="Voltar" type="Button" parent="Conteudo/Modos"]
+custom_minimum_size = Vector2(200, 38)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "Voltar"
+
+[node name="ComoSeJoga" type="VBoxContainer" parent="Conteudo"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Texto" type="Label" parent="Conteudo/ComoSeJoga"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.847059, 0.796078, 0.713725, 1)
+theme_override_font_sizes/font_size = 15
+text = "WASD ou setas — andar     ·     Shift — correr     ·     E (segurar) — vasculhar, entrar em casa
+mouse — mirar     ·     botão esquerdo — atirar     ·     Tab — mochila     ·     Q — trocar de arma
+
+O dia começa com você na calçada, em frente à sua casa, e tem 420 segundos de luz.
+Vasculhar gasta luz em dobro. Volte à porta antes de anoitecer e segure E nela:
+só entra em casa o que passou por ali. A cura precisa de 4 documentos e o prazo é de 30 dias.
+Dentro de casa é só mouse: o que dá para usar acende quando o mouse passa.
+As bolinhas do canto são a energia da noite. A cama encerra a noite."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Voltar" type="Button" parent="Conteudo/ComoSeJoga"]
+custom_minimum_size = Vector2(200, 38)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "Voltar"
+
+[node name="Rodape" type="Label" parent="Conteudo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.541176, 0.498039, 0.439216, 1)
+theme_override_font_sizes/font_size = 13
+text = "setas escolhem, Enter confirma, Esc volta"
+horizontal_alignment = 1

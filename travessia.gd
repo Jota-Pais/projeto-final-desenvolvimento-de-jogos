@@ -24,9 +24,20 @@ extends Node
 signal chegou_em_casa
 signal saiu_para_a_rua
 
+const CENA_DO_TITULO := "res://titulo.tscn"
 const CENA_DA_RUA := "res://rua/rua.tscn"
 const CENA_DA_CASA := "res://casa/casa.tscn"
 const CENA_DO_FIM := "res://fim_de_jogo.tscn"
+
+## Os dois modos de jogo (Joao, 15/10/2026: "cria dois modos, um hardcore e
+## um campanha, o hardcore morreu = perdeu, o campanha morreu = o personagem
+## volta pra casa mas perde o dia"). A unica diferenca e o que acontece quando
+## a vida zera na rua (rua/jogador.gd, levar_dano): na campanha o dia acaba
+## na forca e ele acorda em casa sem o que carregava; no hardcore a partida
+## acaba. Escolhido na tela de titulo; recomecar volta para la.
+enum Modo { CAMPANHA, HARDCORE }
+
+var modo := Modo.CAMPANHA
 
 ## Quantos documentos a pesquisa precisa para a cura ficar pronta.
 ##
@@ -81,20 +92,68 @@ var documentos: Array[String] = []
 ## duas vezes. **Nao entra na conta da cura** (ver a_cura_esta_pronta).
 var documentos_lidos: Array[String] = []
 
-## As balas da Beretta 9mm. **Voce comeca armado** (30/09/2026, regra do Joao):
-## a arma nao e loot nem recompensa, e o que voce tem desde o primeiro dia. O
-## que o vasculho rende sao as balas, e so elas - ver rua/pistola.gd para as
-## tres regras que mantem a arma servindo o vasculho em vez de virar um jogo de
+## As balas. **Voce comeca armado** (30/09/2026, regra do Joao): a arma nao e
+## loot nem recompensa, e o que voce tem desde o primeiro dia. O que o
+## vasculho rende sao as balas, e so elas - ver rua/arma.gd para as tres
+## regras que mantem a arma servindo o vasculho em vez de virar um jogo de
 ## tiro.
 ##
 ## As balas sao **equipamento, nao loot**: nao ocupam vaga na mochila (estao no
 ## cinto) e **nao se perdem no dia que deu errado** - o mapa nao repoe, e
 ## perder a municao inteira seria beco sem saida sem aviso.
-var municao := BALAS_DE_COMECO
+##
+## **Por calibre** (05/10/2026, Joao: "faz um tipo de municao pra cada"):
+## calibre -> quantas. A arma usa a municao do calibre dela (`municao` na
+## ficha, rua/arma.gd); os nomes estao em Construcao.MUNICOES.
+var balas := balas_de_comeco()
+
+## As balas **da arma na mao**: e o que a HUD mostra e o que o tiro gasta. Ler
+## e escrever aqui mexe so no calibre dela; os outros ficam em `balas`.
+var municao: int:
+	get:
+		return balas.get(calibre_da_arma(), 0)
+	set(quantas):
+		balas[calibre_da_arma()] = quantas
 
 ## Com quantas balas a partida comeca: um pente de Beretta 92. **Proposta** -
 ## o Joao pediu que se comece armado, e a quantidade e calibragem.
 const BALAS_DE_COMECO := 15
+const CALIBRE_DE_COMECO := "9mm"
+
+const Arma := preload("res://rua/arma.gd")
+const Construcao := preload("res://rua/construcao.gd")
+
+## Com o que o cinto nasce. **Para os testes, 15 de cada calibre** (Joao,
+## 05/10/2026: "por questao de pratica pros testes faz eu nascer com as balas
+## de cada arma no inventario ja, que nem a de 9mm"). A regra de design
+## continua "comeca com a Beretta e um pente": quando for para valer, isto
+## volta a ser so {CALIBRE_DE_COMECO: BALAS_DE_COMECO}.
+static func balas_de_comeco() -> Dictionary:
+	var cinto := {}
+	for calibre in Construcao.MUNICOES:
+		cinto[calibre] = BALAS_DE_COMECO
+	return cinto
+
+## O calibre da arma na mao.
+func calibre_da_arma() -> String:
+	return Arma.ARMAS[arma]["municao"]
+
+## Uma caixinha achada vai para o calibre dela.
+func guardar_balas(calibre: String, quantas: int) -> void:
+	balas[calibre] = balas.get(calibre, 0) + quantas
+
+## Todas as balas no cinto, de todos os calibres.
+func total_de_balas() -> int:
+	var total := 0
+	for calibre in balas:
+		total += balas[calibre]
+	return total
+
+## A arma na mao, pelo nome da ficha em rua/arma.gd (`ARMAS`). Atravessa o dia
+## como as balas. Comeca com a Beretta (regra de 30/09/2026); como se consegue
+## outra e ⬜ - hoje `Q` troca, auxilio de prototipo.
+var arma := ARMA_DE_COMECO
+const ARMA_DE_COMECO := "Beretta 9mm"
 
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
@@ -162,10 +221,11 @@ func sair_para_a_rua() -> void:
 
 ## Como a PARTIDA acabou - nao confundir com FimDoDia, que e como o dia acabou.
 ##
-## Sao os dois desfechos que o High Concept declara, e so eles: ou a cura fica
-## pronta a tempo, ou o prazo se esgota. Nao ha terceiro: desde 16/09/2026 nao
-## ha como cair na rua - ver rua/jogador.gd.
-enum Desfecho { VITORIA, PRAZO_ESGOTADO }
+## Os dois desfechos que o High Concept declara - ou a cura fica pronta a
+## tempo, ou o prazo se esgota - e, desde 15/10/2026, o terceiro, so no modo
+## hardcore: cair na rua. Na campanha cair custa o dia, nao a partida (ver
+## rua/jogador.gd e `Modo`).
+enum Desfecho { VITORIA, PRAZO_ESGOTADO, CAIU_NA_RUA }
 
 var desfecho := Desfecho.VITORIA
 
@@ -184,10 +244,13 @@ func acabar_o_jogo(qual: Desfecho) -> void:
 ## moveis vazios, senao a segunda partida comecaria num mapa ja saqueado.
 func recomecar() -> void:
 	dia = 1
-	municao = BALAS_DE_COMECO
+	arma = ARMA_DE_COMECO
+	balas = balas_de_comeco()
 	documentos.clear()
 	documentos_lidos.clear()
 	moveis_vazios.clear()
 	documentos_perdidos = 0
 	fim_do_dia = FimDoDia.PELA_PORTA
-	get_tree().change_scene_to_file(CENA_DA_RUA)
+	desfecho = Desfecho.VITORIA
+	# De volta ao titulo, e nao direto a rua: a partida nova escolhe o modo.
+	get_tree().change_scene_to_file(CENA_DO_TITULO)

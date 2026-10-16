@@ -8,9 +8,10 @@ extends Area2D
 ##
 ## O que diferencia uma lata de lixo de uma porta de casa e so a "duracao" e o
 ## que sai de dentro - e desde 30/09/2026 o que sai e sempre a mesma coisa,
-## balas para a Beretta (mais o documento, onde o mapa pos um). Mesmo verbo,
+## balas para a arma (mais o documento, onde o mapa pos um). Mesmo verbo,
 ## custos diferentes - e isso que a Alfa cobra como "aplicabilidade da core
-## mechanic".
+## mechanic". Desde 05/10/2026 o corpo de um zumbi tambem e um destes
+## (zumbi.gd): sem caixa desenhada, com o inventario dele como `achados`.
 
 ## Le so a tabela de documentos, para saber qual achado desenhar com destaque.
 const Construcao := preload("res://rua/construcao.gd")
@@ -44,6 +45,27 @@ signal vasculhando(segundos: float)
 @export var cor := Color("59504a")
 ## Se bloqueia a passagem. Carro e porta bloqueiam; lata de lixo nao precisa.
 @export var solido := true
+## Se desenha a caixa do greybox. O corpo de zumbi nao desenha: o boneco caido
+## ja e o desenho, e aqui ficam so a barra, o aviso e o que saiu.
+@export var desenhar_caixa := true
+## O desenho do movel, quando existe um gerado (rua/arte/objetos/<tipo>.png,
+## design/arte-rua.md, fase 4, 14/10/2026). Sem ele, a caixa do greybox. O
+## sprite e visto de cima com a frente para baixo e sai do tamanho que veio: o
+## pe dele na borda de baixo da pegada (`tamanho`), e o que sobra de altura
+## sobe pela parede atras - e assim que a vista de cima inclinada mostra uma
+## coisa alta.
+@export var desenho: Texture2D
+## Giro do desenho, em radianos: 0 e como veio (frente para baixo); -PI/2 e
+## PI/2 poem a frente para leste e para oeste, para o movel encostado numa
+## parede de lado. Quem decide e o cenario, que sabe onde esta a parede.
+@export var giro := 0.0
+## Espelha o desenho, para dois carros iguais na mesma rua nao serem o mesmo
+## carro.
+@export var espelhado := false
+## Tinta multiplicada sobre o desenho: e o que distingue os quatro armarios
+## especiais, que partilham um sprite de armario de metal (a cor da ficha,
+## normalizada pelo cenario).
+@export var tinta := Color.WHITE
 
 ## Quanto progresso se perde por segundo quando ninguem esta vasculhando.
 ##
@@ -67,6 +89,13 @@ const DECAIMENTO := 0.0
 const ALCANCE := 60.0
 
 const COR_VAZIO := Color("34302d")
+## O desenho de um movel ja vasculhado escurece: nao da para abrir gaveta num
+## sprite, e o jogador precisa ler de longe o que ja rendeu.
+const TINTA_DO_VAZIO := Color(0.5, 0.5, 0.5)
+## Quanto o desenho pode subir alem da pegada, para tras: a espessura de uma
+## parede (Construcao.PAREDE) - o movel encosta nela e o tampo fica por cima
+## dela, nao fora dela.
+const FOLGA_SOBRE_A_PAREDE := 20.0
 const COR_BARRA := Color("c8b78a")
 const COR_FUNDO_DA_BARRA := Color("22201e")
 const COR_DO_AVISO := Color("e8e2d6")
@@ -92,6 +121,8 @@ func _ready() -> void:
 		achados = []
 		_vazio = true
 		_progresso = duracao
+	# Pixel art: nada de borrar o desenho quando a camera aproxima.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_montar_formas()
 	body_entered.connect(_ao_entrar)
 	body_exited.connect(_ao_sair)
@@ -154,17 +185,18 @@ func receber(achado: String) -> void:
 	queue_redraw()
 
 ## O que saiu do movel, escrito em cima dele depois de vasculhado. Documento em
-## cima, na cor dele e com uma marca ao lado; as balas embaixo, contadas.
+## cima, na cor dele e com uma marca ao lado; as balas embaixo, contadas por
+## calibre.
 func _desenhar_o_que_saiu(fonte: Font, esquerda: float, base: float) -> void:
-	var caixinhas := 0
+	var por_calibre := {}
 	var achou_documento := false
 	for achado in _saiu:
 		if Construcao.e_documento(achado):
 			achou_documento = true
 			draw_string(fonte, Vector2(esquerda + 16.0, base - 18.0), achado,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_DOCUMENTO)
-		elif achado == Construcao.MUNICAO:
-			caixinhas += 1
+		elif Construcao.e_municao(achado):
+			por_calibre[achado] = por_calibre.get(achado, 0) + Construcao.MUNICAO_POR_ACHADO
 
 	if achou_documento:
 		# A "marca com brilho" do one-pager, na medida do greybox: um quadrado
@@ -174,8 +206,11 @@ func _desenhar_o_que_saiu(fonte: Font, esquerda: float, base: float) -> void:
 		draw_rect(marca, COR_DO_DOCUMENTO)
 
 	var saldo := "vazio"
-	if caixinhas > 0:
-		saldo = "%d balas" % (caixinhas * Construcao.MUNICAO_POR_ACHADO)
+	if not por_calibre.is_empty():
+		var partes := PackedStringArray()
+		for achado in por_calibre:
+			partes.append("%d %s" % [por_calibre[achado], achado])
+		saldo = " · ".join(partes)
 	draw_string(fonte, Vector2(esquerda, base), saldo,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(COR_DO_AVISO, 0.5))
 
@@ -219,10 +254,30 @@ func _ao_sair(corpo: Node2D) -> void:
 func _ao_ser_atingido() -> void:
 	interromper()
 
+## O sprite com o pe na borda de baixo da pegada, no quadro girado: com giro
+## de 90 graus a pegada que ele ve e a transposta, porque o `tamanho` ja veio
+## transposto do cenario (Construcao.tamanho_do_movel, mapa.gd "deitado").
+func _desenhar_o_desenho() -> void:
+	var pegada := tamanho if absf(sin(giro)) < 0.5 else Vector2(tamanho.y, tamanho.x)
+	var tam := desenho.get_size()
+	# O pe do desenho na borda de baixo da pegada - mas um desenho mais alto
+	# que a pegada (tampo + frente, na vista inclinada) nao pode atravessar a
+	# parede atras dele e aparecer do lado de fora do predio: no maximo cobre
+	# a parede (FOLGA_SOBRE_A_PAREDE), e o que sobra desce para dentro da
+	# sala, onde e so a frente dele pintada no chao.
+	var topo := maxf(pegada.y / 2.0 - tam.y, -pegada.y / 2.0 - FOLGA_SOBRE_A_PAREDE)
+	draw_set_transform(Vector2.ZERO, giro, Vector2(-1.0 if espelhado else 1.0, 1.0))
+	draw_texture_rect(desenho, Rect2(Vector2(-tam.x / 2.0, topo), tam), false,
+		tinta * (TINTA_DO_VAZIO if _vazio else Color.WHITE))
+	draw_set_transform(Vector2.ZERO)
+
 func _draw() -> void:
 	var caixa := Rect2(-tamanho / 2.0, tamanho)
-	draw_rect(caixa, COR_VAZIO if _vazio else cor)
-	draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
+	if desenho != null:
+		_desenhar_o_desenho()
+	elif desenhar_caixa:
+		draw_rect(caixa, COR_VAZIO if _vazio else cor)
+		draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
 
 	var fonte := ThemeDB.fallback_font
 	var topo := -tamanho.y / 2.0

@@ -64,7 +64,7 @@ func _erro(texto: String) -> void:
 	print("  FALHA: " + texto)
 
 func _limpar_o_autoload() -> void:
-	Travessia.municao = Travessia.BALAS_DE_COMECO
+	Travessia.balas = Travessia.balas_de_comeco()
 	Travessia.documentos.clear()
 	Travessia.moveis_vazios.clear()
 	Travessia.documentos_perdidos = 0
@@ -99,7 +99,7 @@ func _moveis_com_documento(rua: Node) -> Array[Node]:
 func _caixinhas_em(movel: Node) -> int:
 	var n := 0
 	for achado in movel.achados:
-		if achado == Construcao.MUNICAO:
+		if Construcao.e_municao(achado):
 			n += 1
 	return n
 
@@ -124,14 +124,15 @@ func _vasculhar_rende_documento_e_balas() -> void:
 		return
 
 	var caixinhas := _caixinhas_em(movel)
-	var balas_antes := Travessia.municao
+	# Todos os calibres: a caixinha vai para o calibre dela (05/10/2026).
+	var balas_antes := Travessia.total_de_balas()
 	movel._esvaziar()
 
 	if mochila.documentos.size() != 1:
 		_erro("o movel tinha 1 documento e a mochila ficou com %d" % mochila.documentos.size())
-	elif Travessia.municao != balas_antes + caixinhas * Construcao.MUNICAO_POR_ACHADO:
+	elif Travessia.total_de_balas() != balas_antes + caixinhas * Construcao.MUNICAO_POR_ACHADO:
 		_erro("o movel tinha %d caixinha(s) e o cinto foi de %d para %d balas"
-			% [caixinhas, balas_antes, Travessia.municao])
+			% [caixinhas, balas_antes, Travessia.total_de_balas()])
 	else:
 		print("  %s: 1 documento para a mochila, %d caixinha(s) para o cinto"
 			% [movel.rotulo, caixinhas])
@@ -154,8 +155,8 @@ func _vasculhar_rende_documento_e_balas() -> void:
 		_erro("vasculhando o mapa inteiro a mochila ficou com %d documentos, e o mapa tem %d"
 			% [mochila.quantos(), Construcao.DOCUMENTOS.size()])
 	else:
-		print("  o mapa inteiro deixou %d documentos na mochila e %d balas no cinto"
-			% [mochila.quantos(), Travessia.municao])
+		print("  o mapa inteiro deixou %d documentos na mochila e %d balas no cinto: %s"
+			% [mochila.quantos(), Travessia.total_de_balas(), Travessia.balas])
 	rua.free()
 
 # --- 2. so entra o que passou pela porta ------------------------------------
@@ -182,7 +183,7 @@ func _um_fim_de_dia(motivo: int) -> void:
 	com_documento[1]._esvaziar()
 
 	var carregava := mochila.documentos.size()
-	var balas := Travessia.municao
+	var balas := Travessia.total_de_balas()
 	if carregava != 2:
 		_erro("o teste comecou com %d documentos na mochila, esperado 2" % carregava)
 		rua.free()
@@ -209,9 +210,9 @@ func _um_fim_de_dia(motivo: int) -> void:
 		elif Travessia.documentos_perdidos != carregava:
 			_erro("acabando %s, a casa nao registrou os %d documentos perdidos"
 				% [nome, carregava])
-		elif Travessia.municao != balas:
+		elif Travessia.total_de_balas() != balas:
 			_erro("acabando %s, as balas foram de %d para %d - balas nao se perdem"
-				% [nome, balas, Travessia.municao])
+				% [nome, balas, Travessia.total_de_balas()])
 		else:
 			print("  %-18s perdeu %d documentos na rua e ficou com as %d balas"
 				% [nome, Travessia.documentos_perdidos, balas])

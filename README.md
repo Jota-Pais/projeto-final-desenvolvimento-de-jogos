@@ -14,7 +14,8 @@ ponto e clique, onde está a narrativa.
 1. Baixe o **Godot 4.7.2 stable**, build padrão (não a .NET/C# — o projeto é em
    GDScript): <https://godotengine.org/download>. É portátil, não tem instalador.
 2. Abra o `project.godot` desta pasta.
-3. **F5** roda o jogo. **F6** roda a cena aberta.
+3. **F5** roda o jogo: abre na tela de título, onde se escolhe o modo. **F6**
+   roda a cena aberta (`rua/rua.tscn` pula o título e começa na campanha).
 
 O código se escreve no editor de script do próprio Godot. Quem preferir VS Code
 pode ligar o editor externo com a extensão `godot-tools`, mas cena continua
@@ -68,6 +69,10 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
 
 - **Cada dia é uma fase.** A partida acaba na vitória (a cura fica pronta) ou na
   derrota (o prazo se esgota) — ver `fim_de_jogo.gd`.
+- **Dois modos, escolhidos na tela de título** (15/10/2026): na **campanha**,
+  cair sem vida na rua custa o dia — você acorda em casa sem o que carregava;
+  no **hardcore**, cair acaba a partida, com uma terceira tela de fim no mesmo
+  tom de paródia. É a única diferença entre os dois (`Travessia.modo`).
 - **A core mechanic é vasculhar sob pressão**, e a pressão vem de três lugares
   em cima da mesma ação: o zumbi cobra tempo, o relógio cobra luz e o prazo
   cobra dia. (A quarta, as 12 vagas da mochila cobrando escolha, saiu em
@@ -85,11 +90,24 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   que o jogador nasce na calçada, e é a única construção do mapa assim.
 - **Só entra em casa o que passou por essa porta.** Amanhecer na rua ou cair
   sem vida deixa a mochila na calçada e custa o dia — são os três únicos jeitos
-  de um dia acabar.
+  de um dia acabar (no hardcore, cair acaba a partida em vez do dia).
 - **Você começa armado, com uma Beretta 9mm e um pente** (30/09/2026). O
   vasculho rende balas, e só balas, além dos documentos; balas são equipamento:
-  não ocupam vaga e não se perdem no dia que deu errado. O tiro mata de uma vez
-  e chama a horda.
+  não ocupam vaga e não se perdem no dia que deu errado. O zumbi tem 100 de
+  vida e o tiro da Beretta tira 20 — cinco tiros (05/10/2026: vida e dano se
+  contam em unidade de vida, não em balas; até 03/10 um tiro matava) — e o
+  tiro chama a horda. O corpo fica 60 s no chão, ou até o fim do dia se
+  carregar algo, e se vasculha como um móvel — sai vazio por enquanto, porque
+  o que o zumbi carrega não foi decidido. **As armas são oito** (lista do
+  João, 05/10/2026): Revólver 38, Beretta 9mm, Doze 2 canos, Benelli semiauto,
+  CTT40, Fireagle 9mm, Fall e M4, sempre na mão como sprite à parte; os
+  números de cada uma são proposta, e `Q` troca de arma (protótipo — como se
+  consegue outra arma não foi decidido). **A munição é por calibre** (05/10):
+  .38, 9mm, calibre 12, .40, 7,62 e 5,56; cada caixinha do vasculho é de um
+  calibre sorteado, a HUD mostra as balas da arma na mão e a tela da mochila
+  lista o cinto inteiro. **Para os testes, o cinto nasce com 15 de cada
+  calibre** (05/10/2026, a pedido do João); a regra de design continua "começa
+  com a Beretta e um pente", e voltar é uma função em `travessia.gd`.
 - **Os documentos são placeholders numerados.** Existem seis no mapa, a cura pede
   quatro, e é o que fecha a partida. ⬜ O que eles são, o que contam e onde ficam
   **não foi decidido pela equipe** — ver `design/narrativa.md`.
@@ -108,13 +126,31 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/construcao.gd` | as regras de uma construção qualquer (parede, vão de porta, quarto), que móvel vai em cada quarto e o que sai de um móvel (balas) |
 | `rua/cenario.gd` | desenha o chão e gera colisão, móveis e árvores a partir do mapa |
 | `rua/vasculhavel.gd` | **a core mechanic**: barra que enche enquanto `E` estiver segurado |
-| `rua/jogador.gd` | andar e correr, e nada mais — quem lê a tecla de vasculhar é o próprio móvel |
-| `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe |
+| `rua/jogador.gd` | andar e correr, e para onde ele olha (para onde anda; para o mouse enquanto atira) — quem lê a tecla de vasculhar é o próprio móvel |
+| `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe; a vida dele, o tiro que fere e o que derruba (corpo no chão) |
+| `rua/boneco.gd` | **a arte entrando**: lê a folha PNG + JSON que o PixelLab exporta e vira `AnimatedSprite2D`, uma animação por ação e direção (`andar_sul`, `vagar_noroeste`…), pé na caixa de colisão, escala 1. `mostrar()` para o que repete, `tocar()` para o que acontece uma vez (`atirar`, `dano`, `morrer`) — e devolve `false` se a folha não tem, para o código mostrar uma versão de graça. O jogador e o zumbi têm um |
+| `rua/arte/<quem>/` | a folha de sprites de cada personagem, como o PixelLab exporta (PNG + JSON de layout): jogador com `andar`; zumbi com `vagar`, `toque` (ataque, 8 direções) e `morrer` (só no sul — o último quadro serve de morto no chão para as outras). **Gerada — não editar à mão**: retoque é no servidor, e o como está em `design/arte-rua.md` |
+| `rua/arte/armas/` | um PNG por arma (de 12 × 7 a 30 × 9 px), desenhado à mão em texto por `design/desenhar_armas.js`; trocável, mantendo o pixel do cabo da ficha |
+| `rua/chao.gd` | **o chão em tiles** (14/10): lê o raster dos vértices (`rua/chao_tracado.png` + `.json`) e os tilesets Wang de `rua/arte/chao/`, escolhe o tile de cada célula pelos quatro cantos e pinta o TileMap inteiro ao abrir, em menos de um segundo. Vem antes do Cenario na cena, que por isso não pinta mais os polígonos do chão |
+| `rua/chao_tracado.png` + `.json` | a classe de chão de cada vértice da grade de 32 px, gerada por `design/rasterizar_chao.js` a partir do mapa traçado. **Gerado — rodar de novo quando o desenho do mapa mudar** |
+| `rua/arte/chao/` | os oito tilesets do chão, gerados no PixelLab (PNG 4×4 + JSON com `bounding_box` e `corners`) e retocados na paleta de fim do mundo, listados em `tilesets.json`; `paleta.json` é o retoque (tabelas por terreno mais a regra geral), para o próximo tileset sair igual |
+| `design/rasterizar_chao.js` | rasteriza o mapa traçado na grade de tiles: `node design/rasterizar_chao.js`, sem dependência, ~20 s |
+| `rua/ruas.gd` | **calçada e rua como polígonos** (15/10): o chão feito pelo homem sai do TileMap e é pintado com textura e meio-fio, de traço reto, por cima dele — em tile de 32 px toda diagonal virava escada. Pinta também o lote de grama que fica dentro da rua |
+| `rua/arte/chao/cheio-<classe>.png` | o ladrilho de 256 × 256 do tile cheio de cada classe, com as variações do chao.gd, que `ruas.gd` usa como textura; gerado por `design/ladrilhar_cheio.gd` (`Godot --headless --path . --script design/ladrilhar_cheio.gd`) |
+| `design/paleta_de_classe.js` | gera um grupo de `paleta.json` a partir do tileset bruto de uma classe que a regra geral deixa com a cor errada (a água veio lodo verde, a mata v2 veio roxa): matiz e saturação fixos, valor por regra; os argumentos estão no cabeçalho do script. Depois, `retocar_chao.gd` |
+| `rua/arte/objetos/` | os sprites dos objetos da rua e dos móveis (árvores, carro, motorhome, mato, bomba, móveis), um PNG por tipo, que `vasculhavel.gd` e `cenario.gd` procuram pelo nome; a caixa de papelão sai de `desenhar_texturas.js` |
+| `design/recortar_fundo.gd` | tira o fundo chapado de um sprite gerado que veio com fundo apesar do pedido (inunda a partir das bordas): `Godot --headless --path . --script design/recortar_fundo.gd -- <entrada.png> <saida.png> [tolerância]` |
+| `design/juntar_folha.js` | junta linhas de animação de uma folha nova do PixelLab (outra conta) na folha antiga do mesmo boneco: `node design/juntar_folha.js <antiga.json> <nova.json> <saida.json> [animação...]` |
+| `design/desenhar_texturas.js` | desenha por regra as texturas dos prédios (parede, piso, telha, zinco, laje, 64 × 64, emendáveis) e os sprites de porta e janela: `node design/desenhar_texturas.js rua/arte/predios` |
+| `rua/arte/predios/` | as texturas e sprites acima; o cenário repete piso e parede nos retângulos de cada prédio, e os telhados repetem telha, zinco ou laje conforme a cor do prédio no desenho, com porta e janelas na linha da fachada |
+| `design/retocar_chao.gd` | aplica `rua/arte/chao/paleta.json` a um tileset recém-gerado e lista as cores que não conhece: `Godot --headless --script design/retocar_chao.gd -- entrada.png rua/arte/chao/paleta.json saida.png` |
+| `design/desenhar_armas.js` | desenha as oito armas em pixel a partir de um texto e grava os PNG: `node design/desenhar_armas.js rua/arte/armas`, sem dependência |
+
 | `rua/navegacao.gd` | grade A* — é o que faz o zumbi achar o vão da porta |
 | `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
 | `rua/mochila.gd` | os documentos que você carrega, as balas indo para o cinto, e o que atravessa o fim do dia |
 | `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
-| `rua/pistola.gd` | a Beretta, as balas e o tiro chamando a horda |
+| `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
 | `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
@@ -123,7 +159,9 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `casa/desenho.gd` | o greybox de cada cômodo, o olho mágico e os closes do exame; sai do caminho quando há arte |
 | `casa/ela.gd` | o estágio da transformação dela ao longo do prazo, e o laudo de cada parte do corpo |
 | `casa/filtro.gdshader` | a noite esverdeada, o grão e a vinheta por cima da casa |
-| `fim_de_jogo.gd` | as duas telas de fim de partida |
+| `titulo.tscn` + `titulo.gd` | **a cena principal, o menu**: Jogar (que abre a escolha entre campanha e hardcore), Como se joga e Sair, sobre a capa |
+| `arte/titulo/` | a capa do menu (`capa.png`, 320 × 180 gerada no PixelLab, mostrada ×4) e a fonte do título, Creepster, com a licença OFL ao lado |
+| `fim_de_jogo.gd` | as três telas de fim de partida: a cura pronta, o prazo esgotado e, no hardcore, a queda na rua |
 
 Mudar o mapa = mexer no **desenho** e rodar `node design/tracar_desenho.js`;
 mudar o que uma coisa **é** (nome, tipo, documento, a sua casa) = `ROTULOS` em
@@ -175,11 +213,11 @@ jogando dois minutos.
 | `rua/conferir_zumbi.tscn` | visão, parede cortando a visão, chamado de horda e toque |
 | `rua/conferir_relogio.tscn` | a luz do dia, o vasculho gastando em dobro, a noite e o aviso |
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
-| `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro mata, a parede corta, o estrondo chama a horda, o baleado não renasce |
+| `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |
-| `rua/conferir_arte.tscn` | **mostra** PNGs de sprite sobre o greybox, na escala do jogo e ao lado da caixa do jogador, e salva a tela — `-- --sprites=a.png;b.png --saida=x.png`. É o passo "olhar antes de aprovar" de `design/arte-rua.md`; aceita `@escala` por sprite para mock de tamanho. Não roda em headless | segundos |
+| `rua/conferir_arte.tscn` (abre janela — rodar com `--position -4000,-4000` para ela ficar fora da tela e sem foco) | **mostra** PNGs de sprite sobre o greybox, na escala do jogo e ao lado do jogador, e salva a tela — `-- --sprites=a.png;b.png --saida=x.png`; `--zumbis` deixa os zumbis na figura. É o passo "olhar antes de aprovar" de `design/arte-rua.md`; aceita `@escala` por sprite para mock de tamanho. Não roda em headless | segundos |
 | `rua/recolorir_arte.gd` | **troca cores exatas** em todos os PNG de uma pasta, em cima do arquivo — `--headless -s res://rua/recolorir_arte.gd -- --pasta=... --trocas=DE:PARA;... [--faixa=y0:y1] [--ensaio]`. É o retoque de paleta de `design/arte-rua.md` (o olho verde do jogador), que se roda depois de cada download porque o servidor não sabe dele | segundos |
 
 Todos rodam por F6 no editor **e** headless, com código de saída (0 = passou,
