@@ -48,13 +48,16 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## A versão do mapa - sobe toda vez que a IDENTIDADE dos móveis (a lista de
 ## chaves, na ordem de geração) muda de propósito. Carimbo do relatório do
 ## conferir_mapa; quem prova é IMPRESSAO_ESPERADA.
-const VERSAO_DO_MAPA := 2
+## Versão 3 (15/10/2026): os rótulos lidos nos prints do Canva mudaram o
+## tipo de dois prédios (Conveniência virou comércio, Casa abandonada) e um
+## veículo virou trator - a lista de móveis mudou de propósito.
+const VERSAO_DO_MAPA := 3
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "06d4b6dc"
+const IMPRESSAO_ESPERADA := "4a4081ea"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
@@ -79,10 +82,12 @@ const IMPRESSAO_ESPERADA := "06d4b6dc"
 ##    Delegacia, Mansão, Casa do fazendeiro) - espalhados, como antes, só para
 ##    a partida ter como ser ganha ("os documentos não são mecânica oficial do
 ##    jogo ainda": a cura por documentos continua provisória, não é decisão);
-##  - **os rótulos miúdos do desenho não dão para ler** (três casas na estrada
-##    de terra do sudoeste, os dois anexos do posto, os dois veículos da
-##    fazenda): estão com nome de lugar, não de dono (ele mandou um link do
-##    Canva com o desenho legível, que exige login; falta exportar o PNG).
+##  - ~~os rótulos miúdos do desenho não dão para ler~~ **resolvido em
+##    15/10/2026** com prints do Canva: Conveniência e Oficina (anexos do
+##    posto), Galpão dele, Casa afastada do velho louco e Casa abandonada
+##    (estrada de terra), Trator (fazenda). A caminhonete da fazenda e a do
+##    galpão dele eram pequenas demais no desenho e o traçador não as
+##    achou; o "Vendedor de melancia" perto do Hotel virou bloco sólido.
 const ROTULOS := [
 	# --- prédios ---------------------------------------------------------
 	{ "nome": "Hospital", "ponto": Vector2(760.0, 440.0), "tipo": "hospital", "documento": 1 },
@@ -113,17 +118,24 @@ const ROTULOS := [
 	{ "nome": "Restaurante", "ponto": Vector2(1200.0, 740.0), "tipo": "restaurante",
 		"rect": Rect2(1170.0, 737.0, 50.0, 16.0), "porta": "norte" },
 	{ "nome": "Posto", "ponto": Vector2(715.0, 508.0), "tipo": "posto" },
-	{ "nome": "Posto (anexo 1)", "ponto": Vector2(712.0, 528.0), "tipo": "galpao" },
-	{ "nome": "Posto (anexo 2)", "ponto": Vector2(735.0, 525.0), "tipo": "galpao" },
+	# Os dois anexos do posto, lidos nos prints do desenho em 15/10/2026: a
+	# conveniencia e a mancha de baixo, a esquerda; a oficina a da direita.
+	{ "nome": "Conveniência", "ponto": Vector2(712.0, 528.0), "tipo": "comercio" },
+	{ "nome": "Oficina", "ponto": Vector2(735.0, 525.0), "tipo": "galpao" },
 	{ "nome": "Prédio em construção", "ponto": Vector2(785.0, 560.0), "tipo": "predio_em_construcao" },
 	{ "nome": "Prédio abandonado", "ponto": Vector2(1293.0, 640.0), "tipo": "predio_abandonado" },
 	{ "nome": "Parque industrial (galpão 1)", "ponto": Vector2(727.0, 633.0), "tipo": "armazem" },
 	{ "nome": "Parque industrial (galpão 2)", "ponto": Vector2(727.0, 690.0), "tipo": "armazem" },
 	{ "nome": "Parque industrial (galpão 3)", "ponto": Vector2(727.0, 727.0), "tipo": "armazem" },
 	{ "nome": "Galpão da fazenda", "ponto": Vector2(768.0, 296.0), "tipo": "galpao" },
-	{ "nome": "Casa da estrada (1)", "ponto": Vector2(556.0, 707.0), "tipo": "casa" },
-	{ "nome": "Casa da estrada (2)", "ponto": Vector2(529.0, 720.0), "tipo": "casa" },
-	{ "nome": "Casa da estrada (3)", "ponto": Vector2(640.0, 740.0), "tipo": "galpao" },
+	# A estrada de terra do sudoeste, lida nos prints do desenho em 15/10/2026:
+	# a casa afastada do velho louco e o galpao dele logo acima, a direita; e
+	# as casas abandonadas perto da rua ("queimadas melhor ainda", escreveu o
+	# Joao - a arte da queimada fica para depois). Das duas abandonadas so
+	# uma virou predio; a outra e bloco solido, pequena demais no desenho.
+	{ "nome": "Galpão dele", "ponto": Vector2(556.0, 707.0), "tipo": "galpao" },
+	{ "nome": "Casa afastada do velho louco", "ponto": Vector2(529.0, 720.0), "tipo": "casa" },
+	{ "nome": "Casa abandonada", "ponto": Vector2(640.0, 740.0), "tipo": "predio_abandonado" },
 	# --- lugares (zonas sem prédio próprio) --------------------------------
 	{ "nome": "Floresta", "ponto": Vector2(560.0, 500.0), "tipo": "zona" },
 	{ "nome": "Milho", "ponto": Vector2(650.0, 275.0), "tipo": "zona" },
@@ -406,9 +418,8 @@ static func _montar() -> Dictionary:
 		tudo["obstaculos"].append({ "classe": o["classe"], "rect": _rect_do_tracado(o["rect"]) })
 
 	for v in tracado["veiculos"]:
-		var comprido: bool = v.get("comprido", false)
 		var deitado: bool = v.get("deitado", true)
-		var tipo := "motorhome" if comprido else "carro"
+		var tipo := _tipo_do_veiculo(v, recorte)
 		var tamanho: Vector2 = Construcao.MOVEIS[tipo]["tamanho"]
 		if not deitado:
 			tamanho = Vector2(tamanho.y, tamanho.x)
@@ -421,6 +432,24 @@ static func _montar() -> Dictionary:
 	_encolher_quem_nao_cabe(tudo)
 	_zumbis(tudo, recorte)
 	return tudo
+
+## Veículos do desenho com nome próprio (15/10/2026, lidos nos prints do
+## Canva): o azul perto do ponto vira o tipo dito, em vez de "carro". Ponto em
+## px do PNG, como os ROTULOS; o veículo precisa estar a menos de
+## RAIO_DO_VEICULO_ROTULADO px dele.
+const VEICULOS_ROTULADOS := [
+	{ "ponto": Vector2(712.0, 258.0), "tipo": "trator" },  # fazenda, à esquerda da casa
+]
+const RAIO_DO_VEICULO_ROTULADO := 8.0
+
+## O tipo de um veículo do traçado: o rotulado se houver um perto, senão
+## "motorhome" para o comprido e "carro" para o resto.
+static func _tipo_do_veiculo(v: Dictionary, recorte: Rect2) -> String:
+	var pos := Vector2(float(v["pos"][0]), float(v["pos"][1]))
+	for rotulo in VEICULOS_ROTULADOS:
+		if pos.distance_to(rotulo["ponto"] - recorte.position) <= RAIO_DO_VEICULO_ROTULADO:
+			return rotulo["tipo"]
+	return "motorhome" if v.get("comprido", false) else "carro"
 
 ## O tipo de um prédio que o desenho não nomeou, pela cor e pelo tamanho.
 static func _tipo_padrao(classe: String, rect: Rect2, anexo: bool) -> String:

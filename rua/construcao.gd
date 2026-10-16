@@ -325,6 +325,9 @@ const MOVEIS := {
 	# O veiculo comprido do desenho (30/09/2026): os do camping de motorhomes
 	# e os onibus parados na rua. Mesmo loot de carro, mais comida.
 	"motorhome": { "rotulo": "Motorhome", "duracao": 3.5, "tamanho": Vector2(400.0, 170.0), "cor": Color("5c4a44") },
+	# O trator da fazenda (rotulo lido no desenho em 15/10/2026; ver
+	# Mapa.VEICULOS_ROTULADOS). Numeros proposta; sem sprite ainda - caixa.
+	"trator": { "rotulo": "Trator", "duracao": 2.5, "tamanho": Vector2(110.0, 70.0), "cor": Color("5a5444") },
 	"lata": { "rotulo": "Lata de lixo", "duracao": 1.5, "tamanho": Vector2(48.0, 48.0), "cor": Color("4a4f45") },
 	# Os quatro que chegaram com os lugares novos de 09/09/2026. O armario de
 	# armas da delegacia e o movel mais caro do mapa: 5,5 s de vasculho
