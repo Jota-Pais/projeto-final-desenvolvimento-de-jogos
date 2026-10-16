@@ -1,0 +1,27 @@
+{
+  "origem": "rua/mapa_tracado.json",
+  "tile": 32,
+  "escala": 24,
+  "colunas": 689,
+  "linhas": 399,
+  "classes": [
+    "grama",
+    "gramado",
+    "mata",
+    "horta",
+    "pavimento",
+    "asfalto",
+    "milho",
+    "terra",
+    "agua"
+  ],
+  "vertices_por_classe": {
+    "mata": 50582,
+    "grama": 158176,
+    "milho": 6540,
+    "gramado": 54537,
+    "terra": 4375,
+    "agua": 520,
+    "horta": 181
+  }
+}

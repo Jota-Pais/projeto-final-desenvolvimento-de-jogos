@@ -1,0 +1,305 @@
+{
+  "character": {
+    "id": "6dad99f8-6a01-448a-ab0a-bcf388498f64",
+    "name": "Idle",
+    "prompt": "zombie apocalypse survivor game, desaturated gloomy colors, grey-green and brown tones; classic movie zombie, rotting grey-green skin, slack jaw with open mouth, arms hanging limp, hunched shambling posture, torn dirty civilian clothes",
+    "size": {
+      "width": 112,
+      "height": 112
+    },
+    "directions": 8,
+    "view": "high top-down"
+  },
+  "spritesheet": {
+    "path": "Zumbi_rua-Idle.png",
+    "cell_size": {
+      "width": 112,
+      "height": 112
+    },
+    "sheet_size": {
+      "width": 896,
+      "height": 3696
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "vagar",
+        "animation_group_id": "2040b631-f8d6-4f4d-b1c4-56de825949a6",
+        "direction": "south-west"
+      },
+      {
+        "row": 9,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "south"
+      },
+      {
+        "row": 10,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "south-east"
+      },
+      {
+        "row": 11,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "east"
+      },
+      {
+        "row": 12,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "north-east"
+      },
+      {
+        "row": 13,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "north"
+      },
+      {
+        "row": 14,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "north-west"
+      },
+      {
+        "row": 15,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "west"
+      },
+      {
+        "row": 16,
+        "type": "animation",
+        "frame_count": 7,
+        "animation": "morrer",
+        "animation_group_id": "9c89639d-6ede-402b-93fc-d22409d8afa6",
+        "direction": "south-west"
+      },
+      {
+        "row": 17,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "south"
+      },
+      {
+        "row": 18,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "south-east"
+      },
+      {
+        "row": 19,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "east"
+      },
+      {
+        "row": 20,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "north-east"
+      },
+      {
+        "row": 21,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "north"
+      },
+      {
+        "row": 22,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "north-west"
+      },
+      {
+        "row": 23,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "west"
+      },
+      {
+        "row": 24,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "toque",
+        "animation_group_id": "c9f731db-d49e-47d9-abc8-3c5be3ea09eb",
+        "direction": "south-west"
+      },
+      {
+        "row": 25,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "south"
+      },
+      {
+        "row": 26,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "south-east"
+      },
+      {
+        "row": 27,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "east"
+      },
+      {
+        "row": 28,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "north-east"
+      },
+      {
+        "row": 29,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "north"
+      },
+      {
+        "row": 30,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "north-west"
+      },
+      {
+        "row": 31,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "west"
+      },
+      {
+        "row": 32,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "dano",
+        "animation_group_id": "3287d698-70bf-44e6-8609-86db36ca93e3",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-10-15T12:40:32.735Z",
+  "juntado_de": [
+    "Zumbi_rua-Idle.json",
+    "Zumbi_v1_importado-Idle.json"
+  ]
+}

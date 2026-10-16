@@ -1,0 +1,54 @@
+{
+  "nota": "Os tilesets do chao, na ordem da cadeia de design/arte-rua.md. `arquivo` e o PNG + JSON no formato do PixelLab (metadata com bounding_box e corners). `provisorio` marca os de cor chapada feitos a mao para provar o caminho; trocar pelo gerado e so substituir os dois arquivos.",
+  "tilesets": [
+    {
+      "arquivo": "grama-pavimento",
+      "baixo": "grama",
+      "cima": "pavimento",
+      "pixellab": "c66154b1-813d-47be-8d6c-43ec6924f50a"
+    },
+    {
+      "arquivo": "pavimento-asfalto",
+      "baixo": "pavimento",
+      "cima": "asfalto",
+      "pixellab": "9656dd10-fddc-4eba-aa26-0508db339245"
+    },
+    {
+      "arquivo": "grama-asfalto",
+      "baixo": "grama",
+      "cima": "asfalto",
+      "pixellab": "67cfdddf-8931-4ac8-b857-441c1125cac9"
+    },
+    {
+      "arquivo": "grama-mata",
+      "baixo": "grama",
+      "cima": "mata",
+      "pixellab": "72e153ab-49ef-464d-8f1f-baa5857ce35c",
+      "pixellab_v1": "b15b07e7-ace2-4258-9913-de933000fb8e"
+    },
+    {
+      "arquivo": "grama-terra",
+      "baixo": "grama",
+      "cima": "terra",
+      "pixellab": "ea3dc6f1-4d5c-4773-b97a-537452344ab4"
+    },
+    {
+      "arquivo": "grama-milho",
+      "baixo": "grama",
+      "cima": "milho",
+      "pixellab": "290fc8c2-35d0-4bb4-8298-733953f33a56"
+    },
+    {
+      "arquivo": "grama-horta",
+      "baixo": "grama",
+      "cima": "horta",
+      "pixellab": "9c0154ce-3e1f-4511-9c96-ff0d25082011"
+    },
+    {
+      "arquivo": "agua-grama",
+      "baixo": "agua",
+      "cima": "grama",
+      "pixellab": "a86fb64a-0b44-4a8f-9de8-ad047f381c66"
+    }
+  ]
+}

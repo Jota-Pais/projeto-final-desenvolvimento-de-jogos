@@ -1,0 +1,109 @@
+{
+  "character": {
+    "id": "47a4b495-cdf1-46ec-a342-1a40f0cac238",
+    "name": "Idle",
+    "prompt": "zombie apocalypse survivor game, desaturated gloomy colors, grey-green and brown tones; man in his thirties, tired face with stubble, dark hooded jacket with the hood up, worn jeans, sneakers, backpack on his back",
+    "size": {
+      "width": 112,
+      "height": 112
+    },
+    "directions": 8,
+    "view": "high top-down"
+  },
+  "spritesheet": {
+    "path": "Jogador_rua-Idle.png",
+    "cell_size": {
+      "width": 116,
+      "height": 116
+    },
+    "sheet_size": {
+      "width": 928,
+      "height": 1044
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "south"
+      },
+      {
+        "row": 2,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "south-east"
+      },
+      {
+        "row": 3,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "east"
+      },
+      {
+        "row": 4,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "north-east"
+      },
+      {
+        "row": 5,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "north"
+      },
+      {
+        "row": 6,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "north-west"
+      },
+      {
+        "row": 7,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "west"
+      },
+      {
+        "row": 8,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "andar-v3",
+        "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
+        "direction": "south-west"
+      }
+    ]
+  },
+  "export_version": "1.0",
+  "export_date": "2026-10-02T13:29:58.249864+00:00"
+}
