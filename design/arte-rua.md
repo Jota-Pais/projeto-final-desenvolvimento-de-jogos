@@ -1104,6 +1104,30 @@ sujeira. Não há foto de porão nem de nada que sirva de cela.
   A foto atual do quarto (cama arrumada) **não serve**: refazer.
 - Planta nova: entrada → sala → corredor → cozinha / quarto.
 
+**Quarto macabro — refeito por nós, sem pedir à equipe (João, 16/10).** O
+brief abaixo ficou só de registro: o João decidiu editar a própria foto
+("no fim são pixels"). Duas camadas: o **gerador** muda a cena (só a região
+da cama, do painel da cabeceira e do criado-mudo da esquerda) e o **código**
+suja (manchas, respingos, arranhões, marcas de mão, mofo, escurecer).
+Decidido por ele no questionário de 16/10: **corrente grossa chumbada no
+painel da cabeceira**, caindo sobre a cama (ela fica acorrentada ali); o
+**criado-mudo branco da esquerda** é a "cômoda virada"; o **crucifixo fica**
+como está. A foto limpa do quarto é a `IMG_6354`.
+
+**A grade real das fotos não é de 8 px.** Medida pelas fronteiras de bloco
+(`reduzir.js` no scratchpad; ampliar de volta com as mesmas fronteiras dá
+0 pixel diferente): quarto, sala, sala de costas e `porta_entrada_suja-1`
+são **207 × 156** (blocos de 6–7 px); o corredor é 181 × 136 (8 px); a
+cozinha, 242 × 181 (6 px); `porta_entrada_suja.png` (2,2 MB) **não está
+pixelada**. Toda edição é feita na grade e volta à foto bloco a bloco.
+
+**Ferramenta: `edit_image_pixen`, 1 geração por tentativa** — é a única de
+edição que custa 1 (`inpaint_image` 10–25; `inpaint_image_pro_flash` e
+`edit_image_pro_flash` 6 neste tamanho). Ela reescreve a imagem inteira
+(entrada até 256 px por lado, múltiplo de 4: a grade vai a 208 × 156 com
+uma coluna repetida), então do resultado **só a região marcada é colada**
+sobre o original, e o resto da foto fica idêntico.
+
 **O que pedir à equipe (brief do quarto):** refotografar o MESMO quarto, do
 MESMO ponto e enquadramento da foto atual (os retângulos de clique vão ser
 desenhados em cima dela, então a cama, o criado-mudo e o guarda-roupa têm
@@ -1114,13 +1138,79 @@ veja onde ela fica (corrente, corda ou grade na porta, à escolha deles). Sem
 mostrar ela — ela é o `ela.gd`, por cima. Mesmo processo de pixelar e
 escurecer das outras, e entregar em 4:3 como as demais, 1448 × 1086.
 
-**O que falta decidir para integrar** (próxima sessão): o jogo mostra 640 ×
-360 (16:9) e a arte é 4:3 — cortar em cima e embaixo, ou faixa preta nas
-laterais (eu cortaria); qual porta de entrada e qual vista da sala entram;
-e o `casa/comodos.gd` precisa ser refeito por cima das fotos: os retângulos
-de clique de cada objeto vão ser desenhados sobre a arte, não a arte sobre
-os retângulos. Eu faço um gabarito com os retângulos atuais por cima de cada
-foto para a gente decidir junto.
+**Integrado no jogo em 16/10.** Decidido pelo João no questionário: o
+jogo fica em **16:9** (é o formato normal de jogo de PC; a janela é 1280 × 720)
+e as fotos são **cortadas**, não com faixa preta; a porta que entra é a
+**pixelada** (`porta_entrada_suja-1.png`); a sala entra com **as duas
+vistas**, virando entre elas; o **olho mágico** e o **rádio** não existem nas
+fotos e são **desenhados em código** por cima (na porta, na altura do olho; no
+rack, à esquerda da TV); a **foto do casal** fica nos **porta-retratos da
+sala**. **A planta — por onde se vai de um cômodo ao outro — ele deixou para
+mim** ("pode decidir, coerente com o desenho de uma casa, no futuro eu vejo se
+gosto"): a porta escura da direita na vista da TV é a mesma porta da rua da
+entrada, e a parede listrada ao lado da TV é a mesma da entrada, então de
+costas para a porta vê-se o sofá. Entrada —virar→ sofá —virar→ TV; na vista da
+TV a porta da rua volta à entrada e a passagem da esquerda vai ao corredor; no
+corredor o fundo (sala de jantar) vai à cozinha e a porta de madeira da
+esquerda ao quarto; o batente da direita é só cenário. Corredor e cozinha
+entram como a equipe entregou.
+
+Como ficou:
+
+- `design/casa_fotos.js` corta cada foto em 16:9 e grava
+  `casa/arte/<cômodo>.png` em **1280 × 720** (vizinho mais próximo: os blocos de
+  ~7 px viram 6–7 px, sem borrar). Altura do corte, em unidades da tela (a
+  foto inteira tem 240; 30 = meio): entrada 30, sala/TV 30, sala/sofá 36,
+  corredor 30, cozinha 40 (mais bancada, menos teto), quarto 26 (para o
+  crucifixo não cortar).
+- O SubViewport da casa passou de 640 × 360 a **1280 × 720**, com o desenho em
+  escala 4: a foto entra 1:1 e o traço tem na tela a mesma grossura de antes.
+  O greybox dos cômodos saiu do `desenho.gd`; sem foto, a tela fica preta.
+- `casa/comodos.gd` refeito em cima das fotos (retângulos medidos em pixel,
+  não a olho — o primeiro gabarito, lido a olho, tinha os retângulos
+  deslocados ~25 unidades). Cômodos: `entrada`, `sala_sofa`, `sala_tv`,
+  `corredor`, `cozinha`, `quarto`. Figura `teste-0-pixellab/casa-gabarito.png`.
+- O que o código desenha por cima: olho mágico, rádio, a estática da TV
+  ligada, **os papéis da pesquisa na frente da bancada** (um por documento,
+  riscado o estudado — era o quadro do greybox) e **ela no quarto**, 1,35x,
+  em pé na cama entre as pontas das correntes geradas, com um pedaço de
+  corrente de cada pulso até a ponta.
+- Porão → quarto nos textos e na lógica (`casa.gd`, `ela.gd`,
+  `fim_de_jogo.gd`, README, `narrativa.md` com nota datada); dormir = sofá.
+- `conferir_casa` (agora confere também que todo cômodo tem foto de 1280 ×
+  720) e `conferir_fim` passam. Figura do jogo rodando:
+  `teste-0-pixellab/casa-no-jogo.png`.
+
+**Filtro e ela — João, 16/10: "arruma o filtro, e redesenha ela se
+necessário, mas saiba que vai ser provisório, o desenho da namorada vai ser
+feito ainda".** Nada gerado.
+
+- **O filtro engolia as fotos**: feito para o greybox em "cor de dia", a curva
+  jogava no preto tudo abaixo de 0,12 de luminância — ~36 % de cada foto da
+  equipe e ~50 % do quarto — e tingia 74 % de verde; no jogo as correntes, as
+  mãos e o sangue sumiam. Quatro variantes comparadas numa emulação em JS do
+  shader (atual; sem corte no preto; + menos verde e vinheta menor; claro). Ficou
+  a terceira, um pouco mais escura: a curva virou três parâmetros com nome no
+  `filtro.gdshader` — `sombra` 0 (não corta mais a sombra), `luz` 0,58, `gama`
+  0,8 (abre as sombras) —, `noite` 0,74 → 0,55 (o sangue segue vermelho-escuro
+  por baixo do verde) e `vinheta` 0,85 → 0,72. Grão, aberração e a lâmpada
+  piscando não mudaram. Afinável no editor, no material da tela.
+- **Ela, provisória**: o traço liso do greybox, em pé na cama, brigava com a
+  foto. Virou um **boneco de pixel montado em código** (`desenho.gd`,
+  `_desenhar_ela`), 36 × 52 pixels **no mesmo bloco das fotos**
+  (`Comodos.BLOCO_DA_FOTO` = 320/207 unidade): ajoelhada na cama, camisola clara
+  e suja, cabelo escuro na cara com duas mechas, braços caídos e as mãos nas
+  coxas, uma algema em cada pulso ligada à ponta da corrente gerada, contorno
+  escuro de 1 pixel. "Ferve" em 4 quadros; com o estágio a pele acinzenta, ela
+  se curva, o sangue cresce no peito e na barra, os olhos ficam brancos e, no
+  último, a boca abre. Quando o desenho da equipe chegar, entra no lugar de
+  `_desenhar_ela` (lugar, clique e correntes ficam). **Os closes do exame**
+  (olho, dentes, braço, mãos) continuam no traço antigo — são parte do desenho
+  dela, ficam para o da equipe.
+- O `conferir_casa` dizia "SEM PROBLEMAS" com o `casa.gd` sem compilar (tudo
+  virava Nil e as comparações passavam): agora falha se a casa não compila.
+- Figuras: `teste-0-pixellab/casa-no-jogo.png` (as seis telas com o filtro novo)
+  e `ela-provisoria.png` (os quatro estágios, sem e com o filtro).
 
 ## Registro de gerações
 
@@ -1197,6 +1287,9 @@ foto para a gente decidir junto.
 | 15/10 | **`dano` do zumbi** = template `taking-punch`, **uma direção por chamada** (a conta grátis só roda 1 job; pedir 8 de uma vez é recusado), grupo `3287d698…`, nome `dano`; sul, leste, norte, oeste, depois as diagonais | jobs `45461bbc…` (S), `423de9a9…` (L), `84773866…` (N)… | 1 por direção (cobrou 1, não 2) | conta 3: 31,5 | **8 direções prontas** (sul conferido na tira: recua, cabeça vai para trás e volta, 6 quadros, cara igual; 2 a 5 min cada, o servidor oscila). Folha nova só tem rotações + dano; `design/juntar_folha.js` juntou as 8 linhas na folha antiga de `rua/arte/zumbi/` (vagar, toque, morrer continuam da conta 1). O `zumbi._sofrer` já pedia `tocar("dano")` — entrou sem mexer em código |
 | 15/10 | **`atirar` do jogador, teste no sul**: v3 custom, 6 quadros sem o quadro de referência, "both arms raised and extended straight forward at chest height with the hands together, a quick sharp recoil jolt back toward the shoulders, then the arms return forward" (sem arma no desenho: a arma na mão é sprite à parte), grupo `b9399029…` | `379b3b7d…` | 2 | conta 3: 29,5 | **reprovado**: no sul, "braços para a frente" virou braços abertos para os lados (pose de polichinelo), porque para a frente na vista de cima é para a câmera e o modelo não encurta o braço. 2 gerações perdidas; grupo apagado. Lição: para pose de braço na vista de cima, template antes de v3 |
 | 15/10 | `atirar` teste 2 no sul: template **`lead-jab`** (soco direto com um braço, vai e volta = recuo do tiro; a arma fica na mão da frente pelo `rua/arma.gd`) | `3bacb472…`, grupo `ef9669f0…` | 1 | conta 3: 28,5 | **reprovado**: 3 quadros de guarda de boxe com o corpo virado de lado e um pé à frente; o braço que soca vai para a câmera e some. Entraria no jogo como um pulo de pose por 3 quadros, pior que o recuo de código. Grupo apagado. **Parei o `atirar` aqui**: 3 gerações nos dois testes, nenhum serve, e o problema é da vista (para a frente = para a câmera no sul). O recuo de código fica. Figuras no Desktop: `jogador-atirar-teste-v3-reprovado.png`, `jogador-atirar-teste-jab-reprovado.png` |
+| 16/10 | **quarto macabro, tentativa 1** — `edit_image_pixen` sobre `quarto_sujo.png` reduzido à grade (208 × 156), seed 16101: "Make this dark bedroom macabre and wrecked, as if a zombie lives here. Destroy the bed: mattress torn open and sagging, sheets ripped and dragged half onto the floor, pillows shredded. A heavy rusty iron chain bolted to the dark wooden headboard panel, hanging down onto the bed. The small white nightstand left of the bed knocked over on its side. Keep the headboard panel and the small crucifix on it. Keep the camera angle, walls, window, lighting and colors the same." Do resultado, só cama + painel entram (máscara local) | job `63d432dc-09d1-499e-b03e-7fb41b79fabc`, asset `d7a9d28a…` | 1 | conta 3: 24,5 | **Saiu**: duas correntes grossas do alto do painel até a cama, crucifixo mantido (mais legível), colchão rasgado com buracos, lençol arrastado até o chão, papéis no chão. **O criado-mudo da esquerda não virou.** O gerado vem mais claro e "limpo" (traço de pixel art, sem grão): `compor.js` acerta o tom pelo que não mudou (O ≈ 0,87–0,96 × G + 8–11), cola só o pixel que difere e devolve o grão da foto. O criado-mudo da direita fica fora (o gerador comeu o ventilador) |
+| 16/10 | **quarto macabro, tentativa 2 — só o criado-mudo da esquerda**: `edit_image_pixen` num recorte de 72 × 64 (x 4–76, y 64–128 da grade) da composição da tentativa 1, seed 16102: "Knock the small white bedside nightstand over: it lies tipped on its side on the floor, its drawer fallen out and open, small objects spilled on the floor. Keep everything else exactly the same: the wall, the edge of the bed and sheets, the floor, the lighting and the colors." | job `d6537450-d3d5-415d-9d67-15f7442486ba`, asset `62f78f0a…` | 1 | conta 3: **23,5** | **Descartada**: o móvel saiu inclinado (não deitado), com a gaveta caída, mas o recorte inteiro foi redesenhado — parede chapada, o rack escuro e a planta sumiram — e o móvel veio limpo e claro, em traço de desenho; colado na foto vira adesivo. O criado-mudo fica de pé na versão mostrada ao João. Na foto ele é uma caixa de baixo contraste, meio coberta pelo rack e pelo lençol, e no filtro da casa quase some |
+| 16/10 | **sujeira do quarto em código** (`sujar.js` no scratchpad, semente 16100, sobre a composição da tentativa 1): escurece 14 % no meio e 30 % nos cantos com 25 % menos cor; mofo cinza do teto e dos cantos (ruído); manchas de sangue velho na cama e no chão e de infiltração no teto; respingos com escorrido; arranhões de unha (claros no painel, fora das correntes e do crucifixo; escuros na parede); quatro marcas de mão de ~8 × 10 da grade, duas arrastadas. Ampliado ×7 bloco a bloco com as fronteiras da foto → 1448 × 1086 | — | 0 | conta 3: 23,5 | **João aprovou, 16/10** ("aprovado, criado-mudo de pé"), depois de ver `teste-0-pixellab/quarto-macabro.png` e `quarto-macabro-comparar.png`. No repo: `design/casa-equipe/quarto_colado.png` (a grade com o gerado colado), `design/sujar_quarto.js` → `quarto_macabro.png` (refaz byte a byte), e no jogo `casa/arte/quarto.png` |
 
 **`atirar`, o que ainda dá para tentar (decisão do João, nada gerado):** v3
 com um pedido diferente por direção — no leste/oeste "arms straight out to

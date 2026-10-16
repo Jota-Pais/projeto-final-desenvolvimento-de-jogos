@@ -4,7 +4,7 @@ extends Control
 ## **A derrota e o diferencial do projeto**, e por isso ela nao e uma tela de
 ## game over: e uma **parodia de final feliz de casal**. O quadro diz que
 ## viveram felizes para sempre; a letra pequena diz que o prazo acabou, ela saiu
-## do porao e agora os dois estao do mesmo lado da porta. O jogo nunca fala a
+## do quarto e agora os dois estao do mesmo lado da porta. O jogo nunca fala a
 ## palavra "derrota" em cima - ela vem embaixo, em corpo pequeno, como um aviso
 ## legal.
 ##
@@ -59,7 +59,7 @@ func _derrota_em_parodia() -> void:
 	titulo.add_theme_color_override("font_color", COR_FELIZ)
 
 	($Conteudo/Corpo as Label).text = (
-		"O prazo acabou. Ela saiu do porão, e você não correu.\n\n"
+		"O prazo acabou. Ela saiu do quarto, e você não correu.\n\n"
 		+ "Agora vocês têm todo o tempo do mundo e nada mais para curar.\n"
 		+ "Os dois seguem juntos — do mesmo lado da porta."
 	)
@@ -78,7 +78,7 @@ func _caiu_na_rua_em_parodia() -> void:
 
 	($Conteudo/Corpo as Label).text = (
 		"Você caiu na rua e não voltou.\n\n"
-		+ "Ela continua no porão, esperando o único que sabia o caminho de casa."
+		+ "Ela continua no quarto, esperando o único que sabia o caminho de casa."
 	)
 
 	var rodape := $Conteudo/Rodape as Label

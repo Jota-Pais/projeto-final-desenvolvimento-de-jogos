@@ -1,10 +1,11 @@
 extends RefCounted
-## Ela, no porao: em que ponto a transformacao esta, e o que o exame mostra.
+## Ela, no quarto: em que ponto a transformacao esta, e o que o exame mostra.
+## (Ate 16/10/2026 ela ficava no porao; a casa das fotos nao tem porao.)
 ##
 ## E o exame de *No, I'm Not a Human* virado do avesso. La, cada parte do corpo
 ## examinada custa energia e responde se a visita e gente; aqui, responde
 ## **quanto dela ainda sobra**. E o prazo da cura em forma de pessoa: a HUD da
-## rua diz em numero quantos dias faltam, o porao diz com o corpo dela.
+## rua diz em numero quantos dias faltam, o quarto diz com o corpo dela.
 ##
 ## **Proposta, nao decisao.** O que a equipe de narrativa decidir sobre ela
 ## (nome, como foi mordida, o que ela ainda lembra) nao esta aqui, e nada daqui
@@ -55,7 +56,7 @@ const LAUDO := {
 	"maos": [
 		"Unhas roídas. As mãos tremem.",
 		"As pontas dos dedos escureceram. As unhas estão quebradiças.",
-		"As unhas cresceram e escureceram. Ela arranha a grade quando você chega perto.",
+		"As unhas cresceram e escureceram. Ela puxa a corrente quando você chega perto.",
 		"Unhas pretas e compridas. Os dedos não dobram mais direito.",
 	],
 }

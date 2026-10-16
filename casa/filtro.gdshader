@@ -1,17 +1,28 @@
 // O filtro da casa: a noite esverdeada, o grao e a vinheta.
 //
-// E o que faz a tela ler como *No, I'm Not a Human* antes de existir uma arte
-// so: la, a noite lava tudo num verde-azulado doente, a imagem tem grao de
-// camera velha e as bordas afundam no preto. O desenho do comodo e feito em
-// cores "de dia" e e este filtro que as leva para a noite - entao a arte que
-// entrar depois (casa/arte/) pode ser pintada em cor normal.
+// E o que faz a tela ler como *No, I'm Not a Human*: la, a noite lava tudo num
+// verde-azulado doente, a imagem tem grao de camera velha e as bordas afundam
+// no preto.
+//
+// **Afinado para as fotos em 16/10/2026.** O filtro nasceu para o greybox,
+// pintado em cores "de dia": uma curva que jogava no preto tudo abaixo de 0,12
+// de luminancia e tingia 74 % de verde. As fotos da equipe ja vem escurecidas
+// e sujas, e com aquela curva ~36 % de cada uma (e ~50 % do quarto) virava
+// preto - as correntes, as maos e o sangue do quarto sumiam. Agora a curva nao
+// corta a sombra (`sombra` = 0) e a abre um pouco (`gama` < 1), o verde fica em
+// 55 % (o sangue continua vermelho-escuro) e a vinheta afunda menos.
 shader_type canvas_item;
 
 uniform vec3 matiz : source_color = vec3(0.32, 0.92, 0.80);
 // 0 = cor original, 1 = tudo no verde da noite.
-uniform float noite : hint_range(0.0, 1.0) = 0.74;
+uniform float noite : hint_range(0.0, 1.0) = 0.55;
+// A curva de luz: luminancia `sombra` ou menos vira preto, `luz` ou mais vira o
+// mais claro, e `gama` abaixo de 1 abre as sombras (acima de 1, fecha).
+uniform float sombra : hint_range(0.0, 0.5) = 0.0;
+uniform float luz : hint_range(0.2, 1.0) = 0.58;
+uniform float gama : hint_range(0.3, 2.0) = 0.8;
 uniform float grao : hint_range(0.0, 0.3) = 0.085;
-uniform float vinheta : hint_range(0.0, 1.0) = 0.85;
+uniform float vinheta : hint_range(0.0, 1.0) = 0.72;
 uniform vec2 resolucao = vec2(640.0, 360.0);
 
 float hash(vec2 p) {
@@ -26,11 +37,11 @@ void fragment() {
 	c.g = texture(TEXTURE, UV).g;
 	c.b = texture(TEXTURE, UV - vec2(ab, 0.0)).b;
 
-	// Curva de contraste antes de tingir: o que e meio-tom afunda, o que e
-	// claro estoura. E o que da o preto fundo e o brilho doente da referencia.
+	// A curva antes de tingir, e o verde por cima so em parte: a cor da foto
+	// segue embaixo, com a luz que a curva deu.
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
-	float curva = smoothstep(0.12, 0.78, l);
-	vec3 de_noite = matiz * pow(curva, 1.15) * 1.25;
+	float curva = pow(max(clamp((l - sombra) / (luz - sombra), 0.0, 1.0), 0.00001), gama);
+	vec3 de_noite = matiz * curva * 1.25;
 	vec3 cor = mix(c * curva / max(l, 0.001), de_noite, noite);
 	// A sombra nunca e preto puro: afunda num verde muito escuro.
 	cor = cor + vec3(0.0, 0.018, 0.015);

@@ -14,10 +14,12 @@ extends Control
 ##  - **caixa de fala preta, letra de maquina, escolha que acende** - e a tela
 ##    toda em baixa resolucao, com grao e a noite esverdeada (filtro.gdshader).
 ##
-## **E beta, e quase tudo aqui e proposta**: a planta da casa, os 3 pontos de
-## energia, o que custa energia e o que nao custa. O que e da narrativa (o que
-## o noticiario diz, o que cada documento conta, quem e o casal da foto) aparece
-## na tela entre colchetes, para ninguem confundir placeholder com texto.
+## **E beta, e quase tudo aqui e proposta**: os 3 pontos de energia, o que
+## custa energia e o que nao custa. A planta e das fotos da equipe e foi
+## decidida em 16/10/2026 (ver comodos.gd): ela fica presa no quarto e ele
+## dorme no sofa da sala. O que e da narrativa (o que o noticiario diz, o que
+## cada documento conta, quem e o casal da foto) aparece na tela entre
+## colchetes, para ninguem confundir placeholder com texto.
 ##
 ## **As regras que fecham a partida continuam no Travessia, sem mudar**: a cura
 ## fica pronta com DOCUMENTOS_PARA_A_CURA entregues, e o prazo acaba no ultimo
@@ -80,13 +82,15 @@ func _montar() -> void:
 	_fonte = SystemFont.new()
 	_fonte.font_names = PackedStringArray(["Consolas", "Lucida Console", "Courier New", "Monospace"])
 
+	# 1280 x 720, o tamanho da janela: as fotos (casa/arte/) entram 1:1, e o
+	# desenho a 4x tem na tela a mesma grossura de traco de antes.
 	var quadro := SubViewport.new()
-	quadro.size = Vector2i(Comodos.TELA * 2.0)
+	quadro.size = Vector2i(Comodos.TELA * 4.0)
 	quadro.disable_3d = true
 	quadro.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(quadro)
 	_desenho = Desenho.new()
-	_desenho.scale = Vector2(2, 2)
+	_desenho.scale = Vector2(4, 4)
 	quadro.add_child(_desenho)
 
 	_tela = TextureRect.new()
@@ -272,7 +276,7 @@ func _clicar(ponto: Dictionary) -> void:
 		"geladeira": _geladeira()
 		"pesquisa": _pesquisa()
 		"foto": _falar("Uma foto de vocês dois.\n\n[Quem são os dois é da equipe de narrativa.]")
-		"cama": _cama()
+		"sofa": _sofa()
 		"ela": _ela()
 
 ## Troca de comodo com um piscar de preto, como porta que abre.
@@ -312,7 +316,7 @@ func _geladeira() -> void:
 
 func _pesquisa() -> void:
 	var tem := Travessia.documentos.size()
-	var texto := "A pesquisa. %d de %d documentos no quadro." % [tem, Travessia.DOCUMENTOS_PARA_A_CURA]
+	var texto := "A pesquisa. %d de %d documentos na bancada." % [tem, Travessia.DOCUMENTOS_PARA_A_CURA]
 	if tem == 0:
 		texto += "\n\nNada para estudar ainda. Os documentos estão na rua."
 	var opcoes := []
@@ -340,12 +344,13 @@ func _estudar(documento: String) -> void:
 func _terminar_a_cura() -> void:
 	Travessia.acabar_o_jogo(Travessia.Desfecho.VITORIA)
 
-func _cama() -> void:
+## O sofa da sala, onde ele dorme (16/10/2026: o quarto e dela).
+func _sofa() -> void:
 	var sobra := ""
 	if energia > 0:
 		sobra = "\n\nAinda daria para fazer %d coisa%s hoje." % [energia, "" if energia == 1 else "s"]
 	if oferece_terminar_a_cura():
-		_falar("A cura está pronta na mesa da cozinha.", [
+		_falar("A cura está pronta na bancada da cozinha.", [
 			{ "texto": "Terminar a cura", "acao": _terminar_a_cura },
 			{ "texto": "Ainda não", "acao": _nada },
 		])
@@ -362,7 +367,7 @@ func _cama() -> void:
 	])
 
 func _ela() -> void:
-	var texto := "Ela, do outro lado da grade."
+	var texto := "Ela, acorrentada à cabeceira."
 	if energia <= 0:
 		texto += "\n\nSem energia para mais nada hoje."
 	var opcoes := []
@@ -426,6 +431,6 @@ func o_que_voltou() -> String:
 		]
 	if Travessia.documentos.is_empty():
 		return "Da rua não veio nada."
-	return "%d documento%s no quadro da pesquisa." % [
+	return "%d documento%s na bancada da pesquisa." % [
 		Travessia.documentos.size(), "" if Travessia.documentos.size() == 1 else "s"
 	]

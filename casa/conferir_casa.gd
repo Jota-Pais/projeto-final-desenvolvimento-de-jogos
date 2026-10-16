@@ -12,7 +12,9 @@ extends Node
 ##     energia as opcoes apagam;
 ##  5. estudar atravessa a noite (o Travessia lembra) e nao conta para a cura;
 ##  6. o estagio dela anda do primeiro ao ultimo dia do prazo, e todo estagio
-##     tem laudo para toda parte.
+##     tem laudo para toda parte;
+##  7. todo comodo tem a sua foto (casa/arte/<comodo>.png, 1280 x 720) - sem
+##     ela a tela fica preta (16/10/2026).
 ##
 ## As regras de fim de partida (cura, prazo) sao conferidas no
 ## rua/conferir_fim.tscn, que ja usa esta casa.
@@ -35,6 +37,7 @@ func _process(_delta: float) -> void:
 	_a_energia()
 	_estudar()
 	_o_estagio_dela()
+	_toda_tela_tem_foto()
 	_limpar()
 	print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 	get_tree().quit(0 if _falhas == 0 else 1)
@@ -53,6 +56,10 @@ func _limpar() -> void:
 func _uma_casa() -> Control:
 	var casa: Control = CENA_DA_CASA.instantiate()
 	add_child(casa)
+	# Se o casa.gd (ou o desenho.gd) nao compila, a cena vem sem script e todo
+	# o resto compara Nil com Nil e "passa" - aconteceu em 16/10/2026.
+	if not casa.has_method("_clicar"):
+		_erro("a casa nao compilou (casa.gd ou desenho.gd) - ver os erros acima")
 	return casa
 
 func _os_pontos_cabem() -> void:
@@ -169,3 +176,16 @@ func _o_estagio_dela() -> void:
 		if (Ela.LAUDO[parte] as Array).size() != Ela.ESTAGIOS:
 			_erro("%s tem %d laudos para %d estagios" % [parte, Ela.LAUDO[parte].size(), Ela.ESTAGIOS])
 	print("  estagio 0 no dia 1, %d no dia %d" % [ultimo, Travessia.PRAZO_DA_CURA])
+
+func _toda_tela_tem_foto() -> void:
+	print("\n7. toda tela tem foto")
+	var tamanho := Vector2i(Comodos.TELA * 4.0)
+	for comodo in Comodos.COMODOS:
+		var arte := "res://casa/arte/%s.png" % comodo
+		if not ResourceLoader.exists(arte):
+			_erro("%s nao tem foto (%s)" % [comodo, arte])
+			continue
+		var foto: Texture2D = load(arte)
+		if Vector2i(foto.get_size()) != tamanho:
+			_erro("%s tem %s, e a tela e %s" % [arte, foto.get_size(), tamanho])
+	print("  %d comodos" % Comodos.COMODOS.size())

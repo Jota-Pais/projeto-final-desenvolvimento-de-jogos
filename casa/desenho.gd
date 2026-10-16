@@ -1,24 +1,24 @@
 extends Node2D
-## Desenha o comodo atual na tela baixa da casa - greybox, feito de poligono e
-## traco, ate a arte existir.
+## Desenha o comodo atual na tela baixa da casa: a foto da equipe
+## (`res://casa/arte/<comodo>.png`, 1280 x 720, cortada em 16:9 por
+## design/casa_fotos.js) e, por cima, o que a foto nao tem ou o que muda
+## durante a noite - o olho magico, o radio, a TV ligada, os papeis da
+## pesquisa, ela no quarto -, o destaque sob o mouse e o close do exame. A foto
+## entra em cor normal; o filtro.gdshader e quem leva para a noite.
 ##
-## **Quando a arte chegar, este arquivo sai do caminho sozinho:** se existir
-## `res://casa/arte/<comodo>.png` (sala.png, cozinha.png...), ela e desenhada no
-## lugar do greybox, esticada para a tela inteira. Pintar em 640 x 360, em cor
-## normal - o filtro.gdshader e quem leva para a noite. Os retangulos de clique
-## continuam vindo de comodos.gd, entao o objeto pintado tem que cair onde o
-## retangulo dele esta.
+## Ate 16/10/2026 havia aqui um greybox de poligono e traco para cada comodo;
+## com as seis fotos no lugar ele saiu. Sem a foto de um comodo a tela fica
+## preta, e o clique continua funcionando.
 ##
 ## O traco e tremido de proposito (`_traco`): e a mao que desenhou, e e o que
-## aproxima o greybox do desenho torto de *No, I'm Not a Human*. Ela, no porao,
+## aproxima o desenho do traco torto de *No, I'm Not a Human*. Ela, no quarto,
 ## "ferve" - o traco muda algumas vezes por segundo, como animacao feita a mao.
 ##
-## Coordenadas na grade de 320 x 180 (comodos.gd). O no e escalado 2x dentro de
-## um SubViewport de 640 x 360: o desenho fica chunky e a arte pintada ganha o
-## dobro de definicao.
+## Coordenadas na grade de 320 x 180 (comodos.gd). O no e escalado 4x dentro de
+## um SubViewport de 1280 x 720: a foto entra 1:1, e o traco tem na tela a
+## mesma grossura de quando era 2x em 640 x 360, esticado 2x.
 
 const Comodos := preload("res://casa/comodos.gd")
-const F := Comodos.FUNDO
 
 var comodo := "entrada"
 ## O id do ponto sob o mouse, para acender.
@@ -33,11 +33,20 @@ var lidos := 0
 var tv_ligada := false
 
 var _t := 0.0
+## As fotos ja carregadas, por comodo. Precisa segurar a textura: o _draw so
+## registra o comando, e uma textura que ninguem segura e liberada no fim dele
+## - e a foto sai branca.
+var _fotos := {}
 
 const PRETO := Color("050706")
 const TRACO := Color(0.05, 0.05, 0.04, 0.85)
 
 const PELE := [Color("c7a58c"), Color("b59f8a"), Color("98a08a"), Color("7d8f80")]
+
+## Nearest: as fotos entram 1:1, mas ela (um boneco de 36 x 52) e ampliada ate a
+## grade de blocos das fotos e tem que sair em bloco, nao borrada.
+func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -47,16 +56,18 @@ func _draw() -> void:
 	if olho_magico:
 		_olho_magico()
 		return
-	var arte := "res://casa/arte/%s.png" % comodo
-	if ResourceLoader.exists(arte):
-		draw_texture_rect(load(arte), Rect2(Vector2.ZERO, Comodos.TELA), false)
+	if not _fotos.has(comodo):
+		var arte := "res://casa/arte/%s.png" % comodo
+		_fotos[comodo] = load(arte) if ResourceLoader.exists(arte) else null
+	if _fotos[comodo]:
+		draw_texture_rect(_fotos[comodo], Rect2(Vector2.ZERO, Comodos.TELA), false)
 	else:
-		match comodo:
-			"entrada": _entrada()
-			"sala": _sala()
-			"cozinha": _cozinha()
-			"quarto": _quarto()
-			"porao": _porao()
+		draw_rect(Rect2(Vector2.ZERO, Comodos.TELA), PRETO)
+	match comodo:
+		"entrada": _na_entrada()
+		"sala_tv": _na_sala()
+		"cozinha": _na_cozinha()
+		"quarto": _no_quarto()
 	_destaque()
 	if close_up != "":
 		_close_up()
@@ -114,372 +125,227 @@ func _brilho(c: Vector2, raio: float, cor: Color, camadas := 6) -> void:
 	for k in camadas:
 		draw_circle(c, raio * (1.0 - float(k) / camadas), Color(cor, cor.a / camadas * 1.6))
 
-# -------------------------------------------------------------------- a caixa
+# ------------------------------------------------- por cima das fotos
 
-## As quatro paredes, o teto e o chao. `tabuas` = chao de madeira; sem elas o
-## chao e liso (cimento, azulejo).
-func _caixa(parede: Color, teto: Color, chao: Color, semente: int, tabuas := true) -> void:
-	var tl := F.position
-	var tr := Vector2(F.end.x, F.position.y)
-	var bl := Vector2(F.position.x, F.end.y)
-	var br := F.end
-	_poli([Vector2(0, 0), Vector2(320, 0), tr, tl], teto)
-	_poli([Vector2(0, 0), tl, bl, Vector2(0, 180)], parede.darkened(0.22))
-	_poli([Vector2(320, 0), Vector2(320, 180), br, tr], parede.darkened(0.3))
-	draw_rect(F, parede)
-	_poli([bl, br, Vector2(320, 180), Vector2(0, 180)], chao)
+## O olho magico na porta da rua. A foto nao tem: e um ponto de metal no meio
+## da folha, na altura do olho.
+func _na_entrada() -> void:
+	var c := Comodos.OLHO_MAGICO
+	draw_circle(c, 1.9, Color("15120f"))
+	draw_circle(c, 1.2, Color("7d7867"))
+	draw_circle(c, 0.6, Color("0d0c0a"))
+	draw_circle(c + Vector2(-0.5, -0.5), 0.35, Color("d8d3bb"))
 
-	# Papel de parede.
-	for x in range(int(F.position.x) + 5, int(F.end.x), 9):
-		draw_line(Vector2(x, F.position.y), Vector2(x, F.end.y), parede.lightened(0.07), 1.0)
-	for i in 9:
-		var x := 4.0 + i * 9.0
-		var yt := 36.0 * x / 80.0
-		var yb := 180.0 - 48.0 * x / 80.0
-		draw_line(Vector2(x, yt), Vector2(x, yb), parede.darkened(0.32), 1.0)
-		draw_line(Vector2(320.0 - x, yt), Vector2(320.0 - x, yb), parede.darkened(0.4), 1.0)
-
-	# Chao convergindo para o ponto de fuga.
-	var linhas := 13 if tabuas else 9
-	for i in linhas:
-		var p := Vector2(-80.0 + i * 480.0 / (linhas - 1), 180)
-		var q := p.lerp(Comodos.PONTO_DE_FUGA, 0.5)
-		draw_line(p, q, chao.darkened(0.4), 1.0)
-	if not tabuas:
-		for y in [138.0, 147.0, 160.0]:
-			draw_line(Vector2(0, y), Vector2(320, y), chao.darkened(0.3), 1.0)
-
-	# Rodape e cantos.
-	draw_line(bl + Vector2(0, -2), br + Vector2(0, -2), parede.darkened(0.5), 2.0)
-	_traco(Vector2(0, 0), tl, TRACO, 1.0, semente)
-	_traco(Vector2(320, 0), tr, TRACO, 1.0, semente + 1)
-	_traco(Vector2(0, 180), bl, TRACO, 1.0, semente + 2)
-	_traco(Vector2(320, 180), br, TRACO, 1.0, semente + 3)
-	_contorno(F, TRACO, 1.0, semente + 4)
-
-	_manchas(F, parede.darkened(0.35), 70, semente)
-	_manchas(Rect2(0, 132, 320, 48), chao.darkened(0.45), 60, semente + 9)
-	_manchas(Rect2(0, 0, 80, 170), parede.darkened(0.5), 35, semente + 17)
-
-## A luz do teto: uma lampada so no meio da casa.
-func _luz_do_teto(c := Vector2(160, 14), forca := 0.22) -> void:
-	_brilho(c, 110.0, Color(1.0, 0.95, 0.8, forca), 5)
-
-## O vao da parede do fundo, para outro comodo.
-func _vao(r: Rect2, semente: int) -> void:
-	draw_rect(r, Color("0c0f0d"))
-	_poli([Vector2(r.position.x, r.end.y), r.end,
-		Vector2(r.end.x - 4, r.end.y - 10), Vector2(r.position.x + 4, r.end.y - 10)], Color("1a1c18"))
-	draw_rect(r.grow(1.5), Color("3b2c1f"), false, 2.0)
-	_contorno(r.grow(2.5), TRACO, 1.0, semente)
-
-## A porta na parede da esquerda: aberta (um vao escuro) ou fechada.
-func _porta_da_esquerda(cor: Color, aberta: bool, semente: int) -> void:
-	var x0 := 16.0
-	var x1 := 62.0
-	var yb0 := 180.0 - 48.0 * x0 / 80.0
-	var yt0 := 36.0 * x0 / 80.0
-	var yb1 := 180.0 - 48.0 * x1 / 80.0
-	var yt1 := 36.0 * x1 / 80.0
-	var a := Vector2(x0, yb0 - (yb0 - yt0) * 0.72)
-	var b := Vector2(x1, yb1 - (yb1 - yt1) * 0.72)
-	var c := Vector2(x1, yb1)
-	var d := Vector2(x0, yb0)
-	_poli([a, b, c, d], Color("0b0d0b") if aberta else cor)
-	if not aberta:
-		# Tabuas pregadas na diagonal.
-		for k in 3:
-			var y := 0.25 + k * 0.25
-			var e := a.lerp(d, y)
-			var f := b.lerp(c, y - 0.08)
-			_traco(e, f, cor.darkened(0.55), 3.0, semente + k, 0.4)
-	_contorno_de([a, b, c, d], TRACO, 1.5, semente)
-
-# ----------------------------------------------------------------- os comodos
-
-func _entrada() -> void:
-	_caixa(Color("6e6a52"), Color("34332b"), Color("4b3b2c"), 11)
-	_luz_do_teto()
-	_porta_da_esquerda(Color("4a3a2a"), true, 12)
-
-	var porta := Rect2(136, 52, 48, 80)
-	draw_rect(porta.grow(3), Color("2f241a"))
-	_bloco(porta, Color("5b4632"), 13)
-	_contorno(Rect2(142, 60, 36, 28), TRACO, 1.0, 14)
-	_contorno(Rect2(142, 94, 36, 32), TRACO, 1.0, 15)
-	draw_circle(Vector2(177, 96), 1.6, Color("b8a060"))
-	# Trancas e corrente: a casa se fecha por dentro.
-	draw_rect(Rect2(173, 78, 6, 3), Color("8a8676"))
-	draw_rect(Rect2(173, 86, 6, 3), Color("8a8676"))
+## A sala vista da TV: o radio no rack (a foto nao tem radio) e, com a TV
+## ligada, a estatica na tela.
+func _na_sala() -> void:
+	var r := Comodos.RADIO
+	_bloco(r, Color("3b3027"), 30)
 	for i in 5:
-		draw_circle(Vector2(166 + i * 2.2, 72 + i * 1.0), 0.9, Color("9a9686"))
-	# O olho magico.
-	draw_circle(Vector2(160, 75), 2.6, Color("1a1a18"))
-	draw_circle(Vector2(160, 75), 1.1, Color("c9c6a8"))
-
-	_poli([Vector2(130, 134), Vector2(190, 134), Vector2(200, 146), Vector2(120, 146)], Color("3c3a30"))
-	# Cabideiro, com um casaco.
-	_traco(Vector2(226, 58), Vector2(226, 134), Color("2a2018"), 2.0, 16)
-	_poli([Vector2(220, 64), Vector2(233, 64), Vector2(236, 104), Vector2(217, 104)], Color("3e4638"))
-	_contorno_de([Vector2(220, 64), Vector2(233, 64), Vector2(236, 104), Vector2(217, 104)], TRACO, 1.0, 17)
-
-func _sala() -> void:
-	_caixa(Color("6a5f4e"), Color("302c26"), Color("46382a"), 21)
-	_luz_do_teto()
-	_vao(Rect2(92, 58, 30, 74), 22)
-	_vao(Rect2(198, 58, 30, 74), 23)
-	_porta_da_esquerda(Color("4a3a2a"), false, 24)
-	draw_circle(Vector2(56, 112), 2.2, Color("9a9070"))  # o cadeado do porao
-
-	# Janela tapada com tabua.
-	var janela := Rect2(138, 50, 44, 34)
-	_bloco(janela, Color("10201c"), 25)
-	for k in 3:
-		_traco(Vector2(janela.position.x - 3, janela.position.y + 6 + k * 11),
-			Vector2(janela.end.x + 3, janela.position.y + 10 + k * 10), Color("4f3b28"), 4.0, 26 + k, 0.4)
-
-	# Mesinha e radio.
-	_bloco(Rect2(140, 112, 40, 6), Color("4a3826"), 27)
-	_traco(Vector2(143, 118), Vector2(143, 132), Color("3a2a1c"), 2.0, 28)
-	_traco(Vector2(177, 118), Vector2(177, 132), Color("3a2a1c"), 2.0, 29)
-	_bloco(Rect2(148, 100, 26, 12), Color("3b3027"), 30)
-	for i in 4:
 		for j in 2:
-			draw_rect(Rect2(151 + i * 3, 103 + j * 3, 1, 1), Color("15110d"))
-	draw_circle(Vector2(168, 106), 2.5, Color("8a7a58"))
-	_traco(Vector2(172, 100), Vector2(182, 86), Color("7a7a70"), 1.0, 31, 0.2)
+			draw_rect(Rect2(r.position.x + 3 + i * 2.5, r.position.y + 3 + j * 3, 1, 1), Color("15110d"))
+	draw_circle(r.position + Vector2(r.size.x - 5, r.size.y * 0.5), 2.4, Color("8a7a58"))
+	_traco(r.position + Vector2(r.size.x - 3, 0), r.position + Vector2(r.size.x + 7, -16), Color("7a7a70"), 1.0, 31, 0.2)
+	if not tv_ligada:
+		return
+	var tela := Comodos.TELA_DA_TV
+	draw_rect(tela, Color("6f7c78"))
+	for i in 400:
+		draw_rect(Rect2(tela.position.x + randf() * tela.size.x,
+			tela.position.y + randf() * tela.size.y, 1, 1), Color(0, 0, 0, 0.7))
+	var faixa := fposmod(_t * 18.0, tela.size.y)
+	draw_rect(Rect2(tela.position.x, tela.position.y + faixa, tela.size.x, 2), Color(1, 1, 1, 0.25))
+	draw_rect(Rect2(tela.position.x + 6, tela.position.y + 7, 30, 4), Color("d8e0d8"))
+	_brilho(tela.get_center(), 70.0, Color(0.8, 1.0, 0.95, 0.2))
 
-	# A televisao de tubo.
-	_bloco(Rect2(244, 126, 52, 16), Color("5a4630"), 32)
-	var tv := Rect2(240, 90, 60, 38)
-	_bloco(tv, Color("5a5c54"), 33)
-	var tela := Rect2(246, 95, 40, 28)
-	draw_rect(tela, Color("121614"))
-	if tv_ligada:
-		draw_rect(tela, Color("6f7c78"))
-		for i in 90:
-			draw_rect(Rect2(tela.position.x + randf() * tela.size.x,
-				tela.position.y + randf() * tela.size.y, 1, 1), Color(0, 0, 0, 0.7))
-		var faixa := fposmod(_t * 18.0, tela.size.y)
-		draw_rect(Rect2(tela.position.x, tela.position.y + faixa, tela.size.x, 2), Color(1, 1, 1, 0.25))
-		draw_rect(Rect2(tela.position.x + 4, tela.position.y + 5, 18, 3), Color("d8e0d8"))
-		_brilho(tela.get_center(), 34.0, Color(0.8, 1.0, 0.95, 0.2))
-	else:
-		_traco(Vector2(249, 99), Vector2(260, 97), Color(1, 1, 1, 0.18), 1.0, 34)
-	_contorno(tela, TRACO, 1.0, 35)
-	draw_circle(Vector2(293, 100), 1.8, Color("15130f"))
-	draw_circle(Vector2(293, 108), 1.8, Color("15130f"))
-	_traco(Vector2(262, 90), Vector2(252, 76), Color("5a5a52"), 1.0, 36, 0.2)
-	_traco(Vector2(268, 90), Vector2(280, 78), Color("5a5a52"), 1.0, 37, 0.2)
-
-	# Tapete e sofa.
-	_poli([Vector2(96, 142), Vector2(226, 142), Vector2(250, 166), Vector2(70, 166)], Color("4d2f2a"))
-	_manchas(Rect2(80, 142, 160, 24), Color("2a1a18"), 25, 38)
-	var encosto := Rect2(70, 118, 100, 20)
-	_bloco(encosto, Color("4c5646"), 39)
-	_bloco(Rect2(70, 136, 100, 22), Color("566250"), 40)
-	_bloco(Rect2(62, 124, 12, 34), Color("48523f"), 41)
-	_bloco(Rect2(166, 124, 12, 34), Color("48523f"), 42)
-	_traco(Vector2(120, 138), Vector2(120, 156), TRACO, 1.0, 43)
-	_manchas(Rect2(74, 120, 92, 36), Color("39402f"), 30, 44)
-
-func _cozinha() -> void:
-	_caixa(Color("7a7560"), Color("35352c"), Color("5a5a52"), 51, false)
-	_luz_do_teto(Vector2(150, 14), 0.2)
-	# Azulejo na metade de baixo do fundo.
-	for y in range(100, 132, 6):
-		draw_line(Vector2(F.position.x, y), Vector2(F.end.x, y), Color("5f5c4c"), 1.0)
-	for x in range(int(F.position.x), int(F.end.x), 7):
-		draw_line(Vector2(x, 100), Vector2(x, 132), Color("5f5c4c"), 1.0)
-
-	# Geladeira velha.
-	var geladeira := Rect2(86, 46, 36, 86)
-	_bloco(geladeira, Color("b3b2a2"), 52)
-	_traco(Vector2(86, 72), Vector2(122, 72), TRACO, 1.0, 53)
-	_traco(Vector2(117, 56), Vector2(117, 66), Color("5a5a50"), 2.0, 54, 0.2)
-	_traco(Vector2(117, 80), Vector2(117, 100), Color("5a5a50"), 2.0, 55, 0.2)
-	draw_rect(Rect2(92, 78, 5, 4), Color("a84a3a"))
-	draw_rect(Rect2(100, 84, 4, 5), Color("4a6a8a"))
-	_manchas(geladeira, Color("7a6a4a"), 22, 56)
-
-	# O quadro da pesquisa: um papel por documento que chegou em casa.
-	var quadro := Rect2(130, 50, 40, 34)
-	draw_rect(quadro.grow(2), Color("3a2a1a"))
-	_bloco(quadro, Color("7a5a38"), 57)
-	_manchas(quadro, Color("5a4028"), 30, 58)
-	var papeis: Array[Vector2] = []
-	for i in documentos:
-		var p := Vector2(133 + (i % 3) * 12.5, 53 + int(i / 3) * 15)
-		papeis.append(p + Vector2(4, 5))
-		_bloco(Rect2(p, Vector2(9, 11)), Color("d8d2bc"), 59 + i)
+## Os papeis da pesquisa na bancada da cozinha: um por documento que chegou em
+## casa, riscado de vermelho o que ja foi estudado. Era o quadro do greybox.
+func _na_cozinha() -> void:
+	var b := Comodos.BANCADA
+	for i in mini(documentos, 8):
+		var linha := floori(i / 4.0)
+		var p := b.position + Vector2((i % 4) * 30.0 + linha * 8.0, linha * 12.0 + (i % 2) * 2.0)
+		var folha := [p, p + Vector2(15, -1), p + Vector2(17, 8), p + Vector2(2, 9)]
+		_poli(folha, Color("cfc8b0"))
+		_contorno_de(folha, TRACO, 1.0, 59 + i, 0.2)
 		for k in 3:
-			draw_line(p + Vector2(2, 3 + k * 2.5), p + Vector2(7, 3 + k * 2.5), Color("8a8474"), 1.0)
+			draw_line(p + Vector2(3, 2.5 + k * 2), p + Vector2(13, 2 + k * 2), Color("8a8474"), 1.0)
 		if i < lidos:
-			_traco(p + Vector2(1, 9), p + Vector2(8, 2), Color("9a2a22"), 1.0, 70 + i, 0.2)
-		draw_circle(p + Vector2(4.5, 1), 1.0, Color("b02a22"))
-	for i in papeis.size() - 1:
-		_traco(papeis[i], papeis[i + 1], Color("a02a22"), 1.0, 80 + i, 0.3)
+			_traco(p + Vector2(2, 8), p + Vector2(15, 0), Color("9a2a22"), 1.0, 70 + i, 0.2)
 
-	# Janela com fita em X, pia e bancada.
-	var janela := Rect2(184, 54, 40, 32)
-	_bloco(janela, Color("10201c"), 60)
-	_traco(janela.position, janela.end, Color("b8b090"), 2.0, 61, 0.3)
-	_traco(Vector2(janela.end.x, janela.position.y), Vector2(janela.position.x, janela.end.y), Color("b8b090"), 2.0, 62, 0.3)
-	_bloco(Rect2(176, 102, 64, 30), Color("4d4234"), 63)
-	_bloco(Rect2(174, 98, 68, 5), Color("8a8676"), 64)
-	_traco(Vector2(208, 102), Vector2(208, 132), TRACO, 1.0, 65)
-	_traco(Vector2(200, 98), Vector2(200, 90), Color("9a9a90"), 2.0, 66, 0.2)
-	_traco(Vector2(200, 90), Vector2(206, 90), Color("9a9a90"), 2.0, 67, 0.2)
+## Ela, no quarto: ajoelhada na cama, entre as pontas das correntes da foto, um
+## pulso preso em cada uma.
+##
+## **PROVISORIO (16/10/2026): o desenho dela e da equipe e ainda vai ser
+## feito.** Ate la ela e este boneco de pixel montado em codigo, na mesma grade
+## de blocos das fotos (Comodos.BLOCO_DA_FOTO), para nao destoar delas - o
+## traco liso do greybox, em pe na cama, brigava com a foto. Quando o desenho
+## chegar, ele entra no lugar de `_desenhar_ela` (ou de uma folha de quadros)
+## e o resto - o lugar, o clique, as correntes - continua.
+##
+## "Ferve" como o traco do greybox: 4 quadros que se alternam 5 vezes por
+## segundo, mexendo as pontas do cabelo e a barra da camisola. Com o estagio,
+## a pele acinzenta, ela se curva, a camisola mancha e os olhos acendem.
+func _no_quarto() -> void:
+	var b := Comodos.BLOCO_DA_FOTO
+	var origem := Comodos.PES_DELA - Vector2(ELA_LARGURA * 0.5, ELA_ALTURA) * b
+	_poli(Array(_elipse(Comodos.PES_DELA + Vector2(0, 1), 26, 4)), Color(0, 0, 0, 0.35))
+	var quadro := int(_t * 5.0) % 4
+	var chave := estagio * 4 + quadro
+	if not _quadros_dela.has(chave):
+		_quadros_dela[chave] = ImageTexture.create_from_image(_desenhar_ela(estagio, quadro))
+	draw_texture_rect(_quadros_dela[chave], Rect2(origem, Vector2(ELA_LARGURA, ELA_ALTURA) * b), false)
+	for i in 2:
+		var pulso: Vector2i = PULSOS_DELA[i]
+		_corrente(origem + (Vector2(pulso) + Vector2(0.5, 0.5)) * b, Comodos.PONTAS_DAS_CORRENTES[i])
 
-	# A mesa, com os papeis e os vidros da pesquisa.
-	var mesa := Rect2(104, 134, 112, 12)
-	_bloco(mesa, Color("5a4430"), 68)
-	_traco(Vector2(110, 146), Vector2(106, 176), Color("3a2a1c"), 3.0, 69, 0.3)
-	_traco(Vector2(210, 146), Vector2(214, 176), Color("3a2a1c"), 3.0, 71, 0.3)
-	for i in mini(documentos, 6):
-		var p := Vector2(112 + i * 11, 134 + (i % 2) * 2)
-		_poli([p, p + Vector2(9, -1), p + Vector2(10, 5), p + Vector2(1, 6)], Color("cfc8b0"))
-	for i in 3:
-		var base := Vector2(180 + i * 9, 134)
-		_poli([base + Vector2(-3, 0), base + Vector2(3, 0), base + Vector2(1.5, -7), base + Vector2(1.5, -11),
-			base + Vector2(-1.5, -11), base + Vector2(-1.5, -7)], Color("7aa89a"))
-		_contorno_de([base + Vector2(-3, 0), base + Vector2(3, 0), base + Vector2(1.5, -11), base + Vector2(-1.5, -11)],
-			TRACO, 1.0, 72 + i, 0.2)
+## Uma corrente de elos de `de` ate `ate`, caida um pouco no meio, em blocos do
+## tamanho do pixel da foto.
+func _corrente(de: Vector2, ate: Vector2) -> void:
+	var b := Comodos.BLOCO_DA_FOTO
+	var n := maxi(2, int(de.distance_to(ate) / b))
+	for i in n + 1:
+		var t := float(i) / n
+		var p := de.lerp(ate, t) + Vector2(0, sin(t * PI) * 2.0)
+		draw_rect(Rect2(p - Vector2(b, b) * 0.5, Vector2(b, b)), Color("5a3426") if i % 2 == 0 else Color("8a5a40"))
 
-func _quarto() -> void:
-	_caixa(Color("686252"), Color("2e2b25"), Color("463829"), 81)
-	_luz_do_teto(Vector2(240, 104), 0.25)
+## O tamanho dela, em pixels da foto, e onde ficam os pulsos (as algemas): e de
+## la que as correntes saem.
+const ELA_LARGURA := 36
+const ELA_ALTURA := 52
+const PULSOS_DELA := [Vector2i(9, 41), Vector2i(27, 41)]
+const CAMISOLA := Color("8f877a")
+const CABELO := Color("1d1713")
+const SANGUE := Color("4a1410")
+const CONTORNO := Color(0.05, 0.04, 0.035)
 
-	# A foto na parede.
-	var foto := Rect2(196, 58, 20, 26)
-	draw_rect(foto.grow(2), Color("3a2a1a"))
-	_bloco(foto, Color("8a8270"), 82)
-	draw_circle(Vector2(202, 68), 3.0, Color("4a4234"))
-	draw_circle(Vector2(210, 67), 3.0, Color("4a4234"))
-	_poli([Vector2(197, 84), Vector2(215, 84), Vector2(213, 74), Vector2(199, 74)], Color("4a4234"))
+## Os quadros dela ja montados, por estagio e quadro da fervura.
+var _quadros_dela := {}
 
-	# Criado-mudo e abajur aceso.
-	_bloco(Rect2(232, 112, 22, 20), Color("4a3826"), 83)
-	_poli([Vector2(236, 100), Vector2(250, 100), Vector2(253, 110), Vector2(233, 110)], Color("c8b48a"))
-	_traco(Vector2(243, 110), Vector2(243, 112), Color("2a2018"), 2.0, 84)
-	_brilho(Vector2(243, 106), 30.0, Color(1.0, 0.9, 0.7, 0.35))
-
-	# A cama de casal. Um lado dela arrumado demais.
-	_bloco(Rect2(84, 94, 112, 26), Color("4a3524"), 85)
-	var colchao := [Vector2(72, 116), Vector2(208, 116), Vector2(224, 160), Vector2(56, 160)]
-	_poli(colchao, Color("6d6a5e"))
-	_contorno_de(colchao, TRACO, 1.0, 86)
-	_bloco(Rect2(92, 110, 42, 12), Color("a8a494"), 87)
-	_bloco(Rect2(146, 108, 42, 12), Color("b2ae9e"), 88)
-	for k in 4:
-		_traco(Vector2(70 + k * 10, 128 + k * 7), Vector2(150 + k * 14, 124 + k * 9), Color("55524a"), 1.0, 89 + k, 0.8)
-	_manchas(Rect2(64, 118, 150, 40), Color("54524a"), 30, 93)
-
-	# Janela tapada na parede da esquerda.
-	var janela := [Vector2(26, 50), Vector2(54, 58), Vector2(54, 100), Vector2(26, 104)]
-	_poli(janela, Color("0f1c18"))
-	_contorno_de(janela, TRACO, 1.0, 94)
-	for k in 3:
-		_traco(Vector2(22, 60 + k * 14), Vector2(58, 66 + k * 12), Color("4f3b28"), 4.0, 95 + k, 0.4)
-
-func _porao() -> void:
-	_caixa(Color("4c4f4a"), Color("262824"), Color("3a3b36"), 101, false)
-	# A lampada pelada, pendurada no fio.
-	_traco(Vector2(160, 0), Vector2(160, 18), Color("1a1a18"), 1.0, 102, 0.3)
-	_brilho(Vector2(160, 21), 130.0, Color(1.0, 0.95, 0.75, 0.3))
-	draw_circle(Vector2(160, 21), 3.0, Color("f0e8c0"))
-	# Infiltracao e rachadura.
-	_manchas(Rect2(84, 36, 60, 40), Color("343832"), 40, 103)
-	_traco(Vector2(200, 36), Vector2(214, 70), TRACO, 1.0, 104, 1.2)
-	_traco(Vector2(214, 70), Vector2(208, 96), TRACO, 1.0, 105, 1.2)
-
-	# A escada que desce da sala, na esquerda.
-	for k in 8:
-		var y := 40.0 + k * 14.0
-		var x := k * 7.0
-		_bloco(Rect2(x, y, 58 - x * 0.4, 5), Color("4a3a2a"), 106 + k)
-
-	# Do lado de dentro da grade, ela. A grade vem depois, por cima.
-	_poli(_elipse(Vector2(160, 136), 26, 5), Color(0, 0, 0, 0.45))
-	draw_circle(Vector2(146, 134), 2.0, Color("555a55"))  # a tigela
-	# Desenhada 1,35x em volta dos pes: ela e o centro do quadro, como as
-	# visitas na porta da referencia. O retangulo de clique (comodos.gd) e este
-	# mesmo, ja escalado.
-	var pes := Vector2(160, 134)
-	draw_set_transform(pes * (1.0 - ESCALA_DELA), 0.0, Vector2.ONE * ESCALA_DELA)
-	_ela(Rect2(136, 56, 48, 78))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	# A corrente, do chao ate o tornozelo.
-	var elo := Vector2(118, 138)
-	for i in 10:
-		var p := elo.lerp(Vector2(152, 132), float(i) / 9.0) + Vector2(0, sin(i * 1.3) * 1.2)
-		draw_arc(p, 1.4, 0, TAU, 8, Color("8a8a80"), 1.0)
-
-	var grade := Rect2(96, 38, 128, 94)
-	draw_rect(Rect2(grade.position.x, grade.position.y, grade.size.x, 3), Color("1c1c1a"))
-	draw_rect(Rect2(grade.position.x, grade.end.y - 3, grade.size.x, 3), Color("1c1c1a"))
-	var x := grade.position.x
-	while x <= grade.end.x:
-		draw_line(Vector2(x, grade.position.y), Vector2(x, grade.end.y), Color("161614"), 2.0)
-		draw_line(Vector2(x - 1, grade.position.y), Vector2(x - 1, grade.end.y), Color(1, 1, 1, 0.08), 1.0)
-		x += 9.0
-	draw_rect(Rect2(186, 82, 6, 7), Color("8a8060"))  # cadeado
-
-const ESCALA_DELA := 1.35
-
-## Ela, desenhada a traco que ferve. Quanto mais adiante no estagio, mais
-## curvada, mais cinza, e os olhos acendem.
-func _ela(r: Rect2) -> void:
-	var s := estagio
-	var ferve := int(_t * 5.0)
+func _desenhar_ela(s: int, quadro: int) -> Image:
+	var im := Image.create(ELA_LARGURA, ELA_ALTURA, false, Image.FORMAT_RGBA8)
 	var pele: Color = PELE[s]
-	var cx := r.get_center().x
-	var curva := s * 3.0
-	var topo := r.position.y + curva
+	var cx := 18.0
+	var base := ELA_ALTURA - 1
+	# Quanto mais adiante, mais curvada: cabeca e ombros descem.
+	var ombro := 21 + s
+	var cintura := ombro + 11
+	var cabeca := Vector2(cx + s * 0.5, 10.0 + s)
+	var hx := int(cabeca.x)
+	var hy := int(cabeca.y)
 
-	var ombro := topo + 22.0
-	var corpo := [
-		Vector2(cx - 13, ombro), Vector2(cx + 13, ombro + 1),
-		Vector2(cx + 10, ombro + 28), Vector2(cx + 13, r.end.y - 14),
-		Vector2(cx - 13, r.end.y - 14), Vector2(cx - 10, ombro + 28),
-	]
-	# Pernas e bracos antes do vestido, para o vestido cobrir a emenda.
-	_traco(Vector2(cx - 5, r.end.y - 16), Vector2(cx - 6, r.end.y - 2), pele.darkened(0.2), 3.0, ferve, 0.8)
-	_traco(Vector2(cx + 5, r.end.y - 16), Vector2(cx + 7, r.end.y - 2), pele.darkened(0.2), 3.0, ferve + 1, 0.8)
-	_poli(corpo, Color("3c3434"))
-	_manchas(Rect2(cx - 12, ombro, 24, 40), Color("241e1e"), 18, ferve)
-	_contorno_de(corpo, TRACO, 1.0, ferve + 2, 0.9)
-	var mao_e := Vector2(cx - 17 - s, ombro + 34 + s * 2)
-	var mao_d := Vector2(cx + 17 + s, ombro + 33 + s * 2)
-	_traco(Vector2(cx - 12, ombro + 2), mao_e, pele, 3.0, ferve + 3, 0.9)
-	_traco(Vector2(cx + 12, ombro + 2), mao_d, pele, 3.0, ferve + 4, 0.9)
-	draw_circle(mao_e, 2.2, pele)
-	draw_circle(mao_d, 2.2, pele)
+	# O corpo: ombro, tronco fino ate a cintura e, ajoelhada, a camisola
+	# espalhada na cama ate a barra rasgada. O lado direito fica na sombra.
+	for y in range(ombro, base + 1):
+		var meia: float
+		if y == ombro:
+			meia = 6.0
+		elif y < cintura:
+			meia = lerpf(8.0, 7.0, float(y - ombro) / float(cintura - ombro))
+		else:
+			meia = lerpf(7.0, 15.5, pow(float(y - cintura) / float(base - cintura), 0.6))
+		for x in ELA_LARGURA:
+			var dx := x + 0.5 - cx
+			if absf(dx) > meia:
+				continue
+			if y > base - 3 and _h(x, quadro, 40) < 0.3 * (y - (base - 3)):
+				continue
+			var cor := CAMISOLA.darkened(0.2 if dx > 3.0 else 0.0)
+			if y - ombro < 3 and absf(dx) < 3.5 - (y - ombro):
+				cor = pele.darkened(0.1)  # o decote
+			else:
+				if y > cintura + 1 and int(absf(dx) + 0.5) % 5 == 2:
+					cor = cor.darkened(0.16)  # as pregas na cama
+				# Sangue em manchas de 2 x 2, mais a cada estagio, e uma no peito.
+				var peito := Vector2(x + 0.5 - (cx + 2.0), y + 0.5 - (ombro + 6.0)).length() < 1.0 + s * 1.2
+				if (s >= 1 and peito) or _h(floori(x / 2.0), floori(y / 2.0), 41) < 0.02 + s * 0.035:
+					cor = SANGUE if _h(x, y, 42) < 0.75 else SANGUE.darkened(0.4)
+			im.set_pixel(x, y, cor)
 
-	var cabeca := Vector2(cx + s * 1.5, topo + 11)
-	var rosto := _elipse(cabeca, 7.0, 9.0, 16)
-	for i in rosto.size():
-		rosto[i] += Vector2(_h(i, ferve, 5) - 0.5, _h(i, ferve, 6) - 0.5) * 0.8
-	_poli(Array(rosto), pele)
-	_contorno_de(Array(rosto), TRACO, 1.0, ferve + 5, 0.4)
-	# Cabelo caindo na cara.
-	for k in 11:
-		var de := cabeca + Vector2(-8 + k * 1.6, -8 + abs(k - 5) * 0.4)
-		var ate := de + Vector2((k - 5) * 0.8, 20 + _h(k, 2, ferve) * 8)
-		_traco(de, ate, Color("241e18"), 1.0, ferve + 10 + k, 0.9)
-	# Olheira funda: e o que faz o rosto ler de longe, atras da grade.
-	_poli(Array(_elipse(cabeca + Vector2(-3, -0.5), 2.4, 1.8, 8)), pele.darkened(0.55))
-	_poli(Array(_elipse(cabeca + Vector2(3, -0.5), 2.4, 1.8, 8)), pele.darkened(0.55))
-	var olho := Color("1a1614") if s < 2 else Color("e0e4cc")
-	draw_rect(Rect2(cabeca + Vector2(-4, -1), Vector2(2, 1)), olho)
-	draw_rect(Rect2(cabeca + Vector2(2, -1), Vector2(2, 1)), olho)
-	if s >= 2:
-		_brilho(cabeca + Vector2(-3, -0.5), 3.0, Color(0.9, 1.0, 0.85, 0.5))
-		_brilho(cabeca + Vector2(3, -0.5), 3.0, Color(0.9, 1.0, 0.85, 0.5))
+	# O pescoco.
+	for y in range(hy + 5, ombro):
+		for x in range(int(cx) - 2, int(cx) + 2):
+			im.set_pixel(x, y, pele.darkened(0.2))
+
+	# Os bracos: do ombro ao cotovelo, que sai do corpo, e dai ao pulso, com a
+	# mao apoiada na coxa. A algema no pulso, e uma linha escura do lado de
+	# dentro para o braco nao sumir na camisola.
+	for i in 2:
+		var lado := -1 if i == 0 else 1
+		var pulso: Vector2i = PULSOS_DELA[i]
+		var cotovelo := Vector2(cx + lado * 10.0, cintura - 1)
+		for trecho in [[Vector2(cx + lado * 8.0, ombro + 1), cotovelo], [cotovelo, Vector2(pulso)]]:
+			var de: Vector2 = trecho[0]
+			var ate: Vector2 = trecho[1]
+			for k in 25:
+				var p := de.lerp(ate, k / 24.0)
+				var x := int(p.x)
+				var y := int(p.y)
+				im.set_pixel(clampi(x - lado, 0, ELA_LARGURA - 1), y, Color("2a2420"))
+				im.set_pixel(x, y, pele)
+				im.set_pixel(clampi(x + lado, 0, ELA_LARGURA - 1), y, pele.darkened(0.25))
+		for y in range(pulso.y + 1, pulso.y + 3):
+			for x in range(pulso.x - 1, pulso.x + 2):
+				im.set_pixel(x, y, pele.darkened(0.08))
+		if s >= 2:
+			for x in [pulso.x - 1, pulso.x + 1]:
+				im.set_pixel(x, pulso.y + 3, Color("1a1410"))  # as unhas
+		for x in range(pulso.x - 1, pulso.x + 2):
+			im.set_pixel(x, pulso.y, Color("3a3936"))
+		im.set_pixel(pulso.x, pulso.y, Color("6d6a63"))
+
+	# A cabeca.
+	for y in range(hy - 7, hy + 7):
+		for x in range(hx - 6, hx + 6):
+			var d := Vector2((x + 0.5 - cabeca.x) / 5.0, (y + 0.5 - cabeca.y) / 6.5)
+			if d.length_squared() <= 1.0:
+				im.set_pixel(x, y, pele)
+	# Olhos fundos (a sombra da sobrancelha e a olheira); a partir do terceiro
+	# estagio, claros e sem pupila.
+	var olho := Color("16110f") if s < 2 else Color("e8ecd4")
+	for lado: int in [-1, 1]:
+		var o := hx + lado * 2 - (1 if lado < 0 else 0)
+		im.set_pixel(o, hy - 1, pele.darkened(0.45))
+		im.set_pixel(o + lado, hy - 1, pele.darkened(0.45))
+		im.set_pixel(o, hy, olho)
+		im.set_pixel(o + lado, hy, pele.darkened(0.6))
+		im.set_pixel(o, hy + 1, pele.darkened(0.3))
 	if s >= 3:
-		draw_rect(Rect2(cabeca + Vector2(-2, 4), Vector2(4, 2)), Color("140808"))
+		for x in range(hx - 1, hx + 2):
+			im.set_pixel(x, hy + 3, Color("140808"))
+			im.set_pixel(x, hy + 4, Color("140808"))
+		im.set_pixel(hx, hy + 5, SANGUE)
 	else:
-		draw_line(cabeca + Vector2(-2, 5), cabeca + Vector2(2, 5), Color("4a2a24"), 1.0)
+		for x in range(hx - 1, hx + 2):
+			im.set_pixel(x, hy + 3, Color("4a2a24"))
+
+	# O cabelo: franja ate a sobrancelha, duas mechas na cara (uma no meio,
+	# uma na bochecha) e o resto caindo pela frente dos ombros.
+	for x in range(hx - 7, hx + 8):
+		var dx := x + 0.5 - cabeca.x
+		var topo := int(cabeca.y - 6.5 * sqrt(maxf(0.0, 1.0 - (dx / 6.0) * (dx / 6.0)))) - 1
+		var ate: int
+		if absf(dx) >= 4.5:
+			ate = ombro + 6 + int(_h(x, quadro, 44) * 3.0)
+		elif x == hx or x == hx + 4:
+			ate = hy + 4 + int(_h(x, quadro, 45) * 3.0)
+		else:
+			ate = hy - 2 + int(_h(x, quadro, 46) * 1.6)
+		for y in range(maxi(0, topo), ate):
+			im.set_pixel(x, y, CABELO.lightened(0.1) if _h(x, y, 47) < 0.15 else CABELO)
+
+	# Contorno escuro de 1 pixel: e o que separa ela da foto.
+	var borda := im.duplicate() as Image
+	for y in ELA_ALTURA:
+		for x in ELA_LARGURA:
+			if im.get_pixel(x, y).a > 0.0:
+				continue
+			for v: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q := Vector2i(x, y) + v
+				if q.x >= 0 and q.y >= 0 and q.x < ELA_LARGURA and q.y < ELA_ALTURA and im.get_pixelv(q).a > 0.0:
+					borda.set_pixel(x, y, CONTORNO)
+					break
+	return borda
 
 # -------------------------------------------------------------- destaque
 

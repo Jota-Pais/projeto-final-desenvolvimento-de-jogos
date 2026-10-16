@@ -47,6 +47,10 @@ apocalipse zumbi, a namorada do protagonista foi mordida e se transformou, ele a
 trancou no porão em vez de abandoná-la e sai todo dia à rua atrás do que precisa
 para desenvolver uma cura — com prazo.
 
+**16/10/2026, decisão do João:** a casa das fotos da equipe não tem porão —
+ela fica presa **no quarto**, acorrentada à cabeceira da cama, e ele dorme no
+sofá da sala.
+
 ⬜ Nem ele nem ela têm nome. Nenhum dos dois tem profissão, e não se sabe por
 que ele saberia trabalhar numa cura.
 
@@ -95,7 +99,7 @@ gráfico é por dia, por semana ou por ato.
 
 ### Ela
 
-⬜ Sem nome. Mordida, transformada, trancada no porão. É o prazo do jogo em
+⬜ Sem nome. Mordida, transformada, presa no quarto (era o porão até 16/10/2026). É o prazo do jogo em
 forma de pessoa, e não aparece na rua.
 
 ### O sobrevivente do búnquer — **proposta do João, 16/09/2026**

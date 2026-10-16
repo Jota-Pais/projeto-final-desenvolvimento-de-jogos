@@ -16,8 +16,8 @@ extends Area2D
 ##
 ## Agora ela e o vao da fachada, pelo `Construcao.porta_de()` - a mesma porta
 ## que todo predio do mapa tem, so que nesta se entra em vez de se vasculhar. O
-## porao continua onde estava na historia: ele e do modo Casa, e e o que voce
-## ve do outro lado.
+## lugar dela continua onde estava na historia (era o porao; desde 16/10/2026
+## e o quarto): ele e do modo Casa, e e o que voce ve do outro lado.
 ##
 ## ## Ela e solida, e e por isso que ela e a unica entrada (16/09/2026)
 ##

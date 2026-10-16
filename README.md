@@ -4,8 +4,8 @@ MVP de um jogo digital em **Godot 4**, feito em equipe para a disciplina de
 Desenvolvimento de Jogos — Engenharia de Software, SATC 2026.2.
 Prof. Me. Fabiano Naspolini de Oliveira.
 
-Apocalipse zumbi. A namorada do protagonista foi mordida e está trancada no
-porão; ele tem um prazo em dias para desenvolver a cura. O jogo alterna dois
+Apocalipse zumbi. A namorada do protagonista foi mordida e está presa no
+quarto; ele tem um prazo em dias para desenvolver a cura. O jogo alterna dois
 modos a cada dia — a **rua**, top-down, onde está o gameplay, e a **casa**,
 ponto e clique, onde está a narrativa.
 
@@ -54,16 +54,18 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   cada mancha do desenho virou polígono de chão ou retângulo de prédio, e o
   detalhe entra lugar por lugar a partir daqui.
 - **A casa** (`casa/casa.tscn`) é uma **beta**: ponto e clique em primeira
-  pessoa no molde de *No, I'm Not a Human* — cinco cômodos fixos (entrada, sala,
-  cozinha, quarto, porão), energia por noite, a TV, o rádio e o olho mágico da
-  porta, o quadro da pesquisa e o exame dela no porão, parte por parte, com o
-  close recortado. Tela em baixa resolução, com grão e a noite esverdeada.
-  **Quase tudo nela é proposta** (a planta, os 3 de energia, o que custa
-  energia), e o que é texto da narrativa aparece entre colchetes.
-- **Sem arte e sem áudio**: a rua é polígono e retângulo de cor chapada, e a
-  casa é greybox de polígono e traço. A arte da casa entra por `casa/arte/<cômodo>.png`
-  (640 × 360, em cor normal — o filtro leva para a noite) e substitui o greybox
-  sozinha.
+  pessoa no molde de *No, I'm Not a Human*, **em cima das fotos que a equipe
+  tirou e pixelou** (16/10/2026) — entrada, sala (vista da TV e vista do sofá,
+  virando entre elas), corredor, cozinha e quarto; sem porão. Ela fica presa no
+  quarto, acorrentada à cabeceira, e ele dorme no sofá. Energia por noite, a TV,
+  o rádio e o olho mágico da porta, os papéis da pesquisa na bancada e o exame
+  dela, parte por parte, com o close recortado. Grão e noite esverdeada por
+  cima. **Os 3 de energia e o que custa energia são proposta**, e o que é texto
+  da narrativa aparece entre colchetes.
+- **Sem áudio** ainda. As fotos da casa ficam em `casa/arte/<cômodo>.png`
+  (1280 × 720, cortadas em 16:9 de `design/casa-equipe/` por
+  `design/casa_fotos.js`); o quarto é a foto da equipe refeita macabra
+  (gerador + `design/sujar_quarto.js`, ver `design/arte-rua.md`).
 
 ## As regras que o código implementa
 
@@ -156,7 +158,9 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
 | `casa/casa.gd` | o modo Casa: a fala, o clique, a energia e as regras da noite (cura, prazo) |
 | `casa/comodos.gd` | **onde** fica cada coisa clicável em cada cômodo — dado, não cena, como o mapa da rua |
-| `casa/desenho.gd` | o greybox de cada cômodo, o olho mágico e os closes do exame; sai do caminho quando há arte |
+| `casa/desenho.gd` | a foto de cada cômodo e o que vai por cima dela (olho mágico, rádio, TV ligada, papéis da pesquisa, ela no quarto), o destaque sob o mouse, a vista do olho mágico e os closes do exame |
+| `casa/arte/<cômodo>.png` | as fotos da casa, 1280 × 720. **Geradas — não editar à mão**: `node design/casa_fotos.js` corta de `design/casa-equipe/` (a altura do corte de cada uma está no script) |
+| `design/sujar_quarto.js` | a segunda camada do quarto macabro: escurece, mofo, sangue, arranhões e marcas de mão sobre `design/casa-equipe/quarto_colado.png` (a foto com as correntes e a cama do gerador já coladas) e amplia de volta para `quarto_macabro.png`. `node design/sujar_quarto.js`, depois `casa_fotos.js` |
 | `casa/ela.gd` | o estágio da transformação dela ao longo do prazo, e o laudo de cada parte do corpo |
 | `casa/filtro.gdshader` | a noite esverdeada, o grão e a vinheta por cima da casa |
 | `titulo.tscn` + `titulo.gd` | **a cena principal, o menu**: Jogar (que abre a escolha entre campanha e hardcore), Como se joga e Sair, sobre a capa |
@@ -215,7 +219,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
-| `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo | segundos |
+| `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |
 | `rua/conferir_arte.tscn` (abre janela — rodar com `--position -4000,-4000` para ela ficar fora da tela e sem foco) | **mostra** PNGs de sprite sobre o greybox, na escala do jogo e ao lado do jogador, e salva a tela — `-- --sprites=a.png;b.png --saida=x.png`; `--zumbis` deixa os zumbis na figura. É o passo "olhar antes de aprovar" de `design/arte-rua.md`; aceita `@escala` por sprite para mock de tamanho. Não roda em headless | segundos |
 | `rua/recolorir_arte.gd` | **troca cores exatas** em todos os PNG de uma pasta, em cima do arquivo — `--headless -s res://rua/recolorir_arte.gd -- --pasta=... --trocas=DE:PARA;... [--faixa=y0:y1] [--ensaio]`. É o retoque de paleta de `design/arte-rua.md` (o olho verde do jogador), que se roda depois de cada download porque o servidor não sabe dele | segundos |
