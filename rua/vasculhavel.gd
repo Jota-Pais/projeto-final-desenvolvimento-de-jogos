@@ -49,7 +49,7 @@ signal vasculhando(segundos: float)
 ## ja e o desenho, e aqui ficam so a barra, o aviso e o que saiu.
 @export var desenhar_caixa := true
 ## O desenho do movel, quando existe um gerado (rua/arte/objetos/<tipo>.png,
-## design/arte-rua.md, fase 4, 14/10/2026). Sem ele, a caixa do greybox. O
+## 14/10/2026). Sem ele, a caixa do greybox. O
 ## sprite e visto de cima com a frente para baixo e sai do tamanho que veio: o
 ## pe dele na borda de baixo da pegada (`tamanho`), e o que sobra de altura
 ## sobe pela parede atras - e assim que a vista de cima inclinada mostra uma

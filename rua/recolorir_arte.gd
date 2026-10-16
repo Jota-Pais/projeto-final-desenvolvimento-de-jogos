@@ -6,8 +6,9 @@ extends SceneTree
 ## um retoque de paleta feito a mao aqui (o olho verde do jogador, decidido em
 ## 30/09/2026) nao volta para la - todo frame novo chega com a cor antiga. Em
 ## vez de regenerar o personagem (e perder o que foi aprovado), a troca e um
-## passo da importacao: baixou, rodou isto na pasta, pronto. As trocas de cada
-## personagem estao em `design/arte-rua.md`.
+## passo da importacao: baixou, rodou isto na pasta, pronto. A do jogador (o
+## olho verde; desde 02/10 ja gravada no servidor, entao so para frame baixado
+## antes): `--trocas=30699B:2E6B3C;374A63:1F4A2B;141E37:10281A --faixa=0:45`.
 ##
 ## So troca cor **exatamente igual** (RGB; o alfa do pixel e preservado). Pixel
 ## art tem paleta pequena, entao isso basta - e e por isso que o `--faixa` existe:

@@ -7,8 +7,8 @@
 // `corte` e o topo do corte em unidades da tela da casa (casa/comodos.gd):
 // a foto inteira, com 320 de largura, tem 240 de altura; o corte mostra 180.
 // 0 = do alto da foto, 30 = o meio, 60 = ate o pe da foto. Decidido em cima
-// do gabarito de 16/10/2026 (design/arte-rua.md, "A casa"), para nao cortar o
-// que se clica. Sem dependencia.
+// do gabarito de 16/10/2026, para nao cortar o que se clica. Sem
+// dependencia.
 //
 // Uso: node design/casa_fotos.js
 const fs = require('fs');

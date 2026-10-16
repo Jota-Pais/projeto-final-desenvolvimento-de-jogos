@@ -2,7 +2,7 @@ extends Node
 ## Ferramenta. **Rode esta cena para ver sprites sobre o greybox, na escala do
 ## jogo.**
 ##
-## Serve ao padrao de arte (`design/arte-rua.md`): antes de aprovar um sprite
+## Serve ao padrao de arte: antes de aprovar um sprite
 ## gerado - e antes de gastar geracoes animando ele - a pergunta e "como fica
 ## em cima da rua que existe, no tamanho que o jogo mostra?". Esta cena monta a
 ## rua de verdade, poe cada PNG pedido ao lado do jogador na escala do padrao

@@ -3,7 +3,7 @@ extends SceneTree
 # o tile cheio da classe repetido com as variacoes de rua/chao.gd (espelho e
 # tom por hash da celula), para rua/ruas.gd desenhar calcada, rua e os lotes
 # de dentro delas como poligonos com textura sem a grade aparecer: o ladrilho
-# so se repete a cada 256 px (15/10/2026, design/arte-rua.md).
+# so se repete a cada 256 px (15/10/2026).
 #
 # Le rua/arte/chao/tilesets.json e os tilesets do PixelLab (bounding_box e
 # corners de cada tile) e grava rua/arte/chao/cheio-<classe>.png. O tile

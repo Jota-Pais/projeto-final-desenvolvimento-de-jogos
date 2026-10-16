@@ -16,7 +16,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 
 const ESCALA = 24;      // px de mundo por px do desenho (rua/mapa.gd, ESCALA)
-const TILE = 32;        // px de mundo por tile (design/arte-rua.md)
+const TILE = 32;        // px de mundo por tile (rua/chao.gd)
 const CLASSES = ['grama', 'gramado', 'mata', 'horta', 'pavimento', 'asfalto', 'milho', 'terra', 'agua'];
 
 const tracado = JSON.parse(fs.readFileSync('rua/mapa_tracado.json', 'utf8'));

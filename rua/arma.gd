@@ -48,7 +48,7 @@ extends Node2D
 ## O Joao pediu "uma versao dele com a arma na mao", sem gerar nada. A arma nao
 ## esta desenhada no boneco: e o `Sprite2D` filho deste no (`Desenho`), com o
 ## PNG de `rua/arte/armas/<desenho>.png` da ficha - desenhados em pixel, a mao
-## (ver design/arte-rua.md, "As armas"). Este script o poe na mao e aponta para
+## (design/desenhar_armas.js). Este script o poe na mao e aponta para
 ## onde o jogador olha (`apontar`). Apontada para a esquerda, a arma e
 ## espelhada no eixo y para o cabo continuar para baixo; apontada para longe da
 ## camera, o jogador a poe atras do corpo. Trocar de arma e trocar a ficha; o

@@ -1,5 +1,5 @@
 {
-  "nota": "Retoque de paleta v2 (14/10) aplicado a cada tileset gerado (design/arte-rua.md, O mapa inteiro): o PixelLab entrega o chao vivo e com juntas escuras; este mapa DE -> PARA leva a grama ao oliva morto, a calcada ao cinza sujo e as juntas e o asfalto a um cinza-escuro neutro uns 23 niveis abaixo das lajotas - contraste baixo dentro do tile, para o chao nao virar grade. Aplicar com o retocador local (scratchpad/retocar.gd) ou com pixelart_workbench map_colors; os proximos tilesets herdam a grama pelo base_tile_id e levam o mesmo mapa. Cor que nao estiver aqui fica como veio: acrescentar o DE -> PARA dela no grupo do terreno.",
+  "nota": "Retoque de paleta v2 (14/10) aplicado a cada tileset gerado: o PixelLab entrega o chao vivo e com juntas escuras; este mapa DE -> PARA leva a grama ao oliva morto, a calcada ao cinza sujo e as juntas e o asfalto a um cinza-escuro neutro uns 23 niveis abaixo das lajotas - contraste baixo dentro do tile, para o chao nao virar grade. Aplicar com o retocador local (scratchpad/retocar.gd) ou com pixelart_workbench map_colors; os proximos tilesets herdam a grama pelo base_tile_id e levam o mesmo mapa. Cor que nao estiver aqui fica como veio: acrescentar o DE -> PARA dela no grupo do terreno.",
   "grama": {
     "#344d0d": "#2f3324",
     "#365609": "#333926",

@@ -1,4 +1,4 @@
-// As texturas dos predios, desenhadas por regra (design/arte-rua.md, fase 3):
+// As texturas dos predios, desenhadas por regra (14/10/2026):
 // parede, piso, telha, zinco e laje, 64 x 64 px, emendaveis por construcao
 // (ruido por pixel e riscos que dao a volta na borda), e os sprites de porta e
 // janela. Contraste baixo de proposito: e fundo, nao objeto. Sem dependencia.
@@ -148,7 +148,7 @@ class Tela {
 }
 
 // --- caixa de papelao (56 x 64): tampo de 34 px e frente de 30, vista ------
-// inclinada como os moveis gerados (design/arte-rua.md, fase 4, 14/10/2026).
+// inclinada como os moveis gerados (14/10/2026).
 // Sai em rua/arte/objetos (segundo argumento), onde o cenario procura o
 // desenho de cada tipo de movel.
 {

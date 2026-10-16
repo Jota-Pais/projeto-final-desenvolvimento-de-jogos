@@ -137,7 +137,7 @@ const MATO := preload("res://rua/arte/objetos/mato.png")
 ## mais uma mancha chapada (14/10/2026). Leve: com as ruas em textura
 ## (15/10) a 30 % virava uma mancha escura por cima da calcada.
 const ALFA_DO_LOTE := 0.15
-## As copas geradas (design/arte-rua.md, fase 4, 14/10/2026): uma viva e uma
+## As copas geradas (14/10/2026): uma viva e uma
 ## seca. `base` e a linha do pe do tronco no PNG, medida na imagem - e o que
 ## encosta no chao. Qual sai em cada arvore e sorteio da posicao, para o mesmo
 ## bosque nao trocar de arvore de um dia para o outro.
@@ -385,8 +385,8 @@ func _draw() -> void:
 	# O piso e as paredes ficam escondidos pelo telhado enquanto o jogador
 	# estiver fora - ver rua/telhados.gd.
 	for construcao in mundo["construcoes"]:
-		# Piso e paredes com textura repetida (design/arte-rua.md, fase 3,
-		# 14/10/2026): os retangulos sao os mesmos de sempre; a textura e
+		# Piso e paredes com textura repetida (14/10/2026):
+		# os retangulos sao os mesmos de sempre; a textura e
 		# desenhada por regra em design/desenhar_texturas.js. A sua casa tem o
 		# piso um tom mais quente, como a cor chapada tinha.
 		var tom := COR_PISO_SEU_TINTA if construcao.get("sua", false) else Color.WHITE

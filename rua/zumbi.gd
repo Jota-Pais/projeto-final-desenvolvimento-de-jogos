@@ -57,7 +57,7 @@ extends CharacterBody2D
 ## nao existem, o codigo mostra um clarao vermelho, a queda de lado (parado na
 ## pose, nao andando - Joao, 05/10: "nao so ficar caminhando de lado no chao")
 ## e uma investida de INVESTIDA px no toque. Em 05/10 ele pediu as animacoes
-## de ataque e de morto de verdade; ver design/arte-rua.md.
+## de ataque e de morto de verdade, geradas no PixelLab (rua/arte/zumbi/).
 
 const TAMANHO := Vector2(30.0, 44.0)
 

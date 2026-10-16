@@ -13,8 +13,8 @@ extends RefCounted
 ## sala, corredor, cozinha e quarto, **sem porao**; o corredor e o centro;
 ## **ela fica presa no quarto**, acorrentada a cabeceira; **ele dorme no sofa
 ## da sala**; a sala tem as duas vistas da equipe (a da TV e a do sofa) e se
-## vira entre elas. Os retangulos foram medidos em cima das fotos
-## (design/arte-rua.md, "A casa", e o gabarito de 16/10).
+## vira entre elas. Os retangulos foram medidos em pixel em cima das fotos,
+## no gabarito de 16/10.
 ##
 ## **Por onde se vai de um comodo ao outro foi decidido por mim**, a pedido do
 ## Joao ("coerente com o desenho de uma casa, no futuro eu vejo se gosto"), e
@@ -54,7 +54,7 @@ const BLOCO_DA_FOTO := 320.0 / 207.0
 ## desenho tem 36 x 52 blocos (desenho.gd), e o clique (`ponto "ela"`) e o
 ## retangulo dele.
 const PES_DELA := Vector2(150, 128)
-## Onde as correntes da foto (geradas, ver design/arte-rua.md) chegam na cama:
+## Onde as correntes da foto (geradas no PixelLab) chegam na cama:
 ## o desenho liga as maos dela a estas duas pontas.
 const PONTAS_DAS_CORRENTES := [Vector2(131, 113), Vector2(170, 113)]
 

@@ -58,7 +58,7 @@ const OLHANDO_PARA_LONGE := -0.3
 ## a Beretta. **E o definitivo** (Joao, 15/10/2026, "faz o recuo em codigo"):
 ## a animacao `atirar` na folha foi tentada duas vezes no PixelLab e
 ## reprovada - na vista de cima, "bracos para a frente" e para a camera e o
-## modelo nao encurta o braco (design/arte-rua.md). O `tocar("atirar")` fica
+## modelo nao encurta o braco. O `tocar("atirar")` fica
 ## so por garantia, se um dia a folha tiver.
 const RECUO := 2.0
 const SEGUNDOS_DO_RECUO := 0.1

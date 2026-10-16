@@ -65,7 +65,7 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
 - **Sem áudio** ainda. As fotos da casa ficam em `casa/arte/<cômodo>.png`
   (1280 × 720, cortadas em 16:9 de `design/casa-equipe/` por
   `design/casa_fotos.js`); o quarto é a foto da equipe refeita macabra
-  (gerador + `design/sujar_quarto.js`, ver `design/arte-rua.md`).
+  (gerador + `design/sujar_quarto.js`).
 
 ## As regras que o código implementa
 
@@ -131,7 +131,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/jogador.gd` | andar e correr, e para onde ele olha (para onde anda; para o mouse enquanto atira) — quem lê a tecla de vasculhar é o próprio móvel |
 | `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe; a vida dele, o tiro que fere e o que derruba (corpo no chão) |
 | `rua/boneco.gd` | **a arte entrando**: lê a folha PNG + JSON que o PixelLab exporta e vira `AnimatedSprite2D`, uma animação por ação e direção (`andar_sul`, `vagar_noroeste`…), pé na caixa de colisão, escala 1. `mostrar()` para o que repete, `tocar()` para o que acontece uma vez (`atirar`, `dano`, `morrer`) — e devolve `false` se a folha não tem, para o código mostrar uma versão de graça. O jogador e o zumbi têm um |
-| `rua/arte/<quem>/` | a folha de sprites de cada personagem, como o PixelLab exporta (PNG + JSON de layout): jogador com `andar`; zumbi com `vagar`, `toque` (ataque, 8 direções) e `morrer` (só no sul — o último quadro serve de morto no chão para as outras). **Gerada — não editar à mão**: retoque é no servidor, e o como está em `design/arte-rua.md` |
+| `rua/arte/<quem>/` | a folha de sprites de cada personagem, como o PixelLab exporta (PNG + JSON de layout): jogador com `andar`; zumbi com `vagar`, `toque` (ataque, 8 direções) e `morrer` (só no sul — o último quadro serve de morto no chão para as outras). **Gerada — não editar à mão**: retoque é no servidor |
 | `rua/arte/armas/` | um PNG por arma (de 12 × 7 a 30 × 9 px), desenhado à mão em texto por `design/desenhar_armas.js`; trocável, mantendo o pixel do cabo da ficha |
 | `rua/chao.gd` | **o chão em tiles** (14/10): lê o raster dos vértices (`rua/chao_tracado.png` + `.json`) e os tilesets Wang de `rua/arte/chao/`, escolhe o tile de cada célula pelos quatro cantos e pinta o TileMap inteiro ao abrir, em menos de um segundo. Vem antes do Cenario na cena, que por isso não pinta mais os polígonos do chão |
 | `rua/chao_tracado.png` + `.json` | a classe de chão de cada vértice da grade de 32 px, gerada por `design/rasterizar_chao.js` a partir do mapa traçado. **Gerado — rodar de novo quando o desenho do mapa mudar** |
@@ -221,8 +221,8 @@ jogando dois minutos.
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |
-| `rua/conferir_arte.tscn` (abre janela — rodar com `--position -4000,-4000` para ela ficar fora da tela e sem foco) | **mostra** PNGs de sprite sobre o greybox, na escala do jogo e ao lado do jogador, e salva a tela — `-- --sprites=a.png;b.png --saida=x.png`; `--zumbis` deixa os zumbis na figura. É o passo "olhar antes de aprovar" de `design/arte-rua.md`; aceita `@escala` por sprite para mock de tamanho. Não roda em headless | segundos |
-| `rua/recolorir_arte.gd` | **troca cores exatas** em todos os PNG de uma pasta, em cima do arquivo — `--headless -s res://rua/recolorir_arte.gd -- --pasta=... --trocas=DE:PARA;... [--faixa=y0:y1] [--ensaio]`. É o retoque de paleta de `design/arte-rua.md` (o olho verde do jogador), que se roda depois de cada download porque o servidor não sabe dele | segundos |
+| `rua/conferir_arte.tscn` (abre janela — rodar com `--position -4000,-4000` para ela ficar fora da tela e sem foco) | **mostra** PNGs de sprite sobre o greybox, na escala do jogo e ao lado do jogador, e salva a tela — `-- --sprites=a.png;b.png --saida=x.png`; `--zumbis` deixa os zumbis na figura. É o passo "olhar antes de aprovar" da arte; aceita `@escala` por sprite para mock de tamanho. Não roda em headless | segundos |
+| `rua/recolorir_arte.gd` | **troca cores exatas** em todos os PNG de uma pasta, em cima do arquivo — `--headless -s res://rua/recolorir_arte.gd -- --pasta=... --trocas=DE:PARA;... [--faixa=y0:y1] [--ensaio]`. É o retoque de paleta (o olho verde do jogador), que se roda depois de cada download porque o servidor não sabe dele | segundos |
 
 Todos rodam por F6 no editor **e** headless, com código de saída (0 = passou,
 1 = achou problema) — dá para rodar sem abrir o editor:
@@ -244,29 +244,6 @@ repositório — o resultado ficou nos conferidores que continuam.
 |---|---|
 | [`design/narrativa.md`](design/narrativa.md) | a história: elenco, lore, fluxo narrativo. É a fonte da seção 2 do GDD |
 | `design/urussanga.png` | o desenho do mapa, do João (30/09/2026). É o que a rua tem que parecer; `design/mapa.png` é o que ela parece hoje |
-| [`design/arte-rua.md`](design/arte-rua.md) | como a arte top-down da rua é gerada no PixelLab: a chamada fixa, o elenco e as animações, o orçamento e como entra no Godot. **Proposta** até a equipe decidir |
-| `design/high-concept.pdf` e `design/high-concept-one-pager.html` | a peça entregue em 09/09/2026 — ficam como foram entregues |
-| [`../README.md`](../README.md) | a disciplina: prazos, critérios e o que cada entrega cobra |
-
-### O High Concept saiu daqui, e está no git
-
-O `.md` que serviu de fonte para a peça acima **saiu da árvore em 16/09/2026**.
-Ele era o registro de uma entrega já feita tentando viver como especificação: o
-jogo mudava, ele ficava para trás, e toda mudança cobrava manutenção num
-documento que ninguém ia reentregar.
-
-**Nada se perdeu** — ele volta em um comando, e é de lá que saem público-alvo e
-proto-persona, benchmarking, orçamento, cronograma, equipe e funções,
-classificação etária, gênero e plataformas. O GDD cobra todos esses, e o pitch
-puxa público e orçamento prontos de lá:
-
-```
-git show 0fcdbc1:design/high-concept.md > design/high-concept.md
-```
-
-Quando o GDD começar, é esse o ponto de partida — **lendo com data na mão**: o
-que estiver lá vale como o que foi declarado em setembro, não como o que o jogo
-faz hoje. Para o que o jogo faz hoje, vale este README e o código.
 
 ## Combinados de Git
 

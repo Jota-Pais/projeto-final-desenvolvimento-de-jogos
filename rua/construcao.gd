@@ -339,7 +339,7 @@ const MOVEIS := {
 	"arquivo": { "rotulo": "Arquivo", "duracao": 4.2, "tamanho": Vector2(88.0, 52.0), "cor": Color("5a5f63") },
 	# Os quatro armarios especiais partilham o sprite do armario de metal
 	# (`"desenho"`, rua/arte/objetos/armario-de-metal.png) tingido pela `cor`
-	# - design/arte-rua.md, fase 4, 14/10/2026.
+	# (14/10/2026).
 	"armario_de_armas": { "rotulo": "Armário de armas", "duracao": 5.5, "tamanho": Vector2(108.0, 50.0), "cor": Color("4e5a55"), "desenho": "armario-de-metal" },
 	# Hospital e corpo de bombeiros (17/09/2026, P16).
 	"maca": { "rotulo": "Maca", "duracao": 2.8, "tamanho": Vector2(90.0, 42.0), "cor": Color("8a9a94") },

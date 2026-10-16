@@ -1,5 +1,5 @@
 {
-  "nota": "Os tilesets do chao, na ordem da cadeia de design/arte-rua.md. `arquivo` e o PNG + JSON no formato do PixelLab (metadata com bounding_box e corners). `provisorio` marca os de cor chapada feitos a mao para provar o caminho; trocar pelo gerado e so substituir os dois arquivos.",
+  "nota": "Os tilesets do chao, um por par de terrenos vizinhos no mapa. `arquivo` e o PNG + JSON no formato do PixelLab (metadata com bounding_box e corners). `provisorio` marca os de cor chapada feitos a mao para provar o caminho; trocar pelo gerado e so substituir os dois arquivos.",
   "tilesets": [
     {
       "arquivo": "grama-pavimento",

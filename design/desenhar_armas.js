@@ -5,7 +5,7 @@ const zlib = require('zlib');
 const fs = require('fs');
 const path = require('path');
 
-// Cores da arte do jogador/zumbi (design/arte-rua.md): contorno, destaque,
+// Cores da arte do jogador/zumbi: contorno, destaque,
 // metal, escuro, madeira, polimero.
 const PALETA = {
   '#': [0x05, 0x04, 0x03, 255],

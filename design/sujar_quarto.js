@@ -1,5 +1,5 @@
-// Suja o quarto dela - a segunda camada do quarto macabro (16/10/2026, ver
-// design/arte-rua.md, "A casa"). A primeira camada e o gerador: a foto da
+// Suja o quarto dela - a segunda camada do quarto macabro (16/10/2026). A
+// primeira camada e o gerador: a foto da
 // equipe reduzida a grade real (207 x 156, blocos de ~7 px), as correntes e a
 // cama destruida do PixelLab coladas por cima so onde mudou. O resultado dela
 // e casa-equipe/quarto_colado.png; este script escurece, poe mofo, manchas,

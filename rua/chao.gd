@@ -1,6 +1,6 @@
 extends TileMapLayer
-## O chao da rua em tiles - a primeira camada da arte do mapa (design/arte-rua.md,
-## "O mapa inteiro"; decidido pelo Joao em 14/10/2026: tile de 32 px).
+## O chao da rua em tiles - a primeira camada da arte do mapa (decidido pelo
+## Joao em 14/10/2026: tile de 32 px).
 ##
 ## O mapa e dado, nao desenho: o tracado do desenho dele vira poligonos por
 ## classe de chao (grama, pavimento, asfalto, mata...). Ate 14/10 o cenario

@@ -13,7 +13,7 @@ extends AnimatedSprite2D
 ## a versao de codigo (03/10/2026). Assim a animacao entra na folha e o jogo a
 ## usa sem mudar uma linha.
 ##
-## As regras vem de `design/arte-rua.md` ("Como entra no Godot"):
+## As regras:
 ##
 ##  - **escala 1**: 1 pixel de desenho = 1 px de mundo (40 px = 1 m), com filtro
 ##    nearest para o pixel nao borrar;
