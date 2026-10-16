@@ -1075,6 +1075,53 @@ depois"). Continua aberto:
 - ⬜ Época e lugar (`narrativa.md`) — quando fechar, entra no prefixo dos
   personagens novos e nos tiles, não nos que já existem.
 
+## A casa — arte da equipe, decidida em 16/10
+
+A casa não é PixelLab: **a equipe fotografou cômodos de verdade e pixelou**
+(fotos escurecidas, com sujeira e sangue), no molde de *No, I'm Not a Human*.
+Baixado da pasta "casa principal" do Drive da equipe em 16/10/2026, com
+autorização explícita do João e só essa pasta. Inventário:
+
+| arquivo (pasta "pixel", 1448 × 1086, 4:3) | o que mostra |
+|---|---|
+| `porta_entrada_suja.png` (duas versões) | a porta de entrada por dentro, sacos de lixo, sangue na parede |
+| `sala_de_estar_suja.png` | a sala vista da TV (painel, rack) |
+| `sala_de_estar_suja_back_view.png` | a sala vista do sofá (portas de madeira ao fundo) |
+| `cozinha_suja.png` | a cozinha, bancada de granito, geladeira |
+| `quarto_sujo.png` | o quarto, cama de casal com crucifixo em cima, guarda-roupa |
+| `corredor_cozinha_quarto_porao_sujos.png` | o corredor, portas dos dois lados, mesa de jantar ao fundo |
+
+A pasta "primeira versão" tem as mesmas seis cenas em JPG, **limpas**, sem
+sujeira. Não há foto de porão nem de nada que sirva de cela.
+
+**Decisões do João (16/10):**
+
+- **O corredor fica** e vira o centro da casa, com portas para a cozinha e
+  para o quarto. **Não há porão.**
+- **O quarto é onde ela está presa.** O jogador **dorme no sofá da sala**.
+- A casa inteira com **energia pesada**, como *No, I'm Not a Human*; o
+  quarto, além disso, **macabro, destruído e sujo** — "um zumbi mora nele".
+  A foto atual do quarto (cama arrumada) **não serve**: refazer.
+- Planta nova: entrada → sala → corredor → cozinha / quarto.
+
+**O que pedir à equipe (brief do quarto):** refotografar o MESMO quarto, do
+MESMO ponto e enquadramento da foto atual (os retângulos de clique vão ser
+desenhados em cima dela, então a cama, o criado-mudo e o guarda-roupa têm
+que ficar onde estão), e sujar de verdade antes de pixelar: cama destruída
+e manchada, lençol rasgado no chão, arranhões e marcas de mão na parede,
+cômoda virada, cortina rasgada, lixo e restos no chão, e um canto onde se
+veja onde ela fica (corrente, corda ou grade na porta, à escolha deles). Sem
+mostrar ela — ela é o `ela.gd`, por cima. Mesmo processo de pixelar e
+escurecer das outras, e entregar em 4:3 como as demais, 1448 × 1086.
+
+**O que falta decidir para integrar** (próxima sessão): o jogo mostra 640 ×
+360 (16:9) e a arte é 4:3 — cortar em cima e embaixo, ou faixa preta nas
+laterais (eu cortaria); qual porta de entrada e qual vista da sala entram;
+e o `casa/comodos.gd` precisa ser refeito por cima das fotos: os retângulos
+de clique de cada objeto vão ser desenhados sobre a arte, não a arte sobre
+os retângulos. Eu faço um gabarito com os retângulos atuais por cima de cada
+foto para a gente decidir junto.
+
 ## Registro de gerações
 
 | data | o quê | id no PixelLab | gerações | saldo | aprovado por |

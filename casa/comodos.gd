@@ -12,6 +12,15 @@ extends RefCounted
 ## cinco que a premissa pede (entrar, descansar, guardar o que veio, pesquisar,
 ## e o porao dela) - nenhum a mais.
 ##
+## **Decidido pelo Joao em 16/10/2026, a partir da arte da equipe** (fotos
+## pixeladas em design/arte-rua.md, "A casa"): a planta nova tem entrada,
+## sala, corredor, cozinha e quarto - **sem porao**. O corredor e o centro,
+## com portas para cozinha e quarto. **O quarto e onde ela esta presa** (o
+## papel que o porao tinha) e **o jogador dorme no sofa da sala**. A casa
+## inteira pesada como *No, I'm Not a Human*; o quarto, alem de pesado,
+## macabro e sujo - um zumbi mora nele. Ainda nao implementado aqui: entra
+## com a arte, na proxima sessao.
+##
 ## Ordem dentro de `pontos` importa: o primeiro retangulo que contem o mouse
 ## ganha, entao o que e pequeno e fica em cima de outro (o olho magico em cima
 ## da porta) vem antes.
