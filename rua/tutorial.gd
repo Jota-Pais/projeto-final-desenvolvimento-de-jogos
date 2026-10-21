@@ -86,9 +86,14 @@ const BECO := Vector2(1197.0, 645.0)
 const PORTA_DA_PIZZARIA := Vector2(1187.5, 737.4)
 const NOME_DA_PIZZARIA := "Cover Pizzaria"
 
-## A camera da cena, mais aberta que a do jogo, para o Antonio caber na tela
-## junto com o jogador. Inteira, como a do jogo (ver Jogador.ZOOM_DA_CAMERA).
-const ZOOM_DA_CENA := 1.0
+## A camera da cena: a mesma visao do jogo desde 21/10/2026 (Joao: "o zoom
+## ta muito grande, deixa na mesma visao do jogo mais ou menos" - era 1, a
+## metade). Inteira, como a do jogo (ver Jogador.ZOOM_DA_CAMERA): zoom
+## quebrado faz o pixel do boneco cintilar. Com a vista mais fechada, a camera
+## segue o que importa na hora (`_no_quadro`), e nao so o jogador.
+const ZOOM_DA_CENA := 2.0
+## Quao depressa a camera da cena vai para o meio do que importa (por segundo).
+const RAPIDEZ_DO_QUADRO := 4.0
 ## Andar apreensivo: devagar.
 const VELOCIDADE_SEM_RUMO := 36.0
 ## Quanto perto do ponto conta como chegou (px de mundo).
@@ -133,6 +138,12 @@ var _aviso: Label
 var _tempo_do_aviso := 0.0
 ## As tarjas pretas da cena (em cima e embaixo da tela).
 var _tarjas: Array[ColorRect] = []
+## O que a camera da cena mantem na tela: nos (o jogador, o zumbi, o
+## Antonio) e pontos do mundo; ela vai para o meio deles. Vazio, ela fica
+## onde o roteiro a pos.
+var _no_quadro: Array = []
+## O portao de chapa do Antonio, depois de achado (_portao_do_antonio).
+var _portao: Node2D
 
 func _ready() -> void:
 	if Travessia.tutorial == "" or Travessia.tutorial == "fim":
@@ -175,6 +186,8 @@ func _p(ponto_do_png: Vector2) -> Vector2:
 	return Mapa.ponto_do_png(ponto_do_png)
 
 func _process(delta: float) -> void:
+	if _jogador != null and _no_roteiro:
+		_enquadrar(delta)
 	if _jogador == null or _no_roteiro:
 		_seta.queue_redraw()
 		return
@@ -345,14 +358,15 @@ func _abertura() -> void:
 	# (rua/zumbi.gd) faz ele perseguir de longe, sem ter precisado ver.
 	var zumbi: Node2D = _cenario._criar_zumbi(_p(SAIDA_DO_ZUMBI))
 	zumbi._memoria_do_toque = PERSEGUICAO_MAXIMA + 2.0
-	# A camera abre para pegar o terreno, o jogador e o portao.
-	var meio := (_p(PORTAO_DO_ANTONIO) + _p(SAIDA_DO_ZUMBI)) / 2.0 - _jogador.global_position
-	create_tween().tween_property(camera, "offset", meio * 0.6, 0.9).set_trans(Tween.TRANS_SINE)
+	# A camera pega os dois.
+	_no_quadro = [_jogador, zumbi]
 	await get_tree().create_timer(0.35).timeout
 	_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
 	await get_tree().create_timer(SUSTO).timeout
 
-	# A fuga para a rua, e o portao do Antonio correndo enquanto isso.
+	# A fuga para a rua, e o portao do Antonio correndo enquanto isso; a
+	# camera pega o portao tambem.
+	_no_quadro = [_jogador, zumbi, _p(PORTAO_DO_ANTONIO)]
 	_correr_o_portao(true)
 	for ponto in FUGA:
 		await _andar_ate(_p(ponto), Jogador.VELOCIDADE_CORRENDO, 3.0)
@@ -369,19 +383,23 @@ func _abertura() -> void:
 	if is_instance_valid(zumbi):
 		_antonio.atirar_em(zumbi.global_position)
 		zumbi.levar_tiro(1000.0, (zumbi.global_position - _antonio.global_position).normalized())
-	await get_tree().create_timer(0.9).timeout
+	# Depois do tiro o Antonio fecha o portao (Joao, 21/10/2026: "faz o
+	# antonio fechar o portao depois do tiro") e fala de dentro.
+	_no_quadro = [_jogador, _antonio]
+	await get_tree().create_timer(0.6).timeout
+	await _correr_o_portao(false)
 	_jogador.olhar_para(_antonio.global_position - _jogador.global_position)
 	await _conversa(Falas.O_TIRO)
 
-	# A conversa no portao aberto.
+	# A conversa no portao fechado.
+	_no_quadro.clear()
 	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE)
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
 	create_tween().tween_property(camera, "offset", Vector2(0.0, (_antonio.global_position.y - _jogador.global_position.y) / 2.0), 0.6)
 	await _conversa(Falas.PORTAO)
-	# A missao e o radio: ele entrega pelo vao e fecha o portao.
+	# A missao e o radio: ele joga o radio por cima do muro.
 	await _jogar_o_radio()
-	await _correr_o_portao(false)
 
 	_cena(false)
 	camera.zoom = Vector2.ONE * Jogador.ZOOM_DA_CAMERA
@@ -391,13 +409,35 @@ func _abertura() -> void:
 	Travessia.tutorial = "favor"
 	_comecar_o_favor()
 
+## A camera da cena vai, devagar, para o meio do que esta em `_no_quadro`.
+func _enquadrar(delta: float) -> void:
+	if _no_quadro.is_empty():
+		return
+	var soma := Vector2.ZERO
+	var quantos := 0
+	for coisa in _no_quadro:
+		if coisa is Vector2:
+			soma += coisa
+			quantos += 1
+		elif is_instance_valid(coisa):
+			soma += (coisa as Node2D).global_position
+			quantos += 1
+	if quantos == 0:
+		return
+	var camera := _jogador.get_node("Camera") as Camera2D
+	camera.offset = camera.offset.lerp(soma / quantos - _jogador.global_position, minf(1.0, delta * RAPIDEZ_DO_QUADRO))
+
 ## O portao de chapa do Antonio: a peca do cenario que o desenha
-## (rua/barreira.gd), achada pelo lugar.
+## (rua/barreira.gd), achada pelo lugar dele fechado - e guardada, porque
+## aberto ele esta uma largura para o lado.
 func _portao_do_antonio() -> Node2D:
+	if is_instance_valid(_portao):
+		return _portao
 	var onde := _p(PORTAO_DO_ANTONIO)
 	for filho in _cenario.get_children():
 		if filho.get("tipo") == "portao_chapa" and (filho as Node2D).global_position.distance_to(onde) < 40.0:
-			return filho
+			_portao = filho
+			return _portao
 	return null
 
 ## O portao corre para tras do muro do lado leste, que e mais largo que ele:
