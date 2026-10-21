@@ -425,7 +425,7 @@ func _criar_barreiras(mundo: Dictionary) -> void:
 			Transform2D(deg_to_rad(barricada["giro"]), barricada["pos"]))
 		_segmentos.append({ "cantos": Mapa.cantos_da_barricada(barricada) })
 		var desenho := Barreira.Barricada.new()
-		desenho.montar(barricada["tipo"], barricada["pos"], barricada["giro"])
+		desenho.montar(barricada["tipo"], barricada["pos"], barricada["giro"], barricada.get("estado", ""))
 		add_child(desenho)
 
 	for camada in corpos:

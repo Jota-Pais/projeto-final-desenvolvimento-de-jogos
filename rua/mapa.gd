@@ -705,7 +705,8 @@ static func _barreiras(tudo: Dictionary, recorte: Rect2) -> void:
 		if grupo == "cerco_do_tutorial" and not cerco_ligado:
 			continue
 		tudo["barricadas"].append({ "nome": objeto.get("nome", ""), "tipo": objeto["tipo"], "grupo": grupo,
-			"pos": _do_png(objeto["ponto"], recorte), "giro": float(objeto.get("giro_graus", 0.0)) })
+			"pos": _do_png(objeto["ponto"], recorte), "giro": float(objeto.get("giro_graus", 0.0)),
+			"estado": objeto.get("estado", "") })
 	# A caixa de todas: quem pergunta longe dela (a arvore do outro lado do
 	# mapa) nao precisa olhar barreira por barreira.
 	var caixa := Rect2()

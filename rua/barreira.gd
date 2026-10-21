@@ -32,9 +32,11 @@
 ## minimo PASSO - corpo + 2 do conferir_mapa (hoje 4 px), senao uma barreira
 ## fina passa entre duas celulas da varredura.
 ##
-## **Enquanto a arte nao vem, cada peca e desenhada em cinza** (a Peca, la
-## embaixo): face e topo na vista inclinada, a face em grade quando o material
-## e vazado. Os sprites do PixelLab entram por cima disto sem mudar o dado.
+## **Tipo sem arte e desenhado em cinza** (a Peca, la embaixo): face e topo na
+## vista inclinada, a face em grade quando o material e vazado. Desde
+## 21/10/2026 todo tipo tem arte em rua/arte/barreiras/ (PixelLab a partir de
+## um molde pintado, ou o proprio molde onde o gerado nao prestou), menos o
+## arame farpado, que nenhuma barreira do mapa usa.
 
 const Camadas := preload("res://rua/camadas.gd")
 
@@ -63,14 +65,24 @@ const TIPOS := {
 ## (~20,5 px por metro), e diz a `camada`: abaixo do olho de quem esta em pe e
 ## cobertura baixa (cacamba de 1 m esconde quem esta agachado, nao quem esta
 ## de pe); o carro tombado e o onibus seguram tudo.
+##
+## Onibus, cacamba e monte de entulho tem sprite proprio (21/10/2026, PixelLab
+## e molde pintado; ver projeto-final/arte-rua.md), em pe como o do carro e
+## desenhado no tamanho dele (`nativo`), sem esticar ate a pegada: a pegada e
+## que foi medida pelo sprite. O onibus foi gerado de lado - tombado, visto de
+## cima, e a lateral que aparece -, com as rodas para o norte no giro 0. O
+## `estado` "queimado" do dado escurece pela `tinta_queimado`.
 const OBJETOS := {
-	"onibus": { "tamanho": Vector2(380.0, 110.0), "altura": 60.0, "camada": Camadas.SOLIDO, "cor": Color("8a7a4e") },
+	"onibus": { "tamanho": Vector2(356.0, 94.0), "altura": 60.0, "camada": Camadas.SOLIDO, "cor": Color("8a7a4e"),
+		"desenho": "res://rua/arte/barreiras/onibus.png", "nativo": true, "tinta_queimado": Color(0.32, 0.29, 0.27) },
 	"carro_tombado": { "tamanho": Vector2(180.0, 80.0), "altura": 37.0, "camada": Camadas.SOLIDO, "cor": Color("6b6e70"),
 		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.7, 0.72, 0.78), "chassi": true },
 	"carro_queimado": { "tamanho": Vector2(180.0, 80.0), "altura": 30.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("3a3533"),
 		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.32, 0.29, 0.27) },
-	"cacamba": { "tamanho": Vector2(170.0, 90.0), "altura": 20.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("8a5a3c") },
-	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "altura": 23.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("6f655a") },
+	"cacamba": { "tamanho": Vector2(170.0, 90.0), "altura": 20.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("8a5a3c"),
+		"desenho": "res://rua/arte/barreiras/cacamba.png", "nativo": true },
+	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "altura": 23.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("6f655a"),
+		"desenho": "res://rua/arte/barreiras/monte_entulho.png", "nativo": true },
 }
 
 ## Vao padrao, igual ao da porta de predio (Construcao.VAO), e o minimo que a
@@ -324,14 +336,19 @@ class Barricada extends Node2D:
 	var tipo := ""
 	var giro := 0.0
 	var _desenho: Texture2D
+	var _tinta := Color.WHITE
 
-	func montar(tipo_do_objeto: String, onde: Vector2, giro_em_graus: float) -> void:
+	func montar(tipo_do_objeto: String, onde: Vector2, giro_em_graus: float, estado := "") -> void:
 		tipo = tipo_do_objeto
 		position = onde
 		giro = deg_to_rad(giro_em_graus)
-		var caminho: String = OBJETOS[tipo].get("desenho", "")
+		var o: Dictionary = OBJETOS[tipo]
+		var caminho: String = o.get("desenho", "")
 		if caminho != "" and ResourceLoader.exists(caminho):
 			_desenho = load(caminho)
+		_tinta = o.get("tinta", Color.WHITE)
+		if estado == "queimado" and o.has("tinta_queimado"):
+			_tinta = o["tinta_queimado"]
 
 	func _draw() -> void:
 		var o: Dictionary = OBJETOS[tipo]
@@ -340,7 +357,9 @@ class Barricada extends Node2D:
 			# O sprite e em pe (comprido em y): gira um quarto de volta a menos.
 			draw_set_transform(Vector2.ZERO, giro - PI / 2.0)
 			var em_pe := Vector2(tam.y, tam.x)
-			draw_texture_rect(_desenho, Rect2(-em_pe / 2.0, em_pe), false, o.get("tinta", Color.WHITE))
+			if o.get("nativo", false):
+				em_pe = _desenho.get_size()
+			draw_texture_rect(_desenho, Rect2((-em_pe / 2.0).round(), em_pe), false, _tinta)
 			if o.get("chassi", false):
 				# Tombado de lado: o chassi escuro aparece num dos lados compridos.
 				draw_rect(Rect2(em_pe.x / 2.0 - 14.0, -em_pe.y / 2.0 + 10.0, 10.0, em_pe.y - 20.0),
