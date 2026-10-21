@@ -265,6 +265,7 @@ func _atirar() -> void:
 	# abertura; uma arma de um projetil com abertura desvia ao acaso.
 	var quantos: int = f["projeteis"]
 	var abertura := deg_to_rad(float(f["abertura"]))
+	var soou_o_impacto := false
 	for i in quantos:
 		var desvio := 0.0
 		if quantos > 1:
@@ -277,7 +278,12 @@ func _atirar() -> void:
 		var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
 		if batida.is_empty():
 			continue
-		Som.tocar_em("armas/impacto_bala", batida["position"], 500.0, randf_range(0.9, 1.1))
+		# Um impacto por tiro, e nao por projetil (21/10/2026): os seis chumbos
+		# da escopeta caem quase no mesmo ponto, e seis impactos somados soavam
+		# mais alto que o proprio tiro.
+		if not soou_o_impacto:
+			soou_o_impacto = true
+			Som.tocar_em("armas/impacto_bala", batida["position"], 500.0, randf_range(0.9, 1.1))
 		if (batida["collider"] as Node).is_in_group("zumbi"):
 			(batida["collider"] as Node).levar_tiro(float(f["dano"]), direcao)
 

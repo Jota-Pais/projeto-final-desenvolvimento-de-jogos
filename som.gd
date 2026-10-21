@@ -54,11 +54,22 @@ var _musica: AudioStreamPlayer
 var _ambiente: AudioStreamPlayer
 
 func _ready() -> void:
-	# O som nao para quando a arvore pausa (nada pausa hoje, mas um menu de
-	# pausa futuro nao deveria calar a musica dele).
+	# O som nao para quando a arvore pausa: a fala de perto (rua/caixa_de_fala.gd)
+	# para o jogo, e a musica e o ambiente seguem por baixo dela.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_musica = _novo_player()
 	_ambiente = _novo_player()
+
+## Ao fechar o jogo, cala tudo e solta os streams antes de o servidor de audio
+## fechar (21/10/2026): fechar no meio de um som deixava o mp3 e a reproducao
+## dele presos, e o Godot acusava instancia vazada na saida. Na rua o aviso
+## sumiu; o loop que tocava no instante de fechar (a musica do menu, o ambiente
+## da casa) ainda fica preso no servidor de audio, que so o solta na mixagem
+## seguinte - e ela nao vem. So aparece no console, nunca para quem joga.
+func _exit_tree() -> void:
+	for player in [_musica, _ambiente] + _efeitos.values():
+		(player as AudioStreamPlayer).stop()
+		(player as AudioStreamPlayer).stream = null
 
 ## O stream de `nome`, ou null (com erro) se o arquivo nao existe.
 func carregar(nome: String) -> AudioStream:

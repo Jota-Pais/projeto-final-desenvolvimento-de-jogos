@@ -283,6 +283,11 @@ func _physics_process(delta: float) -> void:
 
 func _gemer() -> void:
 	_proximo_gemido = randf_range(GEMIDO_MINIMO, GEMIDO_MAXIMO)
+	# Longe demais para se ouvir, nem cria o som (21/10/2026): com dezenas de
+	# zumbis vivos em volta, cada gemido sem ninguem para ouvir era um no
+	# tocando no vazio. Quem ouve e a camera, que esta no jogador.
+	if _jogador == null or global_position.distance_to(_jogador.global_position) > ALCANCE_DO_GEMIDO:
+		return
 	Som.tocar_em("zumbi", global_position, ALCANCE_DO_GEMIDO, randf_range(0.85, 1.15))
 
 ## Para onde a cara aponta, por estado. **Quem persegue olha para voce**, e
