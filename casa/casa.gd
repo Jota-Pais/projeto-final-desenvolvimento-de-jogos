@@ -12,7 +12,12 @@ extends Control
 ##    visita e gente; aqui, para ver quanto dela ainda sobra (ver ela.gd);
 ##  - **a televisao, o radio e o olho magico** da porta da rua;
 ##  - **caixa de fala preta, letra de maquina, escolha que acende** - e a tela
-##    toda em baixa resolucao, com grao e a noite esverdeada (filtro.gdshader).
+##    toda em baixa resolucao.
+##
+## **As fotos entram como sao, sem filtro** (21/10/2026, Joao: "retire o filtro
+## azul na parte interna da casa, deixa as imagens assim como estao"). Ate
+## entao um shader (filtro.gdshader) lavava a tela num verde-azulado de noite,
+## com grao e vinheta; saiu inteiro.
 ##
 ## **E beta, e quase tudo aqui e proposta**: os 3 pontos de energia, o que
 ## custa energia e o que nao custa. A planta e das fotos da equipe e foi
@@ -29,7 +34,6 @@ extends Control
 const Comodos := preload("res://casa/comodos.gd")
 const Ela := preload("res://casa/ela.gd")
 const Desenho := preload("res://casa/desenho.gd")
-const FILTRO := preload("res://casa/filtro.gdshader")
 
 ## **Proposta.** Tres coisas por noite: da para examinar ela e estudar, mas nao
 ## tudo - e a mesma pressao de escolha das vagas da mochila, do lado de dentro.
@@ -109,9 +113,6 @@ func _montar() -> void:
 	_tela.stretch_mode = TextureRect.STRETCH_SCALE
 	_tela.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_tela.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var material_do_filtro := ShaderMaterial.new()
-	material_do_filtro.shader = FILTRO
-	_tela.material = material_do_filtro
 	add_child(_tela)
 
 	_escuro = ColorRect.new()

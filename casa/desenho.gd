@@ -4,7 +4,7 @@ extends Node2D
 ## design/casa_fotos.js) e, por cima, o que a foto nao tem ou o que muda
 ## durante a noite - o olho magico, o radio, a TV ligada, os papeis da
 ## pesquisa, ela no quarto -, o destaque sob o mouse e o close do exame. A foto
-## entra em cor normal; o filtro.gdshader e quem leva para a noite.
+## entra como e, sem filtro (21/10/2026).
 ##
 ## Ate 16/10/2026 havia aqui um greybox de poligono e traco para cada comodo;
 ## com as seis fotos no lugar ele saiu. Sem a foto de um comodo a tela fica
@@ -148,15 +148,24 @@ func _na_sala() -> void:
 	_traco(r.position + Vector2(r.size.x - 3, 0), r.position + Vector2(r.size.x + 7, -16), Color("7a7a70"), 1.0, 31, 0.2)
 	if not tv_ligada:
 		return
-	var tela := Comodos.TELA_DA_TV
-	draw_rect(tela, Color("6f7c78"))
+	# A tela e o quadrilatero medido na foto (Comodos.TELA_DA_TV): a estatica
+	# fica dentro dele, a faixa que rola e cortada nele.
+	var tela := PackedVector2Array(Comodos.TELA_DA_TV)
+	var caixa := Rect2(tela[0], Vector2.ZERO)
+	for p in tela:
+		caixa = caixa.expand(p)
+	draw_colored_polygon(tela, Color("6f7c78"))
 	for i in 400:
-		draw_rect(Rect2(tela.position.x + randf() * tela.size.x,
-			tela.position.y + randf() * tela.size.y, 1, 1), Color(0, 0, 0, 0.7))
-	var faixa := fposmod(_t * 18.0, tela.size.y)
-	draw_rect(Rect2(tela.position.x, tela.position.y + faixa, tela.size.x, 2), Color(1, 1, 1, 0.25))
-	draw_rect(Rect2(tela.position.x + 6, tela.position.y + 7, 30, 4), Color("d8e0d8"))
-	_brilho(tela.get_center(), 70.0, Color(0.8, 1.0, 0.95, 0.2))
+		var ponto := caixa.position + Vector2(randf(), randf()) * caixa.size
+		if Geometry2D.is_point_in_polygon(ponto, tela):
+			draw_rect(Rect2(ponto, Vector2.ONE), Color(0, 0, 0, 0.7))
+	var faixa := caixa.position.y + fposmod(_t * 18.0, caixa.size.y)
+	var listra := PackedVector2Array([Vector2(caixa.position.x, faixa), Vector2(caixa.end.x, faixa),
+		Vector2(caixa.end.x, faixa + 2.0), Vector2(caixa.position.x, faixa + 2.0)])
+	for pedaco in Geometry2D.intersect_polygons(listra, tela):
+		draw_colored_polygon(pedaco, Color(1, 1, 1, 0.25))
+	draw_rect(Rect2(tela[0] + Vector2(6, 7), Vector2(30, 4)), Color("d8e0d8"))
+	_brilho((tela[0] + tela[2]) / 2.0, 70.0, Color(0.8, 1.0, 0.95, 0.2))
 
 ## Os papeis da pesquisa na bancada da cozinha: um por documento que chegou em
 ## casa, riscado de vermelho o que ja foi estudado. Era o quadro do greybox.
@@ -192,6 +201,7 @@ func _no_quarto() -> void:
 	_poli(Array(_elipse(Comodos.PES_DELA + Vector2(0, 1), 26, 4)), Color(0, 0, 0, 0.35))
 	var quadro := int(_t * 5.0) % 4
 	var chave := estagio * 4 + quadro
+	preparar_o_contorno_dela()
 	if not _quadros_dela.has(chave):
 		_quadros_dela[chave] = ImageTexture.create_from_image(_desenhar_ela(estagio, quadro))
 	draw_texture_rect(_quadros_dela[chave], Rect2(origem, Vector2(ELA_LARGURA, ELA_ALTURA) * b), false)
@@ -221,6 +231,33 @@ const CONTORNO := Color(0.05, 0.04, 0.035)
 
 ## Os quadros dela ja montados, por estagio e quadro da fervura.
 var _quadros_dela := {}
+## De qual estagio e o contorno dela que esta em Comodos.contornos_vivos.
+var _estagio_do_contorno := -1
+
+## O contorno do clique "ela" e o dela, do quadro parado do estagio
+## (21/10/2026): refeito quando o estagio muda, em Comodos.contornos_vivos.
+## Fora do _draw (o conferir_casa chama direto).
+func preparar_o_contorno_dela() -> void:
+	if _estagio_do_contorno == estagio:
+		return
+	_estagio_do_contorno = estagio
+	var b := Comodos.BLOCO_DA_FOTO
+	var origem := Comodos.PES_DELA - Vector2(ELA_LARGURA * 0.5, ELA_ALTURA) * b
+	Comodos.contornos_vivos["ela"] = _contorno_dela(_desenhar_ela(estagio, 0), origem, b)
+
+## A silhueta dela (o alfa do desenho, contorno escuro incluido) na grade da
+## tela: e onde o clique "ela" pega e o destaque acende.
+func _contorno_dela(im: Image, origem: Vector2, bloco: float) -> Array:
+	var mapa := BitMap.new()
+	mapa.create_from_image_alpha(im, 0.05)
+	var partes: Array = []
+	for poligono in mapa.opaque_to_polygons(Rect2i(0, 0, im.get_width(), im.get_height()), 0.8):
+		var na_tela := PackedVector2Array()
+		for p in poligono:
+			na_tela.append(origem + p * bloco)
+		if na_tela.size() >= 3:
+			partes.append(na_tela)
+	return partes
 
 func _desenhar_ela(s: int, quadro: int) -> Image:
 	var im := Image.create(ELA_LARGURA, ELA_ALTURA, false, Image.FORMAT_RGBA8)
@@ -350,7 +387,9 @@ func _desenhar_ela(s: int, quadro: int) -> Image:
 # -------------------------------------------------------------- destaque
 
 ## O que acende sob o mouse. O vao de voltar vira uma seta; o resto ganha
-## contorno claro, tremido como o resto do desenho.
+## contorno claro, tremido como o resto do desenho - na silhueta do objeto
+## (Comodos.contorno_de), um pouco para fora dela, para o traco nao cobrir a
+## borda que a foto ja tem.
 func _destaque() -> void:
 	for ponto in Comodos.COMODOS[comodo]["pontos"]:
 		var r: Rect2 = ponto["rect"]
@@ -362,8 +401,16 @@ func _destaque() -> void:
 			continue
 		if not aceso:
 			continue
-		draw_rect(r.grow(1), Color(0.9, 1.0, 0.95, 0.07))
-		_contorno(r.grow(1.5), Color(0.92, 1.0, 0.96, 0.85), 1.0, 99)
+		var partes := Comodos.contorno_de(ponto)
+		if partes.is_empty():
+			draw_rect(r.grow(1), Color(0.9, 1.0, 0.95, 0.07))
+			_contorno(r.grow(1.5), Color(0.92, 1.0, 0.96, 0.85), 1.0, 99)
+			continue
+		for parte in partes:
+			var fora := Geometry2D.offset_polygon(parte, 1.0, Geometry2D.JOIN_ROUND)
+			var borda: PackedVector2Array = fora[0] if not fora.is_empty() else parte
+			draw_colored_polygon(borda, Color(0.9, 1.0, 0.95, 0.07))
+			_contorno_de(Array(borda), Color(0.92, 1.0, 0.96, 0.85), 1.0, 99, 0.35)
 
 # ------------------------------------------------------------- olho magico
 

@@ -14,7 +14,11 @@ extends Node
 ##  6. o estagio dela anda do primeiro ao ultimo dia do prazo, e todo estagio
 ##     tem laudo para toda parte;
 ##  7. todo comodo tem a sua foto (casa/arte/<comodo>.png, 1280 x 720) - sem
-##     ela a tela fica preta (16/10/2026).
+##     ela a tela fica preta (16/10/2026);
+##  8. o contorno de cada objeto (21/10/2026): cabe na tela, nao entra na
+##     faixa de voltar, o `rect` e a caixa dele, e o miolo dele responde por
+##     ele (nenhum ponto de antes na lista o tampa) - o dela tambem, que o
+##     desenho calcula.
 ##
 ## As regras de fim de partida (cura, prazo) sao conferidas no
 ## rua/conferir_fim.tscn, que ja usa esta casa.
@@ -38,6 +42,7 @@ func _process(_delta: float) -> void:
 	_estudar()
 	_o_estagio_dela()
 	_toda_tela_tem_foto()
+	_os_contornos()
 	_limpar()
 	print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 	get_tree().quit(0 if _falhas == 0 else 1)
@@ -74,6 +79,52 @@ func _os_pontos_cabem() -> void:
 			if ponto.has("vai") and not Comodos.COMODOS.has(ponto["vai"]):
 				_erro("%s/%s leva a um comodo que nao existe: %s" % [comodo, ponto["id"], ponto["vai"]])
 	print("  %d pontos em %d comodos" % [quantos, Comodos.COMODOS.size()])
+
+func _os_contornos() -> void:
+	print("\n8. os contornos")
+	# O dela sai do desenho: um quadro do quarto o calcula.
+	var casa := _uma_casa()
+	casa._desenho.preparar_o_contorno_dela()
+	var tela := Rect2(Vector2.ZERO, Comodos.TELA)
+	var com_contorno := 0
+	for comodo in Comodos.COMODOS:
+		for ponto in Comodos.COMODOS[comodo]["pontos"]:
+			if ponto["rect"] == Comodos.VOLTAR:
+				continue
+			var partes := Comodos.contorno_de(ponto)
+			if partes.is_empty():
+				_erro("%s/%s nao tem contorno" % [comodo, ponto["id"]])
+				continue
+			com_contorno += 1
+			var caixa := Rect2((partes[0] as PackedVector2Array)[0], Vector2.ZERO)
+			for parte in partes:
+				if (parte as PackedVector2Array).size() < 3:
+					_erro("%s/%s tem contorno com menos de 3 vertices" % [comodo, ponto["id"]])
+				for p in parte:
+					caixa = caixa.expand(p)
+					if not tela.grow(0.01).has_point(p):
+						_erro("%s/%s: vertice %s fora da tela" % [comodo, ponto["id"], p])
+					if Comodos.VOLTAR.has_point(p):
+						_erro("%s/%s: vertice %s na faixa de voltar" % [comodo, ponto["id"], p])
+			# O rect e a caixa do contorno (o dela muda com o estagio: so ela fica
+			# de fora desta conta).
+			if ponto.has("contorno") and not (ponto["rect"] as Rect2).grow(0.6).encloses(caixa):
+				_erro("%s/%s: o rect %s nao e a caixa do contorno %s" % [comodo, ponto["id"], ponto["rect"], caixa])
+			# O miolo responde pelo ponto: o centro de um triangulo do contorno.
+			var maior: PackedVector2Array = partes[0]
+			for parte in partes:
+				if (parte as PackedVector2Array).size() > maior.size():
+					maior = parte
+			var tri := Geometry2D.triangulate_polygon(maior)
+			if tri.is_empty():
+				_erro("%s/%s: o contorno nao se triangula (cruza a si mesmo?)" % [comodo, ponto["id"]])
+				continue
+			var miolo := (maior[tri[0]] + maior[tri[1]] + maior[tri[2]]) / 3.0
+			var achado := Comodos.ponto_em(comodo, miolo)
+			if achado.get("id", "") != ponto["id"]:
+				_erro("%s/%s: o miolo %s responde por '%s'" % [comodo, ponto["id"], miolo, achado.get("id", "")])
+	casa.queue_free()
+	print("  %d objetos com contorno" % com_contorno)
 
 func _todo_comodo_se_alcanca() -> void:
 	print("\n2. todo comodo se alcanca")
