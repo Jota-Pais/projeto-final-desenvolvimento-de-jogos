@@ -191,6 +191,11 @@ func _process(delta: float) -> void:
 		_mira = para_o_mouse.normalized()
 	queue_redraw()
 
+	# Desarmado (o dia 1 do tutorial, ate o Antonio dar a 9mm): nao ha arma na
+	# mao para desenhar nem gatilho para apertar.
+	visible = Travessia.armado
+	if not Travessia.armado:
+		return
 	# Com a mochila aberta ele esta com as duas maos no saco, nao no gatilho.
 	if TelaDaMochila.aberta:
 		return
@@ -212,7 +217,8 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 	var tecla := evento as InputEventKey
 	if tecla == null or not tecla.pressed or tecla.echo or tecla.keycode != KEY_Q:
 		return
-	if TelaDaMochila.aberta:
+	# Desarmado nao troca; e no tutorial a arma e a 9mm do Antonio, so ela.
+	if TelaDaMochila.aberta or not Travessia.armado or Travessia.no_tutorial():
 		return
 	var i := ORDEM.find(Travessia.arma)
 	trocar(ORDEM[(i + 1) % ORDEM.size()])
@@ -264,6 +270,10 @@ func _atirar() -> void:
 	var jogador := get_parent() as CollisionObject2D
 	if jogador != null:
 		excluir.append(jogador.get_rid())
+	# De pe, a bala passa por cima da cobertura baixa; agachado, ela para nela.
+	var mascara := Camadas.TIRO
+	if jogador != null and jogador.get("agachado"):
+		mascara |= Camadas.COBERTURA_BAIXA
 
 	# Cada projetil e um raio. A escopeta espalha os dela por igual dentro da
 	# abertura; uma arma de um projetil com abertura desvia ao acaso.
@@ -277,7 +287,7 @@ func _atirar() -> void:
 		elif abertura > 0.0:
 			desvio = randf_range(-abertura / 2.0, abertura / 2.0)
 		var direcao := _mira.rotated(desvio)
-		var consulta := PhysicsRayQueryParameters2D.create(de, de + direcao * float(f["alcance"]), Camadas.TIRO)
+		var consulta := PhysicsRayQueryParameters2D.create(de, de + direcao * float(f["alcance"]), mascara)
 		consulta.exclude = excluir
 		var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
 		if batida.is_empty():

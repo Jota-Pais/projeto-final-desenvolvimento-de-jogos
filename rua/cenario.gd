@@ -31,6 +31,10 @@ const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
+
+## Um zumbi morreu, de tiro (21/10/2026: o dia 2 do tutorial escuta).
+signal zumbi_morreu(zumbi: Node)
+
 ## So para o TAMANHO do corpo, na hora de achar lugar livre para um zumbi.
 const Zumbi := preload("res://rua/zumbi.gd")
 ## Muros, cercas e barricadas (21/10/2026): as regras de cada tipo e as pecas
@@ -78,6 +82,10 @@ const ZUMBIS_DA_NOITE := 14
 ## um pouco alem da meia diagonal da tela (1280 x 720 com zoom 2, ~370 px), para
 ## ninguem aparecer do nada.
 const LONGE_DA_TELA := 420.0
+
+## Os veiculos parados que sao cobertura baixa (rua/camadas.gd): abaixo do olho
+## de quem esta em pe. O motorhome e alto e segura a vista inteira.
+const COBERTURA_BAIXA_NA_RUA := ["carro", "caminhonete", "trator"]
 
 ## De quantos em quantos dias o bairro ganha um zumbi a mais. **Proposta.**
 ##
@@ -408,7 +416,7 @@ func _criar_barreiras(mundo: Dictionary) -> void:
 
 	for barricada in mundo["barricadas"]:
 		var tamanho: Vector2 = Barreira.OBJETOS[barricada["tipo"]]["tamanho"]
-		var corpo := _corpo_da_camada(corpos, Camadas.SOLIDO)
+		var corpo := _corpo_da_camada(corpos, Barreira.OBJETOS[barricada["tipo"]]["camada"])
 		var dono := corpo.create_shape_owner(corpo)
 		var forma := RectangleShape2D.new()
 		forma.size = tamanho
@@ -916,6 +924,12 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	# _adicionar_forma() - mas o zumbi tem que desviar dele igual.
 	if movel.solido:
 		_obstaculos.append(Rect2(posicao - tamanho / 2.0, tamanho))
+		# O carro parado na rua e cobertura baixa (21/10/2026): agachado atras
+		# dele, o zumbi nao te ve; de pe, ve por cima (rua/camadas.gd).
+		if tipo in COBERTURA_BAIXA_NA_RUA:
+			var corpo := movel.get_node_or_null("Corpo") as StaticBody2D
+			if corpo != null:
+				corpo.collision_layer = Camadas.COBERTURA_BAIXA
 
 ## O desenho de um tipo de movel, se ja existe um gerado em PASTA_DOS_DESENHOS
 ## (<tipo>.png, ou <tipo>-em-pe.png com `em_pe`; a ficha pode apontar outro
@@ -990,6 +1004,7 @@ func _criar_pilha(onde: Vector2, achado: String) -> void:
 ## dos moveis - relogio e mochila. Nao se anota movel vazio: corpo nao tem
 ## chave e nao atravessa o dia.
 func _ao_morrer_o_zumbi(zumbi: Node, indice: int) -> void:
+	zumbi_morreu.emit(zumbi)
 	if indice >= 0:
 		_anotar_ponto_limpo(indice)
 	var corpo := zumbi.get_node_or_null("Corpo")

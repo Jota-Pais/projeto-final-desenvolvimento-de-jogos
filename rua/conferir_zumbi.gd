@@ -281,6 +281,10 @@ const MATERIAIS_DA_VISTA := [
 	{ "nome": "grade", "camada": Camadas.SO_CORPO, "ve": true },
 	{ "nome": "tapume", "camada": Camadas.CORPO_E_VISAO, "ve": false },
 	{ "nome": "muro", "camada": Camadas.SOLIDO, "ve": false },
+	# A cobertura baixa (21/10/2026, o agachar do tutorial): de pe ele te ve por
+	# cima; agachado, nao.
+	{ "nome": "cobertura baixa, de pe", "camada": Camadas.COBERTURA_BAIXA, "ve": true },
+	{ "nome": "cobertura baixa, agachado", "camada": Camadas.COBERTURA_BAIXA, "agachado": true, "ve": false },
 ]
 var _barreira_de_teste: StaticBody2D
 
@@ -355,6 +359,7 @@ func _vista_e_material(zumbi: Node2D) -> void:
 			_bairro.add_child(_barreira_de_teste)
 			_barreira_de_teste.global_position = meio
 		_barreira_de_teste.collision_layer = material["camada"]
+		_jogador.agachar(material.get("agachado", false))
 		zumbi.global_position = meio + Vector2(0.0, 40.0)
 		zumbi._olhando = Vector2.UP
 		_jogador.global_position = meio + Vector2(0.0, -40.0)
@@ -369,6 +374,7 @@ func _vista_e_material(zumbi: Node2D) -> void:
 	_caso_da_visao += 1
 	_quadros = 0
 	if _caso_da_visao - 3 >= MATERIAIS_DA_VISTA.size():
+		_jogador.agachar(false)
 		_barreira_de_teste.queue_free()
 		zumbi.set_physics_process(true)
 		_passar()

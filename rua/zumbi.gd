@@ -404,8 +404,13 @@ func _ve_o_jogador() -> bool:
 	if absf(rad_to_deg(para.angle_to(_olhando))) > ABERTURA_DA_VISTA / 2.0:
 		return false
 
+	# Agachado, a cobertura baixa (cacamba, carro, entulho, sacos) tambem corta
+	# a vista - de pe ele te ve por cima dela (21/10/2026, rua/camadas.gd).
+	var mascara := Camadas.VISTA
+	if _jogador.get("agachado"):
+		mascara |= Camadas.COBERTURA_BAIXA
 	var consulta := PhysicsRayQueryParameters2D.create(
-		global_position, _jogador.global_position, Camadas.VISTA)
+		global_position, _jogador.global_position, mascara)
 	consulta.exclude = _ignorados
 	var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
 	# Se a primeira coisa no caminho nao e o jogador, tem parede (ou movel) no

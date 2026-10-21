@@ -366,14 +366,20 @@ const MATERIAIS_DO_TIRO := [
 	{ "nome": "grade", "camada": Camadas.SO_CORPO, "passa": true },
 	{ "nome": "tapume", "camada": Camadas.CORPO_E_VISAO, "passa": true },
 	{ "nome": "muro", "camada": Camadas.SOLIDO, "passa": false },
+	# A cobertura baixa (21/10/2026): de pe a bala passa por cima; agachado, para.
+	{ "nome": "cobertura baixa, atirando de pe", "camada": Camadas.COBERTURA_BAIXA, "passa": true },
+	{ "nome": "cobertura baixa, atirando agachado", "camada": Camadas.COBERTURA_BAIXA, "agachado": true, "passa": false },
 ]
 var _materiais: Array = []
 
 func _preparar_os_materiais() -> void:
 	print("\n4b. o tiro e os materiais")
+	# Um tiro por material, de pente cheio: sem bala o "parou" seria falta de
+	# municao, e nao a barreira.
+	Travessia.municao = 15
 	var meio := (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
 	for i in MATERIAIS_DO_TIRO.size():
-		var onde := meio + Vector2(-300.0 + 300.0 * i, 0.0)
+		var onde := meio + Vector2(-600.0 + 300.0 * i, 0.0)
 		var barreira := StaticBody2D.new()
 		barreira.collision_layer = MATERIAIS_DO_TIRO[i]["camada"]
 		barreira.collision_mask = 0
@@ -391,9 +397,11 @@ func _conferir_os_materiais() -> void:
 		var material: Dictionary = MATERIAIS_DO_TIRO[i]
 		var alvo: Node2D = m["alvo"]
 		_jogador.global_position = (m["onde"] as Vector2) + Vector2(0.0, -50.0)
+		_jogador.agachar(material.get("agachado", false))
 		_apontar_para(alvo.global_position)
 		_arma._espera = 0.0
 		_arma._atirar()
+		_jogador.agachar(false)
 		var passou: bool = alvo.vida < alvo.VIDA_CHEIA
 		if passou != material["passa"]:
 			_erro("atras de %s, o tiro %s" % [material["nome"], "passou" if passou else "parou"])

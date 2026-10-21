@@ -37,6 +37,14 @@ extends CharacterBody2D
 const VELOCIDADE := 140.0
 const VELOCIDADE_CORRENDO := 230.0
 
+## Agachar (21/10/2026, para o tutorial): C liga e desliga. Agachado ele anda
+## devagar e nao corre, e a cobertura baixa - cacamba, carro, entulho, sacos -
+## o esconde da vista do zumbi (rua/camadas.gd; Joao: "eu me escondo, quem eu
+## vejo nao"). O desenho e o boneco achatado, com o pe no chao, ate vir uma
+## animacao. **Numeros: proposta.**
+const VELOCIDADE_AGACHADO := 70.0
+const ALTURA_AGACHADO := 0.72
+
 ## Quanto a camera aproxima (20/10/2026, "diminui o enquadramento da tela"): a
 ## tela de 1280 x 720 mostra 640 x 360 px de mundo. **So inteiro**: com o boneco
 ## em escala 0,5 o zoom 2 da 1 pixel de desenho por pixel de tela, e o chao em
@@ -113,7 +121,19 @@ const COR_FUNDO_DA_VIDA := Color("241d1c")
 
 var vida := VIDA_CHEIA
 
+## Se ele esta agachado (ver VELOCIDADE_AGACHADO). O zumbi e a arma leem.
+var agachado := false
+
+## Sob roteiro - a cena de abertura do tutorial (rua/tutorial.gd): quem anda e
+## o roteiro, por `direcao_do_roteiro` e `velocidade_do_roteiro`; as teclas de
+## andar, agachar e atirar nao contam.
+var no_roteiro := false
+var direcao_do_roteiro := Vector2.ZERO
+var velocidade_do_roteiro := VELOCIDADE
+
 var _empurrao := Vector2.ZERO
+## O deslocamento do desenho de pe, para devolver o pe ao chao agachado.
+var _offset_de_pe := Vector2.ZERO
 
 @onready var _boneco: Boneco = $Boneco
 @onready var _arma: Arma = $Arma
@@ -134,6 +154,7 @@ func _ready() -> void:
 	# vivem no espaco dela. O tiro sai de coordenada global e nao muda.
 	_arma.scale = Vector2.ONE * Boneco.ESCALA
 	($Camera as Camera2D).zoom = Vector2.ONE * ZOOM_DA_CAMERA
+	_offset_de_pe = _boneco.offset
 
 func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
@@ -144,7 +165,14 @@ func _physics_process(delta: float) -> void:
 	# zumbi anda, e e isso que faz escolher o que largar custar alguma coisa.
 	if TelaDaMochila.aberta:
 		direcao = Vector2.ZERO
+	elif not no_roteiro and Input.is_action_just_pressed("agachar"):
+		agachar(not agachado)
 	var velocidade := VELOCIDADE_CORRENDO if Input.is_action_pressed("correr") else VELOCIDADE
+	if agachado:
+		velocidade = VELOCIDADE_AGACHADO
+	if no_roteiro:
+		direcao = direcao_do_roteiro
+		velocidade = velocidade_do_roteiro
 	velocity = direcao * velocidade + _empurrao
 	move_and_slide()
 
@@ -153,6 +181,20 @@ func _physics_process(delta: float) -> void:
 
 	_animar(direcao, velocidade, delta)
 	_soar(direcao, velocidade == VELOCIDADE_CORRENDO)
+
+## Agacha ou levanta. O boneco achata em volta do centro do corpo, e o
+## deslocamento do desenho devolve o pe ao lugar (o pe esta `pe` px do desenho
+## abaixo do centro).
+func agachar(sim: bool) -> void:
+	agachado = sim
+	var fator := ALTURA_AGACHADO if sim else 1.0
+	_boneco.scale.y = Boneco.ESCALA * fator
+	_boneco.offset.y = _offset_de_pe.y + _boneco.pe * (1.0 - fator) / fator
+
+## O roteiro manda ele olhar para algum lugar, parado.
+func olhar_para(direcao: Vector2) -> void:
+	if direcao.length() > 0.01:
+		_olhando = direcao.normalized()
 
 ## Os passos e o fundo. Dentro de uma construcao o passo e no piso e o fundo
 ## e o ambiente de dentro; na rua, passo na rua e silencio em volta - e la
@@ -187,7 +229,8 @@ func _soar(direcao: Vector2, correndo: bool) -> void:
 ## Correr e o mesmo andar mais rapido (decidido 30/09; animacao de corrida so
 ## com assinatura).
 func _animar(direcao: Vector2, velocidade: float, delta: float) -> void:
-	if Input.is_action_pressed("atirar") and not TelaDaMochila.aberta:
+	if Input.is_action_pressed("atirar") and not TelaDaMochila.aberta and Travessia.armado \
+			and not no_roteiro:
 		_mirando = SEGUNDOS_DE_MIRA
 	else:
 		_mirando = maxf(0.0, _mirando - delta)

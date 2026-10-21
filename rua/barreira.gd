@@ -16,15 +16,18 @@
 ## sim alguns nao, seja variado e criativo"; as camadas estao em
 ## rua/camadas.gd):
 ##
-##  - muro de reboco, muro de bloco, faixa de entulho: nada passa;
+##  - muro de reboco, muro de bloco: nada passa;
 ##  - tapume de zinco, cerca de tabuas, portao de chapa: tapam a vista do
 ##    zumbi, mas a bala atravessa a chapa e a tabua;
-##  - grade sobre mureta, alambrado, arame farpado, sacos de areia baixos com
-##    concertina em cima: seguram so o corpo - da para ver e atirar atraves.
+##  - grade sobre mureta, alambrado, arame farpado: seguram so o corpo - da
+##    para ver e atirar atraves;
+##  - faixa de entulho (1,5 m) e sacos de areia (1 m): **cobertura baixa**
+##    (21/10/2026) - de pe, o zumbi te ve e o tiro passa por cima; agachado,
+##    ela te esconde (Joao: "eu me escondo, quem eu vejo nao").
 ##
 ## A `altura` e a da face, em px de mundo, na regua do boneco (Joao, 20/10:
-## muro de 2 m com ~41 px, perto do boneco de ~37). Hoje so desenha; e o que o
-## agachar do tutorial vai usar para dizer o que esconde. A `espessura` e a da
+## muro de 2 m com ~41 px, perto do boneco de ~37). O que fica abaixo do olho
+## de quem esta em pe (~33 px) e cobertura baixa. A `espessura` e a da
 ## colisao e a do topo desenhado (a regua aprovada tem topo de 6 px): no
 ## minimo PASSO - corpo + 2 do conferir_mapa (hoje 4 px), senao uma barreira
 ## fina passa entre duas celulas da varredura.
@@ -39,14 +42,14 @@ const Camadas := preload("res://rua/camadas.gd")
 const TIPOS := {
 	"muro_reboco": { "camada": Camadas.SOLIDO, "espessura": 6.0, "altura": 41.0, "vazada": false, "cor": Color("b9b1a2") },
 	"muro_bloco": { "camada": Camadas.SOLIDO, "espessura": 8.0, "altura": 41.0, "vazada": false, "cor": Color("8c8c86") },
-	"entulho_linha": { "camada": Camadas.SOLIDO, "espessura": 24.0, "altura": 30.0, "vazada": false, "cor": Color("6f655a") },
+	"entulho_linha": { "camada": Camadas.COBERTURA_BAIXA, "espessura": 24.0, "altura": 30.0, "vazada": false, "cor": Color("6f655a") },
 	"tapume_zinco": { "camada": Camadas.CORPO_E_VISAO, "espessura": 6.0, "altura": 45.0, "vazada": false, "cor": Color("8a6a52") },
 	"cerca_tabuas": { "camada": Camadas.CORPO_E_VISAO, "espessura": 8.0, "altura": 37.0, "vazada": false, "cor": Color("7a5f45") },
 	"portao_chapa": { "camada": Camadas.CORPO_E_VISAO, "espessura": 8.0, "altura": 45.0, "vazada": false, "cor": Color("6e5848") },
 	"mureta_grade": { "camada": Camadas.SO_CORPO, "espessura": 8.0, "altura": 37.0, "vazada": true, "cor": Color("5c5f60") },
 	"alambrado": { "camada": Camadas.SO_CORPO, "espessura": 6.0, "altura": 41.0, "vazada": true, "cor": Color("9da3a3") },
 	"arame_farpado": { "camada": Camadas.SO_CORPO, "espessura": 6.0, "altura": 30.0, "vazada": true, "cor": Color("6b6660") },
-	"sacos_areia": { "camada": Camadas.SO_CORPO, "espessura": 20.0, "altura": 20.0, "vazada": false, "cor": Color("a39274") },
+	"sacos_areia": { "camada": Camadas.SO_CORPO | Camadas.COBERTURA_BAIXA, "espessura": 20.0, "altura": 20.0, "vazada": false, "cor": Color("a39274") },
 }
 
 ## As barricadas soltas (onibus, carro, cacamba, entulho): um retangulo girado,
@@ -57,16 +60,17 @@ const TIPOS := {
 ## carros da rua, que e em pe, sem vasculho - e outro objeto, nao um movel; a
 ## tinta e, no tombado, a faixa escura do chassi o separam dos carros que se
 ## vasculham. A `altura`, como a das barreiras, e a da regua do boneco
-## (~20,5 px por metro): hoje so desenha; e o que o agachar vai usar para
-## dizer que cacamba de 1 m esconde quem esta agachado e nao quem esta de pe.
+## (~20,5 px por metro), e diz a `camada`: abaixo do olho de quem esta em pe e
+## cobertura baixa (cacamba de 1 m esconde quem esta agachado, nao quem esta
+## de pe); o carro tombado e o onibus seguram tudo.
 const OBJETOS := {
-	"onibus": { "tamanho": Vector2(380.0, 110.0), "altura": 60.0, "cor": Color("8a7a4e") },
-	"carro_tombado": { "tamanho": Vector2(180.0, 80.0), "altura": 37.0, "cor": Color("6b6e70"),
+	"onibus": { "tamanho": Vector2(380.0, 110.0), "altura": 60.0, "camada": Camadas.SOLIDO, "cor": Color("8a7a4e") },
+	"carro_tombado": { "tamanho": Vector2(180.0, 80.0), "altura": 37.0, "camada": Camadas.SOLIDO, "cor": Color("6b6e70"),
 		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.7, 0.72, 0.78), "chassi": true },
-	"carro_queimado": { "tamanho": Vector2(180.0, 80.0), "altura": 30.0, "cor": Color("3a3533"),
+	"carro_queimado": { "tamanho": Vector2(180.0, 80.0), "altura": 30.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("3a3533"),
 		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.32, 0.29, 0.27) },
-	"cacamba": { "tamanho": Vector2(170.0, 90.0), "altura": 20.0, "cor": Color("8a5a3c") },
-	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "altura": 23.0, "cor": Color("6f655a") },
+	"cacamba": { "tamanho": Vector2(170.0, 90.0), "altura": 20.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("8a5a3c") },
+	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "altura": 23.0, "camada": Camadas.COBERTURA_BAIXA, "cor": Color("6f655a") },
 }
 
 ## Vao padrao, igual ao da porta de predio (Construcao.VAO), e o minimo que a

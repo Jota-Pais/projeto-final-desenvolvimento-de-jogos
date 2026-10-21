@@ -98,10 +98,14 @@ func _linha_da_esquerda(jogador: Node) -> String:
 	# 9mm", "8 cartuchos calibre 12"); os outros calibres estao na tela da
 	# mochila.
 	var municao: String = Construcao.MUNICOES[Travessia.calibre_da_arma()]
-	if Travessia.municao == 0:
+	if not Travessia.armado:
+		linhas.append("desarmado")
+	elif Travessia.municao == 0:
 		linhas.append("%s   sem %s" % [Travessia.arma, municao])
 	else:
 		linhas.append("%s   %d %s" % [Travessia.arma, Travessia.municao, municao])
+	if jogador != null and jogador.get("agachado"):
+		linhas.append("agachado   [C]")
 	return "\n".join(linhas)
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.

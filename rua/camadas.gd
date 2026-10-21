@@ -16,18 +16,27 @@
 ##    o zumbi nao ve atraves, mas a bala atravessa a chapa fina;
 ##  - **CORPO_E_TIRO** (camada 4): reservada - segura a bala e deixa ver.
 ##
+##  - **COBERTURA_BAIXA** (camada 5, 21/10/2026): o que fica abaixo do olho de
+##    quem esta em pe - faixa de entulho, sacos de areia, cacamba, monte de
+##    entulho, carro queimado e os carros parados na rua. Segura o corpo; de pe,
+##    o zumbi te ve por cima e o tiro passa por cima; **agachado, ela te
+##    esconde e te protege** (Joao: "eu me escondo, quem eu vejo nao").
+##
 ## Quem anda (jogador, zumbi) bate em todas; o raio da vista do zumbi para no
-## SOLIDO e no CORPO_E_VISAO; o raio do tiro para no SOLIDO e no CORPO_E_TIRO.
-## O jogador ve tudo de cima (o jogo nao tem nevoa): "vista" aqui e do zumbi.
+## SOLIDO e no CORPO_E_VISAO (e na COBERTURA_BAIXA, se voce esta agachado); o
+## raio do tiro para no SOLIDO e no CORPO_E_TIRO (e na COBERTURA_BAIXA, se quem
+## atira esta agachado). O jogador ve tudo de cima (o jogo nao tem nevoa):
+## "vista" aqui e do zumbi.
 
 const SOLIDO := 1
 const SO_CORPO := 2
 const CORPO_E_VISAO := 4
 const CORPO_E_TIRO := 8
+const COBERTURA_BAIXA := 16
 
 ## A mascara de quem anda: barra em toda barreira.
-const ANDAR := SOLIDO | SO_CORPO | CORPO_E_VISAO | CORPO_E_TIRO
-## A mascara do raio da vista do zumbi.
+const ANDAR := SOLIDO | SO_CORPO | CORPO_E_VISAO | CORPO_E_TIRO | COBERTURA_BAIXA
+## A mascara do raio da vista do zumbi, com voce de pe.
 const VISTA := SOLIDO | CORPO_E_VISAO
-## A mascara do raio do tiro.
+## A mascara do raio do tiro, de quem atira de pe.
 const TIRO := SOLIDO | CORPO_E_TIRO

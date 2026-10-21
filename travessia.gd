@@ -155,6 +155,34 @@ func total_de_balas() -> int:
 var arma := ARMA_DE_COMECO
 const ARMA_DE_COMECO := "Beretta 9mm"
 
+## Se ele tem arma na mao. **A partida que comeca pelo titulo comeca
+## desarmada** (Joao, 21/10/2026): a 9mm e a recompensa do favor do Antonio no
+## dia 1 do tutorial. Fica `true` fora dele - na cena da rua aberta direto (F6)
+## e nas ferramentas de conferencia, que testam a arma.
+var armado := true
+
+## Onde o tutorial esta (rua/tutorial.gd), ou "" sem tutorial. Atravessa os
+## dias como o resto: o tutorial tem dois (Joao, 21/10/2026). So a partida que
+## comeca pelo titulo tem tutorial - a cena da rua aberta direto, nao.
+var tutorial := ""
+
+## As falas de radio do tutorial que ja tocaram, para nao repetir de um dia
+## para o outro.
+var tutorial_avisos := {}
+
+## Se o tutorial esta em andamento.
+func no_tutorial() -> bool:
+	return tutorial != "" and tutorial != "fim"
+
+## Chamado pelo titulo: a partida nova, no modo escolhido, comeca no tutorial e
+## desarmada.
+func comecar_partida(qual: int) -> void:
+	modo = qual as Modo
+	tutorial = "abertura"
+	tutorial_avisos.clear()
+	armado = false
+	get_tree().change_scene_to_file(CENA_DA_RUA)
+
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
 ## voltado com a mochila vazia.
@@ -245,6 +273,9 @@ func acabar_o_jogo(qual: Desfecho) -> void:
 func recomecar() -> void:
 	dia = 1
 	arma = ARMA_DE_COMECO
+	armado = true
+	tutorial = ""
+	tutorial_avisos.clear()
 	balas = balas_de_comeco()
 	documentos.clear()
 	documentos_lidos.clear()

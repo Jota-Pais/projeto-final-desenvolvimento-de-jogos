@@ -27,6 +27,7 @@ sendo editada no Godot.
 |---|---|
 | `WASD` / setas | andar |
 | `Shift` | correr |
+| `C` | agachar e levantar — agachado, atrás de cobertura baixa (carro, entulho, sacos), o zumbi não te vê |
 | `E` (segurar) | vasculhar um móvel, entrar em casa |
 | mouse | mirar |
 | botão esquerdo | atirar |
@@ -37,9 +38,10 @@ O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de l
 de anoitecer e segure `E` nela: só entra em casa o que passou por ali. A cura
 precisa de 4 documentos e o prazo é de 30 dias.
 
-Você começa armado, com uma **Beretta 9mm** e um pente. O que o vasculho rende
-são **balas** para ela e os **documentos** da cura; não existe outro item no
-jogo (30/09/2026).
+Você começa armado, com uma **Beretta 9mm** e um pente — menos na partida que
+começa pelo título, em que o **tutorial** dá a arma no fim do dia 1. O que o
+vasculho rende são **balas** para ela e os **documentos** da cura; não existe
+outro item no jogo (30/09/2026), fora o do favor do tutorial.
 
 Dentro de casa é **só mouse**: o que dá para usar acende quando o mouse passa, e
 clicar numa porta leva ao cômodo dela. As bolinhas do canto são a energia da
@@ -79,9 +81,17 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   enquanto**. Lá dentro ninguém corta terreno: cada lote tem muro, grade,
   alambrado, tábua ou tapume, e cada material diz se deixa ver e atirar através
   (`rua/camadas.gd`). Com você dentro, a noite traz a horda para dentro do
-  cerco. **As peças são cinza** até a arte do PixelLab entrar. A casa colada a
+  cerco. **A peça sem arte do PixelLab ainda sai cinza.** A casa colada a
   leste da sua é a do Antônio, o vizinho do roteiro do tutorial
   (`design/narrativa.md`): selada, ninguém entra.
+- **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
+  título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda sem rumo
+  pela rua de cima, um zumbi te pega e o Antônio o mata do quintal dele), a
+  conversa no portão, o favor no Restaurante com o rádio ensinando a correr, a
+  agachar e a vasculhar, e a volta ao portão, que dá a 9mm. Dia 2: explorar e
+  atirar; o primeiro zumbi abatido fecha o tutorial. **As falas ainda são
+  marcadores** (`[... — fala do João]`) até o texto do João entrar em
+  `rua/falas_do_tutorial.gd`.
 
 ## As regras que o código implementa
 
@@ -169,13 +179,17 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 
 | `rua/navegacao.gd` | grade A* — é o que faz o zumbi achar o vão da porta. Muro e cerca entram como segmento, e não como o retângulo que os envolve (21/10/2026) |
 | `rua/barreira.gd` | **muros, cercas e barricadas** (21/10/2026): as regras de cada material — o que segura, a espessura da colisão, a altura da face —, o corte dos vãos e o desenho provisório de cada peça, em cinza, na vista inclinada. Por onde cada uma passa está em `mapa.gd` (`BARREIRAS`, `BARRICADAS` e a `REGIAO_DO_TUTORIAL`) |
-| `rua/camadas.gd` | as camadas de colisão: o que barra o corpo, o que barra a vista do zumbi e o que barra o tiro — grade e alambrado seguram só o corpo; tábua e zinco tapam a vista, mas a bala atravessa |
+| `rua/camadas.gd` | as camadas de colisão: o que barra o corpo, o que barra a vista do zumbi e o que barra o tiro — grade e alambrado seguram só o corpo; tábua e zinco tapam a vista, mas a bala atravessa. A **cobertura baixa** (carro, entulho, sacos de areia) só esconde quem está agachado atrás dela: eu me escondo, quem eu vejo não |
 | `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
 | `rua/mochila.gd` | os documentos que você carrega, as balas indo para o cinto, e o que atravessa o fim do dia |
 | `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
 | `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas. Está na rua, escondida até alguém falar |
+| `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, o item do favor num móvel do Restaurante, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
+| `rua/falas_do_tutorial.gd` | **o texto das falas do tutorial**, e só ele — e o nome do item do favor. É aqui que o texto do João entra |
+| `rua/antonio.gd` | o Antônio na rua: parado no quintal dele, vira para o alvo e atira (clarão e som); quem decide quando é o roteiro |
+| `rua/arte/antonio/` | a folha do Antônio na rua (`Antonio_rua-Idle`, parado em 8 direções, gerada no PixelLab) e o retrato de 64 px da caixa de fala |
 | `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
 | `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
 | `casa/casa.gd` | o modo Casa: a fala, o clique, a energia e as regras da noite (cura, prazo) |
@@ -241,6 +255,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
+| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está no Restaurante, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |

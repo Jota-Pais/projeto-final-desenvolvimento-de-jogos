@@ -79,6 +79,4 @@ func _primeiro_botao(no: Node) -> Button:
 ## cru, e o autoload buscado pelo caminho, para esta cena compilar sem ele
 ## (ver o cabecalho).
 func _comecar(modo: int) -> void:
-	var travessia := get_node("/root/Travessia")
-	travessia.modo = modo
-	get_tree().change_scene_to_file(travessia.CENA_DA_RUA)
+	get_node("/root/Travessia").comecar_partida(modo)

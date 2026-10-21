@@ -67,6 +67,25 @@ func falar(nome: String, linhas: PackedStringArray, retrato: Texture2D = null) -
 func pelo_radio(nome: String, linhas: PackedStringArray, retrato: Texture2D = null) -> void:
 	_entrar({ "nome": nome, "linhas": linhas, "retrato": retrato, "radio": true })
 
+## Se ainda ha fala na tela, na fila, ou o E de uma fala de perto ainda nao foi
+## solto. Quem encadeia falas (o tutorial) espera isto, e nao o `acabou`: o
+## `acabou` de uma fala de radio que estava na frente chegaria primeiro.
+func ocupada() -> bool:
+	return not _atual.is_empty() or not _fila.is_empty() or _esperando_soltar
+
+## Tira da fila as falas de radio e corta a que esta tocando: quem vai falar de
+## perto (o Antonio, no portao) nao deixa o jogador parado esperando o radio.
+func calar_o_radio() -> void:
+	var sem_radio: Array[Dictionary] = []
+	for fala in _fila:
+		if not fala["radio"]:
+			sem_radio.append(fala)
+	_fila = sem_radio
+	if not _atual.is_empty() and _atual["radio"]:
+		_atual = {}
+		_caixa.visible = false
+		acabou.emit()
+
 func _entrar(fala: Dictionary) -> void:
 	if (fala["linhas"] as PackedStringArray).is_empty():
 		return
