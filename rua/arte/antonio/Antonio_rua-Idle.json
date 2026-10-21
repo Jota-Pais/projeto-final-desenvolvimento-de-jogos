@@ -1,0 +1,39 @@
+{
+  "character": {
+    "id": "29fb7023-a6f6-4bf6-97fe-9b280105d2fa",
+    "name": "Antonio (rua)",
+    "nota": "folha montada em 21/10/2026 das 8 rotacoes do PixelLab (conta 4), no layout do export de personagem: so a linha das rotacoes paradas; animacoes entram como linhas novas"
+  },
+  "spritesheet": {
+    "path": "Antonio_rua-Idle.png",
+    "cell_size": {
+      "width": 112,
+      "height": 112
+    },
+    "sheet_size": {
+      "width": 896,
+      "height": 112
+    },
+    "columns": 8,
+    "pivot": "cell-center",
+    "rows": [
+      {
+        "row": 0,
+        "type": "rotations",
+        "frame_count": 8,
+        "directions": [
+          "south",
+          "south-east",
+          "east",
+          "north-east",
+          "north",
+          "north-west",
+          "west",
+          "south-west"
+        ]
+      }
+    ]
+  },
+  "export_version": "montada",
+  "export_date": "2026-10-21"
+}
