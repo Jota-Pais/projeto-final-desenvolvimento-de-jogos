@@ -58,15 +58,20 @@ var _grade := AStarGrid2D.new()
 var _regiao: Rect2i
 var _mundo: Rect2
 var _obstaculos: Array[Rect2] = []
+## As barreiras (21/10/2026): segmentos { a, b, espessura } dos muros e cercas
+## e retangulos girados { cantos } das barricadas. Nao viram Rect2 porque o
+## retangulo que envolve uma linha na diagonal bloquearia a caixa inteira.
+var _segmentos: Array = []
 ## Onde a janela atual esta centrada. NAN enquanto nao houver janela.
 var _centro := Vector2(NAN, NAN)
 var _jogador: Node2D
 
 ## Chamado pelo cenario depois de gerar toda a colisao. Guarda os obstaculos e
 ## nao monta nada ainda: a janela so existe quando se sabe onde o jogador esta.
-func montar(mundo: Rect2, obstaculos: Array[Rect2]) -> void:
+func montar(mundo: Rect2, obstaculos: Array[Rect2], segmentos: Array = []) -> void:
 	_mundo = mundo
 	_obstaculos = obstaculos
+	_segmentos = segmentos
 	_grade.cell_size = Vector2.ONE * CELULA
 	_grade.offset = Vector2.ONE * CELULA / 2.0
 	# Sem cortar canto de parede na diagonal.
@@ -103,6 +108,11 @@ func remontar_em(centro: Vector2) -> void:
 		# janela cobre alguns por cento deles.
 		if obstaculo.grow(MARGEM).intersects(janela):
 			_bloquear(obstaculo)
+	for segmento in _segmentos:
+		if segmento.has("cantos"):
+			_bloquear_barricada(segmento["cantos"])
+		else:
+			_bloquear_segmento(segmento["a"], segmento["b"], segmento["espessura"])
 
 ## Se um ponto esta dentro da janela montada.
 func alcanca(ponto: Vector2) -> bool:
@@ -133,6 +143,62 @@ func _bloquear(obstaculo: Rect2) -> void:
 			# fecharia inteiro e o zumbi nunca entraria em casa.
 			if crescido.has_point(centro_de(celula)):
 				_grade.set_point_solid(celula, true)
+
+## Uma barreira em linha: as celulas com centro a menos de `raio` do segmento.
+## O raio e a meia espessura mais a MARGEM, e **nunca menos de meia celula**:
+## com menos, uma linha na diagonal passaria entre os centros e a grade teria
+## furo onde o corpo nao passa. Com meia celula, toda coluna (ou linha, se a
+## barreira e mais em pe) tem um centro bloqueado, e a corrente nao se cruza
+## nem na diagonal (DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES).
+##
+## Anda pelo eixo mais comprido do segmento e, em cada coluna (ou linha), so
+## testa as celulas da faixa em volta da linha: a caixa inteira de um muro na
+## diagonal e quase toda longe dele (com ela, remontar a janela custava 8 ms).
+func _bloquear_segmento(a: Vector2, b: Vector2, espessura: float) -> void:
+	var raio := maxf(espessura / 2.0 + MARGEM, CELULA / 2.0)
+	var deitado := absf(b.x - a.x) >= absf(b.y - a.y)
+	var eixo := 0 if deitado else 1
+	var outro := 1 - eixo
+	var comprimento := b[eixo] - a[eixo]
+	if is_zero_approx(comprimento):
+		return
+	for i in range(floori((minf(a[eixo], b[eixo]) - raio) / CELULA),
+			floori((maxf(a[eixo], b[eixo]) + raio) / CELULA) + 1):
+		# O pedaco do segmento que passa nesta coluna, crescida do raio.
+		var t0 := clampf((float(i) * CELULA - raio - a[eixo]) / comprimento, 0.0, 1.0)
+		var t1 := clampf((float(i + 1) * CELULA + raio - a[eixo]) / comprimento, 0.0, 1.0)
+		var p0 := a.lerp(b, minf(t0, t1))
+		var p1 := a.lerp(b, maxf(t0, t1))
+		for j in range(floori((minf(p0[outro], p1[outro]) - raio) / CELULA),
+				floori((maxf(p0[outro], p1[outro]) + raio) / CELULA) + 1):
+			var celula := Vector2i(i, j) if deitado else Vector2i(j, i)
+			if not _regiao.has_point(celula):
+				continue
+			var centro := centro_de(celula)
+			if centro.distance_to(Geometry2D.get_closest_point_to_segment(centro, a, b)) <= raio:
+				_grade.set_point_solid(celula, true)
+
+## Uma barricada solta (retangulo girado): as celulas com centro dentro dela ou
+## a menos de MARGEM da borda. Cheia, e nao so a borda - celula livre la dentro
+## seria a "livre mais perto" de quem esta encostado nela, e sem caminho.
+func _bloquear_barricada(cantos: PackedVector2Array) -> void:
+	var caixa := Rect2(cantos[0], Vector2.ZERO)
+	for c in cantos:
+		caixa = caixa.expand(c)
+	caixa = caixa.grow(MARGEM)
+	var de := Vector2i((caixa.position / CELULA).floor())
+	var ate := Vector2i((caixa.end / CELULA).ceil())
+	for x in range(maxi(de.x, _regiao.position.x), mini(ate.x + 1, _regiao.end.x)):
+		for y in range(maxi(de.y, _regiao.position.y), mini(ate.y + 1, _regiao.end.y)):
+			var centro := centro_de(Vector2i(x, y))
+			var dentro := Geometry2D.is_point_in_polygon(centro, cantos)
+			for i in 4:
+				if dentro:
+					break
+				var perto := Geometry2D.get_closest_point_to_segment(centro, cantos[i], cantos[(i + 1) % 4])
+				dentro = centro.distance_to(perto) <= MARGEM
+			if dentro:
+				_grade.set_point_solid(Vector2i(x, y), true)
 
 func centro_de(celula: Vector2i) -> Vector2:
 	return Vector2(celula) * CELULA + Vector2.ONE * CELULA / 2.0

@@ -12,7 +12,8 @@ extends Node
 ##     na mochila e nao se perdem no dia que deu errado;
 ##  3. **sem municao nao atira**, e atirar gasta;
 ##  4. o tiro **tira vida e nao mata de uma vez** (03/10/2026: o zumbi tem
-##     vida; o 1o tiro fere, o ultimo derruba), e **parede corta o tiro**;
+##     vida; o 1o tiro fere, o ultimo derruba), e **parede corta o tiro** - e,
+##     nas barreiras (21/10/2026), muro corta, grade e tapume nao;
 ##  5. o tiro **chama a horda** num raio maior que o chamado de um zumbi;
 ##  6. o zumbi baleado **nao renasce hoje** - senao atirar nao serviria de nada;
 ##  7. **as oito armas** da lista do Joao (05/10/2026) existem na ficha, tem
@@ -27,6 +28,7 @@ const Mapa := preload("res://rua/mapa.gd")
 const Arma := preload("res://rua/arma.gd")
 const Zumbi := preload("res://rua/zumbi.gd")
 const Mochila := preload("res://rua/mochila.gd")
+const Camadas := preload("res://rua/camadas.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
 
@@ -82,10 +84,14 @@ func _physics_process(_delta: float) -> void:
 		6: pass
 		7: pass
 		8: _conferir_a_parede(); _passar()
-		9: _preparar_as_armas(); _passar()
+		9: _preparar_os_materiais(); _passar()
 		10: pass
 		11: pass
-		12:
+		12: _conferir_os_materiais(); _passar()
+		13: _preparar_as_armas(); _passar()
+		14: pass
+		15: pass
+		16:
 			_conferir_as_armas()
 			_o_tiro_chama_a_horda()
 			_o_baleado_nao_renasce()
@@ -93,7 +99,7 @@ func _physics_process(_delta: float) -> void:
 			_limpar()
 			print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 			get_tree().quit(0 if _falhas == 0 else 1)
-	if _fase in [2, 3, 6, 7, 10, 11]:
+	if _fase in [2, 3, 6, 7, 10, 11, 14, 15]:
 		_passar()
 
 func _passar() -> void:
@@ -352,6 +358,49 @@ func _conferir_a_parede() -> void:
 	else:
 		print("  atras da parede da fachada: o tiro para nela")
 	_alvo.queue_free()
+
+## O tiro e os materiais (21/10/2026): tres barreiras de teste na praca, uma de
+## cada material, cada uma com um zumbi atras. O tiro passa pela grade e pelo
+## tapume - chapa fina - e para no muro (rua/camadas.gd).
+const MATERIAIS_DO_TIRO := [
+	{ "nome": "grade", "camada": Camadas.SO_CORPO, "passa": true },
+	{ "nome": "tapume", "camada": Camadas.CORPO_E_VISAO, "passa": true },
+	{ "nome": "muro", "camada": Camadas.SOLIDO, "passa": false },
+]
+var _materiais: Array = []
+
+func _preparar_os_materiais() -> void:
+	print("\n4b. o tiro e os materiais")
+	var meio := (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
+	for i in MATERIAIS_DO_TIRO.size():
+		var onde := meio + Vector2(-300.0 + 300.0 * i, 0.0)
+		var barreira := StaticBody2D.new()
+		barreira.collision_layer = MATERIAIS_DO_TIRO[i]["camada"]
+		barreira.collision_mask = 0
+		var forma := CollisionShape2D.new()
+		forma.shape = RectangleShape2D.new()
+		(forma.shape as RectangleShape2D).size = Vector2(160.0, 6.0)
+		barreira.add_child(forma)
+		_rua.add_child(barreira)
+		barreira.global_position = onde
+		_materiais.append({ "barreira": barreira, "alvo": _um_zumbi_em(onde + Vector2(0.0, 50.0)), "onde": onde })
+
+func _conferir_os_materiais() -> void:
+	for i in _materiais.size():
+		var m: Dictionary = _materiais[i]
+		var material: Dictionary = MATERIAIS_DO_TIRO[i]
+		var alvo: Node2D = m["alvo"]
+		_jogador.global_position = (m["onde"] as Vector2) + Vector2(0.0, -50.0)
+		_apontar_para(alvo.global_position)
+		_arma._espera = 0.0
+		_arma._atirar()
+		var passou: bool = alvo.vida < alvo.VIDA_CHEIA
+		if passou != material["passa"]:
+			_erro("atras de %s, o tiro %s" % [material["nome"], "passou" if passou else "parou"])
+		else:
+			print("  atras de %s: o tiro %s" % [material["nome"], "passa" if passou else "para"])
+		(m["barreira"] as Node).queue_free()
+		alvo.queue_free()
 
 ## A casa de teste: a mais perto de onde o jogador nasce com a frente livre e
 ## com pelo menos 560 px de fachada - o tiro da fase 4 e dado de 220 px de

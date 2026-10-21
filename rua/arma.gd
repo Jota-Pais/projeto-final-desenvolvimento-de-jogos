@@ -57,6 +57,10 @@ extends Node2D
 ## So para a guarda do `aberta`: nao se atira com a mochila aberta.
 const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 
+## As camadas de colisao (rua/camadas.gd): o tiro para em muro e passa por
+## grade, alambrado, tabua e chapa fina.
+const Camadas := preload("res://rua/camadas.gd")
+
 ## A ficha de cada arma. `dano` e por projetil, em unidade de vida;
 ## `projeteis` e quantos saem por tiro (a escopeta espalha os dela em
 ## `abertura` graus; com um projetil so, `abertura` e o quanto o tiro pode
@@ -273,7 +277,7 @@ func _atirar() -> void:
 		elif abertura > 0.0:
 			desvio = randf_range(-abertura / 2.0, abertura / 2.0)
 		var direcao := _mira.rotated(desvio)
-		var consulta := PhysicsRayQueryParameters2D.create(de, de + direcao * float(f["alcance"]))
+		var consulta := PhysicsRayQueryParameters2D.create(de, de + direcao * float(f["alcance"]), Camadas.TIRO)
 		consulta.exclude = excluir
 		var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
 		if batida.is_empty():

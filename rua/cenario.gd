@@ -33,6 +33,10 @@ const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
 ## So para o TAMANHO do corpo, na hora de achar lugar livre para um zumbi.
 const Zumbi := preload("res://rua/zumbi.gd")
+## Muros, cercas e barricadas (21/10/2026): as regras de cada tipo e as pecas
+## desenhadas; as camadas dizem o que cada uma segura.
+const Barreira := preload("res://rua/barreira.gd")
+const Camadas := preload("res://rua/camadas.gd")
 const Navegacao := preload("res://rua/navegacao.gd")
 ## So para ler o TAMANHO dela na hora de registrar o obstaculo: a porta e irma
 ## do cenario na cena, e nao nasce aqui dentro como os outros corpos solidos.
@@ -69,6 +73,11 @@ const PERTO_DA_PILHA := 45.0
 ## isso que faz voltar pra casa ser uma travessia em vez de uma caminhada. Nao e
 ## sistema de onda: e o povoamento continuando a acontecer, no ritmo do relogio.
 const ZUMBIS_DA_NOITE := 14
+
+## Dentro do cerco do tutorial, quao longe do jogador o zumbi da noite nasce:
+## um pouco alem da meia diagonal da tela (1280 x 720 com zoom 2, ~370 px), para
+## ninguem aparecer do nada.
+const LONGE_DA_TELA := 420.0
 
 ## De quantos em quantos dias o bairro ganha um zumbi a mais. **Proposta.**
 ##
@@ -113,7 +122,10 @@ const TUFOS_DE_MATO := 5000
 ## peca em vez de agrupar. Subiu de 2000 para 4000 em 14/10/2026: as 1.763
 ## arvores viraram um no cada, de proposito, para entrar no Y-sort com o
 ## jogador (um no por arvore e o preco de a copa cobrir quem passa atras).
-const ORCAMENTO_DE_NOS := 4000
+## Subiu para 5000 em 21/10/2026 pelo mesmo motivo: cada peca de muro e de
+## cerca e um no (ver Barreira.VARIACAO_MAXIMA_DE_Y), e so a regiao rosa do
+## tutorial tem umas 900.
+const ORCAMENTO_DE_NOS := 5000
 
 # Paleta fria e dessaturada, que e a direcao de arte da rua: concreto,
 # ferrugem, verde-acinzentado, ceu lavado. As cores do desenho de origem sao
@@ -214,6 +226,10 @@ var _moveis_ja_vazios := 0
 ## E a partir desta lista que a navegacao do zumbi e montada.
 var _obstaculos: Array[Rect2] = []
 
+## Os segmentos das barreiras, { a, b, espessura }, para a navegacao: uma
+## barreira na diagonal virando retangulo axial fecharia uma caixa inteira.
+var _segmentos: Array = []
+
 ## Toda arvore plantada, so para o `_draw()` pintar - a colisao dela mora no
 ## StaticBody2D do proprio bosque, nao aqui.
 var _arvores: Array[Rect2] = []
@@ -263,6 +279,10 @@ func _ready() -> void:
 			_adicionar_forma(corpo_do_predio, parede)
 		for parede in Construcao.paredes_internas(construcao):
 			_adicionar_forma(corpo_do_predio, parede)
+		# A casa selada (a do Antonio, 21/10/2026) tem o vao da porta fechado:
+		# ele fala da porta, mas ninguem entra.
+		if construcao.get("selada", false):
+			_adicionar_forma(corpo_do_predio, _vao_da_porta(construcao))
 		add_child(corpo_do_predio)
 		_povoar(construcao)
 
@@ -274,6 +294,7 @@ func _ready() -> void:
 		blocos.append(obstaculo["rect"])
 	_corpo_de(blocos)
 	_corpo_de(mundo["solidos"])
+	_criar_barreiras(mundo)
 
 	for movel in mundo["moveis_de_rua"]:
 		var chave := "rua/%s@%.0f,%.0f" % [movel["tipo"], (movel["pos"] as Vector2).x,
@@ -316,6 +337,137 @@ func _corpo_de(retangulos: Array) -> void:
 	for r in retangulos:
 		_adicionar_forma(corpo, r)
 	add_child(corpo)
+
+## O vao da porta de um predio como retangulo, da espessura da parede.
+func _vao_da_porta(construcao: Dictionary) -> Rect2:
+	var eixo := Construcao.eixo_da_fachada(construcao).abs()
+	var tamanho := eixo * Construcao.VAO + Vector2(eixo.y, eixo.x) * Construcao.PAREDE
+	return Rect2(Construcao.porta_de(construcao) - tamanho / 2.0, tamanho)
+
+## Os muros, as cercas e as barricadas (21/10/2026; o dado em rua/mapa.gd, as
+## regras em rua/barreira.gd).
+##
+## **Um corpo por camada**, e nao um so: o material diz o que a barreira segura
+## (rua/camadas.gd) e a camada do corpo e essa resposta. Cada segmento vira uma
+## forma girada no corpo da camada dele e entra em `_segmentos`, que e o que a
+## navegacao bloqueia - o retangulo que envolve uma barreira na diagonal
+## fecharia a caixa inteira, rua e calcada junto.
+##
+## O desenho e uma Peca por pedaco de segmento, irma do zumbi e do jogador no
+## Y-sort; com arte, a peca sabe a que distancia do comeco do segmento ela
+## esta (a textura emenda de uma na outra) e que pilares caem nela. As
+## barricadas soltas seguram tudo (camada SOLIDO) e entram na navegacao pelos
+## quatro cantos do retangulo girado.
+func _criar_barreiras(mundo: Dictionary) -> void:
+	var corpos := {}
+	var artes := {}
+	var tampas: Array[PackedVector2Array] = []
+	for barricada in mundo["barricadas"]:
+		tampas.append(Mapa.cantos_da_barricada(barricada))
+	for barreira in mundo["barreiras"]:
+		var tipo: Dictionary = Barreira.TIPOS[barreira["tipo"]]
+		if not artes.has(barreira["tipo"]):
+			artes[barreira["tipo"]] = Barreira.arte_de(barreira["tipo"])
+		var arte: Dictionary = artes[barreira["tipo"]]
+		var pontos: PackedVector2Array = barreira["pontos"]
+		for i in range(1, pontos.size()):
+			var a := pontos[i - 1]
+			var b := pontos[i]
+			if a.distance_to(b) < 1.0:
+				continue
+			_adicionar_segmento(_corpo_da_camada(corpos, tipo["camada"]), a, b, tipo["espessura"])
+			var direcao := (b - a).normalized()
+			var pilares := _pilares(a, b, arte, i == pontos.size() - 1, tampas)
+			# Na quina, o desenho passa meia espessura do vertice, como a
+			# colisao: sem isto o topo abre uma cunha do lado de fora da curva.
+			var meia := direcao * float(tipo["espessura"]) / 2.0
+			var a_desenho := a - meia if i > 1 else a
+			var b_desenho := b + meia if i < pontos.size() - 1 else b
+			for trecho in _a_mostra(a_desenho, b_desenho, tampas):
+				# Cabeceira na ponta da barreira e onde uma barricada corta o
+				# desenho; na quina entre dois segmentos, nao.
+				var de := trecho[0]
+				var ate := trecho[trecho.size() - 1]
+				var ponta_em_de := i == 1 or not de.is_equal_approx(a_desenho)
+				var ponta_em_ate := i == pontos.size() - 1 or not ate.is_equal_approx(b_desenho)
+				var pedacos := Barreira.pecas(de, ate)
+				for k in pedacos.size():
+					var s_de := (pedacos[k][0] - a).dot(direcao)
+					var s_ate := (pedacos[k][1] - a).dot(direcao)
+					var ultimo := k == pedacos.size() - 1
+					var deles := PackedVector2Array()
+					for p in pilares:
+						var s := (p - a).dot(direcao)
+						if s >= s_de and (s < s_ate or (ultimo and s <= s_ate + 0.01)):
+							deles.append(p)
+					var peca := Barreira.Peca.new()
+					peca.montar(barreira["tipo"], pedacos[k][0], pedacos[k][1],
+						k == 0 and ponta_em_de, ultimo and ponta_em_ate, arte, s_de, deles)
+					add_child(peca)
+
+	for barricada in mundo["barricadas"]:
+		var tamanho: Vector2 = Barreira.OBJETOS[barricada["tipo"]]["tamanho"]
+		var corpo := _corpo_da_camada(corpos, Camadas.SOLIDO)
+		var dono := corpo.create_shape_owner(corpo)
+		var forma := RectangleShape2D.new()
+		forma.size = tamanho
+		corpo.shape_owner_add_shape(dono, forma)
+		corpo.shape_owner_set_transform(dono,
+			Transform2D(deg_to_rad(barricada["giro"]), barricada["pos"]))
+		_segmentos.append({ "cantos": Mapa.cantos_da_barricada(barricada) })
+		var desenho := Barreira.Barricada.new()
+		desenho.montar(barricada["tipo"], barricada["pos"], barricada["giro"])
+		add_child(desenho)
+
+	for camada in corpos:
+		add_child(corpos[camada])
+
+## Os pilares de um segmento, em mundo, para o tipo que tem pilar desenhado: um
+## a cada periodo da textura da face, menos os que uma barricada tapa.
+func _pilares(a: Vector2, b: Vector2, arte: Dictionary, ultimo: bool,
+		tampas: Array[PackedVector2Array]) -> PackedVector2Array:
+	var fora := PackedVector2Array()
+	if not arte.has("pilar") or not arte.has("face"):
+		return fora
+	var periodo := float((arte["face"] as Texture2D).get_width())
+	for s in Barreira.pilares_do_segmento(a.distance_to(b), periodo, ultimo):
+		var p := a + (b - a).normalized() * s
+		var tapado := false
+		for tampa in tampas:
+			if Geometry2D.is_point_in_polygon(p, tampa):
+				tapado = true
+				break
+		if not tapado:
+			fora.append(p)
+	return fora
+
+## O que fica a mostra de um segmento: a barricada em cima dele tapa o pedaco
+## que passa por baixo (a faixa de entulho debaixo do onibus). So o desenho - a
+## colisao segue o segmento inteiro.
+func _a_mostra(a: Vector2, b: Vector2, tampas: Array[PackedVector2Array]) -> Array[PackedVector2Array]:
+	var trechos: Array[PackedVector2Array] = [PackedVector2Array([a, b])]
+	for tampa in tampas:
+		var sobra: Array[PackedVector2Array] = []
+		for trecho in trechos:
+			sobra.append_array(Geometry2D.clip_polyline_with_polygon(trecho, tampa))
+		trechos = sobra
+	return trechos
+
+func _corpo_da_camada(corpos: Dictionary, camada: int) -> StaticBody2D:
+	if not corpos.has(camada):
+		var corpo := StaticBody2D.new()
+		corpo.collision_layer = camada
+		corpo.collision_mask = 0
+		corpos[camada] = corpo
+	return corpos[camada]
+
+## Um segmento de barreira no corpo da camada dele, e na lista da navegacao.
+func _adicionar_segmento(corpo: StaticBody2D, a: Vector2, b: Vector2, espessura: float) -> void:
+	var forma := Barreira.forma(a, b, espessura)
+	var dono := corpo.create_shape_owner(corpo)
+	corpo.shape_owner_add_shape(dono, forma["forma"])
+	corpo.shape_owner_set_transform(dono, forma["transform"])
+	_segmentos.append({ "a": a, "b": b, "espessura": espessura })
 
 ## So um alarme: imprime quantos nos o cenario criou GERANDO O MAPA e avisa se
 ## passar do teto. Nao trava nada.
@@ -503,8 +655,9 @@ func _dentro_do_bosque(bosque: Dictionary, ponto: Vector2) -> bool:
 ## Um movel por vaga de cada quarto, distribuidos pela parede do fundo do
 ## quarto. E o jeito do PZ: o loot esta dentro, em movel, e nao na calcada.
 func _povoar(construcao: Dictionary) -> void:
-	# A sua casa nao se vasculha - o que tem la dentro e o modo Casa.
-	if construcao.get("sua", false):
+	# A sua casa nao se vasculha - o que tem la dentro e o modo Casa. A casa
+	# selada (a do Antonio, 21/10/2026) tambem nao: ninguem entra.
+	if construcao.get("sua", false) or construcao.get("selada", false):
 		return
 
 	var quartos := Construcao.quartos_de(construcao)
@@ -546,7 +699,7 @@ func _montar_navegacao() -> void:
 	_navegacao.name = "Navegacao"
 	_navegacao.add_to_group("navegacao")
 	add_child(_navegacao)
-	_navegacao.montar(Mapa.MUNDO, _obstaculos)
+	_navegacao.montar(Mapa.MUNDO, _obstaculos, _segmentos)
 
 # --------------------------------------------------- povoamento por proximidade
 
@@ -627,6 +780,11 @@ func _um_lugar_livre_no_anel() -> Vector2:
 	consulta.shape = forma
 	consulta.collide_with_areas = false
 
+	# Com o jogador dentro do cerco do tutorial (21/10/2026), a noite traz os
+	# zumbis para dentro dele - do lado de fora eles so empurrariam a barreira.
+	if Mapa.cerco_ligado and Mapa.dentro_do_cerco(_jogador.global_position):
+		return _um_lugar_livre_no_cerco(espaco, consulta)
+
 	var ultimo := _jogador.global_position
 	for _tentativa in 14:
 		var angulo := _sorteio.randf_range(0.0, TAU)
@@ -638,6 +796,38 @@ func _um_lugar_livre_no_anel() -> Vector2:
 		if espaco.intersect_shape(consulta, 1).is_empty():
 			return ultimo
 	return ultimo
+
+## Um ponto livre dentro do cerco, fora da tela (a meia diagonal da tela com o
+## zoom 2 e ~370 px) e fora de predio - dentro da sua casa ou da do Antonio,
+## seladas, ele ficaria preso. O anel nao serve aqui: a regiao e pequena, e de
+## 700 a 1300 px do jogador quase tudo cai do lado de fora. Sem ponto fora da
+## tela, fica o mais longe que achou.
+func _um_lugar_livre_no_cerco(espaco: PhysicsDirectSpaceState2D,
+		consulta: PhysicsShapeQueryParameters2D) -> Vector2:
+	var regiao := Mapa.regiao_do_tutorial()
+	var caixa := Rect2(regiao[0], Vector2.ZERO)
+	for p in regiao:
+		caixa = caixa.expand(p)
+	var melhor := _jogador.global_position
+	for _tentativa in 40:
+		var ponto := Vector2(_sorteio.randf_range(caixa.position.x, caixa.end.x),
+			_sorteio.randf_range(caixa.position.y, caixa.end.y))
+		if not Geometry2D.is_point_in_polygon(ponto, regiao) or _dentro_de_predio(ponto):
+			continue
+		consulta.transform = Transform2D(0.0, ponto)
+		if not espaco.intersect_shape(consulta, 1).is_empty():
+			continue
+		if ponto.distance_to(_jogador.global_position) >= LONGE_DA_TELA:
+			return ponto
+		if ponto.distance_to(_jogador.global_position) > melhor.distance_to(_jogador.global_position):
+			melhor = ponto
+	return melhor
+
+func _dentro_de_predio(ponto: Vector2) -> bool:
+	for construcao in Mapa.mundo()["construcoes"]:
+		if (construcao["rect"] as Rect2).has_point(ponto):
+			return true
+	return false
 
 ## O indice e o ponto de povoamento de onde ele saiu, ou -1 para quem a noite
 ## trouxe. E o que permite anotar que aquele ponto foi limpo a tiro.
@@ -896,7 +1086,8 @@ func _livre_para_arvore(area: Rect2) -> bool:
 	for onde in mundo["zumbis"]:
 		if area.grow(30.0).has_point(onde):
 			return false
-	return true
+	# Nem em cima de muro, cerca ou barricada (21/10/2026).
+	return not Mapa.tem_barreira_em(area.grow(20.0))
 
 # --------------------------------------------------------------------- colisao
 

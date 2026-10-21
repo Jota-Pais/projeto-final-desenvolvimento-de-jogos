@@ -24,11 +24,27 @@ extends Node
 ## milhao de consultas. A 24 ela pulava a faixa onde o corpo novo cabe na
 ## frente de um movel encostado na parede (20 px, com o ALCANCE de 30), e o
 ## movel saia inalcancavel sem ser.
+##
+## ## Duas passadas: com o cerco e sem (21/10/2026)
+##
+## O tutorial se passa na regiao rosa, cercada (Mapa.BARREIRAS). Com o cerco
+## ligado, que e o jogo de hoje, a passada 1a prova que **ele fecha** - o flood
+## fill a partir de casa nao sai da regiao - e que la dentro tudo se alcanca.
+## Depois a rua e montada de novo com o cerco desligado, e a passada 1 de
+## sempre prova que o resto do mapa continua um lugar so: os muros de lote de
+## dentro nao podem fechar porta de predio nenhum.
 
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
+const Barreira := preload("res://rua/barreira.gd")
+const Navegacao := preload("res://rua/navegacao.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const Jogador := preload("res://rua/jogador.gd")
+
+## Quanto uma celula alcancada pode ficar para fora do contorno da regiao sem
+## contar como furo no cerco: o contorno segue as barreiras por cima, a mao, e
+## a barreira de borda pode correr um pouco do lado de fora dele.
+const FOLGA_DO_CERCO := 96.0
 
 ## Celula da grade: 16 px, menor que a faixa de alcance de um movel (ver acima)
 ## e com os corpos de duas celulas vizinhas a 2 px um do outro - barreira
@@ -60,18 +76,32 @@ var _falhas := 0
 
 func _ready() -> void:
 	# A fase 0 le so o dicionario (Mapa.mundo()), antes de qualquer coisa
-	# instanciar - custa milissegundos.
+	# instanciar - custa milissegundos. O dado do mapa e conferido com o cerco
+	# ligado, como o jogo monta.
+	Mapa.cerco_ligado = true
+	Mapa.remontar()
 	_o_dado_fecha()
+	_as_barreiras_fecham()
+	# Sem regiao declarada nao ha cerco para provar: vai direto a passada sem.
+	_montar_a_rua(not Mapa.REGIAO_DO_TUTORIAL.is_empty())
 
+## Uma rua nova, com o cerco ligado ou nao. A anterior sai da arvore antes de
+## a nova entrar: duas ruas juntas sao dois jogadores no grupo "jogador".
+func _montar_a_rua(com_cerco: bool) -> void:
+	if _rua != null:
+		remove_child(_rua)
+		_rua.queue_free()
+	Mapa.cerco_ligado = com_cerco
+	Mapa.remontar()
 	_rua = CENA_DA_RUA.instantiate()
 	add_child(_rua)
+	_quadros = 0
 
 func _process(_delta: float) -> void:
 	# Espera a fisica assentar antes de consultar o espaco.
 	_quadros += 1
 	if _feito or _quadros < 4:
 		return
-	_feito = true
 
 	_jogador = _rua.get_node("Jogador")
 	_espaco = get_viewport().find_world_2d().direct_space_state
@@ -84,9 +114,22 @@ func _process(_delta: float) -> void:
 	# Sem isto, o corpo do proprio jogador conta como parede.
 	_consulta.exclude = [_jogador.get_rid()]
 
+	if Mapa.cerco_ligado:
+		_o_cerco_fecha()
+		_os_documentos()
+		_a_identidade_bate()
+		# E de novo, sem o cerco: o mapa inteiro.
+		_montar_a_rua(false)
+		return
+	_feito = true
+
 	_da_para_chegar_em_tudo()
-	_os_documentos()
-	_a_identidade_bate()
+	if Mapa.REGIAO_DO_TUTORIAL.is_empty():
+		_os_documentos()
+		_a_identidade_bate()
+	# O cerco volta a ser o de sempre, para quem rodar depois na mesma sessao.
+	Mapa.cerco_ligado = true
+	Mapa.remontar()
 
 	print("\n%s" % ("SEM PROBLEMAS" if _falhas == 0 else "%d PROBLEMA(S)" % _falhas))
 	if not Engine.is_editor_hint():
@@ -331,13 +374,14 @@ func _da_para_chegar_em_tudo() -> void:
 		_erro("a porta de casa e inalcancavel")
 	print("  %d moveis, %d inalcancaveis" % [quantos, ruins])
 
-	# Todo quarto de todo predio - menos a sua casa, que tem que estar selada.
+	# Todo quarto de todo predio - menos a sua casa e a do Antonio, que tem que
+	# estar seladas.
 	var quartos_ruins := 0
 	var predios := 0
 	for construcao in Mapa.mundo()["construcoes"]:
 		var quartos := Construcao.quartos_de(construcao)
-		if construcao.get("sua", false):
-			quartos_ruins += _a_sua_casa_esta_selada(alcancavel, quartos)
+		if construcao.get("sua", false) or construcao.get("selada", false):
+			quartos_ruins += _esta_selada(construcao, alcancavel, quartos)
 			continue
 		predios += 1
 		for j in quartos.size():
@@ -379,18 +423,245 @@ func _explicar_o_quarto(construcao: Dictionary, quarto: Rect2, livre: Dictionary
 ## desenho** (16/09/2026): o unico jeito de entrar nela e segurar E na porta, e
 ## isso troca para a cena da casa em vez de te por dentro do predio. Entao aqui
 ## a conferencia inverte: se der para chegar a pe em algum quarto dela, a porta
-## parou de ser a unica entrada.
-func _a_sua_casa_esta_selada(alcancavel: Dictionary, quartos: Array[Rect2]) -> int:
+## parou de ser a unica entrada. A casa do Antonio (21/10/2026) e selada de
+## vez: nem pela porta.
+func _esta_selada(construcao: Dictionary, alcancavel: Dictionary, quartos: Array[Rect2]) -> int:
 	var abertos := 0
 	for j in quartos.size():
 		if _tem_celula_em(alcancavel, quartos[j], PASSO):
 			abertos += 1
 	if abertos > 0:
-		_erro("da para entrar na sua casa a pe: %d dos %d quartos se alcancam"
-			% [abertos, quartos.size()] + " pela rua, e a porta devia ser a unica entrada")
+		_erro("da para entrar em %s a pe: %d dos %d quartos se alcancam pela rua"
+			% [_nome_de(construcao), abertos, quartos.size()])
 	else:
-		print("  a sua casa esta selada: so se entra pela porta")
+		print("  %s esta selada" % _nome_de(construcao))
 	return abertos
+
+# --- 0b. o dado das barreiras (21/10/2026) -----------------------------------
+
+## Cada barreira e de um tipo que existe, todo vao cabe o zumbi (a navegacao
+## bloqueia um raio em volta de cada ponta) e nenhuma passa por dentro de
+## predio. O cerco tem regiao, e a sua casa e a do Antonio estao nela.
+func _as_barreiras_fecham() -> void:
+	print("\n0b. o dado das barreiras")
+	var antes := _falhas
+	for barreira in Mapa.BARREIRAS:
+		var nome: String = barreira.get("nome", "?")
+		var tipo: String = barreira.get("tipo", "")
+		if not Barreira.TIPOS.has(tipo):
+			_erro("a barreira '%s' tem tipo '%s', que nao existe em Barreira.TIPOS" % [nome, tipo])
+			continue
+		if (barreira.get("pontos", []) as Array).size() < 2:
+			_erro("a barreira '%s' tem menos de dois pontos" % nome)
+		var minimo := _vao_minimo(tipo)
+		for vao in barreira.get("vaos", []):
+			var largura := float(vao.get("largura_mundo", Barreira.VAO))
+			var portao = vao.get("portao")
+			if portao != null and not Barreira.TIPOS.has(portao):
+				_erro("o portao '%s' da barreira '%s' nao existe em Barreira.TIPOS" % [portao, nome])
+			if portao == null and largura < minimo:
+				_erro("um vao da barreira '%s' tem %.0f px; o zumbi so passa com %.0f" % [nome, largura, minimo])
+	for objeto in Mapa.BARRICADAS:
+		if not Barreira.OBJETOS.has(objeto.get("tipo", "")):
+			_erro("a barricada '%s' tem tipo '%s', que nao existe em Barreira.OBJETOS"
+				% [objeto.get("nome", "?"), objeto.get("tipo", "")])
+
+	var mundo := Mapa.mundo()
+	var segmentos := 0
+	for barreira in mundo["barreiras"]:
+		var pontos: PackedVector2Array = barreira["pontos"]
+		segmentos += pontos.size() - 1
+		for i in range(1, pontos.size()):
+			for c in mundo["construcoes"]:
+				if Mapa._segmento_cruza(pontos[i - 1], pontos[i], Construcao.interior_de(c).grow(-2.0)):
+					_erro("a barreira '%s' passa por dentro de %s, em %s (png)"
+						% [barreira["nome"], _nome_de(c), _no_png(pontos[i - 1].lerp(pontos[i], 0.5))])
+	for barricada in mundo["barricadas"]:
+		var cantos := Mapa.cantos_da_barricada(barricada)
+		for c in mundo["construcoes"]:
+			var dentro := Construcao.interior_de(c).grow(-2.0)
+			for i in 4:
+				if Mapa._segmento_cruza(cantos[i], cantos[(i + 1) % 4], dentro):
+					_erro("a barricada '%s' entra em %s" % [barricada["nome"], _nome_de(c)])
+					break
+
+	var cercadas := 0
+	for barreira in Mapa.BARREIRAS:
+		if barreira.get("grupo", "") == "cerco_do_tutorial":
+			cercadas += 1
+	if cercadas > 0 and Mapa.REGIAO_DO_TUTORIAL.size() < 3:
+		_erro("o cerco do tutorial tem barreira mas nao tem regiao (Mapa.REGIAO_DO_TUTORIAL)")
+	if Mapa.REGIAO_DO_TUTORIAL.size() >= 3:
+		for c in mundo["construcoes"]:
+			if (c.get("sua", false) or c.get("selada", false)) \
+					and not Mapa.dentro_do_cerco((c["rect"] as Rect2).get_center()):
+				_erro("%s fica fora da regiao do tutorial" % _nome_de(c))
+	print("  %d barreiras (%d do cerco) em %d segmentos, %d barricadas" % [
+		Mapa.BARREIRAS.size(), cercadas, segmentos, (mundo["barricadas"] as Array).size()])
+	print("  %d achado(s) nesta fase" % (_falhas - antes))
+
+## O menor vao aberto que a grade do zumbi ainda atravessa: a navegacao
+## bloqueia, em volta de cada ponta, a meia espessura mais a margem (nunca
+## menos de meia celula), e no meio tem que sobrar uma celula inteira.
+func _vao_minimo(tipo: String) -> float:
+	var raio := maxf(float(Barreira.TIPOS[tipo]["espessura"]) / 2.0 + Navegacao.MARGEM,
+		Navegacao.CELULA / 2.0)
+	return maxf(Barreira.VAO_MINIMO, raio * 2.0 + Navegacao.CELULA)
+
+## Um ponto do mundo em px do PNG, que e como o dado do mapa e escrito.
+func _no_png(ponto: Vector2) -> Vector2:
+	return ((ponto - Mapa.ponto_do_png(Vector2.ZERO)) / Mapa.ESCALA).round()
+
+# --- 1a. o cerco do tutorial fecha (21/10/2026) ------------------------------
+
+## Com o cerco ligado, o flood fill a partir de casa so roda numa caixa em
+## volta da regiao (bem mais barato que o mundo inteiro): se ele encosta na
+## borda da caixa, ou alcanca celula mais longe que FOLGA_DO_CERCO do lado de
+## fora do contorno, o cerco tem furo - e as primeiras celulas de fora dizem
+## onde. La dentro, todo movel, todo quarto (menos os selados), todo lugar com
+## nome e a porta de casa tem que se alcancar.
+func _o_cerco_fecha() -> void:
+	print("\n1a. o cerco do tutorial fecha")
+	var regiao := Mapa.regiao_do_tutorial()
+	var caixa := Rect2(regiao[0], Vector2.ZERO)
+	for p in regiao:
+		caixa = caixa.expand(p)
+	caixa = caixa.grow(FOLGA_DO_CERCO + PASSO * 4.0).intersection(Mapa.MUNDO)
+
+	if not Mapa.dentro_do_cerco(_jogador.global_position):
+		_erro("o jogador nasce fora da regiao do tutorial, em %s (png)" % _no_png(_jogador.global_position))
+		return
+	var livre := _onde_cabe(caixa, PASSO)
+	var inicio := Vector2i((_jogador.global_position / PASSO).floor())
+	if not livre.has(inicio):
+		_erro("o jogador nasce sem lugar para ficar de pe, em %s" % _jogador.global_position)
+		return
+	var alcancavel := _espalhar(livre, inicio)
+
+	var fora: Array[Vector2] = []
+	var dentro := 0
+	for celula in alcancavel:
+		var centro := _centro(celula, PASSO)
+		if Geometry2D.is_point_in_polygon(centro, regiao):
+			dentro += 1
+		elif _distancia_ao_contorno(centro, regiao) > FOLGA_DO_CERCO:
+			fora.append(centro)
+	var livres_dentro := 0
+	for celula in livre:
+		if Geometry2D.is_point_in_polygon(_centro(celula, PASSO), regiao):
+			livres_dentro += 1
+	print("  dentro da regiao cabe ficar de pe em %d celulas; da para chegar em %d" % [livres_dentro, dentro])
+	if not fora.is_empty():
+		_erro("o cerco tem furo: %d celulas alcancadas do lado de fora" % fora.size())
+		_mostrar_o_furo(fora, regiao)
+	else:
+		print("  o cerco fecha: ninguem sai da regiao a pe")
+		_a_navegacao_tambem_fecha(regiao, livre, alcancavel)
+
+	var ruins := 0
+	var quantos := 0
+	for movel in _moveis():
+		var onde := (movel as Node2D).position
+		if not Mapa.dentro_do_cerco(onde):
+			continue
+		quantos += 1
+		var tamanho := ((movel as Node2D).get_node("Deteccao").shape as RectangleShape2D).size
+		if not _tem_celula_em(alcancavel, Rect2(onde - tamanho / 2.0, tamanho), PASSO):
+			_erro("%s em %s (png %s) e inalcancavel dentro do cerco" % [
+				(movel as Node2D).get("rotulo"), onde, _no_png(onde)])
+			ruins += 1
+	var porta := _rua.get_node("EntradaDeCasa") as Node2D
+	var tamanho_da_porta := ((porta.get_node("Deteccao") as CollisionShape2D).shape as RectangleShape2D).size
+	if not _tem_celula_em(alcancavel, Rect2(porta.position - tamanho_da_porta / 2.0, tamanho_da_porta), PASSO):
+		_erro("a porta de casa e inalcancavel dentro do cerco")
+	print("  %d moveis dentro, %d inalcancaveis" % [quantos, ruins])
+
+	var predios := 0
+	for construcao in Mapa.mundo()["construcoes"]:
+		if not Mapa.dentro_do_cerco((construcao["rect"] as Rect2).get_center()):
+			continue
+		var quartos := Construcao.quartos_de(construcao)
+		if construcao.get("sua", false) or construcao.get("selada", false):
+			_esta_selada(construcao, alcancavel, quartos)
+			continue
+		predios += 1
+		for j in quartos.size():
+			if not _tem_celula_em(alcancavel, quartos[j], PASSO):
+				_erro("quarto %d de %s sem passagem dentro do cerco" % [j, _nome_de(construcao)])
+	for lugar in Mapa.lugares():
+		var r: Rect2 = lugar["rect"]
+		if Mapa.dentro_do_cerco(r.get_center()) and not _tem_celula_em(alcancavel, r, PASSO):
+			_erro("nao da para chegar a pe em %s dentro do cerco" % lugar["nome"])
+	print("  %d predios dentro do cerco" % predios)
+
+## A navegacao do zumbi tem grade propria (rua/navegacao.gd), que bloqueia as
+## barreiras por raio e nao pela forma: a fisica fechar nao prova que ela
+## fecha. Do lado de fora, onde cabe ficar de pe mas o flood fill nao chegou,
+## escolhe-se uma celula por oitavo em volta da regiao; de casa ate ela nao
+## pode haver caminho - senao o zumbi tenta passar por onde o corpo nao passa,
+## e encalha na barreira.
+func _a_navegacao_tambem_fecha(regiao: PackedVector2Array, livre: Dictionary, alcancavel: Dictionary) -> void:
+	var navegacao := get_tree().get_first_node_in_group("navegacao")
+	navegacao.remontar_em(_jogador.global_position)
+	var meio := Vector2.ZERO
+	for p in regiao:
+		meio += p
+	meio /= float(regiao.size())
+	var por_oitavo := {}
+	for celula in livre:
+		# Uma em cada 4 x 4 basta para achar um ponto por oitavo, e poupa a
+		# distancia ao contorno de dezenas de milhares de celulas.
+		if alcancavel.has(celula) or celula.x % 4 != 0 or celula.y % 4 != 0:
+			continue
+		var centro := _centro(celula, PASSO)
+		if Geometry2D.is_point_in_polygon(centro, regiao) or _distancia_ao_contorno(centro, regiao) < FOLGA_DO_CERCO * 2.0:
+			continue
+		var oitavo := posmod(roundi((centro - meio).angle() / (TAU / 8.0)), 8)
+		if not por_oitavo.has(oitavo) or centro.distance_to(meio) < (por_oitavo[oitavo] as Vector2).distance_to(meio):
+			por_oitavo[oitavo] = centro
+	var vazou := 0
+	for oitavo in por_oitavo:
+		var caminho: PackedVector2Array = navegacao.caminho(_jogador.global_position, por_oitavo[oitavo])
+		if caminho.is_empty():
+			continue
+		vazou += 1
+		for p in caminho:
+			if not Geometry2D.is_point_in_polygon(p, regiao):
+				_erro("a navegacao do zumbi sai do cerco perto de %s (png), a caminho de %s (png)"
+					% [_no_png(p), _no_png(por_oitavo[oitavo])])
+				break
+	if vazou == 0:
+		print("  a navegacao do zumbi tambem fecha: de casa, nenhum caminho para fora (%d pontos)"
+			% por_oitavo.size())
+
+func _distancia_ao_contorno(ponto: Vector2, regiao: PackedVector2Array) -> float:
+	var menor := INF
+	for i in regiao.size():
+		var perto := Geometry2D.get_closest_point_to_segment(ponto, regiao[i], regiao[(i + 1) % regiao.size()])
+		menor = minf(menor, ponto.distance_to(perto))
+	return menor
+
+## Onde o cerco vaza: das celulas alcancadas do lado de fora, as que estao
+## mais perto do contorno - e por ali que o flood fill saiu.
+func _mostrar_o_furo(fora: Array[Vector2], regiao: PackedVector2Array) -> void:
+	var ordem := []
+	for centro in fora:
+		ordem.append([_distancia_ao_contorno(centro, regiao), centro])
+	ordem.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var mostrados: Array[Vector2] = []
+	for par in ordem:
+		var centro: Vector2 = par[1]
+		var perto := false
+		for m in mostrados:
+			if m.distance_to(centro) < 200.0:
+				perto = true
+				break
+		if perto:
+			continue
+		mostrados.append(centro)
+		print("    sai perto de %s (png), %s" % [_no_png(centro), Mapa.lugar_em(centro)])
+		if mostrados.size() >= 5:
+			break
 
 ## Cada movel gerado.
 func _moveis() -> Array[Node]:

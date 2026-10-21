@@ -166,6 +166,15 @@ const COR_FUNDO_DA_VIDA := Color("241d1c")
 
 const SEGUNDOS_ENTRE_RECALCULOS := 0.4
 const TOLERANCIA_DO_PASSO := 26.0
+## Sem caminho - o jogador do outro lado de um cerco (21/10/2026) -, ele espera
+## isto antes de pedir de novo, empurrando a barreira enquanto isso. A busca que
+## nao acha nada varre a janela inteira (uns 4 ms), e com o caminho vazio ela
+## se repetia a cada quadro.
+const SEGUNDOS_SEM_CAMINHO := 2.0
+
+## As camadas de colisao (rua/camadas.gd): ele anda batendo em toda barreira e
+## ve atraves de grade e alambrado.
+const Camadas := preload("res://rua/camadas.gd")
 
 ## O gemido (som do Drive, 20/10/2026). Ele geme ao te ver - e o aviso de que
 ## a perseguicao comecou, antes de voce olhar para ele - e, vagando ou
@@ -217,6 +226,8 @@ var _olhando_em_volta := 0.0
 var _caminho: PackedVector2Array
 var _passo := 0
 var _recalcular := 0.0
+## A ultima busca nao achou caminho (ver SEGUNDOS_SEM_CAMINHO).
+var _sem_caminho := false
 var _alvo_de_vaguear := Vector2.ZERO
 var _tempo_vagando := 0.0
 ## Quanto falta para o proximo gemido a toa. Comeca sorteado, para a horda
@@ -239,6 +250,7 @@ var _clarao_do_dano: Tween
 
 func _ready() -> void:
 	add_to_group("zumbi")
+	collision_mask = Camadas.ANDAR
 	var forma := RectangleShape2D.new()
 	forma.size = TAMANHO
 	($Colisao as CollisionShape2D).shape = forma
@@ -368,6 +380,7 @@ func _comecar_a_procurar() -> void:
 func _desistir() -> void:
 	_estado = Estado.VAGANDO
 	_caminho = PackedVector2Array()
+	_recalcular = 0.0
 
 ## Ve num cone, e **parede corta**. E o que faz entrar numa casa quebrar a
 ## perseguicao - e o que faz ficar dentro dela com ele nao quebrar.
@@ -392,7 +405,7 @@ func _ve_o_jogador() -> bool:
 		return false
 
 	var consulta := PhysicsRayQueryParameters2D.create(
-		global_position, _jogador.global_position)
+		global_position, _jogador.global_position, Camadas.VISTA)
 	consulta.exclude = _ignorados
 	var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
 	# Se a primeira coisa no caminho nao e o jogador, tem parede (ou movel) no
@@ -530,6 +543,7 @@ func foi_chamado(onde: Vector2) -> void:
 		return
 	_ultima_posicao = onde
 	_caminho = PackedVector2Array()
+	_recalcular = 0.0
 	_comecar_a_procurar()
 
 # ------------------------------------------------------------------ movimento
@@ -562,9 +576,10 @@ func _seguir(delta: float, destino: Vector2) -> Vector2:
 		return global_position.direction_to(destino)
 
 	_recalcular -= delta
-	if _recalcular <= 0.0 or _caminho.is_empty():
-		_recalcular = SEGUNDOS_ENTRE_RECALCULOS
+	if _recalcular <= 0.0 or (_caminho.is_empty() and not _sem_caminho):
 		_caminho = _navegacao.caminho(global_position, destino)
+		_sem_caminho = _caminho.is_empty()
+		_recalcular = SEGUNDOS_SEM_CAMINHO if _sem_caminho else SEGUNDOS_ENTRE_RECALCULOS
 		_passo = 0
 
 	while _passo < _caminho.size() and global_position.distance_to(_caminho[_passo]) < TOLERANCIA_DO_PASSO:

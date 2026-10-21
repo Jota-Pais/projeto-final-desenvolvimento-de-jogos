@@ -73,6 +73,15 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   (1280 × 720, cortadas em 16:9 de `design/casa-equipe/` por
   `design/casa_fotos.js`); o quarto é a foto da equipe refeita macabra
   (gerador + `design/sujar_quarto.js`).
+- **O tutorial se passa na região rosa** em volta da sua casa (21/10/2026, a
+  pedido do João). Ela é cercada pelo caos, não por bloqueio oficial — carros
+  jogados, ônibus tombado, caçamba, entulho —, e o cerco **fica sempre, por
+  enquanto**. Lá dentro ninguém corta terreno: cada lote tem muro, grade,
+  alambrado, tábua ou tapume, e cada material diz se deixa ver e atirar através
+  (`rua/camadas.gd`). Com você dentro, a noite traz a horda para dentro do
+  cerco. **As peças são cinza** até a arte do PixelLab entrar. A casa colada a
+  leste da sua é a do Antônio, o vizinho do roteiro do tutorial
+  (`design/narrativa.md`): selada, ninguém entra.
 
 ## As regras que o código implementa
 
@@ -157,7 +166,9 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `design/retocar_chao.gd` | aplica `rua/arte/chao/paleta.json` a um tileset recém-gerado e lista as cores que não conhece: `Godot --headless --script design/retocar_chao.gd -- entrada.png rua/arte/chao/paleta.json saida.png` |
 | `design/desenhar_armas.js` | desenha as oito armas em pixel a partir de um texto e grava os PNG: `node design/desenhar_armas.js rua/arte/armas`, sem dependência |
 
-| `rua/navegacao.gd` | grade A* — é o que faz o zumbi achar o vão da porta |
+| `rua/navegacao.gd` | grade A* — é o que faz o zumbi achar o vão da porta. Muro e cerca entram como segmento, e não como o retângulo que os envolve (21/10/2026) |
+| `rua/barreira.gd` | **muros, cercas e barricadas** (21/10/2026): as regras de cada material — o que segura, a espessura da colisão, a altura da face —, o corte dos vãos e o desenho provisório de cada peça, em cinza, na vista inclinada. Por onde cada uma passa está em `mapa.gd` (`BARREIRAS`, `BARRICADAS` e a `REGIAO_DO_TUTORIAL`) |
+| `rua/camadas.gd` | as camadas de colisão: o que barra o corpo, o que barra a vista do zumbi e o que barra o tiro — grade e alambrado seguram só o corpo; tábua e zinco tapam a vista, mas a bala atravessa |
 | `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
 | `rua/mochila.gd` | os documentos que você carrega, as balas indo para o cinto, e o que atravessa o fim do dia |
 | `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
@@ -179,7 +190,9 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 
 Mudar o mapa = mexer no **desenho** e rodar `node design/tracar_desenho.js`;
 mudar o que uma coisa **é** (nome, tipo, documento, a sua casa) = `ROTULOS` em
-`mapa.gd`. Mudar o que sai dos móveis = `construcao.gd`.
+`mapa.gd`. Mudar o que sai dos móveis = `construcao.gd`. Mudar um muro, uma
+cerca ou uma barricada = `BARREIRAS` e `BARRICADAS` em `mapa.gd`, e rodar o
+`conferir_mapa`, que prova que o cerco do tutorial continua fechado.
 
 ### Como o desenho vira mapa
 

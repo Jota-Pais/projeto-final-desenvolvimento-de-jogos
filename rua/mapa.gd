@@ -37,6 +37,7 @@
 ## é polígono pintado; mata ganha árvore sólida, água ganha colisão.
 
 const Construcao := preload("res://rua/construcao.gd")
+const Barreira := preload("res://rua/barreira.gd")
 
 const ARQUIVO_DO_TRACADO := "res://rua/mapa_tracado.json"
 
@@ -58,13 +59,15 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## tortas (a segunda casa abandonada e o vendedor de melancia viraram prédio).
 ## Versão 5 (20/10/2026): a sua casa mudou de prédio, a pedido do João - a
 ## antiga ganhou os móveis de casa e a nova, selada, perdeu os dela.
-const VERSAO_DO_MAPA := 5
+## Versão 6 (21/10/2026): a casa do Antônio, vizinha da sua, ficou selada para
+## o roteiro do tutorial e perdeu os móveis dela.
+const VERSAO_DO_MAPA := 6
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "3bcd05fb"
+const IMPRESSAO_ESPERADA := "b79463ac"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
@@ -105,6 +108,11 @@ const ROTULOS := [
 	{ "nome": "Mansão", "ponto": Vector2(888.0, 290.0), "tipo": "mansao", "documento": 5 },
 	{ "nome": "Casa do fazendeiro", "ponto": Vector2(742.0, 254.0), "tipo": "casa", "documento": 6 },
 	{ "nome": "sua casa", "ponto": Vector2(1181.0, 645.0), "tipo": "casa", "sua": true },
+	# O vizinho do bunker do roteiro do tutorial (design/narrativa.md): a casa
+	# colada a leste da sua, a mais fortificada do bairro (Joao, 20/10/2026).
+	# Selada como a sua - ninguem entra; fala-se com ele no portao. Sem movel e
+	# sem zumbi na porta.
+	{ "nome": "Casa do Antônio", "ponto": Vector2(1214.0, 647.0), "tipo": "casa", "selada": true },
 	{ "nome": "Campo ANEV (norte)", "ponto": Vector2(950.0, 455.0), "tipo": "campo" },
 	{ "nome": "Campo ANEV (sul)", "ponto": Vector2(1376.0, 700.0), "tipo": "campo" },
 	{ "nome": "Prisão", "ponto": Vector2(1005.0, 670.0), "tipo": "prisao" },
@@ -170,6 +178,36 @@ const ZUMBIS_NA_RUA := [
 	Vector2(870.0, 690.0), Vector2(1012.0, 606.0), Vector2(1250.0, 420.0), Vector2(1255.0, 600.0),
 	Vector2(1040.0, 330.0), Vector2(960.0, 300.0), Vector2(640.0, 250.0), Vector2(1200.0, 330.0),
 ]
+
+## As barreiras: muros, cercas e barricadas em linha (21/10/2026; as regras de
+## cada tipo estao em rua/barreira.gd). Cada uma e uma polilinha em px do PNG,
+## como os ROTULOS: `tipo` (Barreira.TIPOS), `pontos`, `vaos` - cada um
+## { "ponto", "largura_mundo", "portao" }, com o portao (um tipo) fechando o
+## vao ou null deixando-o aberto -, `grupo` ("cerco_do_tutorial" ou "") e,
+## opcionais, `fechada`, `topo`, `estado`, `cor` e `porque`. O cerco do tutorial
+## e o grupo "cerco_do_tutorial": a regiao rosa do Joao, fechada sempre, por
+## enquanto (ver `cerco_ligado`).
+const BARREIRAS := []
+
+## As barricadas soltas (Barreira.OBJETOS): `tipo`, `ponto` (px do PNG),
+## `giro_graus`, `grupo`.
+const BARRICADAS := []
+
+## A regiao do tutorial, em px do PNG: o contorno rosa do Joao (20/10/2026),
+## encaixado nas linhas e predios do desenho. E o que o conferir_mapa usa para
+## provar que o cerco fecha, e onde a horda da noite nasce quando o jogador
+## esta dentro.
+const REGIAO_DO_TUTORIAL := []
+
+## O cerco do tutorial existe. **Fica sempre, por enquanto** (Joao, 20/10:
+## como o resto do mapa abre se decide depois); as ferramentas desligam para
+## conferir o mapa inteiro. Mude antes de o mapa montar.
+static var cerco_ligado := true
+
+## Esquece o mundo montado, e a proxima leitura monta de novo. So para as
+## ferramentas: o conferir_mapa confere com o cerco ligado e desligado.
+static func remontar() -> void:
+	_montado = {}
 
 ## Quanto o jogador nasce afastado da porta, para fora. Maior que a meia
 ## altura da zona de detecção da porta (50 px desde 20/10/2026, eram 80) mais
@@ -285,7 +323,7 @@ static func construcao_com_a_frente_livre(tipo: String, de: Vector2, alcance: fl
 		frente_minima: float, extras: Array = []) -> Dictionary:
 	var candidatas: Array = []
 	for c in mundo()["construcoes"]:
-		if c["tipo"] == tipo and not c.get("sua", false):
+		if c["tipo"] == tipo and not c.get("sua", false) and not c.get("selada", false):
 			candidatas.append(c)
 	candidatas.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return (a["rect"] as Rect2).get_center().distance_to(de) \
@@ -320,7 +358,7 @@ static func _tem_algo_solido_em(area: Rect2, menos: Dictionary, extras: Array) -
 	for extra in extras:
 		if (extra as Rect2).intersects(area):
 			return true
-	return false
+	return _tem_barreira_em(tudo, area)
 
 ## Um ponto do PNG original (px, como um editor de imagem mostra) em
 ## coordenada de mundo - para ferramenta que quer apontar um lugar do desenho.
@@ -382,6 +420,9 @@ static func _montar() -> Dictionary:
 		"zumbis": [],
 		"agua": [],
 		"solidos": [],
+		# As barreiras (21/10/2026): trechos já cortados nos vãos, em mundo.
+		"barreiras": [],
+		"barricadas": [],
 		# Peças que o mapa anterior tinha e o cenário ainda sabe ler. Vazias.
 		"cercas": [],
 		"piso": [],
@@ -442,8 +483,94 @@ static func _montar() -> Dictionary:
 
 	_rotular(tudo, tracado, recorte)
 	_encolher_quem_nao_cabe(tudo)
+	# Antes dos zumbis: ponto de zumbi em cima de muro e pulado.
+	_barreiras(tudo, recorte)
 	_zumbis(tudo, recorte)
 	return tudo
+
+## As barreiras e as barricadas em coordenada de mundo. Cada trecho continuo de
+## uma barreira, depois de cortados os vaos, vira uma entrada { nome, tipo,
+## grupo, pontos }; o vao com portao vira um trecho do tipo do portao. Quem
+## consome nunca ve vao. O cerco do tutorial so entra com `cerco_ligado`.
+static func _barreiras(tudo: Dictionary, recorte: Rect2) -> void:
+	for barreira in BARREIRAS:
+		var grupo: String = barreira.get("grupo", "")
+		if grupo == "cerco_do_tutorial" and not cerco_ligado:
+			continue
+		var pontos := PackedVector2Array()
+		for p in barreira["pontos"]:
+			pontos.append(_do_png(p, recorte))
+		if barreira.get("fechada", false) and pontos.size() > 2:
+			pontos.append(pontos[0])
+		var vaos: Array = []
+		for vao in barreira.get("vaos", []):
+			vaos.append({ "ponto": _do_png(vao["ponto"], recorte),
+				"largura": float(vao.get("largura_mundo", Barreira.VAO)), "portao": vao.get("portao") })
+		var nome: String = barreira.get("nome", "")
+		for trecho in Barreira.trechos(pontos, vaos):
+			tudo["barreiras"].append({ "nome": nome, "tipo": barreira["tipo"], "grupo": grupo, "pontos": trecho })
+		for vao in vaos:
+			if vao["portao"] != null:
+				tudo["barreiras"].append({ "nome": "%s (portão)" % nome, "tipo": vao["portao"],
+					"grupo": grupo, "pontos": Barreira.vao_na_linha(pontos, vao) })
+	for objeto in BARRICADAS:
+		var grupo: String = objeto.get("grupo", "")
+		if grupo == "cerco_do_tutorial" and not cerco_ligado:
+			continue
+		tudo["barricadas"].append({ "nome": objeto.get("nome", ""), "tipo": objeto["tipo"], "grupo": grupo,
+			"pos": _do_png(objeto["ponto"], recorte), "giro": float(objeto.get("giro_graus", 0.0)) })
+
+## Os quatro cantos de uma barricada girada, em mundo.
+static func cantos_da_barricada(barricada: Dictionary) -> PackedVector2Array:
+	var meio: Vector2 = Barreira.OBJETOS[barricada["tipo"]]["tamanho"] / 2.0
+	var giro := deg_to_rad(barricada["giro"])
+	var cantos := PackedVector2Array()
+	for c in [Vector2(-meio.x, -meio.y), Vector2(meio.x, -meio.y), Vector2(meio.x, meio.y), Vector2(-meio.x, meio.y)]:
+		cantos.append((barricada["pos"] as Vector2) + c.rotated(giro))
+	return cantos
+
+## Se alguma barreira ou barricada passa dentro de `area` (mundo).
+static func tem_barreira_em(area: Rect2) -> bool:
+	return _tem_barreira_em(mundo(), area)
+
+## A mesma pergunta sobre um mundo dado - a montagem chama isto antes de o
+## mundo existir (mundo() ali entraria em laco).
+static func _tem_barreira_em(tudo: Dictionary, area: Rect2) -> bool:
+	for barreira in tudo["barreiras"]:
+		var pontos: PackedVector2Array = barreira["pontos"]
+		for i in range(1, pontos.size()):
+			if _segmento_cruza(pontos[i - 1], pontos[i], area):
+				return true
+	for barricada in tudo["barricadas"]:
+		var cantos := cantos_da_barricada(barricada)
+		var caixa := Rect2(cantos[0], Vector2.ZERO)
+		for c in cantos:
+			caixa = caixa.expand(c)
+		if caixa.intersects(area):
+			return true
+	return false
+
+static func _segmento_cruza(a: Vector2, b: Vector2, area: Rect2) -> bool:
+	if area.has_point(a) or area.has_point(b):
+		return true
+	var c := [area.position, Vector2(area.end.x, area.position.y), area.end, Vector2(area.position.x, area.end.y)]
+	for i in 4:
+		if Geometry2D.segment_intersects_segment(a, b, c[i], c[(i + 1) % 4]) != null:
+			return true
+	return false
+
+## A regiao do tutorial em mundo (ver REGIAO_DO_TUTORIAL).
+static func regiao_do_tutorial() -> PackedVector2Array:
+	mundo()
+	var fora := PackedVector2Array()
+	for p in REGIAO_DO_TUTORIAL:
+		fora.append(_do_png(p, _recorte))
+	return fora
+
+## Se o ponto esta dentro da regiao do tutorial. Sem regiao, ninguem esta.
+static func dentro_do_cerco(ponto: Vector2) -> bool:
+	var regiao := regiao_do_tutorial()
+	return regiao.size() >= 3 and Geometry2D.is_point_in_polygon(ponto, regiao)
 
 ## Veículos do desenho com nome próprio (15/10/2026, lidos nos prints do
 ## Canva): o azul perto do ponto vira o tipo dito, em vez de "carro". Ponto em
@@ -554,6 +681,10 @@ static func _rotular(tudo: Dictionary, tracado: Dictionary, recorte: Rect2) -> v
 		if rotulo.get("sua", false):
 			alvo["sua"] = true
 			_sua_casa = alvo
+		if rotulo.get("selada", false):
+			# Selada como a sua: sem movel, sem zumbi na porta, e o
+			# conferir_mapa cobra que nenhum quarto dela se alcance a pe.
+			alvo["selada"] = true
 		if rotulo.get("queimada", false):
 			# Casa queimada (15/10/2026): telhado, parede e piso carbonizados
 			# (rua/telhados.gd e rua/cenario.gd); o anexo herda abaixo.
@@ -596,7 +727,7 @@ static func _encolher_quem_nao_cabe(tudo: Dictionary) -> void:
 ## Ponto que cai dentro de parede, água ou outro prédio é pulado.
 static func _zumbis(tudo: Dictionary, recorte: Rect2) -> void:
 	for construcao in tudo["construcoes"]:
-		if construcao["anexo"] or construcao.get("sua", false):
+		if construcao["anexo"] or construcao.get("sua", false) or construcao.get("selada", false):
 			continue
 		var achou := false
 		for distancia in [RECUO_DO_ZUMBI, RECUO_DO_ZUMBI * 0.6, RECUO_DO_ZUMBI * 1.5]:
@@ -631,4 +762,4 @@ static func _da_para_nascer(tudo: Dictionary, onde: Vector2) -> bool:
 		var r := Rect2((movel["pos"] as Vector2) - (movel["tamanho"] as Vector2) / 2.0, movel["tamanho"])
 		if r.grow(20.0).intersects(corpo):
 			return false
-	return true
+	return not _tem_barreira_em(tudo, corpo.grow(20.0))

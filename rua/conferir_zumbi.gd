@@ -7,7 +7,8 @@ extends Node
 ##  1. nenhum zumbi nasce dentro de parede;
 ##  2. a navegacao acha caminho da rua ate dentro de casa, do galpao e do
 ##     mercadinho - e de um canto do mapa ao outro;
-##  3. parede corta a linha de visao, e ele nao ve pelas costas;
+##  3. parede corta a linha de visao, e ele nao ve pelas costas; nas
+##     barreiras (21/10/2026), ve atraves de grade e nao de tapume nem muro;
 ##  4. ele persegue, toca, e o toque **interrompe o vasculho**;
 ##  5. ele **entra na casa** atras de voce;
 ##  6. quem enxerga chama a horda.
@@ -32,6 +33,7 @@ const CENA_DA_RUA := preload("res://rua/rua.tscn")
 ## So para o TAMANHO do corpo do zumbi - uma copia a mao ficava para tras quando
 ## ele encolheu (20/10/2026).
 const Zumbi := preload("res://rua/zumbi.gd")
+const Camadas := preload("res://rua/camadas.gd")
 
 # Os estados do zumbi, na ordem do enum dele.
 const VAGANDO := 0
@@ -242,11 +244,19 @@ func _navegacao() -> void:
 	# Da praca ate a porta de casa: um caminho longo, atravessando o miolo da
 	# cidade. O alvo e a **soleira**, e nao a porta: desde 16/09/2026 a porta e
 	# um corpo solido, e o zumbi que persegue voce ate em casa para na calcada.
+	# Com o cerco do tutorial (21/10/2026) e a praca do lado de fora, o certo
+	# e o contrario: o zumbi de la nao tem caminho ate a sua casa.
 	var soleira := Mapa.onde_o_jogador_nasce()
 	var praca := (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
 	_nav.remontar_em((praca + soleira) / 2.0)
 	var longe: PackedVector2Array = _nav.caminho(praca, soleira)
-	if longe.is_empty():
+	var cercada := Mapa.cerco_ligado and Mapa.dentro_do_cerco(soleira) and not Mapa.dentro_do_cerco(praca)
+	if cercada:
+		if not longe.is_empty():
+			_erro("com o cerco ligado, o zumbi da praca acha caminho ate a sua casa")
+		else:
+			print("  praca -> casa             sem caminho: o cerco do tutorial segura")
+	elif longe.is_empty():
 		_erro("sem caminho da praca ate a porta de casa")
 	else:
 		print("  praca -> casa             %3d pontos, %.0f px" % [longe.size(), _tamanho(longe)])
@@ -264,6 +274,16 @@ func _tamanho(caminho: PackedVector2Array) -> float:
 
 var _caso_da_visao := 0
 
+## As barreiras de teste dos casos 3 a 5 (21/10/2026): uma de cada material,
+## na praca, entre o zumbi e o jogador - o que a vista atravessa e o que ela
+## nao atravessa (rua/camadas.gd).
+const MATERIAIS_DA_VISTA := [
+	{ "nome": "grade", "camada": Camadas.SO_CORPO, "ve": true },
+	{ "nome": "tapume", "camada": Camadas.CORPO_E_VISAO, "ve": false },
+	{ "nome": "muro", "camada": Camadas.SOLIDO, "ve": false },
+]
+var _barreira_de_teste: StaticBody2D
+
 ## Posiciona num quadro e consulta tres quadros depois: a linha de visao e
 ## raycast, e a fisica so ve a posicao nova no passo seguinte. O zumbi fica
 ## congelado, senao ele anda e sobrescreve o _olhando com a propria velocidade.
@@ -274,6 +294,10 @@ func _linha_de_visao() -> void:
 	var casa := _uma_construcao("casa")
 	var zumbi = _zumbis[0]
 	var porta := Construcao.porta_de(casa)
+
+	if _caso_da_visao >= 3:
+		_vista_e_material(zumbi)
+		return
 
 	if _quadros == 1:
 		zumbi.set_physics_process(false)
@@ -314,7 +338,38 @@ func _linha_de_visao() -> void:
 
 	_caso_da_visao += 1
 	_quadros = 0
-	if _caso_da_visao > 2:
+
+## Os casos 3 a 5: na praca, o zumbi olhando para o jogador a 80 px, com uma
+## barreira de teste do material no meio.
+func _vista_e_material(zumbi: Node2D) -> void:
+	var material: Dictionary = MATERIAIS_DA_VISTA[_caso_da_visao - 3]
+	var meio := (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
+	if _quadros == 1:
+		if _barreira_de_teste == null:
+			_barreira_de_teste = StaticBody2D.new()
+			_barreira_de_teste.collision_mask = 0
+			var forma := CollisionShape2D.new()
+			forma.shape = RectangleShape2D.new()
+			(forma.shape as RectangleShape2D).size = Vector2(160.0, 6.0)
+			_barreira_de_teste.add_child(forma)
+			_bairro.add_child(_barreira_de_teste)
+			_barreira_de_teste.global_position = meio
+		_barreira_de_teste.collision_layer = material["camada"]
+		zumbi.global_position = meio + Vector2(0.0, 40.0)
+		zumbi._olhando = Vector2.UP
+		_jogador.global_position = meio + Vector2(0.0, -40.0)
+		return
+	if _quadros < 4:
+		return
+	var ve: bool = zumbi._ve_o_jogador()
+	if ve != material["ve"]:
+		_erro("atras de %s, o zumbi %s o jogador" % [material["nome"], "ve" if ve else "nao ve"])
+	else:
+		print("  atras de %s: %s" % [material["nome"], "ve" if ve else "nao ve"])
+	_caso_da_visao += 1
+	_quadros = 0
+	if _caso_da_visao - 3 >= MATERIAIS_DA_VISTA.size():
+		_barreira_de_teste.queue_free()
 		zumbi.set_physics_process(true)
 		_passar()
 

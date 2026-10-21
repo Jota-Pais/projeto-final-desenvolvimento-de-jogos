@@ -80,6 +80,10 @@ const SEGUNDOS_DO_RECUO := 0.1
 ## som de fundo (ver _soar).
 const Mapa := preload("res://rua/mapa.gd")
 
+## As camadas de colisao (rua/camadas.gd): ele bate em toda barreira, ate na
+## que se ve e atira atraves.
+const Camadas := preload("res://rua/camadas.gd")
+
 ## Os passos, por onde ele pisa (sons do Drive, 20/10/2026). Cada um e um loop
 ## de varios passos, nao um passo so: toca enquanto ele anda e para quando ele
 ## para. Dentro e o piso de madeira, que nao tem versao correndo - correr
@@ -120,6 +124,7 @@ var _passos: AudioStreamPlayer
 
 
 func _ready() -> void:
+	collision_mask = Camadas.ANDAR
 	_arma.atirou.connect(_ao_atirar)
 	_passos = AudioStreamPlayer.new()
 	add_child(_passos)

@@ -21,7 +21,13 @@ extends Node
 ##
 ## O item 1 e o unico que pode reprovar o DESENHO e nao o codigo: se o bairro
 ## nao tiver documento bastante, a partida e inganhavel e nada aqui avisaria.
+##
+## **Roda com o cerco do tutorial desligado** (21/10/2026). Com ele, os
+## documentos ficam do lado de fora e a partida nao se ganha - decisao do
+## Joao, "sem vitoria por enquanto" -; o que se confere aqui e o ciclo de fim
+## de jogo, que vale para quando o mapa abrir.
 
+const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const Cenario := preload("res://rua/cenario.gd")
 const Relogio := preload("res://rua/relogio.gd")
@@ -48,6 +54,8 @@ func _process(_delta: float) -> void:
 	if _rodou:
 		return
 	_rodou = true
+	Mapa.cerco_ligado = false
+	Mapa.remontar()
 
 	_a_partida_da_para_ganhar()
 	_a_cura_e_a_vitoria()
