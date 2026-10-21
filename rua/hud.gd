@@ -139,9 +139,10 @@ func _linha_da_direita(mochila: Node) -> String:
 	if mochila == null:
 		return "mochila   —"
 	var quantos: int = mochila.quantos()
+	# O mapa (21/10/2026) ganha a pista dele embaixo, pelo mesmo motivo.
 	if quantos == 0:
-		return "mochila   vazia   [Tab]"
-	return "mochila   %d documento%s   [Tab]" % [quantos, "" if quantos == 1 else "s"]
+		return "mochila   vazia   [Tab]\nmapa   [M]"
+	return "mochila   %d documento%s   [Tab]\nmapa   [M]" % [quantos, "" if quantos == 1 else "s"]
 
 ## A linha propria do documento, acima da mochila, ficou vazia desde que a
 ## mochila so carrega documento (30/09/2026): dizer duas vezes a mesma conta

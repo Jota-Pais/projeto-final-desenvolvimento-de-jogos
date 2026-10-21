@@ -213,6 +213,10 @@ var tutorial := ""
 ## para o outro.
 var tutorial_avisos := {}
 
+## O que o jogador ja viu da cidade, para o mapa do M (rua/mapa_visto.gd faz a
+## conta; 21/10/2026). Atravessa os dias; a partida nova zera.
+var mapa_visto := PackedByteArray()
+
 ## Se o tutorial esta em andamento.
 func no_tutorial() -> bool:
 	return tutorial != "" and tutorial != "fim"
@@ -223,6 +227,7 @@ func comecar_partida(qual: int) -> void:
 	modo = qual as Modo
 	tutorial = "abertura"
 	tutorial_avisos.clear()
+	mapa_visto = PackedByteArray()
 	armado = false
 	na_mao = ""
 	arremessaveis = { "pedra": 0, "garrafa": 0 }
@@ -323,6 +328,7 @@ func recomecar() -> void:
 	arremessaveis = { "pedra": 0, "garrafa": 0 }
 	tutorial = ""
 	tutorial_avisos.clear()
+	mapa_visto = PackedByteArray()
 	balas = balas_de_comeco()
 	documentos.clear()
 	documentos_lidos.clear()

@@ -117,6 +117,9 @@ var _tarjas: Array[ColorRect] = []
 
 func _ready() -> void:
 	if Travessia.tutorial == "" or Travessia.tutorial == "fim":
+		# Sem o _process do quadro em que ainda existe: a tela dele nem foi
+		# montada.
+		set_process(false)
 		queue_free()
 		return
 	# A caixa de fala de perto para o jogo; o tutorial espera por ela.
@@ -247,6 +250,11 @@ func _cena(entrando: bool, segundos := 0.6) -> void:
 func _avisar(texto: String) -> void:
 	_aviso.text = texto
 	_tempo_do_aviso = AVISO_NA_TELA
+
+## Para onde o objetivo aponta agora (mundo), ou NAN sem alvo: o mapa do M
+## marca (rua/tela_do_mapa.gd).
+func alvo_do_objetivo() -> Vector2:
+	return _alvo
 
 func _mostrar_objetivo(texto: String, alvo := Vector2(NAN, NAN)) -> void:
 	_objetivo.text = texto

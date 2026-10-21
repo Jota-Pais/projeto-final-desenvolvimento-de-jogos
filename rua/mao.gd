@@ -13,6 +13,7 @@ extends Node2D
 const Arremessado := preload("res://rua/arremessado.gd")
 const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 const Camadas := preload("res://rua/camadas.gd")
+const TelaDoMapa := preload("res://rua/tela_do_mapa.gd")
 
 ## O arremesso jogou `qual` para `onde` (o tutorial escuta).
 signal arremessou(qual: String, onde: Vector2)
@@ -49,7 +50,8 @@ func _unhandled_input(evento: InputEvent) -> void:
 		return
 	if botao.button_index != MOUSE_BUTTON_WHEEL_UP and botao.button_index != MOUSE_BUTTON_WHEEL_DOWN:
 		return
-	if TelaDaMochila.aberta or _jogador.get("no_roteiro"):
+	# Com o mapa aberto o scroll aproxima o mapa (rua/tela_do_mapa.gd).
+	if TelaDaMochila.aberta or _jogador.get("no_roteiro") or TelaDoMapa.aberto:
 		return
 	Travessia.passar_a_mao(-1 if botao.button_index == MOUSE_BUTTON_WHEEL_UP else 1)
 	_carregando = false

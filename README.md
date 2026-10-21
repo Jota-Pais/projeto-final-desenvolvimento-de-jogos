@@ -33,6 +33,7 @@ sendo editada no Godot.
 | mouse | mirar |
 | botão esquerdo | usar o que está na mão: com a arma, atirar; com a pedra ou a garrafa, segurar para mirar mais longe e soltar para jogar |
 | `Tab` | abrir a mochila |
+| `M` | abrir o mapa: só o que você já viu, o resto debaixo da neblina; o scroll aproxima, `M` ou `Esc` fecha. O jogo não para |
 
 O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de luz
 (07:00 às 19:00) e **vasculhar gasta luz em dobro**. Volte à porta de casa antes
@@ -204,6 +205,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
 | `rua/mochila.gd` | os documentos que você carrega, as balas indo para o cinto, e o que atravessa o fim do dia |
 | `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
+| `rua/tela_do_mapa.gd` | **o mapa do `M`** (21/10/2026): o desenho simples da cidade (rua, calçada, grama, prédio, muro) com neblina no que nunca passou na tela, enquadrando o que já se viu; marca você, a sua casa, os nomes dos lugares vistos e o objetivo do tutorial. O mundo roda atrás, como na mochila. É também quem marca o visto, a cada quadro, pelo que a câmera mostra |
+| `rua/mapa_visto.gd` | a grade do que já se viu (célula de 32 px), guardada em `Travessia.mapa_visto`: atravessa os dias e zera na partida nova; já no formato da textura da neblina |
 | `rua/mao.gd` | **a mão** (21/10/2026): o scroll troca o que está na mão (`Travessia.na_mao`) e o botão esquerdo usa; com a pedra ou a garrafa, segurar carrega a distância até o limite e desenha a mira (o arco, o alvo e até onde o barulho chama), e soltar joga |
 | `rua/arremessado.gd` | a pedra ou a garrafa no ar e onde ela cai: o barulho chama todo zumbi perto (`foi_chamado`, o mesmo do tiro); a garrafa chama de mais longe e deixa cacos |
 | `rua/bracos.gd` | **as mãos** (21/10/2026): a arma vai na mão que o desenho do boneco já tem — porte baixo, apontada para onde ele olha, balançando com o braço quando ele anda —, com o punho por cima do cabo e, nas armas longas, a outra mão no guarda-mão quando ela não aparece no desenho; segura a pedra e a garrafa, e ergue a mão para trás do ombro mirando o arremesso. Nada de braço desenhado do quadril até a arma: com as mãos do desenho na tela, viraria mão sobrando |
@@ -293,6 +296,7 @@ jogando dois minutos.
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
