@@ -122,6 +122,8 @@ const COR_DO_DOCUMENTO := Color("e8b061")
 
 var _progresso := 0.0
 var _jogador_dentro := false
+## O aviso "E  vasculhar" na tela (jogador dentro e fora de roteiro).
+var _mostrando_o_aviso := false
 
 ## Sem nada dentro.
 var _vazio := false
@@ -171,8 +173,15 @@ func _process(delta: float) -> void:
 	if TelaDaMochila.aberta:
 		return
 
+	# Sob roteiro (a cena de abertura do tutorial) o E passa a fala: nada de
+	# vasculhar o morto do lado, nem o aviso na tela.
+	var pode := _jogador_dentro and not _jogador_no_roteiro()
+	if pode != _mostrando_o_aviso:
+		_mostrando_o_aviso = pode
+		queue_redraw()
+
 	var antes := _progresso
-	if _jogador_dentro and Input.is_action_pressed("vasculhar"):
+	if pode and Input.is_action_pressed("vasculhar"):
 		_progresso += delta
 		vasculhando.emit(delta)
 		if _progresso >= duracao:
@@ -183,6 +192,10 @@ func _process(delta: float) -> void:
 
 	if _progresso != antes:
 		queue_redraw()
+
+func _jogador_no_roteiro() -> bool:
+	var jogador := get_tree().get_first_node_in_group("jogador")
+	return jogador != null and bool(jogador.get("no_roteiro"))
 
 ## Zera o vasculho em andamento. Quem pressiona o jogador chama isto - o zumbi
 ## e o primeiro cliente.
@@ -395,7 +408,7 @@ func _draw() -> void:
 		draw_rect(cheio, COR_BARRA)
 		draw_rect(barra, Color(0.0, 0.0, 0.0, 0.5), false, 1.0)
 
-	if _jogador_dentro:
+	if _mostrando_o_aviso:
 		draw_string(fonte, Vector2(esquerda, -26.0), "E  vasculhar %s (%.1fs)" % [rotulo, duracao],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_AVISO)
 	draw_set_transform(Vector2.ZERO)

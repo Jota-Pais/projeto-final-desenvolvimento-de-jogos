@@ -250,6 +250,9 @@ var _clarao_do_dano: Tween
 
 func _ready() -> void:
 	add_to_group("zumbi")
+	# A morte boa e a do oeste, espelhada para o leste (rua/boneco.gd,
+	# acoes_de_um_lado): as outras direcoes sairam com braco sobrando.
+	_boneco.acoes_de_um_lado = { "morrer": "oeste" }
 	collision_mask = Camadas.ANDAR
 	var forma := RectangleShape2D.new()
 	forma.size = TAMANHO

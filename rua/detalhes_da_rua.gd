@@ -53,8 +53,8 @@ const LIGACOES := [
 ## Coisas soltas na calcada: lixeira, orelhao, placa, saco de lixo.
 const NA_RUA := [
 	{ "tipo": "orelhao", "png": Vector2(1160.0, 612.0) },
-	{ "tipo": "lixeira", "png": Vector2(1118.0, 612.5), "variante": 2 },
-	{ "tipo": "saco_de_lixo", "png": Vector2(1121.0, 612.5), "variante": 1 },
+	{ "tipo": "lixeira", "png": Vector2(1124.0, 612.5), "variante": 2 },
+	{ "tipo": "saco_de_lixo", "png": Vector2(1122.0, 612.5), "variante": 1 },
 	{ "tipo": "placa_pare", "png": Vector2(1224.5, 626.0) },
 	{ "tipo": "lixeira", "png": Vector2(1250.0, 700.0), "variante": 1 },
 	{ "tipo": "saco_de_lixo", "png": Vector2(1252.0, 701.0) },

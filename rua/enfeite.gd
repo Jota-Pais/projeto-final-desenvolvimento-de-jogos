@@ -32,9 +32,9 @@ const PEGADAS := {
 	"mesa_plastico": Vector2(30, 22),
 	"fogao_industrial": Vector2(70, 32),
 	"engradado": Vector2(26, 20),
-	"botijao": Vector2(16, 14),
+	"botijao": Vector2(10, 6),
 	"lenha": Vector2(60, 24),
-	"lixeira": Vector2(30, 24),
+	"lixeira": Vector2(18, 10),
 	"churrasqueira": Vector2(46, 26),
 	"tanque": Vector2(40, 24),
 	"casinha_cachorro": Vector2(40, 32),
@@ -70,6 +70,22 @@ const PEGADAS := {
 const MOBILIA := ["mesa_toalha", "balcao", "forno_pizza", "bancada", "cama", "sofa", "rack_tv",
 	"mesa_jantar", "pia_fogao", "mesa_bar", "guarda_sol", "mesa_escritorio"]
 const PASTA_DA_MOBILIA := "res://rua/arte/objetos/mobilia/"
+## Os enfeites soltos com desenho do PixelLab (21/10/2026, noite; Joao: "3
+## objetos no PixelLab", questionario: cadeira "Vermelha", lixeira "Conteiner
+## verde"): rua/arte/objetos/<nome>.png, aparados no opaco, desenhados a meia
+## escala - a do boneco, 1 pixel de desenho por pixel de tela com o zoom 2. A
+## cadeira foi pedida com as quatro vistas numa imagem e vieram a de frente e a
+## de lado (a do outro lado e ela espelhada); a de costas continua por regra.
+const PASTA_DOS_SOLTOS := "res://rua/arte/objetos/"
+const ESCALA_DOS_SOLTOS := 0.5
+## As cores do botijao e da lixeira alem da que veio desenhada: o desenho e
+## tingido (ver _tingido); alfa 0 e sem tinta - o azul e o verde do desenho.
+const CORES_DO_BOTIJAO := [Color(0, 0, 0, 0), Color("7a7c7e"), Color("4f7f4f"), Color("a0503e")]
+const LARANJA_DA_LIXEIRA := Color("b86a2a")
+## As linhas do encosto no desenho da cadeira de frente (o resto e assento e
+## pernas).
+const ENCOSTO_DA_CADEIRA := 13.0
+
 ## Quanto um desenho pode subir alem da pegada: a espessura da parede atras
 ## (o mesmo do rua/vasculhavel.gd).
 const FOLGA_SOBRE_A_PAREDE := 20.0
@@ -85,6 +101,7 @@ var tamanho := Vector2.ZERO
 
 static var _texturas := {}
 static var _medidas := {}
+static var _soltos := {}
 
 static func _textura(qual: String) -> Texture2D:
 	if not qual in MOBILIA:
@@ -155,7 +172,7 @@ func _draw() -> void:
 		"bebedouro": _bebedouro()
 		"latas": _latas()
 		"mesa_plastico": _mesa_plastico()
-		"cadeira_plastico": _cadeira(PLASTICO)
+		"cadeira_plastico": _cadeira_plastico()
 		"cadeira": _cadeira(MADEIRA.lightened(0.1))
 		"guarda_sol": _guarda_sol()
 		"cavalete": _cavalete()
@@ -261,6 +278,86 @@ func _cadeira(cor: Color) -> void:
 			draw_rect(Rect2(-6, -24, 12, 3), cor.darkened(0.15))
 			draw_rect(Rect2(-8, -26, 16, 13), CONTORNO, false, 1.0)
 
+## A cadeira de plastico do desenho: de frente olhando para o sul, de lado
+## para leste e oeste (espelhada), tombada e a de lado deitada. De costas
+## (olhando para o norte) e montada da de frente: o assento e as pernas no
+## lugar e o encosto (as ENCOSTO_DA_CADEIRA linhas de cima do desenho) descido
+## para a frente do assento, que e onde ele fica visto por tras.
+func _cadeira_plastico() -> void:
+	var frente := _solto("cadeira_plastico")
+	if variante % 5 == 4:
+		_deitado(_solto("cadeira_plastico_lado"), PI / 2.0)
+		return
+	if olhando == "norte":
+		var k := ESCALA_DOS_SOLTOS
+		var tam := frente.get_size()
+		var e := ENCOSTO_DA_CADEIRA
+		_sombra_redonda(tam.x * k * 0.5)
+		draw_texture_rect_region(frente, Rect2(-tam.x * k / 2.0, (-tam.y + e) * k, tam.x * k, (tam.y - e) * k),
+			Rect2(0.0, e, tam.x, tam.y - e))
+		draw_texture_rect_region(frente, Rect2(-tam.x * k / 2.0, (-tam.y + e + 4.0) * k, tam.x * k, e * k),
+			Rect2(0.0, 0.0, tam.x, e))
+		return
+	if olhando == "leste" or olhando == "oeste":
+		_em_pe(_solto("cadeira_plastico_lado"), olhando == "oeste")
+		return
+	_em_pe(frente)
+
+## Um enfeite solto deitado no chao: o desenho de pe girado de `angulo`, com o
+## lado de baixo no chao.
+func _deitado(desenho: Texture2D, angulo: float) -> void:
+	var k := ESCALA_DOS_SOLTOS
+	_elipse(Vector2(2.0, 0.0), Vector2(desenho.get_height() * k * 0.5, 3.0), SOMBRA, false)
+	draw_set_transform(Vector2(0.0, PE - desenho.get_width() * k / 2.0), angulo, Vector2.ONE * k)
+	draw_texture(desenho, -desenho.get_size() / 2.0)
+	draw_set_transform(Vector2(0.0, PE))
+
+## Um enfeite solto desenhado de pe: o pe do desenho no chao, centrado, com a
+## sombra embaixo; `espelhar` vira para o outro lado.
+func _em_pe(desenho: Texture2D, espelhar := false) -> void:
+	var tamanho_no_mundo := desenho.get_size() * ESCALA_DOS_SOLTOS
+	_sombra_redonda(tamanho_no_mundo.x * 0.5)
+	var caixa := Rect2(Vector2(-tamanho_no_mundo.x / 2.0, -tamanho_no_mundo.y), tamanho_no_mundo)
+	if espelhar:
+		caixa = Rect2(Vector2(caixa.end.x, caixa.position.y), Vector2(-caixa.size.x, caixa.size.y))
+	draw_texture_rect(desenho, caixa, false)
+
+## O desenho solto `nome`, tingido de `cor` quando ela vem (alfa > 0): cada
+## pixel guarda o claro e escuro dele e ganha a cor nova, e o contorno preto
+## fica. Feito uma vez por cor.
+static func _solto(nome: String, cor := Color(0, 0, 0, 0)) -> Texture2D:
+	var chave := "%s#%s" % [nome, cor.to_html()]
+	if _soltos.has(chave):
+		return _soltos[chave]
+	var caminho := PASTA_DOS_SOLTOS + nome + ".png"
+	var textura: Texture2D = load(caminho)
+	if cor.a > 0.0:
+		textura = _tingido(textura, cor)
+	_soltos[chave] = textura
+	return textura
+
+static func _tingido(textura: Texture2D, cor: Color) -> Texture2D:
+	var imagem := textura.get_image()
+	imagem.decompress()
+	# O claro medio do desenho vira a cor pedida; o resto acompanha.
+	var soma := 0.0
+	var n := 0
+	for y in imagem.get_height():
+		for x in imagem.get_width():
+			var c := imagem.get_pixel(x, y)
+			if c.a > 0.5 and c.get_luminance() > 0.12:
+				soma += c.get_luminance()
+				n += 1
+	var media := soma / maxf(1.0, float(n))
+	for y in imagem.get_height():
+		for x in imagem.get_width():
+			var c := imagem.get_pixel(x, y)
+			if c.a <= 0.0 or c.get_luminance() <= 0.12:
+				continue
+			var k := c.get_luminance() / media
+			imagem.set_pixel(x, y, Color(minf(1.0, cor.r * k), minf(1.0, cor.g * k), minf(1.0, cor.b * k), c.a))
+	return ImageTexture.create_from_image(imagem)
+
 func _guarda_sol() -> void:
 	_sombra_redonda(30.0)
 	draw_line(Vector2(0, 0), Vector2(0, -46), FERRO, 2.0)
@@ -315,21 +412,13 @@ func _engradado() -> void:
 	draw_rect(topo, CONTORNO, false, 1.0)
 
 func _botijao() -> void:
-	_sombra_redonda(8.0)
-	var cores := [Color("3e6fa0"), Color("7a7c7e"), Color("4f7f4f"), Color("a0503e")]
-	var cor: Color = cores[variante % 4]
+	var desenho := _solto("botijao", CORES_DO_BOTIJAO[variante % 4])
 	if variante % 5 == 4:
-		# Deitado.
-		draw_rect(Rect2(-12, -9, 24, 12), cor)
-		_elipse(Vector2(12, -3), Vector2(3, 6), cor.darkened(0.2))
-		draw_rect(Rect2(-12, -9, 24, 12), CONTORNO, false, 1.0)
+		# Deitado: o desenho de pe, girado.
+		_elipse(Vector2(2, 0), Vector2(10, 3), SOMBRA, false)
+		_deitado(desenho, -PI / 2.0)
 		return
-	draw_rect(Rect2(-7, -20, 14, 20), cor)
-	draw_rect(Rect2(-7, -20, 3, 20), cor.lightened(0.18))
-	_elipse(Vector2(0, -20), Vector2(7, 3), cor.lightened(0.1))
-	draw_rect(Rect2(-2, -26, 4, 5), Color("8a8c8e"))
-	draw_rect(Rect2(-7, -20, 14, 20), CONTORNO, false, 1.0)
-	draw_rect(Rect2(-7, -9, 14, 2), cor.darkened(0.3))
+	_em_pe(desenho)
 
 func _lenha() -> void:
 	draw_rect(Rect2(-28, -4, 60, 6), SOMBRA)
@@ -346,9 +435,7 @@ func _lenha() -> void:
 	draw_rect(Rect2(-30, -30, 60, 30), CONTORNO, false, 1.0)
 
 func _lixeira() -> void:
-	var cor := Color("3f6a3f") if variante % 2 == 0 else Color("b86a2a")
-	_caixa(Rect2(-15, -12, 30, 24), 22.0, cor.lightened(0.1), cor)
-	draw_rect(Rect2(-15, -36, 30, 4), cor.darkened(0.25))
+	_em_pe(_solto("lixeira", LARANJA_DA_LIXEIRA if variante % 2 == 1 else Color(0, 0, 0, 0)))
 	if variante % 3 == 2:
 		_saco_de_lixo_em(Vector2(14, 6))
 

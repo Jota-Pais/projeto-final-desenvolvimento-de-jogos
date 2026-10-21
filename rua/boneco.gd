@@ -49,6 +49,14 @@ const ESCALA := 0.5
 ## `ritmo` para correr ou perseguir com a mesma animacao, de graca.
 @export var quadros_por_segundo := 10.0
 
+## As acoes que so prestam de um lado (21/10/2026): acao -> o setor que vale
+## ("oeste"). O `morrer` do zumbi saiu um zumbi diferente em cada direcao, e
+## em algumas com braco sobrando (Joao: "tem um frame dele morto onde ele ta
+## ficando com 3 bracos"); com isto ele toca sempre o do lado bom, espelhado
+## quando o golpe vem do outro lado, e o morto no chao e sempre o mesmo. A
+## folha gerada fica como veio.
+@export var acoes_de_um_lado := {}
+
 ## Os nomes de direcao do PixelLab e os nomes em portugues que entram no nome
 ## da animacao.
 const NOME_DA_DIRECAO := {
@@ -124,7 +132,7 @@ func tocar(acao: String, direcao: Vector2) -> bool:
 		return false
 	if direcao.length_squared() > 0.0001:
 		_direcao = setor(direcao)
-	var nome := "%s_%s" % [acao, _direcao]
+	var nome := _nome_de_um_lado(acao, direcao)
 	if not sprite_frames.has_animation(nome):
 		return false
 	sprite_frames.set_animation_loop(nome, false)
@@ -133,6 +141,19 @@ func tocar(acao: String, direcao: Vector2) -> bool:
 	_uma_vez = true
 	play(nome)
 	return true
+
+## O nome da animacao de `acao` para `direcao`: a da propria direcao, ou, se
+## a acao so presta de um lado (acoes_de_um_lado), a daquele lado - e o
+## desenho espelhado quando a direcao aponta para o lado contrario.
+func _nome_de_um_lado(acao: String, direcao: Vector2) -> String:
+	if not acoes_de_um_lado.has(acao):
+		flip_h = false
+		return "%s_%s" % [acao, setor(direcao) if direcao.length_squared() > 0.0001 else _direcao]
+	var lado: String = acoes_de_um_lado[acao]
+	var para_o_leste := direcao.x > 0.0
+	# O lado bom olha para oeste: para o leste, espelha.
+	flip_h = para_o_leste if lado == "oeste" else not para_o_leste
+	return "%s_%s" % [acao, lado]
 
 func _ao_terminar() -> void:
 	if not _uma_vez:
@@ -147,7 +168,7 @@ func _ao_terminar() -> void:
 func ultimo_quadro(acao: String, direcao: Vector2) -> bool:
 	if sprite_frames == null:
 		return false
-	var nome := "%s_%s" % [acao, setor(direcao)]
+	var nome := _nome_de_um_lado(acao, direcao)
 	if not sprite_frames.has_animation(nome):
 		return false
 	_uma_vez = false

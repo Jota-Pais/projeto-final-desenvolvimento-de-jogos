@@ -137,22 +137,29 @@ const ORDEM := ["Revólver 38", "Beretta 9mm", "Doze 2 canos", "Benelli semiauto
 
 const PASTA_DOS_DESENHOS := "res://rua/arte/armas/"
 
-## Quanto tempo o cano fica aceso na tela depois do tiro.
+## Quanto tempo o cano fica aceso na tela depois do tiro, e quanto a fumaca
+## leva para subir e sumir.
 const CLARAO := 0.09
+const FUMACA := 0.45
 
 ## Onde fica a mao que segura a arma, em px a partir do centro do jogador (o
 ## pe esta em +20 e a cabeca em -58): altura da cintura. Em px do desenho: este
 ## no tem a escala do boneco (jogador.gd), entao no mundo tudo aqui e metade.
+## Desde 21/10/2026 e so o ponto de partida: a arma vai na mao desenhada do
+## boneco, que os bracos (rua/bracos.gd) acham a cada quadro e poem em
+## `mao_na_folha` - ela balanca com o braco quando ele anda.
 const MAO := Vector2(0.0, -18.0)
 ## Quanto a arma avanca da mao na direcao em que ele olha, e quanto o avanco
 ## vertical se achata pela perspectiva do high top-down.
-const BRACO := 12.0
+const BRACO := 3.0
 const ACHATAMENTO := 0.5
 ## O coice volta em ESPERA_DO_COICE segundos.
 const ESPERA_DO_COICE := 0.08
 
 const COR_DA_MIRA := Color(0.85, 0.35, 0.3, 0.22)
 const COR_DO_CLARAO := Color(1.0, 0.92, 0.62, 0.85)
+const COR_DO_MEIO_DO_CLARAO := Color(1.0, 1.0, 0.92, 0.95)
+const COR_DA_FUMACA := Color(0.72, 0.72, 0.68, 0.4)
 
 ## Emitido a cada disparo, com a direcao do tiro. O jogador escuta para o
 ## boneco reagir (pose de tiro ou recuo).
@@ -167,10 +174,15 @@ var mostrar_a_mira := true
 
 var _espera := 0.0
 var _clarao := 0.0
+var _fumaca := 0.0
+## A boca do cano no ultimo tiro, onde a fumaca nasce.
+var _boca := Vector2.ZERO
 var _coice := 0.0
 var _mira := Vector2.RIGHT
 ## Para onde a arma esta apontada (ver `apontar`).
 var _apontada := Vector2.DOWN
+## A mao do boneco que segura a arma, neste espaco (rua/bracos.gd poe).
+var mao_na_folha := MAO
 
 @onready var _desenho: Sprite2D = $Desenho
 
@@ -182,6 +194,7 @@ func _process(delta: float) -> void:
 	if _clarao > 0.0:
 		_clarao = maxf(0.0, _clarao - delta)
 		queue_redraw()
+	_fumaca = maxf(0.0, _fumaca - delta)
 	if _coice > 0.0:
 		_coice = maxf(0.0, _coice - float(ficha()["coice"]) / ESPERA_DO_COICE * delta)
 		apontar(_apontada)
@@ -263,6 +276,8 @@ func _atirar() -> void:
 	Travessia.municao -= 1
 	# A arma ja aponta para onde a bala vai, para o clarao sair do cano certo.
 	apontar(_mira)
+	_fumaca = FUMACA
+	_boca = _desenho.position + _apontada * (float(f["cano"]) + 3.0)
 
 	var de := global_position
 	# So o jogador sai da conta. Parede, movel e zumbi entram - e o primeiro
@@ -309,8 +324,22 @@ func _atirar() -> void:
 	if f["estojo"]:
 		get_tree().create_timer(0.25).timeout.connect(
 			Som.tocar.bind("armas/estojo_caindo", randf_range(0.9, 1.1), 3))
+		_cuspir_o_estojo()
 	_o_estrondo_chama()
 	atirou.emit(_mira)
+
+## O estojo voa da janela da arma para o lado de fora dela e fica no chao um
+## pouco. Vai para o mundo (o pai do jogador), nao fica na mao.
+func _cuspir_o_estojo() -> void:
+	var jogador := get_parent() as Node2D
+	if jogador == null or jogador.get_parent() == null:
+		return
+	var lado := Vector2(-_mira.y, _mira.x) if _mira.x >= 0.0 else Vector2(_mira.y, -_mira.x)
+	var estojo := Estojo.new()
+	jogador.get_parent().add_child(estojo)
+	var cabo := to_global(_desenho.position)
+	estojo.montar(Vector2(cabo.x, jogador.global_position.y + 4.0), jogador.global_position.y + 4.0 - cabo.y,
+		(lado - _mira * 0.4).normalized())
 
 func _o_estrondo_chama() -> void:
 	# A arma conhece o grupo "zumbi" de proposito: o trabalho dela e sobre
@@ -331,7 +360,7 @@ func apontar(direcao: Vector2) -> void:
 	if direcao.length_squared() < 0.0001:
 		return
 	_apontada = direcao.normalized()
-	_desenho.position = MAO + Vector2(_apontada.x, _apontada.y * ACHATAMENTO) * BRACO - _apontada * _coice
+	_desenho.position = mao_na_folha + Vector2(_apontada.x, _apontada.y * ACHATAMENTO) * BRACO - _apontada * _coice
 	_desenho.rotation = _apontada.angle()
 	_desenho.scale = Vector2(1.0, -1.0 if _apontada.x < 0.0 else 1.0)
 
@@ -340,8 +369,70 @@ func apontar(direcao: Vector2) -> void:
 ## entender por que o tiro pegou na parede. O clarao sai da boca do cano do
 ## sprite. O comprimento divide pela escala do no: o raio do tiro e em px de
 ## mundo, e a linha tem que parar onde ele para.
+##
+## O tiro (21/10/2026, Joao: "animacao do tiro e coisas assim"): o clarao e
+## uma estrela na direcao do tiro, que encolhe; a fumaca sobe da boca do cano
+## e some; o estojo voa (_cuspir_o_estojo); a arma recua na mao (coice) e o
+## corpo da o passo (rua/jogador.gd) - os bracos vao junto (rua/bracos.gd).
 func _draw() -> void:
 	if mostrar_a_mira and Travessia.municao > 0:
 		draw_line(Vector2.ZERO, _mira * float(ficha()["alcance"]) / scale.x, COR_DA_MIRA, 2.0)
+	if _fumaca > 0.0:
+		var subiu := 1.0 - _fumaca / FUMACA
+		var fumaca := COR_DA_FUMACA
+		fumaca.a *= 1.0 - subiu
+		draw_circle(_boca + Vector2(0.0, -10.0 * subiu), 3.0 + 7.0 * subiu, fumaca)
 	if _clarao > 0.0:
-		draw_circle(_desenho.position + _apontada * (float(ficha()["cano"]) + 3.0), 6.0, COR_DO_CLARAO)
+		var boca := _desenho.position + _apontada * (float(ficha()["cano"]) + 3.0)
+		var forca := _clarao / CLARAO
+		for desvio in [-0.6, 0.0, 0.6]:
+			var comprimento := (3.0 + 6.0 * forca) * (1.5 if desvio == 0.0 else 1.0)
+			draw_line(boca, boca + _apontada.rotated(desvio) * comprimento, COR_DO_CLARAO, 2.0)
+		draw_circle(boca, 2.0 + 2.0 * forca, COR_DO_CLARAO)
+		draw_circle(boca, 1.5, COR_DO_MEIO_DO_CLARAO)
+
+## O estojo vazio no ar e no chao: um pixel de latao que gira, quica uma vez e
+## some. A altura e de mentira (o desenho sobe, o no fica no chao), para ele
+## entrar no Y-sort pelo lugar onde vai cair.
+class Estojo extends Node2D:
+	const GRAVIDADE := 420.0
+	const NO_CHAO := 1.6
+	const SUMINDO := 0.5
+	const LATAO := Color("c9a03a")
+	const LATAO_ESCURO := Color("7a5a1e")
+	var _velocidade := Vector2.ZERO
+	var _altura := 0.0
+	var _subida := 60.0
+	var _giro := 0.0
+	var _angulo := 0.0
+	var _tempo := 0.0
+
+	func montar(no_chao: Vector2, altura: float, para: Vector2) -> void:
+		global_position = no_chao
+		_altura = altura
+		_velocidade = para * randf_range(28.0, 42.0)
+		_giro = randf_range(-22.0, 22.0)
+
+	func _process(delta: float) -> void:
+		_tempo += delta
+		if _altura > 0.0 or _subida > 0.0:
+			_subida -= GRAVIDADE * delta
+			_altura += _subida * delta
+			position += _velocidade * delta
+			_angulo += _giro * delta
+			if _altura <= 0.0:
+				_altura = 0.0
+				# Quica uma vez, e baixo; no segundo toque fica.
+				_subida = -_subida * 0.3 if _subida < -50.0 else 0.0
+				_velocidade *= 0.4
+				_giro *= 0.4
+		if _tempo > NO_CHAO:
+			modulate.a = maxf(0.0, 1.0 - (_tempo - NO_CHAO) / SUMINDO)
+		if _tempo > NO_CHAO + SUMINDO:
+			queue_free()
+		queue_redraw()
+
+	func _draw() -> void:
+		draw_set_transform(Vector2(0.0, -_altura), _angulo)
+		draw_rect(Rect2(-1.5, -0.5, 3.0, 1.0), LATAO_ESCURO)
+		draw_rect(Rect2(-1.0, -0.5, 1.5, 1.0), LATAO)

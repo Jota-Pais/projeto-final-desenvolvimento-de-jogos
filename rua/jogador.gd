@@ -171,6 +171,13 @@ func _ready() -> void:
 	_mao.set_script(load("res://rua/mao.gd"))
 	_mao.name = "Mao"
 	add_child(_mao)
+	# Os bracos que seguram a arma, a pedra e a garrafa (rua/bracos.gd): filhos
+	# do boneco, para agachar e recuar junto com ele.
+	var bracos := Node2D.new()
+	bracos.set_script(load("res://rua/bracos.gd"))
+	bracos.name = "Bracos"
+	_boneco.add_child(bracos)
+	bracos.montar(self, _boneco, _arma, _mao)
 
 func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
@@ -219,6 +226,10 @@ func agachar(sim: bool) -> void:
 	var fator := ALTURA_AGACHADO if sim else 1.0
 	_boneco.scale.y = Boneco.ESCALA * fator
 	_boneco.offset.y = _offset_de_pe.y + _boneco.pe * (1.0 - fator) / fator
+
+## Para onde ele olha agora (os bracos leem, para saber qual e a mao direita).
+func para_onde_olha() -> Vector2:
+	return _olhando
 
 ## O roteiro manda ele olhar para algum lugar, parado.
 func olhar_para(direcao: Vector2) -> void:

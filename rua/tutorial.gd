@@ -36,6 +36,7 @@ const Jogador := preload("res://rua/jogador.gd")
 const DetalhesDaRua := preload("res://rua/detalhes_da_rua.gd")
 
 const RETRATO_DO_ANTONIO := preload("res://rua/arte/antonio/retrato.png")
+const RETRATO_DO_JOGADOR := preload("res://rua/arte/jogador/retrato.png")
 
 ## Os lugares do roteiro, em px do PNG do desenho (como os ROTULOS do mapa).
 ## O jogador comeca a cena na rua de cima, a oeste da casa dele, e anda para
@@ -86,6 +87,8 @@ const PERTO_DAS_PEDRAS := 200.0
 const PERTO_DO_ZUMBI := 320.0
 const PERTO_PARA_ARREMESSAR := 560.0
 const AVISO_NA_TELA := 3.0
+## A altura de cada tarja da cena, em fracao da tela.
+const ALTURA_DA_TARJA := 0.1
 ## Quanto o objetivo fica na tela depois do fim.
 const FIM_NA_TELA := 6.0
 
@@ -109,6 +112,8 @@ var _movel_do_favor: Node
 var _zumbi_da_porta: Node2D
 var _aviso: Label
 var _tempo_do_aviso := 0.0
+## As tarjas pretas da cena (em cima e embaixo da tela).
+var _tarjas: Array[ColorRect] = []
 
 func _ready() -> void:
 	if Travessia.tutorial == "" or Travessia.tutorial == "fim":
@@ -211,6 +216,31 @@ func _montar_a_tela() -> void:
 	_seta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_seta.draw.connect(_desenhar_a_seta)
 	_camada.add_child(_seta)
+	for de_cima in [true, false]:
+		var tarja := ColorRect.new()
+		tarja.color = Color.BLACK
+		tarja.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tarja.anchor_right = 1.0
+		tarja.anchor_top = 0.0 if de_cima else 1.0
+		tarja.anchor_bottom = 0.0 if de_cima else 1.0
+		tarja.set_meta("de_cima", de_cima)
+		_camada.add_child(tarja)
+		_tarjas.append(tarja)
+
+## As tarjas de cinema entram (ou saem) na cena de abertura (21/10/2026,
+## Joao: "Mao e tarjas"), e o texto da HUD sai junto - quem esta vendo uma
+## cena nao precisa de relogio nem de municao. O escurecer da noite fica.
+func _cena(entrando: bool, segundos := 0.6) -> void:
+	var hud := get_parent().get_node_or_null("Hud")
+	if hud != null:
+		for filho in hud.get_children():
+			if filho is Label:
+				create_tween().tween_property(filho, "modulate:a", 0.0 if entrando else 1.0, segundos)
+	for tarja in _tarjas:
+		var de_cima: bool = tarja.get_meta("de_cima")
+		var ate := ALTURA_DA_TARJA if entrando else 0.0
+		create_tween().tween_property(tarja, "anchor_bottom" if de_cima else "anchor_top",
+			ate if de_cima else 1.0 - ate, segundos).set_trans(Tween.TRANS_SINE)
 
 ## Um aviso curto embaixo do objetivo ("Voce recebeu: radio"), que some
 ## sozinho.
@@ -271,6 +301,7 @@ func _abertura() -> void:
 	camera.offset = Vector2.ZERO
 	_jogador.global_position = _p(INICIO)
 	_mostrar_objetivo("")
+	_cena(true, 0.0)
 	await _conversa(Falas.ABERTURA)
 
 	# A caminhada apreensiva: devagar, parando para olhar em volta.
@@ -325,6 +356,7 @@ func _abertura() -> void:
 	# A missao e o radio: ele joga o radio por cima do muro.
 	await _jogar_o_radio()
 
+	_cena(false)
 	camera.zoom = Vector2.ONE * Jogador.ZOOM_DA_CAMERA
 	camera.offset = Vector2.ZERO
 	_jogador.no_roteiro = false
@@ -369,7 +401,7 @@ func _parar_olhando(direcao: Vector2, segundos: float) -> void:
 	await get_tree().create_timer(segundos).timeout
 
 ## Uma conversa de perto: cada bloco de linhas seguidas do mesmo personagem
-## numa caixa, com o retrato do Antonio quando e ele. Espera o jogo voltar
+## numa caixa, com o retrato de quem fala. Espera o jogo voltar
 ## (a caixa so solta quando o E e solto).
 func _conversa(falas: Array) -> void:
 	var i := 0
@@ -379,7 +411,7 @@ func _conversa(falas: Array) -> void:
 		while i < falas.size() and falas[i][0] == quem:
 			linhas.append(falas[i][1])
 			i += 1
-		var retrato: Texture2D = RETRATO_DO_ANTONIO if quem == Falas.QUEM_E_O_ANTONIO else null
+		var retrato: Texture2D = RETRATO_DO_ANTONIO if quem == Falas.QUEM_E_O_ANTONIO else RETRATO_DO_JOGADOR
 		_caixa.calar_o_radio()
 		while _caixa.ocupada():
 			await get_tree().process_frame
