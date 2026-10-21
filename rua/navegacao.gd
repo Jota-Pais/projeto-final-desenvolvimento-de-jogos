@@ -54,6 +54,10 @@ const ANEIS_DE_BUSCA := 6
 
 const FORA := Vector2i(-1, -1)
 
+## A mascara de quem anda, para o raio que diz de que lado do muro um ponto
+## esta (ver _celula_livre_perto).
+const Camadas := preload("res://rua/camadas.gd")
+
 var _grade := AStarGrid2D.new()
 var _regiao: Rect2i
 var _mundo: Rect2
@@ -209,23 +213,54 @@ func _bloquear_barricada(cantos: PackedVector2Array) -> void:
 func centro_de(celula: Vector2i) -> Vector2:
 	return Vector2(celula) * CELULA + Vector2.ONE * CELULA / 2.0
 
-## A celula do ponto, ou a livre mais proxima. O jogador encostado numa parede
-## cai em celula bloqueada, porque o obstaculo foi crescido pela MARGEM.
+## A celula do ponto, ou a livre mais proxima **do mesmo lado**. O jogador
+## encostado numa parede cai em celula bloqueada, porque o obstaculo foi
+## crescido pela MARGEM - e, encostado num muro fino, a livre mais perto pode
+## estar do outro lado dele (21/10/2026): o zumbi de dentro perdia o caminho,
+## e a horda da noite podia nascer presa no patio do Antonio. Em cada anel
+## fica a livre mais perto que se ve do ponto sem nada que barre o corpo no
+## meio; so se nenhum anel tiver uma assim, a primeira livre, como antes.
 func _celula_livre_perto(ponto: Vector2) -> Vector2i:
 	var celula := Vector2i((ponto / CELULA).floor()).clamp(
 		_regiao.position, _regiao.end - Vector2i.ONE)
 	if not _grade.is_point_solid(celula):
 		return celula
 
+	var primeira := FORA
 	for anel in range(1, ANEIS_DE_BUSCA + 1):
+		var melhor := FORA
+		var menor := INF
 		for dx in range(-anel, anel + 1):
 			for dy in range(-anel, anel + 1):
 				# So a borda do anel; o interior ja foi visto.
 				if absi(dx) != anel and absi(dy) != anel:
 					continue
 				var perto := celula + Vector2i(dx, dy)
-				if not _regiao.has_point(perto):
+				if not _regiao.has_point(perto) or _grade.is_point_solid(perto):
 					continue
-				if not _grade.is_point_solid(perto):
-					return perto
-	return FORA
+				if primeira == FORA:
+					primeira = perto
+				var distancia := centro_de(perto).distance_squared_to(ponto)
+				if distancia < menor and _nada_no_meio(ponto, centro_de(perto)):
+					menor = distancia
+					melhor = perto
+		if melhor != FORA:
+			return melhor
+	return primeira
+
+## Se o corpo iria em linha reta de um ponto ao outro: o raio para em tudo que
+## barra quem anda (parede, muro, cerca, barricada) e passa por gente - o
+## jogador e os zumbis tambem estao na camada SOLIDO.
+func _nada_no_meio(de: Vector2, ate: Vector2) -> bool:
+	var consulta := PhysicsRayQueryParameters2D.create(de, ate, Camadas.ANDAR)
+	var espaco := get_world_2d().direct_space_state
+	for _vez in 4:
+		var batida := espaco.intersect_ray(consulta)
+		if batida.is_empty():
+			return true
+		if not (batida["collider"] is CharacterBody2D):
+			return false
+		var fora := consulta.exclude
+		fora.append(batida["rid"])
+		consulta.exclude = fora
+	return true
