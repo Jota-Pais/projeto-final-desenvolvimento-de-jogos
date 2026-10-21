@@ -63,6 +63,7 @@ const PEGADAS := {
 	"cadeiras_espera": Vector2(66, 16),
 	"grade_cela": Vector2(120, 6),
 	"fogareiro": Vector2(18, 14),
+	"bebedouro": Vector2(16, 14),
 }
 
 ## Os tipos com desenho gerado (rua/arte/objetos/mobilia/<tipo>.png).
@@ -151,6 +152,7 @@ func _draw() -> void:
 		"cadeiras_espera": _cadeiras_espera()
 		"papeis": _papeis()
 		"fogareiro": _fogareiro()
+		"bebedouro": _bebedouro()
 		"latas": _latas()
 		"mesa_plastico": _mesa_plastico()
 		"cadeira_plastico": _cadeira(PLASTICO)
@@ -853,6 +855,18 @@ func _grade_cela() -> void:
 
 func _cadeiras_espera() -> void:
 	var base := _base()
+	if olhando == "norte":
+		# De costas, viradas para as mesas: o assento em cima e o encosto
+		# embaixo, de costas para a camera.
+		draw_rect(Rect2(base.position.x, -4, base.size.x, 3), Color("5a5c5e"))
+		for k in 3:
+			var x := base.position.x + 2.0 + k * (base.size.x - 4.0) / 3.0
+			var w := (base.size.x - 4.0) / 3.0 - 2.0
+			draw_rect(Rect2(x, -26, w, 10), Color("3f6a8f"))
+			draw_rect(Rect2(x, -18, w, 14), Color("2f4f6a"))
+			draw_line(Vector2(x + 2, -15), Vector2(x + w - 2, -15), Color("25405a"), 1.0)
+			draw_rect(Rect2(x, -26, w, 22), CONTORNO, false, 1.0)
+		return
 	draw_rect(Rect2(base.position.x, -4, base.size.x, 3), Color("5a5c5e"))
 	for k in 3:
 		var x := base.position.x + 2.0 + k * (base.size.x - 4.0) / 3.0
@@ -869,6 +883,17 @@ func _papeis() -> void:
 		var folha := PackedVector2Array([p, p + dir * 9.0, p + dir * 9.0 + lado * 7.0, p + lado * 7.0])
 		draw_colored_polygon(folha, Color(0.88, 0.86, 0.8, 0.95))
 		draw_line(p + lado * 2.0, p + dir * 7.0 + lado * 2.0, Color(0.3, 0.3, 0.35, 0.6), 1.0)
+
+## O bebedouro de galao: o corpo branco e o galao azul, meio vazio.
+func _bebedouro() -> void:
+	var base := _base()
+	_caixa(base, 26.0, Color("d8d4ca"), Color("c2beb4"))
+	draw_rect(Rect2(base.position.x + 2, base.end.y - 18, 4, 3), Color("3e6fa0"))
+	draw_rect(Rect2(base.end.x - 6, base.end.y - 18, 4, 3), Color("b8473c"))
+	var galao := Rect2(base.position.x + 1, base.position.y - 46, base.size.x - 2, 20)
+	draw_rect(galao, Color(0.55, 0.72, 0.85, 0.85))
+	draw_rect(Rect2(galao.position.x, galao.position.y, galao.size.x, 8), Color(0.75, 0.85, 0.9, 0.6))
+	draw_rect(galao, CONTORNO, false, 1.0)
 
 func _fogareiro() -> void:
 	_sombra_redonda(9.0)

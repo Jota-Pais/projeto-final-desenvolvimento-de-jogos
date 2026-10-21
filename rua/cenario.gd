@@ -710,11 +710,14 @@ func _povoar(construcao: Dictionary) -> void:
 func _mobiliar(construcao: Dictionary, chave_do_predio: String, numero_do_documento: int) -> void:
 	var canto: Vector2 = (construcao["rect"] as Rect2).position
 	var lista: Array = construcao["mobilia"]
-	for i in lista.size():
-		var pedido: Dictionary = lista[i]
+	# A chave conta so os moveis de vasculho: por enfeite na lista (uma
+	# planta, uma cadeira) nao muda a identidade de armario nenhum.
+	var i := -1
+	for pedido in lista:
 		var tipo: String = pedido["tipo"]
 		if not Construcao.MOVEIS.has(tipo):
 			continue
+		i += 1
 		var olhando: String = pedido.get("olhando", "sul")
 		var pegada: Vector2 = pedido.get("pegada", Arquitetura.PEGADA_JUSTA.get(tipo, Construcao.MOVEIS[tipo]["tamanho"]))
 		if olhando == "leste" or olhando == "oeste":
