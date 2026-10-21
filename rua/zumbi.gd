@@ -13,7 +13,7 @@ extends CharacterBody2D
 ##    empurra e tira vida (DANO por toque; a vida voltou em 30/09/2026). Nao
 ##    existe atacar de volta; a resposta e sair de perto.
 ##
-## Ele e **mais lento que voce andando** (165 contra 280, e 460 correndo). Da
+## Ele e **mais lento que voce andando** (82,5 contra 140, e 230 correndo). Da
 ## para sempre fugir, de proposito: o que ele tira nao e vida, e o tempo que
 ## voce precisava para terminar de vasculhar.
 ##
@@ -58,18 +58,28 @@ extends CharacterBody2D
 ## pose, nao andando - Joao, 05/10: "nao so ficar caminhando de lado no chao")
 ## e uma investida de INVESTIDA px no toque. Em 05/10 ele pediu as animacoes
 ## de ataque e de morto de verdade, geradas no PixelLab (rua/arte/zumbi/).
+##
+## ## Metade do tamanho e da velocidade (20/10/2026)
+##
+## Pedido do Joao: "o mundo ta muito pequeno, deixa o personagem e zumbis com
+## metade do tamanho e metade da velocidade", com a camera mais perto (zoom 2,
+## em jogador.gd). O corpo foi de 30 x 44 para 15 x 22, o desenho para escala
+## 0,5 (rua/boneco.gd), as velocidades de 70/165 para 35/82,5, o toque de 48
+## para 24 px. A vista (520), o chamado (700) e as distancias do vaguear e da
+## chegada cairam pela metade junto, por decisao dele: na tela o zumbi ve, chama
+## e anda como antes - so o mundo ficou duas vezes maior em volta dele.
 
-const TAMANHO := Vector2(30.0, 44.0)
+const TAMANHO := Vector2(15.0, 22.0)
 
-const VELOCIDADE_VAGANDO := 70.0
-const VELOCIDADE_PERSEGUINDO := 165.0
+const VELOCIDADE_VAGANDO := 35.0
+const VELOCIDADE_PERSEGUINDO := 82.5
 
 ## Ate onde ele ve, e a abertura do cone. Parede corta a linha de visao.
-const ALCANCE_DA_VISTA := 520.0
+const ALCANCE_DA_VISTA := 260.0
 const ABERTURA_DA_VISTA := 110.0
 
-## Quanto o alcance da vista cresce na noite fechada: 0.35 leva os 520 px a
-## 702 px as 05:00, subindo aos poucos a partir das 19:00.
+## Quanto o alcance da vista cresce na noite fechada: 0.35 leva os 260 px a
+## 351 px as 05:00, subindo aos poucos a partir das 19:00.
 ##
 ## **Nao e realismo** - zumbi nao ve melhor no escuro. E a mesma razao de a rua
 ## encher: a noite existe para te empurrar pra casa, e ficar invisivel andando
@@ -78,7 +88,7 @@ const VISTA_A_MAIS_DE_NOITE := 0.35
 
 ## Quem enxerga o jogador avisa os zumbis vagando dentro deste raio. E o que
 ## faz horda se formar sem sistema de onda nenhum.
-const ALCANCE_DO_CHAMADO := 700.0
+const ALCANCE_DO_CHAMADO := 350.0
 
 ## Quantos segundos ele aceita ficar **travado** antes de desistir e voltar a
 ## vagar. Travado = nao saiu do lugar, nao = nao chegou mais perto.
@@ -96,7 +106,7 @@ const ALCANCE_DO_CHAMADO := 700.0
 const SEGUNDOS_SEM_PROGRESSO := 3.0
 
 ## Quanto ele tem que andar nesse tempo para nao ser considerado travado.
-const PASSO_MINIMO := 24.0
+const PASSO_MINIMO := 12.0
 
 ## Quanto tempo ele fica parado olhando em volta quando chega onde te viu por
 ## ultimo e nao te acha, antes de voltar a vagar (30/09/2026). Antes desistia
@@ -111,11 +121,12 @@ const SEGUNDOS_OLHANDO_EM_VOLTA := 2.0
 ## de uma vez.
 const MEMORIA_DO_TOQUE := 2.0
 
-const DISTANCIA_DO_TOQUE := 48.0
+const DISTANCIA_DO_TOQUE := 24.0
 ## O golpe: ele para SEGUNDOS_DO_GOLPE para bater (e a animacao `toque`, ou a
-## investida de codigo: o boneco avanca INVESTIDA px e volta em
-## SEGUNDOS_DA_INVESTIDA). Proposta de 05/10/2026 - a parada e o que faz o
-## golpe se ler como golpe, e e uma brecha de 0,3 s para sair de perto.
+## investida de codigo: o boneco avanca INVESTIDA px do desenho - metade disso
+## no mundo, com a escala do boneco - e volta em SEGUNDOS_DA_INVESTIDA).
+## Proposta de 05/10/2026 - a parada e o que faz o golpe se ler como golpe, e e
+## uma brecha de 0,3 s para sair de perto.
 const SEGUNDOS_DO_GOLPE := 0.3
 const INVESTIDA := 8.0
 const SEGUNDOS_DA_INVESTIDA := 0.25
@@ -134,11 +145,11 @@ const VIDA_CHEIA := 100.0
 ## O corpo como vasculhavel: quanto tempo leva para vasculhar (proposta) e o
 ## tamanho da zona em volta dele, mais ou menos o boneco deitado.
 const SEGUNDOS_PARA_VASCULHAR_O_CORPO := 2.0
-const TAMANHO_DO_CORPO := Vector2(70.0, 30.0)
+const TAMANHO_DO_CORPO := Vector2(35.0, 15.0)
 const CENA_DO_VASCULHAVEL := preload("res://rua/vasculhavel.tscn")
 ## O tiro que nao mata: o quanto ele e jogado para tras (some em
 ## ESPERA_DO_RECUO s) e por quanto tempo fica vermelho.
-const FORCA_DO_RECUO := 160.0
+const FORCA_DO_RECUO := 80.0
 const ESPERA_DO_RECUO := 0.2
 const SEGUNDOS_DO_DANO := 0.15
 const COR_DO_DANO := Color(1.0, 0.35, 0.35)
@@ -286,7 +297,7 @@ func _animar() -> void:
 
 func _chegou_onde_viu() -> bool:
 
-	return global_position.distance_to(_ultima_posicao) < 40.0
+	return global_position.distance_to(_ultima_posicao) < 20.0
 
 # --------------------------------------------------------------------- decisao
 
@@ -513,10 +524,10 @@ func _direcao_do_estado(delta: float) -> Vector2:
 ## caminho: zumbi vagando esbarrar na parede e virar e o comportamento certo.
 func _vaguear(delta: float) -> Vector2:
 	_tempo_vagando -= delta
-	var chegou := global_position.distance_to(_alvo_de_vaguear) < 40.0
-	if _tempo_vagando <= 0.0 or chegou or (velocity.length() < 8.0 and _tempo_vagando < 2.2):
+	var chegou := global_position.distance_to(_alvo_de_vaguear) < 20.0
+	if _tempo_vagando <= 0.0 or chegou or (velocity.length() < 4.0 and _tempo_vagando < 2.2):
 		_tempo_vagando = randf_range(2.5, 6.0)
-		_alvo_de_vaguear = global_position + Vector2.from_angle(randf_range(0.0, TAU)) * randf_range(120.0, 420.0)
+		_alvo_de_vaguear = global_position + Vector2.from_angle(randf_range(0.0, TAU)) * randf_range(60.0, 210.0)
 	return global_position.direction_to(_alvo_de_vaguear)
 
 ## Segue o caminho da grade A*. E isto que faz ele achar o vao da porta em vez
@@ -563,7 +574,7 @@ func _golpear() -> void:
 	if _boneco.tocar("toque", _olhando):
 		return
 	var investida := create_tween()
-	investida.tween_property(_boneco, "position", _olhando * INVESTIDA, SEGUNDOS_DA_INVESTIDA / 2.0) \
+	investida.tween_property(_boneco, "position", _olhando * INVESTIDA * Boneco.ESCALA, SEGUNDOS_DA_INVESTIDA / 2.0) \
 		.set_ease(Tween.EASE_OUT)
 	investida.tween_property(_boneco, "position", Vector2.ZERO, SEGUNDOS_DA_INVESTIDA / 2.0)
 
@@ -581,9 +592,10 @@ func _draw() -> void:
 		_desenhar_a_vida()
 
 ## Barra de vida em cima da cabeca, so depois do primeiro tiro - a mesma do
-## jogador, no mesmo lugar (proposta de 03/10/2026).
+## jogador, no mesmo lugar e do mesmo tamanho (proposta de 03/10/2026; metade
+## em 20/10, junto com o boneco: com o zoom 2 fica do tamanho de antes na tela).
 func _desenhar_a_vida() -> void:
-	var barra := Rect2(-16.0, -66.0, 32.0, 5.0)
+	var barra := Rect2(-8.0, -33.0, 16.0, 2.5)
 	draw_rect(barra, COR_FUNDO_DA_VIDA)
 	var cheio := barra
 	cheio.size.x = barra.size.x * (vida / VIDA_CHEIA)

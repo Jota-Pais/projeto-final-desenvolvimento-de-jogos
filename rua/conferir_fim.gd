@@ -26,9 +26,11 @@ const Construcao := preload("res://rua/construcao.gd")
 const Cenario := preload("res://rua/cenario.gd")
 const Relogio := preload("res://rua/relogio.gd")
 
-## Velocidade de caminhada, para traduzir distancia em segundos de dia. Tem que
-## bater com a VELOCIDADE do rua/jogador.gd.
-const VELOCIDADE := 280.0
+## Velocidade de caminhada, para traduzir distancia em segundos de dia - lida
+## do jogador: a copia a mao ficou para tras quando ele passou a andar na
+## metade (20/10/2026).
+const Jogador := preload("res://rua/jogador.gd")
+const VELOCIDADE := Jogador.VELOCIDADE
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_CASA := preload("res://casa/casa.tscn")
 const CENA_DO_FIM := preload("res://fim_de_jogo.tscn")

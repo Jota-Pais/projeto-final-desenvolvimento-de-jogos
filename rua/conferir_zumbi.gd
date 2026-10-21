@@ -29,6 +29,9 @@ extends Node
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
+## So para o TAMANHO do corpo do zumbi - uma copia a mao ficava para tras quando
+## ele encolheu (20/10/2026).
+const Zumbi := preload("res://rua/zumbi.gd")
 
 # Os estados do zumbi, na ordem do enum dele.
 const VAGANDO := 0
@@ -150,7 +153,7 @@ func _spawn() -> void:
 	print("\n1. onde os %d zumbis nascem" % _zumbis.size())
 	var espaco := get_viewport().find_world_2d().direct_space_state
 	var forma := RectangleShape2D.new()
-	forma.size = Vector2(30.0, 44.0)
+	forma.size = Zumbi.TAMANHO
 	var consulta := PhysicsShapeQueryParameters2D.new()
 	consulta.shape = forma
 	var fora: Array[RID] = [_jogador.get_rid()]
@@ -276,15 +279,22 @@ func _linha_de_visao() -> void:
 		zumbi.set_physics_process(false)
 		zumbi.velocity = Vector2.ZERO
 		var para_fora := Construcao.normal_de(casa)
-		zumbi.global_position = porta + para_fora * 260.0
+		zumbi.global_position = porta + para_fora * 130.0
 		# Olhando para DENTRO da casa (o contrario do normal, que sai por ela) -
 		# antes escrito como Vector2.UP porque toda casa de teste era ao sul.
 		zumbi._olhando = -para_fora
 		match _caso_da_visao:
-			0: _jogador.global_position = Construcao.quartos_de(casa)[1].get_center()
-			1: _jogador.global_position = porta + para_fora * 90.0
+			0:
+				# Um de cada lado da fachada, longe do vao da porta e bem dentro do
+				# alcance da vista: so a parede pode cortar. Ate 20/10/2026 o
+				# jogador ia para o quarto do fundo; com a vista pela metade ele
+				# ficava longe demais, e o caso passava pela distancia.
+				var ao_lado := Construcao.eixo_da_fachada(casa) * Construcao.frente_de(casa) * 0.3
+				zumbi.global_position = porta + ao_lado + para_fora * 60.0
+				_jogador.global_position = porta + ao_lado - para_fora * 60.0
+			1: _jogador.global_position = porta + para_fora * 45.0
 			2:
-				_jogador.global_position = porta + para_fora * 90.0
+				_jogador.global_position = porta + para_fora * 45.0
 				zumbi._olhando = para_fora
 		return
 	if _quadros < 4:
@@ -293,10 +303,10 @@ func _linha_de_visao() -> void:
 	var ve: bool = zumbi._ve_o_jogador()
 	match _caso_da_visao:
 		0:
-			if ve: _erro("ve o jogador atraves de duas paredes")
-			else: print("  atras de duas paredes: nao ve")
+			if ve: _erro("ve o jogador atraves da parede da fachada")
+			else: print("  atras da parede: nao ve")
 		1:
-			if not ve: _erro("nao ve o jogador na frente da porta, a 90 px e na mira")
+			if not ve: _erro("nao ve o jogador na frente da porta, a 45 px e na mira")
 			else: print("  na frente da porta: ve")
 		2:
 			if ve: _erro("ve o jogador estando de costas")
@@ -329,14 +339,17 @@ func _preparar_perseguicao() -> void:
 		if d < perto:
 			perto = d
 			_movel = filho
-	_jogador.global_position = _movel.position + Vector2(0.0, _movel.tamanho.y / 2.0 + 34.0)
+	_jogador.global_position = _movel.position + Vector2(0.0, _movel.tamanho.y / 2.0 + 17.0)
 	_foi_tocado = false
 	if not _jogador.atingido.is_connected(_ao_ser_tocado):
 		_jogador.atingido.connect(_ao_ser_tocado)
 	_longe_do_teste(1)
 
 	var zumbi = _zumbis[0]
-	zumbi.global_position = _jogador.global_position + Vector2(0.0, 420.0)
+	# A 210 px ele chega em ~2,3 s, antes dos 3,0 s do carro: mais longe, o carro
+	# esvaziava antes do toque e a fase passava sem testar nada (20/10/2026,
+	# com o zumbi na metade da velocidade - eram 420 px).
+	zumbi.global_position = _jogador.global_position + Vector2(0.0, 210.0)
 	# Chamado, ele vem. A perseguicao de verdade so comeca se ele ENXERGAR, que
 	# e o que se confere adiante - sem o chamado o teste era sorteio, porque o
 	# _olhando dele e sobrescrito pela propria velocidade todo quadro.
@@ -476,10 +489,14 @@ func _preparar_horda() -> void:
 	# sem predio e sem carro - linha de visao limpa para os quatro.
 	_jogador.global_position = (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
 	_longe_do_teste(4)
-	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 300.0)
+	_zumbis[0].global_position = _jogador.global_position + Vector2(0.0, 150.0)
 	_zumbis[0]._estado = VAGANDO
+	# Os vizinhos ficam alem da vista do dia (260) do jogador e dentro do
+	# chamado (350) do primeiro: so acordam se ele chamar. Antes um deles ficava
+	# a 243 px, dentro da propria vista, e podia acordar sozinho.
+	var vizinhos := [Vector2(-200.0, 230.0), Vector2(200.0, 230.0), Vector2(0.0, 300.0)]
 	for i in range(1, 4):
-		_zumbis[i].global_position = _jogador.global_position + Vector2(160.0 * i, 460.0)
+		_zumbis[i].global_position = _jogador.global_position + vizinhos[i - 1]
 		_zumbis[i]._estado = VAGANDO
 	_zumbis[0].foi_chamado(_jogador.global_position)
 	_passar()
@@ -490,7 +507,7 @@ func _preparar_horda() -> void:
 ## o jogador".
 ##
 ## Ele enxergava, e no **quadro 2**. O que acontecia depois e que ele chegava em
-## cima do jogador: a 43 px os dois corpos se empurram, a velocidade dele vira
+## cima do jogador: a 21 px os dois corpos se empurram, a velocidade dele vira
 ## para o lado, e o `_olhando` sai da propria velocidade - o jogador sai do cone
 ## de 110 graus e ele cai para PROCURANDO. No quadro 240 o estado dele era
 ## legitimamente "procurando", e a pergunta que a ferramenta faz nao e essa:

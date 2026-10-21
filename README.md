@@ -130,7 +130,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/vasculhavel.gd` | **a core mechanic**: barra que enche enquanto `E` estiver segurado |
 | `rua/jogador.gd` | andar e correr, e para onde ele olha (para onde anda; para o mouse enquanto atira) — quem lê a tecla de vasculhar é o próprio móvel |
 | `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe; a vida dele, o tiro que fere e o que derruba (corpo no chão) |
-| `rua/boneco.gd` | **a arte entrando**: lê a folha PNG + JSON que o PixelLab exporta e vira `AnimatedSprite2D`, uma animação por ação e direção (`andar_sul`, `vagar_noroeste`…), pé na caixa de colisão, escala 1. `mostrar()` para o que repete, `tocar()` para o que acontece uma vez (`atirar`, `dano`, `morrer`) — e devolve `false` se a folha não tem, para o código mostrar uma versão de graça. O jogador e o zumbi têm um |
+| `rua/boneco.gd` | **a arte entrando**: lê a folha PNG + JSON que o PixelLab exporta e vira `AnimatedSprite2D`, uma animação por ação e direção (`andar_sul`, `vagar_noroeste`…), pé na caixa de colisão, escala 0,5 (20/10/2026: jogador e zumbi com metade do tamanho e da velocidade, câmera com zoom 2 — na tela o boneco fica como antes e o mundo, duas vezes maior). `mostrar()` para o que repete, `tocar()` para o que acontece uma vez (`atirar`, `dano`, `morrer`) — e devolve `false` se a folha não tem, para o código mostrar uma versão de graça. O jogador e o zumbi têm um |
 | `rua/arte/<quem>/` | a folha de sprites de cada personagem, como o PixelLab exporta (PNG + JSON de layout): jogador com `andar`; zumbi com `vagar`, `toque` (ataque, 8 direções) e `morrer` (só no sul — o último quadro serve de morto no chão para as outras). **Gerada — não editar à mão**: retoque é no servidor |
 | `rua/arte/armas/` | um PNG por arma (de 12 × 7 a 30 × 9 px), desenhado à mão em texto por `design/desenhar_armas.js`; trocável, mantendo o pixel do cabo da ficha |
 | `rua/chao.gd` | **o chão em tiles** (14/10): lê o raster dos vértices (`rua/chao_tracado.png` + `.json`) e os tilesets Wang de `rua/arte/chao/`, escolhe o tile de cada célula pelos quatro cantos e pinta o TileMap inteiro ao abrir, em menos de um segundo. Vem antes do Cenario na cena, que por isso não pinta mais os polígonos do chão |
@@ -197,12 +197,10 @@ mudar o que uma coisa **é** (nome, tipo, documento, a sua casa) = `ROTULOS` em
 - **Árvore desenhada é árvore sólida.** Nada é só decoração: o que aparece no
   `_draw()` tem o obstáculo correspondente.
 
-⬜ **Três coisas do mapa de hoje são provisórias**, à espera do João e da
-equipe: qual casa é a sua (está numa casa sem nome do miolo, entre a
-Prefeitura, a Praça e as Lojas), onde ficam os seis documentos, e os rótulos
-miúdos do desenho que não dão para ler (três casas na estrada de terra do
-sudoeste, os dois anexos do posto, os dois veículos da fazenda). Está tudo
-marcado em `mapa.gd`.
+**A sua casa** é a casa marrom ao sul da avenida diagonal, entre as Lojas e a
+Delegacia, a oeste da rotatória — o João a marcou no retrato do mapa em
+20/10/2026. ⬜ **Uma coisa do mapa de hoje é provisória**, à espera da
+equipe: onde ficam os seis documentos. Está marcada em `mapa.gd`.
 
 ## As ferramentas (F6)
 

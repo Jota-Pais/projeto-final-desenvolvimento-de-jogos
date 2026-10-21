@@ -49,8 +49,12 @@ const DURACAO := 1.2
 
 ## Mesmo motivo do ALCANCE do vasculhavel: tem que ser maior que a meia altura
 ## do jogador, senao nao existe lugar onde ele esteja fora da porta e dentro da
-## zona ao mesmo tempo.
-const ALCANCE := 60.0
+## zona ao mesmo tempo. Caiu de 60 para 30 com o corpo, em 20/10/2026.
+const ALCANCE := 30.0
+
+## Os avisos escritos no mundo, na mesma escala dos do vasculhavel: com o zoom 2
+## da camera ficam do tamanho de antes na tela (20/10/2026).
+const ESCALA_DO_AVISO := 0.5
 
 ## Na escala do vao de porta do bairro (Construcao.VAO): ela preenche o vao
 ## inteiro, e e por isso que a largura (a medida ao longo da fachada) e
@@ -73,9 +77,22 @@ const COR_DA_BARRA := Color("e8b061")
 const COR_FUNDO_DA_BARRA := Color("2a211a")
 const COR_DO_AVISO := Color("f2ddba")
 
+## So para perguntar se o E agora e de um movel (20/10/2026): zona de E que
+## cruza a de um movel fica com o movel. Ver Vasculhavel._com_o_jogador.
+const Vasculhavel := preload("res://rua/vasculhavel.gd")
+
 var _progresso := 0.0
 var _jogador_dentro := false
 var _entrando := false
+## O E que enche a porta tem que ter sido apertado aqui, com a porta livre:
+## quem vinha segurando E num movel e acabou de esvaziar ele nao entra em casa
+## sem querer, 1,2 s depois.
+var _segurando := false
+## A porta livre: o jogador na zona e nenhum movel com o E dele.
+var _livre := false
+## Para que lado a fachada olha - e para la que a luz vaza, e o aviso vai para
+## o outro lado, o de dentro, que e onde o boneco nao fica.
+var _lado := "sul"
 
 func _ready() -> void:
 	_montar_formas()
@@ -85,6 +102,7 @@ func _ready() -> void:
 ## Chamado por `cenario._por_no_lugar` antes de posicionar a porta: decide se
 ## o vao e deitado ou em pe, e remonta as formas de colisao com o tamanho novo.
 func orientar(porta_da_casa: String) -> void:
+	_lado = porta_da_casa
 	TAMANHO = Vector2(40.0, 100.0) if (porta_da_casa == "leste" or porta_da_casa == "oeste") \
 		else Vector2(100.0, 40.0)
 	_montar_formas()
@@ -95,7 +113,13 @@ func _process(delta: float) -> void:
 		return
 
 	var antes := _progresso
-	if _jogador_dentro and Input.is_action_pressed("vasculhar"):
+	var estava_livre := _livre
+	_livre = _jogador_dentro and not Vasculhavel.ha_o_que_vasculhar_aqui()
+	if _livre and Input.is_action_just_pressed("vasculhar"):
+		_segurando = true
+	if not _livre or not Input.is_action_pressed("vasculhar"):
+		_segurando = false
+	if _segurando:
 		_progresso += delta
 		if _progresso >= DURACAO:
 			_entrar()
@@ -105,7 +129,7 @@ func _process(delta: float) -> void:
 		# nada a acumular numa fechadura.
 		_progresso = 0.0
 
-	if _progresso != antes:
+	if _progresso != antes or _livre != estava_livre:
 		queue_redraw()
 
 func _entrar() -> void:
@@ -140,11 +164,18 @@ func _ao_sair(corpo: Node2D) -> void:
 
 func _draw() -> void:
 	# Luz vazando da porta para a calcada, ao longo da fachada - deitada
-	# quando o vao e deitado, em pe quando o vao e em pe (17/09/2026).
-	if TAMANHO.x > TAMANHO.y:
-		draw_rect(Rect2(-TAMANHO.x, TAMANHO.y / 2.0 - 4.0, TAMANHO.x * 2.0, 90.0), COR_DA_LUZ)
-	else:
-		draw_rect(Rect2(TAMANHO.x / 2.0 - 4.0, -TAMANHO.y, 90.0, TAMANHO.y * 2.0), COR_DA_LUZ)
+	# quando o vao e deitado, em pe quando o vao e em pe (17/09/2026) -, do
+	# lado de fora. Ate 20/10/2026 ia sempre para +y ou +x, e a casa nova, de
+	# porta norte, ficava com a luz dentro dela, por cima do telhado.
+	match _lado:
+		"norte":
+			draw_rect(Rect2(-TAMANHO.x, -TAMANHO.y / 2.0 - 86.0, TAMANHO.x * 2.0, 90.0), COR_DA_LUZ)
+		"leste":
+			draw_rect(Rect2(TAMANHO.x / 2.0 - 4.0, -TAMANHO.y, 90.0, TAMANHO.y * 2.0), COR_DA_LUZ)
+		"oeste":
+			draw_rect(Rect2(-TAMANHO.x / 2.0 - 86.0, -TAMANHO.y, 90.0, TAMANHO.y * 2.0), COR_DA_LUZ)
+		_:
+			draw_rect(Rect2(-TAMANHO.x, TAMANHO.y / 2.0 - 4.0, TAMANHO.x * 2.0, 90.0), COR_DA_LUZ)
 
 	# A soleira e uma sombra sobre o vao, e a porta e a mesma dos outros
 	# predios (rua/arte/predios/porta.png, a do telhado), so que maior e
@@ -158,20 +189,27 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 	var fonte := ThemeDB.fallback_font
-	var topo := -TAMANHO.y / 2.0
-	var esquerda := -TAMANHO.x / 2.0
+	# Daqui para baixo e aviso: origem na borda da porta do lado de dentro
+	# (a de cima, menos na porta norte, que e a de baixo), cada unidade vale
+	# ESCALA_DO_AVISO px de mundo. Do lado de fora ele cairia em cima do boneco.
+	var k := ESCALA_DO_AVISO
+	var desce := _lado == "norte"
+	draw_set_transform(Vector2(0.0, TAMANHO.y / 2.0 if desce else -TAMANHO.y / 2.0), 0.0, Vector2.ONE * k)
+	var largura := TAMANHO.x / k
+	var esquerda := -largura / 2.0
 
 	if _progresso > 0.0:
-		var barra := Rect2(Vector2(-TAMANHO.x / 2.0, topo - 18.0), Vector2(TAMANHO.x, 8.0))
+		var barra := Rect2(Vector2(esquerda, 10.0 if desce else -18.0), Vector2(largura, 8.0))
 		draw_rect(barra, COR_FUNDO_DA_BARRA)
 		var cheio := barra
-		cheio.size.x = TAMANHO.x * (_progresso / DURACAO)
+		cheio.size.x = largura * (_progresso / DURACAO)
 		draw_rect(cheio, COR_DA_BARRA)
 		draw_rect(barra, Color(0.0, 0.0, 0.0, 0.5), false, 1.0)
 
-	if _jogador_dentro:
-		draw_string(fonte, Vector2(esquerda, topo - 26.0), "E  entrar em casa",
+	if _livre:
+		draw_string(fonte, Vector2(esquerda, 34.0 if desce else -26.0), "E  entrar em casa",
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_AVISO)
 	else:
-		draw_string(fonte, Vector2(esquerda, topo - 12.0), "sua casa",
+		draw_string(fonte, Vector2(esquerda, 20.0 if desce else -12.0), "sua casa",
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(COR_DO_AVISO, 0.45))
+	draw_set_transform(Vector2.ZERO)

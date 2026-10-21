@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://rua/boneco.gd" id="2_boneco"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
-size = Vector2(30, 44)
+size = Vector2(15, 22)
 
 [node name="Zumbi" type="CharacterBody2D"]
 script = ExtResource("1_zumbi")

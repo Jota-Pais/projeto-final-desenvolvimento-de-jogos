@@ -5,11 +5,13 @@ extends Node
 ## Serve ao padrao de arte: antes de aprovar um sprite
 ## gerado - e antes de gastar geracoes animando ele - a pergunta e "como fica
 ## em cima da rua que existe, no tamanho que o jogo mostra?". Esta cena monta a
-## rua de verdade, poe cada PNG pedido ao lado do jogador na escala do padrao
-## (1 px de mundo por pixel de desenho - escala 1, decidido 30/09/2026 -,
-## filtro nearest, pe na borda de baixo da caixa de colisao), escreve o nome do
-## arquivo embaixo e salva um PNG da tela. O jogador fica no meio, de regua: a
-## caixa dele e 28 x 40 e, desde 02/10/2026, ele ja e o boneco do PixelLab.
+## rua de verdade, poe cada PNG pedido ao lado do jogador na escala do mundo
+## (1 px de mundo por pixel de desenho, filtro nearest, pe na borda de baixo da
+## caixa de colisao), escreve o nome do arquivo embaixo e salva um PNG da tela,
+## com o zoom do jogo. O jogador fica no meio, de regua: a caixa dele e 14 x 20
+## e o boneco do PixelLab entra em escala 0,5 desde 20/10/2026 (rua/boneco.gd) -
+## um personagem novo se confere com `@0.5` no caminho; movel, carro e o resto
+## do mundo continuam em escala 1.
 ##
 ## **Nao roda em headless** (capturar a tela precisa de renderizador), igual ao
 ## retratar_mapa. No editor e F6; na linha de comando:
@@ -26,8 +28,11 @@ extends Node
 ## padrao eles somem, para a figura ser do sprite que se esta conferindo).
 ## `--tiros` (com `--zumbis`) poe um zumbi ferido a esquerda do jogador e um
 ## morto a direita, para ver o dano e a morte como o codigo mostra enquanto a
-## folha nao tem `dano` e `morrer` (03/10/2026). `--zoom=3` aproxima a camera
-## para ver detalhe de pixel (a arma na mao tem de 12 x 7 a 30 x 9).
+## folha nao tem `dano` e `morrer` (03/10/2026). Sem `--zoom` a camera fica no
+## zoom do jogo (2, jogador.gd) - a fileira cabe ate dois sprites; com mais, a
+## figura cai para o maior zoom inteiro em que todos cabem. `--zoom=6` aproxima
+## no jogador para ver detalhe de pixel (a arma na mao tem de 12 x 7 a 30 x 9 de
+## desenho); sprite ao lado sai da figura.
 ## `--arma=M4` poe outra arma na mao dele (os nomes estao em rua/arma.gd).
 ## `--onde=x,y` leva o jogador para outro ponto do mundo, para ver o chao
 ## longe de casa (mata, lavoura, rio); `--zoom=0.06` mostra o mapa quase
@@ -41,9 +46,11 @@ extends Node
 ## pe desenhado que encosta na caixa de colisao.
 
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
+const Jogador := preload("res://rua/jogador.gd")
 
-## O padrao: 1 pixel de desenho = 1 px de mundo (escala 1, decidido 30/09/2026
-## no teste 0). `--escala=` troca.
+## A escala do mundo: 1 pixel de desenho = 1 px de mundo (decidido 30/09/2026
+## no teste 0; desde 20/10/2026 vale para o mundo, e o boneco e 0,5).
+## `--escala=` troca para todos, `@escala` para um.
 const ESCALA_DA_ARTE := 1.0
 
 ## Distancia entre um sprite e o seguinte, em px de mundo. Um canvas do PixelLab
@@ -51,8 +58,8 @@ const ESCALA_DA_ARTE := 1.0
 const ESPACO := 200.0
 
 
-## Onde fica a borda de baixo da caixa de colisao do jogador (28 x 40, centrada).
-const PE_DO_JOGADOR := 20.0
+## Onde fica a borda de baixo da caixa de colisao do jogador (14 x 20, centrada).
+const PE_DO_JOGADOR := 10.0
 
 var _rua: Node
 var _caminhos: PackedStringArray
@@ -60,7 +67,9 @@ var _saida := "user://conferir_arte.png"
 var _escala := ESCALA_DA_ARTE
 var _com_zumbis := false
 var _com_tiros := false
-var _zoom := 1.0
+var _zoom := Jogador.ZOOM_DA_CAMERA
+## O --zoom veio na linha de comando: a figura nao mexe nele para caber.
+var _zoom_pedido := false
 ## Onde o jogador fica na figura; zero = onde ele nasce.
 var _onde := Vector2.ZERO
 var _quadros := 0
@@ -88,6 +97,7 @@ func _ready() -> void:
 			_com_tiros = true
 		elif a.begins_with("--zoom="):
 			_zoom = float(a.trim_prefix("--zoom="))
+			_zoom_pedido = true
 		elif a.begins_with("--arma="):
 			# Antes de a rua nascer: a arma le o Travessia no _ready.
 			Travessia.arma = a.trim_prefix("--arma=")
@@ -163,12 +173,12 @@ func _posicionar_os_zumbis() -> void:
 	# O ferido fica um pouco ATRAS do jogador (pe mais acima) e encostado, e o
 	# deitado cai POR CIMA dos pes dele: e a prova do Y-sort (14/10/2026) -
 	# quem tem o pe mais embaixo na tela desenha na frente.
-	_ferido.global_position = jogador.global_position + Vector2(-34.0, -46.0)
-	_morto.global_position = jogador.global_position + Vector2(110.0, 0.0)
+	_ferido.global_position = jogador.global_position + Vector2(-17.0, -23.0)
+	_morto.global_position = jogador.global_position + Vector2(55.0, 0.0)
 	# Olhando para o sul: e a direcao em que a folha tem o `morrer` de verdade.
 	_morto._olhando = Vector2.DOWN
 	if _deitado != null:
-		_deitado.global_position = jogador.global_position + Vector2(10.0, 44.0)
+		_deitado.global_position = jogador.global_position + Vector2(5.0, 22.0)
 		_deitado._olhando = Vector2.RIGHT
 
 ## O da esquerda leva um tiro **da arma** (ferido, com a barra de vida; e o
@@ -196,11 +206,18 @@ func _colocar_os_sprites() -> void:
 	var jogador := _rua.get_node("Jogador") as Node2D
 	if _onde != Vector2.ZERO:
 		jogador.global_position = _onde
+	var n := _caminhos.size()
+	# A fileira tem que caber na figura (20/10/2026): no zoom do jogo cabem dois
+	# sprites lado a lado; com mais, o maior zoom inteiro em que todos cabem.
+	if not _zoom_pedido and n > 0:
+		var cabe := floorf(get_viewport().get_visible_rect().size.x / ((float(n) + 1.0) * ESPACO))
+		if cabe < _zoom:
+			_zoom = maxf(1.0, cabe)
+			print("conferir_arte: %d sprites nao cabem no zoom do jogo; figura em zoom %.0f" % [n, _zoom])
 	var camera := get_viewport().get_camera_2d()
 	if camera != null:
 		camera.position_smoothing_enabled = false
 		camera.zoom = Vector2.ONE * _zoom
-	var n := _caminhos.size()
 	for i in n:
 		# Distribuidos em volta do jogador; com dois, um de cada lado dele.
 		var deslocamento := (float(i) - (float(n) - 1.0) / 2.0) * ESPACO
@@ -256,8 +273,12 @@ func _colocar(caminho: String, onde: Vector2) -> void:
 	rotulo.add_theme_color_override("font_color", Color.WHITE)
 	rotulo.add_theme_color_override("font_outline_color", Color.BLACK)
 	rotulo.add_theme_constant_override("outline_size", 4)
-	rotulo.size = Vector2(ESPACO, 24.0)
-	rotulo.position = Vector2(onde.x - ESPACO / 2.0, onde.y + PE_DO_JOGADOR + 8.0)
+	# O rotulo e do mundo, mas tem que ler do mesmo tamanho na tela com qualquer
+	# zoom: escala 1/zoom, e o tamanho dele em unidades dessa escala.
+	var k := 1.0 / maxf(_zoom, 0.01)
+	rotulo.scale = Vector2.ONE * k
+	rotulo.size = Vector2(ESPACO / k, 24.0)
+	rotulo.position = Vector2(onde.x - ESPACO / 2.0, onde.y + PE_DO_JOGADOR + 8.0 * k)
 	_rua.add_child(rotulo)
 
 func _salvar() -> void:

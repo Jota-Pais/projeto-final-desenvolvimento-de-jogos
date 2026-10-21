@@ -306,7 +306,7 @@ func _um_zumbi() -> Zumbi:
 func _onde_a_noite_faz_nascer(rua: Node) -> void:
 	var espaco := get_viewport().find_world_2d().direct_space_state
 	var forma := RectangleShape2D.new()
-	forma.size = Vector2(30.0, 44.0)
+	forma.size = Zumbi.TAMANHO
 	var consulta := PhysicsShapeQueryParameters2D.new()
 	consulta.shape = forma
 	var fora: Array[RID] = [(rua.get_node("Jogador") as CollisionObject2D).get_rid()]

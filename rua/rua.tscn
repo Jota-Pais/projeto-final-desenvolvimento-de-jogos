@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://rua/ruas.gd" id="9_ruas"]
 
 [node name="Rua" type="Node2D"]
+texture_filter = 1
 y_sort_enabled = true
 
 [node name="Relogio" type="Node" parent="." groups=["relogio"]]

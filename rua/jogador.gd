@@ -28,8 +28,21 @@ extends CharacterBody2D
 ## Subiu junto com a ampliacao do bairro de 08/09, mas so ~1,3x e nao 1,8x:
 ## parte do ponto e o mundo passar a parecer grande. Se ficar arrastado, este e
 ## o numero a mexer.
-const VELOCIDADE := 280.0
-const VELOCIDADE_CORRENDO := 460.0
+##
+## **Metade desde 20/10/2026** (eram 280 e 460), junto com o tamanho. Joao: "o
+## mundo ta muito pequeno, deixa o personagem e zumbis com metade do tamanho e
+## metade da velocidade". O corpo foi de 28 x 40 para 14 x 20 (jogador.tscn) e
+## o desenho para escala 0,5 (rua/boneco.gd); com o zoom da camera em dobro, na
+## tela ele anda e aparece como antes, e o mundo fica duas vezes maior.
+const VELOCIDADE := 140.0
+const VELOCIDADE_CORRENDO := 230.0
+
+## Quanto a camera aproxima (20/10/2026, "diminui o enquadramento da tela"): a
+## tela de 1280 x 720 mostra 640 x 360 px de mundo. **So inteiro**: com o boneco
+## em escala 0,5 o zoom 2 da 1 pixel de desenho por pixel de tela, e o chao em
+## escala 1 fica com 2 x 2; um zoom quebrado (1,5) faria o pixel desigual e a
+## arte tremer andando. Os limites da camera (cenario.gd) ja descontam o zoom.
+const ZOOM_DA_CAMERA := 2.0
 
 ## So para a guarda do `aberta`: com a tela da mochila na frente, WASD escolhe
 ## linha em vez de andar.
@@ -55,7 +68,7 @@ const OLHANDO_PARA_LONGE := -0.3
 ## O recuo de codigo do disparo: o boneco da um passo contra o tiro e volta
 ## em SEGUNDOS_DO_RECUO. O passo e RECUO px mais o `coice` da arma (a ficha
 ## em rua/arma.gd: pistola 2-3, escopeta 5-6), para a Doze sacudir mais que
-## a Beretta. **E o definitivo** (Joao, 15/10/2026, "faz o recuo em codigo"):
+## a Beretta - em px do desenho, vezes a escala do boneco no mundo. **E o definitivo** (Joao, 15/10/2026, "faz o recuo em codigo"):
 ## a animacao `atirar` na folha foi tentada duas vezes no PixelLab e
 ## reprovada - na vista de cima, "bracos para a frente" e para a camera e o
 ## modelo nao encurta o braco. O `tocar("atirar")` fica
@@ -73,8 +86,9 @@ const VIDA_CHEIA := 100.0
 ## Empurrao do toque do zumbi: some em ESPERA_DO_EMPURRAO segundos.
 ##
 ## E o feedback do toque junto com a barra - e, de bonus, costuma te tirar da
-## zona de alcance do movel, que ja interrompe o vasculho por si.
-const FORCA_DO_EMPURRAO := 260.0
+## zona de alcance do movel, que ja interrompe o vasculho por si. Metade desde
+## 20/10/2026 (era 260), junto com a velocidade: uns 16 px.
+const FORCA_DO_EMPURRAO := 130.0
 const ESPERA_DO_EMPURRAO := 0.25
 
 const COR_DA_VIDA := Color("c0463c")
@@ -93,6 +107,10 @@ var _mirando := 0.0
 
 func _ready() -> void:
 	_arma.atirou.connect(_ao_atirar)
+	# A arma na mao encolhe com o boneco: o sprite, a mao, o braco e o clarao
+	# vivem no espaco dela. O tiro sai de coordenada global e nao muda.
+	_arma.scale = Vector2.ONE * Boneco.ESCALA
+	($Camera as Camera2D).zoom = Vector2.ONE * ZOOM_DA_CAMERA
 
 func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
@@ -157,7 +175,7 @@ func _ao_atirar(direcao: Vector2) -> void:
 	_mirando = SEGUNDOS_DE_MIRA
 	if _boneco.tocar("atirar", direcao):
 		return
-	var passo := RECUO + float(_arma.ficha()["coice"])
+	var passo := (RECUO + float(_arma.ficha()["coice"])) * Boneco.ESCALA
 	_boneco.position = -direcao * passo
 	create_tween().tween_property(_boneco, "position", Vector2.ZERO, SEGUNDOS_DO_RECUO) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
@@ -190,12 +208,13 @@ func levar_dano(quanto: float, de_onde: Vector2) -> void:
 
 ## Barra de vida em cima da cabeca, so quando falta alguma: e onde ela importa
 ## na hora do aperto. A HUD mostra o numero no canto. Fica acima do boneco (o
-## pe esta em +20 e ele tem uns 75 px de altura), porque o corpo desenha antes
-## dos filhos: em cima do sprite ela sumiria atras dele.
+## pe esta em +10 e ele tem uns 37 px de altura no mundo), porque o corpo
+## desenha antes dos filhos: em cima do sprite ela sumiria atras dele. Metade
+## desde 20/10/2026, junto com o boneco - com o zoom 2, do tamanho de antes.
 func _draw() -> void:
 	if is_equal_approx(vida, VIDA_CHEIA):
 		return
-	var barra := Rect2(-16.0, -66.0, 32.0, 5.0)
+	var barra := Rect2(-8.0, -33.0, 16.0, 2.5)
 
 	draw_rect(barra, COR_FUNDO_DA_VIDA)
 	var cheio := barra

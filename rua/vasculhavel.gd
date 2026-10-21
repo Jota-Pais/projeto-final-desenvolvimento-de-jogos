@@ -81,12 +81,19 @@ const DECAIMENTO := 0.0
 ## Folga em volta do objeto onde o jogador ja alcanca. E ela que obriga a ficar
 ## parado: sair desta zona interrompe o vasculho sem precisar de regra nenhuma.
 ##
-## Tem que ser maior que a meia altura do jogador (20, num corpo de 28x40),
+## Tem que ser maior que a meia altura do jogador (10, num corpo de 14x20),
 ## senao nao existe lugar onde ele esteja ao mesmo tempo fora do corpo solido e
 ## dentro da zona - foi assim que a porta encostada na parede da casa ficou
 ## impossivel de vasculhar por uma janela de 2 px. Se o tamanho do jogador
-## mudar, este numero muda junto.
-const ALCANCE := 60.0
+## mudar, este numero muda junto: era 60 com o corpo de 28x40, e caiu para 30
+## com ele em 20/10/2026.
+const ALCANCE := 30.0
+
+## Os avisos escritos no mundo - a barra, o "E vasculhar" e o que saiu - sao
+## desenhados nesta escala desde 20/10/2026: com o zoom 2 da camera
+## (jogador.gd) ficam do tamanho de antes na tela, e a letra continua nitida
+## (fonte 14 sob 0,5 e zoom 2 sai 1:1).
+const ESCALA_DO_AVISO := 0.5
 
 const COR_VAZIO := Color("34302d")
 ## O desenho de um movel ja vasculhado escurece: nao da para abrir gaveta num
@@ -109,6 +116,26 @@ var _jogador_dentro := false
 
 ## Sem nada dentro.
 var _vazio := false
+
+## Os vasculhaveis com o jogador dentro e alguma coisa para render, por id de
+## instancia (20/10/2026). A porta de casa pergunta antes de encher: E numa
+## zona que cruza a de um movel fica com o movel, e entrar em casa - que acaba
+## o dia - pede um E novo, longe dele. Sem isto, segurar E no carro parado ao
+## lado da porta da casa nova entrava em casa no meio do vasculho.
+static var _com_o_jogador := {}
+
+## Se o E agora vasculha alguma coisa (ver _com_o_jogador).
+static func ha_o_que_vasculhar_aqui() -> bool:
+	return not _com_o_jogador.is_empty()
+
+func _atualizar_presenca() -> void:
+	if _jogador_dentro and not _vazio:
+		_com_o_jogador[get_instance_id()] = true
+	else:
+		_com_o_jogador.erase(get_instance_id())
+
+func _exit_tree() -> void:
+	_com_o_jogador.erase(get_instance_id())
 
 ## O que saiu daqui quando foi vasculhado - para o movel vazio dizer o que
 ## rendeu. E uma copia: `achados` e esvaziado por quem escuta o sinal.
@@ -169,6 +196,7 @@ func _esvaziar() -> void:
 	print("%s: %s" % [rotulo, "nada" if _saiu.is_empty() else ", ".join(_saiu)])
 	achados.clear()
 	_vazio = true
+	_atualizar_presenca()
 	_progresso = duracao
 	queue_redraw()
 
@@ -181,6 +209,7 @@ func receber(achado: String) -> void:
 	achados.append(achado)
 	_saiu = []
 	_vazio = false
+	_atualizar_presenca()
 	_progresso = 0.0
 	queue_redraw()
 
@@ -237,6 +266,7 @@ func _ao_entrar(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = true
+	_atualizar_presenca()
 	# Enquanto ele estiver aqui, o toque do zumbi interrompe o vasculho. Este
 	# arquivo nao sabe que zumbi existe: escuta o jogador, que e quem apanha.
 	if corpo.has_signal("atingido") and not corpo.atingido.is_connected(_ao_ser_atingido):
@@ -247,6 +277,7 @@ func _ao_sair(corpo: Node2D) -> void:
 	if not corpo.is_in_group("jogador"):
 		return
 	_jogador_dentro = false
+	_atualizar_presenca()
 	if corpo.has_signal("atingido") and corpo.atingido.is_connected(_ao_ser_atingido):
 		corpo.atingido.disconnect(_ao_ser_atingido)
 	queue_redraw()
@@ -280,16 +311,20 @@ func _draw() -> void:
 		draw_rect(caixa, Color(0.0, 0.0, 0.0, 0.35), false, 2.0)
 
 	var fonte := ThemeDB.fallback_font
-	var topo := -tamanho.y / 2.0
-	var esquerda := -tamanho.x / 2.0
+	# Daqui para baixo e aviso: a origem vai para o topo do movel e cada unidade
+	# vale ESCALA_DO_AVISO px de mundo (ver a constante).
+	var k := ESCALA_DO_AVISO
+	draw_set_transform(Vector2(0.0, -tamanho.y / 2.0), 0.0, Vector2.ONE * k)
+	var esquerda := -tamanho.x / 2.0 / k
 
 	if _vazio:
-		_desenhar_o_que_saiu(fonte, esquerda, topo - 8.0)
+		_desenhar_o_que_saiu(fonte, esquerda, -8.0)
+		draw_set_transform(Vector2.ZERO)
 		return
 
 	if _progresso > 0.0:
-		var largura := maxf(tamanho.x, 76.0)
-		var barra := Rect2(Vector2(-largura / 2.0, topo - 18.0), Vector2(largura, 8.0))
+		var largura := maxf(tamanho.x / k, 76.0)
+		var barra := Rect2(Vector2(-largura / 2.0, -18.0), Vector2(largura, 8.0))
 		draw_rect(barra, COR_FUNDO_DA_BARRA)
 		var cheio := barra
 		cheio.size.x = largura * (_progresso / duracao)
@@ -297,5 +332,6 @@ func _draw() -> void:
 		draw_rect(barra, Color(0.0, 0.0, 0.0, 0.5), false, 1.0)
 
 	if _jogador_dentro:
-		draw_string(fonte, Vector2(esquerda, topo - 26.0), "E  vasculhar %s (%.1fs)" % [rotulo, duracao],
+		draw_string(fonte, Vector2(esquerda, -26.0), "E  vasculhar %s (%.1fs)" % [rotulo, duracao],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COR_DO_AVISO)
+	draw_set_transform(Vector2.ZERO)

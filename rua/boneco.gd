@@ -15,8 +15,10 @@ extends AnimatedSprite2D
 ##
 ## As regras:
 ##
-##  - **escala 1**: 1 pixel de desenho = 1 px de mundo (40 px = 1 m), com filtro
-##    nearest para o pixel nao borrar;
+##  - **escala 0,5** (ESCALA, desde 20/10/2026; ate entao 1): 1 pixel de
+##    desenho = meio px de mundo, com filtro nearest para o pixel nao borrar. A
+##    camera da rua tem zoom 2 (jogador.gd), entao na tela continua 1 pixel de
+##    desenho por pixel de tela;
 ##  - **pivo fixo no centro da celula**, como o PixelLab recomenda, com o pe da
 ##    rotacao sul na borda de baixo da caixa de colisao (`pe`). Alinhar cada
 ##    direcao pelo proprio pe desenhado faria o boneco pular ate 6 px ao virar,
@@ -31,8 +33,16 @@ extends AnimatedSprite2D
 ## na mesma pasta.
 @export_file("*.json") var folha := ""
 
-## Onde fica a borda de baixo da caixa de colisao do pai, em y local: e onde o
-## pe da rotacao sul encosta. 20 para o jogador (28 x 40), 22 para o zumbi.
+## A escala do desenho no mundo (20/10/2026). Joao: "o mundo ta muito pequeno,
+## deixa o personagem e zumbis com metade do tamanho" - o boneco encolhe aqui,
+## e o corpo de colisao, nas caixas do jogador e do zumbi. So 0,5 com o zoom 2
+## da camera deixa o pixel inteiro na tela; outra conta faz o boneco cintilar.
+const ESCALA := 0.5
+
+## Onde fica a borda de baixo da caixa de colisao do pai: e onde o pe da rotacao
+## sul encosta. Em px **do desenho**, porque o `offset` do sprite vem antes da
+## escala: 20 no jogador e 22 no zumbi caem em +10 e +11 no mundo, a borda de
+## baixo das caixas de 14 x 20 e 15 x 22.
 @export var pe := 20.0
 
 ## Ritmo das animacoes a velocidade normal. `mostrar()` multiplica pelo
@@ -65,6 +75,7 @@ var _uma_vez := false
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	centered = true
+	scale = Vector2.ONE * ESCALA
 	animation_finished.connect(_ao_terminar)
 	var montada := _montar(folha, quadros_por_segundo)
 	if montada.is_empty():

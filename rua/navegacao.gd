@@ -12,7 +12,8 @@ extends Node2D
 ## Com o mapa de 57.600 x 36.000, uma grade de 32 px sobre o mundo inteiro teria
 ## **2 milhoes de celulas**. Nao e lento, e inviavel: memoria e o `update()` da
 ## AStarGrid2D crescem com a area, e nada disso serve para nada - o zumbi ve a
-## 520 px e o caminho mais longo que ele precisa e atravessar uma casa.
+## 260 px (520 ate 20/10/2026) e o caminho mais longo que ele precisa e
+## atravessar uma casa.
 ##
 ## Entao a grade cobre so uma janela em volta do jogador, e e remontada quando
 ## ele sai dela. Sao ~62 mil celulas em vez de 2 milhoes, e o custo passou a
@@ -32,19 +33,20 @@ extends Node2D
 ## Lado da celula. Menor = caminho mais fino e grade mais cara de montar.
 const CELULA := 32.0
 
-## Lado da janela coberta pela grade. 8.000 px sao 200 m, umas seis telas -
-## folgado para qualquer perseguicao, e 250 x 250 celulas.
+## Lado da janela coberta pela grade. 8.000 px sao 200 m, umas doze telas com o
+## zoom 2 da camera - folgado para qualquer perseguicao, e 250 x 250 celulas.
 const JANELA := 8000.0
 
 ## Quanto o jogador pode se afastar do centro da janela antes de ela ser
-## remontada. Um quarto da janela: remonta a cada ~7 s de caminhada, e sempre
-## sobra meia janela de folga na direcao em que ele estava indo.
+## remontada. Um quarto da janela: remonta a cada ~14 s de caminhada (a 140
+## px/s), e sempre sobra meia janela de folga na direcao em que ele estava indo.
 const FOLGA_ANTES_DE_REMONTAR := 2000.0
 
 ## Quanto o obstaculo cresce antes de virar celula bloqueada, para o caminho
-## nao passar raspando na parede. E menor que a meia largura do zumbi de
-## proposito: o resto quem resolve e o move_and_slide.
-const MARGEM := 16.0
+## nao passar raspando na parede. Mais ou menos a meia largura do zumbi (7,5
+## num corpo de 15 x 22; era 16 com o de 30 x 44, ate 20/10/2026): o resto quem
+## resolve e o move_and_slide.
+const MARGEM := 8.0
 
 ## Quantos aneis de celula procurar quando o ponto pedido cai em cima de
 ## obstaculo - acontece sempre que o jogador esta encostado numa parede.

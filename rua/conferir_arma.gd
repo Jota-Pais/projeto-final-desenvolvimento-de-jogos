@@ -25,6 +25,7 @@ extends Node
 const Construcao := preload("res://rua/construcao.gd")
 const Mapa := preload("res://rua/mapa.gd")
 const Arma := preload("res://rua/arma.gd")
+const Zumbi := preload("res://rua/zumbi.gd")
 const Mochila := preload("res://rua/mochila.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
 const CENA_DA_HUD := preload("res://rua/hud.tscn")
@@ -308,24 +309,48 @@ func _conferir_o_corpo() -> void:
 		print("  o corpo se vasculha (\"%s\", %.1f s) e esta %s" % [corpo.rotulo, corpo.duracao,
 			"vazio - nada no zumbi por enquanto" if corpo.achados.is_empty() else str(corpo.achados)])
 
-## Da rua, com a parede da fachada e a divisoria interna no meio.
+var _casa_da_parede: Dictionary
+
+## Da rua, com a parede da fachada no meio: o alvo na sala, logo atras dela e
+## longe do vao da porta, e o jogador na calcada, do outro lado. Ate 20/10/2026
+## o alvo ficava no quarto do fundo; com o alcance pela metade o jogador teve
+## de chegar a porta, o raio passava pelo vao e quem parava o tiro era a
+## estante da sala - a fase media o movel, nao a parede.
 func _preparar_a_parede() -> void:
 	var casa := _uma_casa()
 	if casa.is_empty():
 		return
-	_alvo = _um_zumbi_em(Construcao.quartos_de(casa)[1].get_center())
-	_jogador.global_position = Construcao.porta_de(casa) + Construcao.normal_de(casa) * 300.0
+	_casa_da_parede = casa
+	var porta := Construcao.porta_de(casa)
+	var para_fora := Construcao.normal_de(casa)
+	var ao_lado := Construcao.eixo_da_fachada(casa) * Construcao.frente_de(casa) * 0.3
+	_alvo = _um_zumbi_em(porta + ao_lado - para_fora * 60.0)
+	_jogador.global_position = porta + ao_lado + para_fora * 60.0
 
 func _conferir_a_parede() -> void:
 	if _alvo == null:
+		return
+	# A prova de que e a parede que esta no meio: o primeiro obstaculo do raio,
+	# sem o jogador e sem o alvo, cai numa parede de fora da casa de teste.
+	var consulta := PhysicsRayQueryParameters2D.create(_jogador.global_position, _alvo.global_position)
+	consulta.exclude = [_jogador.get_rid(), _alvo.get_rid()]
+	var batida := get_viewport().find_world_2d().direct_space_state.intersect_ray(consulta)
+	var na_parede := false
+	if not batida.is_empty():
+		for parede in Construcao.paredes_externas(_casa_da_parede):
+			if parede.grow(1.0).has_point(batida["position"]):
+				na_parede = true
+	if not na_parede:
+		_erro("entre o jogador e o alvo nao e a parede da fachada que esta no meio - a fase nao mede a parede")
+		_alvo.queue_free()
 		return
 	_apontar_para(_alvo.global_position)
 	_arma._espera = 0.0
 	_arma._atirar()
 	if _alvo.vida < _alvo.VIDA_CHEIA:
-		_erro("o tiro atravessou duas paredes e feriu quem estava no quarto do fundo")
+		_erro("o tiro atravessou a parede da fachada e feriu quem estava na sala")
 	else:
-		print("  atras de duas paredes: o tiro para na primeira")
+		print("  atras da parede da fachada: o tiro para nela")
 	_alvo.queue_free()
 
 ## A casa de teste: a mais perto de onde o jogador nasce com a frente livre e
@@ -351,13 +376,19 @@ func _apontar_para(onde: Vector2) -> void:
 
 var _alvo_das_armas: Node2D
 
-## Um zumbi a 220 px do jogador, na praca, para cada arma atirar nele.
+## A distancia do alvo das oito armas. Eram 220 px ate 20/10/2026: com o zumbi
+## pela metade, a 220 ele ocupava metade do angulo, e a Fireagle (5 graus de
+## desvio) errava uma rodada em cinco.
+const DISTANCIA_DAS_ARMAS := 110.0
+
+## Um zumbi a DISTANCIA_DAS_ARMAS do jogador, na praca, para cada arma atirar
+## nele.
 func _preparar_as_armas() -> void:
 	_jogador.global_position = (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
-	_alvo_das_armas = _um_zumbi_em(_jogador.global_position + Vector2(0.0, 220.0))
+	_alvo_das_armas = _um_zumbi_em(_jogador.global_position + Vector2(0.0, DISTANCIA_DAS_ARMAS))
 
 ## A lista do Joao (05/10/2026). Cada arma existe na ficha, tem desenho em
-## rua/arte/armas/ e, na mao, fere o zumbi a 220 px - a escopeta com pelo menos
+## rua/arte/armas/ e, na mao, fere o zumbi a 110 px - a escopeta com pelo menos
 ## um dos projeteis. A vida do alvo volta a cada tiro, para cada arma medir do
 ## zero; no fim a Beretta volta para a mao.
 func _conferir_as_armas() -> void:
@@ -397,7 +428,7 @@ func _conferir_as_armas() -> void:
 		elif Travessia.balas[calibre] != balas_antes - 1:
 			_erro("%s: o tiro nao gastou uma bala %s (%d -> %d)" % [nome, calibre, balas_antes, Travessia.balas[calibre]])
 		elif tirou <= 0.0:
-			_erro("%s: o tiro a 220 px nao feriu" % nome)
+			_erro("%s: o tiro a %.0f px nao feriu" % [nome, DISTANCIA_DAS_ARMAS])
 		elif tirou > maximo + 0.01:
 			_erro("%s: tirou %.0f, mais que %d x %.0f" % [nome, tirou, ficha["projeteis"], ficha["dano"]])
 		else:
@@ -418,15 +449,17 @@ func _conferir_as_armas() -> void:
 func _o_tiro_chama_a_horda() -> void:
 	print("\n5. o estrondo")
 	var estrondo: float = _arma.ficha()["estrondo"]
-	if estrondo <= 700.0:
-		_erro("o estrondo (%.0f) nao alcanca mais longe que o chamado de um zumbi (700)"
-			% estrondo)
+	if estrondo <= Zumbi.ALCANCE_DO_CHAMADO:
+		_erro("o estrondo (%.0f) nao alcanca mais longe que o chamado de um zumbi (%.0f)"
+			% [estrondo, Zumbi.ALCANCE_DO_CHAMADO])
 
 	# No meio da praca: o estrondo e so um raio, nao precisa de linha de visao,
 	# mas o jogador e os dois zumbis tem que nascer em chao livre, e a praca e
-	# o maior gramado aberto do mapa.
+	# o maior gramado aberto do mapa. O de perto fica a dois tercos do estrondo
+	# (era 1.200 px escrito a mao ate o estrondo cair pela metade, 20/10/2026).
 	_jogador.global_position = (Mapa.lugar("Praça")["rect"] as Rect2).get_center()
-	var perto := _um_zumbi_em(_jogador.global_position + Vector2(0.0, 1200.0))
+	var perto_px := estrondo * 2.0 / 3.0
+	var perto := _um_zumbi_em(_jogador.global_position + Vector2(0.0, perto_px))
 	var longe := _um_zumbi_em(_jogador.global_position
 		+ Vector2(0.0, estrondo + 900.0))
 	perto._estado = 0
@@ -438,13 +471,13 @@ func _o_tiro_chama_a_horda() -> void:
 	_arma._atirar()
 
 	if perto._estado == 0:
-		_erro("o zumbi a 1.200 px nao ouviu o tiro")
+		_erro("o zumbi a %.0f px nao ouviu o tiro" % perto_px)
 	elif longe._estado != 0:
 		_erro("o zumbi a %.0f px ouviu um tiro que nao devia alcancar"
 			% estrondo)
 	else:
-		print("  a 1.200 px veio; a %.0f px nao ouviu"
-			% (estrondo + 900.0))
+		print("  a %.0f px veio; a %.0f px nao ouviu"
+			% [perto_px, estrondo + 900.0])
 	perto.queue_free()
 	longe.queue_free()
 

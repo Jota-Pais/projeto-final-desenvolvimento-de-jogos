@@ -11,9 +11,12 @@
 ##
 ## ## A escala, e por que ela e essa
 ##
-## **A referencia de tudo aqui e o corpo do jogador: 28 x 40 px**
+## **A referencia de tudo aqui era o corpo do jogador: 28 x 40 px**
 ## (`rua/jogador.tscn`), ou seja 40 px = 1 metro. Toda medida existe em relacao
-## a ele.
+## a ele. **Em 20/10/2026 o corpo caiu para 14 x 20 e o mundo ficou como
+## estava** (Joao: "o mundo ta muito pequeno"): em corpos novos, tudo na tabela
+## abaixo dobra. O metro continua sendo 40 px, que e o que o mapa e as
+## ferramentas contam.
 ##
 ## Em 08/09/2026 a arquitetura cresceu ~1,8x e o jogador ficou do mesmo tamanho,
 ## que e o que da a sensacao de escala. O **movel cresceu bem menos** (~1,35x),

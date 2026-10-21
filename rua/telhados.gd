@@ -148,13 +148,20 @@ func _desenhar_a_fachada(construcao: Dictionary, sua: bool) -> void:
 		t -= ESPACO_DAS_JANELAS
 	draw_set_transform(Vector2.ZERO)
 
+## O nome e aviso, nao telhado: desde 20/10/2026 sai na escala ESCALA_DO_NOME,
+## a mesma dos avisos do vasculhavel, para o zoom 2 da camera nao dobrar a letra
+## na tela.
+const ESCALA_DO_NOME := 0.5
+
 func _desenhar_o_nome(r: Rect2, nome: String) -> void:
 	var fonte := ThemeDB.fallback_font
 	var corpo := 13
+	var k := ESCALA_DO_NOME
 	# Nome maior que o telhado e cortado, nao estourado para fora dele.
 	var largura := fonte.get_string_size(nome, HORIZONTAL_ALIGNMENT_LEFT, -1, corpo).x
-	while largura > r.size.x - 16.0 and nome.length() > 4:
+	while largura > r.size.x / k - 16.0 and nome.length() > 4:
 		nome = nome.substr(0, nome.length() - 2) + "…"
 		largura = fonte.get_string_size(nome, HORIZONTAL_ALIGNMENT_LEFT, -1, corpo).x
-	draw_string(fonte, Vector2(r.position.x + 8.0, r.position.y + 18.0), nome,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, corpo, COR_DO_NOME)
+	draw_set_transform(r.position, 0.0, Vector2.ONE * k)
+	draw_string(fonte, Vector2(8.0, 18.0), nome, HORIZONTAL_ALIGNMENT_LEFT, -1, corpo, COR_DO_NOME)
+	draw_set_transform(Vector2.ZERO)

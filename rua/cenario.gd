@@ -31,6 +31,8 @@ const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const CENA_DO_MOVEL := preload("res://rua/vasculhavel.tscn")
 const CENA_DO_ZUMBI := preload("res://rua/zumbi.tscn")
+## So para o TAMANHO do corpo, na hora de achar lugar livre para um zumbi.
+const Zumbi := preload("res://rua/zumbi.gd")
 const Navegacao := preload("res://rua/navegacao.gd")
 ## So para ler o TAMANHO dela na hora de registrar o obstaculo: a porta e irma
 ## do cenario na cena, e nao nasce aqui dentro como os outros corpos solidos.
@@ -57,8 +59,9 @@ const COR_DO_CHAO := Color("6a6152")
 
 ## Ate onde uma coisa largada cai numa pilha que ja existe em vez de comecar
 ## outra. Sem isto, esvaziar a mochila deixaria doze quadradinhos empilhados no
-## mesmo pixel.
-const PERTO_DA_PILHA := 90.0
+## mesmo pixel. Metade desde 20/10/2026 (era 90), junto com o alcance do
+## vasculho: a pilha que recebe tem que estar ao alcance de quem largou.
+const PERTO_DA_PILHA := 45.0
 
 ## Quantos zumbis a noite traz, ao todo, das 19:00 as 05:00. **Proposta.**
 ##
@@ -80,7 +83,7 @@ const MATO_A_MAIS_POR_DIA := 30
 
 ## **Zumbi so existe perto de voce.** Fora deste raio ele nem esta na arvore.
 ##
-## 5.200 px sao 130 m, umas quatro telas - longe o bastante para nunca se ver um
+## 5.200 px sao 130 m, umas oito telas com o zoom 2 - longe o bastante para nunca se ver um
 ## aparecer do nada, e perto o bastante para nao haver dezenas de zumbis
 ## processando raycast ao mesmo tempo. Era 7.000 no mapa de 1 km (30/09/2026):
 ## este tem metade do tamanho e os pontos de zumbi ficaram mais densos, e com
@@ -421,9 +424,9 @@ func _desenhar_poligono(pontos: PackedVector2Array, cor: Color) -> void:
 	draw_colored_polygon(pontos, cor)
 
 ## Quanto o pe de um boneco fica abaixo da origem dele (a caixa do jogador e
-## 28 x 40, centrada: o pe esta em +20). A origem de todo no alto fica a essa
-## distancia acima do pe, para o Y-sort comparar pe com pe.
-const PE := 20.0
+## 14 x 20 desde 20/10/2026, centrada: o pe esta em +10). A origem de todo no
+## alto fica a essa distancia acima do pe, para o Y-sort comparar pe com pe.
+const PE := 10.0
 
 ## Uma arvore como no, com a origem a PE px acima da borda de baixo da copa:
 ## e assim que ela entra no Y-sort - quem tem o pe mais embaixo na tela
@@ -599,7 +602,10 @@ func _povoar_em_volta() -> void:
 ## noite() do relogio, que vai de 0 a 1 entre as 19:00 e as 05:00.
 ##
 ## Eles nascem **num anel em volta do jogador**, e nao nas bordas do mapa. O
-## anel e maior que a tela, entao ninguem aparece do nada.
+## anel e maior que a tela, entao ninguem aparece do nada. Desde 20/10/2026 e
+## de 700 a 1300 px (era 1400 a 2600), metade como o zumbi e o zoom 2 da
+## camera: continua a umas duas a quatro meias diagonais de tela, e a horda
+## chega no mesmo tempo de antes.
 func _a_noite_traz_mais() -> void:
 	if _relogio == null:
 		return
@@ -616,7 +622,7 @@ func _a_noite_traz_mais() -> void:
 func _um_lugar_livre_no_anel() -> Vector2:
 	var espaco := get_world_2d().direct_space_state
 	var forma := RectangleShape2D.new()
-	forma.size = Vector2(30.0, 44.0)
+	forma.size = Zumbi.TAMANHO
 	var consulta := PhysicsShapeQueryParameters2D.new()
 	consulta.shape = forma
 	consulta.collide_with_areas = false
@@ -624,7 +630,7 @@ func _um_lugar_livre_no_anel() -> Vector2:
 	var ultimo := _jogador.global_position
 	for _tentativa in 14:
 		var angulo := _sorteio.randf_range(0.0, TAU)
-		var raio := _sorteio.randf_range(1400.0, 2600.0)
+		var raio := _sorteio.randf_range(700.0, 1300.0)
 		ultimo = (_jogador.global_position + Vector2.from_angle(angulo) * raio).clamp(
 			Mapa.MUNDO.position + Vector2.ONE * 300.0,
 			Mapa.MUNDO.end - Vector2.ONE * 300.0)

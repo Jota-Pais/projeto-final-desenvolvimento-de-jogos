@@ -12,7 +12,7 @@ extends Node2D
 ##     do mapa pode render uma caixinha de balas, e nao ha outra fonte. Atirar
 ##     gasta o que voce vasculhou;
 ##  3. **o tiro chama a horda**, e num raio muito maior que o chamado de um
-##     zumbi que enxergou voce (1.800 contra 700 px na Beretta). O tiro resolve
+##     zumbi que enxergou voce (900 contra 350 px na Beretta). O tiro resolve
 ##     um problema e cria um maior - e a regra do PZ, e e o que faz a arma
 ##     continuar sendo pressao sobre a mesma acao.
 ##
@@ -68,46 +68,48 @@ const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 ## o calibre (Construcao.MUNICOES);
 ## `desenho` e o PNG em rua/arte/armas/, `mao` o pixel do cabo que fica na
 ## mao, `cano` a distancia da mao a boca do cano, e `coice` quanto ela recua
-## no tiro. **Numeros: proposta de 05/10/2026.**
+## no tiro. **Numeros: proposta de 05/10/2026.** `alcance` e `estrondo` cairam
+## pela metade em 20/10/2026, junto com o boneco e o zoom 2 da camera (decisao
+## do Joao): na tela o tiro vai e se ouve ate onde ia antes.
 const ARMAS := {
 	"Revólver 38": {
 		"classe": "curta", "dano": 25.0, "projeteis": 1, "abertura": 0.0,
-		"espera": 0.6, "automatica": false, "alcance": 800.0, "estrondo": 1700.0,
+		"espera": 0.6, "automatica": false, "alcance": 400.0, "estrondo": 850.0,
 		"municao": ".38", "desenho": "revolver-38", "mao": Vector2(1.0, 5.0), "cano": 10.0, "coice": 3.0,
 	},
 	"Beretta 9mm": {
 		"classe": "curta", "dano": 20.0, "projeteis": 1, "abertura": 0.0,
-		"espera": 0.45, "automatica": false, "alcance": 900.0, "estrondo": 1800.0,
+		"espera": 0.45, "automatica": false, "alcance": 450.0, "estrondo": 900.0,
 		"municao": "9mm", "desenho": "beretta-9mm", "mao": Vector2(2.0, 4.0), "cano": 10.0, "coice": 3.0,
 	},
 	"Doze 2 canos": {
 		"classe": "escopeta", "dano": 12.0, "projeteis": 6, "abertura": 16.0,
-		"espera": 1.2, "automatica": false, "alcance": 450.0, "estrondo": 2200.0,
+		"espera": 1.2, "automatica": false, "alcance": 225.0, "estrondo": 1100.0,
 		"municao": "12", "desenho": "doze-2-canos", "mao": Vector2(9.0, 4.0), "cano": 16.0, "coice": 6.0,
 	},
 	"Benelli semiauto": {
 		"classe": "escopeta", "dano": 10.0, "projeteis": 6, "abertura": 14.0,
-		"espera": 0.6, "automatica": false, "alcance": 450.0, "estrondo": 2200.0,
+		"espera": 0.6, "automatica": false, "alcance": 225.0, "estrondo": 1100.0,
 		"municao": "12", "desenho": "benelli-semiauto", "mao": Vector2(9.0, 4.0), "cano": 16.0, "coice": 5.0,
 	},
 	"CTT40": {
 		"classe": "submetralhadora", "dano": 14.0, "projeteis": 1, "abertura": 4.0,
-		"espera": 0.09, "automatica": false, "alcance": 750.0, "estrondo": 1900.0,
+		"espera": 0.09, "automatica": false, "alcance": 375.0, "estrondo": 950.0,
 		"municao": ".40", "desenho": "ctt40", "mao": Vector2(1.0, 5.0), "cano": 14.0, "coice": 2.0,
 	},
 	"Fireagle 9mm": {
 		"classe": "submetralhadora", "dano": 12.0, "projeteis": 1, "abertura": 5.0,
-		"espera": 0.07, "automatica": false, "alcance": 750.0, "estrondo": 1900.0,
+		"espera": 0.07, "automatica": false, "alcance": 375.0, "estrondo": 950.0,
 		"municao": "9mm", "desenho": "fireagle-9mm", "mao": Vector2(1.0, 5.0), "cano": 16.0, "coice": 2.0,
 	},
 	"Fall": {
 		"classe": "fuzil", "dano": 45.0, "projeteis": 1, "abertura": 1.5,
-		"espera": 0.3, "automatica": true, "alcance": 1400.0, "estrondo": 2600.0,
+		"espera": 0.3, "automatica": true, "alcance": 700.0, "estrondo": 1300.0,
 		"municao": "7,62", "desenho": "fall", "mao": Vector2(9.0, 4.0), "cano": 20.0, "coice": 4.0,
 	},
 	"M4": {
 		"classe": "fuzil", "dano": 30.0, "projeteis": 1, "abertura": 2.0,
-		"espera": 0.11, "automatica": true, "alcance": 1300.0, "estrondo": 2500.0,
+		"espera": 0.11, "automatica": true, "alcance": 650.0, "estrondo": 1250.0,
 		"municao": "5,56", "desenho": "m4", "mao": Vector2(8.0, 4.0), "cano": 19.0, "coice": 3.0,
 	},
 }
@@ -123,7 +125,8 @@ const PASTA_DOS_DESENHOS := "res://rua/arte/armas/"
 const CLARAO := 0.09
 
 ## Onde fica a mao que segura a arma, em px a partir do centro do jogador (o
-## pe esta em +20 e a cabeca em -58): altura da cintura.
+## pe esta em +20 e a cabeca em -58): altura da cintura. Em px do desenho: este
+## no tem a escala do boneco (jogador.gd), entao no mundo tudo aqui e metade.
 const MAO := Vector2(0.0, -18.0)
 ## Quanto a arma avanca da mao na direcao em que ele olha, e quanto o avanco
 ## vertical se achata pela perspectiva do high top-down.
@@ -287,9 +290,10 @@ func apontar(direcao: Vector2) -> void:
 ## A linha de mira e o clarao do cano. A linha e **auxilio de prototipo**, como
 ## o cone de visao do zumbi: sem ver para onde a arma aponta nao da para
 ## entender por que o tiro pegou na parede. O clarao sai da boca do cano do
-## sprite.
+## sprite. O comprimento divide pela escala do no: o raio do tiro e em px de
+## mundo, e a linha tem que parar onde ele para.
 func _draw() -> void:
 	if mostrar_a_mira and Travessia.municao > 0:
-		draw_line(Vector2.ZERO, _mira * float(ficha()["alcance"]), COR_DA_MIRA, 2.0)
+		draw_line(Vector2.ZERO, _mira * float(ficha()["alcance"]) / scale.x, COR_DA_MIRA, 2.0)
 	if _clarao > 0.0:
 		draw_circle(_desenho.position + _apontada * (float(ficha()["cano"]) + 3.0), 6.0, COR_DO_CLARAO)

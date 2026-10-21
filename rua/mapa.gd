@@ -19,7 +19,9 @@
 ##
 ## ## A escala
 ##
-## **40 px = 1 metro** (o jogador tem 40 px de altura), como sempre. O desenho
+## **40 px = 1 metro**, como sempre - era a altura do corpo do jogador ate
+## 20/10/2026, quando ele e o zumbi passaram a ter metade: o mundo ficou como
+## estava, e duas vezes maior em volta deles, de proposito. O desenho
 ## entra com ESCALA px de mundo por px dele: a 24, um pixel do desenho é 0,6 m
 ## e o mapa inteiro (917 x 530 px) tem 550 x 318 m. É o número que faz uma
 ## rua de 13 px do desenho ter 7,8 m, um carro de 7 px ter 4,2 m e a praça
@@ -54,13 +56,15 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## Versão 4 (15/10/2026, mais tarde): o traçador passou a achar os veículos
 ## miúdos (duas caminhonetes e mais cinco carros) e as manchas pequenas e
 ## tortas (a segunda casa abandonada e o vendedor de melancia viraram prédio).
-const VERSAO_DO_MAPA := 4
+## Versão 5 (20/10/2026): a sua casa mudou de prédio, a pedido do João - a
+## antiga ganhou os móveis de casa e a nova, selada, perdeu os dela.
+const VERSAO_DO_MAPA := 5
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "19256eac"
+const IMPRESSAO_ESPERADA := "3bcd05fb"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
@@ -78,9 +82,10 @@ const IMPRESSAO_ESPERADA := "19256eac"
 ## ⬜ **Três decisões aqui são provisórias, à espera do João/da equipe**
 ## (respostas dele em 15/10/2026 entre parênteses):
 ##
-##  - ~~qual casa é a sua~~ **confirmada em 15/10/2026**: a casa sem nome do
-##    miolo (entre a Prefeitura, a Praça e as Lojas) é a do desenho mesmo
-##    ("minha casa tava no desenho, acho que é a mesma que já tá no jogo");
+##  - ~~qual casa é a sua~~ **trocada pelo João em 20/10/2026**, marcada no
+##    retrato do mapa: a casa marrom ao sul da avenida diagonal, entre as
+##    Lojas e a Delegacia, a oeste da rotatória. Até então era a casa sem nome
+##    do miolo, entre a Prefeitura, a Praça e as Lojas (confirmada em 15/10);
 ##  - **onde ficam os seis documentos** (Hospital, Prefeitura, Escola,
 ##    Delegacia, Mansão, Casa do fazendeiro) - espalhados, como antes, só para
 ##    a partida ter como ser ganha ("os documentos não são mecânica oficial do
@@ -99,7 +104,7 @@ const ROTULOS := [
 	{ "nome": "Delegacia", "ponto": Vector2(1122.0, 712.0), "tipo": "delegacia", "documento": 4 },
 	{ "nome": "Mansão", "ponto": Vector2(888.0, 290.0), "tipo": "mansao", "documento": 5 },
 	{ "nome": "Casa do fazendeiro", "ponto": Vector2(742.0, 254.0), "tipo": "casa", "documento": 6 },
-	{ "nome": "sua casa", "ponto": Vector2(1210.0, 480.0), "tipo": "casa", "sua": true },
+	{ "nome": "sua casa", "ponto": Vector2(1181.0, 645.0), "tipo": "casa", "sua": true },
 	{ "nome": "Campo ANEV (norte)", "ponto": Vector2(950.0, 455.0), "tipo": "campo" },
 	{ "nome": "Campo ANEV (sul)", "ponto": Vector2(1376.0, 700.0), "tipo": "campo" },
 	{ "nome": "Prisão", "ponto": Vector2(1005.0, 670.0), "tipo": "prisao" },
@@ -167,8 +172,8 @@ const ZUMBIS_NA_RUA := [
 ]
 
 ## Quanto o jogador nasce afastado da porta, para fora. Maior que a meia
-## altura da zona de detecção da porta (80 px), senão o dia começaria com
-## você já dentro dela.
+## altura da zona de detecção da porta (50 px desde 20/10/2026, eram 80) mais
+## a dele, senão o dia começaria com você já dentro dela.
 const RECUO_DO_NASCIMENTO := 110.0
 
 ## Quanto um zumbi nasce afastado da porta de cada prédio.

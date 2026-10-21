@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://rua/boneco.gd" id="3_boneco"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_corpo"]
-size = Vector2(28, 40)
+size = Vector2(14, 20)
 
 [node name="Jogador" type="CharacterBody2D" groups=["jogador"]]
 script = ExtResource("1_jogador")

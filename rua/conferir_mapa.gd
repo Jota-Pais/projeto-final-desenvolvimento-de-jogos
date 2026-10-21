@@ -15,23 +15,32 @@ extends Node
 ## ## Uma grade so, fina (30/09/2026)
 ##
 ## O mapa tracado do desenho tem 550 x 318 m: varrer tudo a 24 px (o corpo do
-## jogador tem 28 x 40) sao ~490 mil consultas de fisica, uns 20 s. O mapa de
+## jogador tinha 28 x 40) eram ~490 mil consultas de fisica, uns 20 s. O mapa de
 ## 1 km precisava de duas passadas (grossa no mundo, fina por lugar); este cabe
 ## numa so, e uma passada so nao tem o furo de "o lugar e alcancavel na grossa
 ## mas a porta dele nao e na fina".
+##
+## Desde 20/10/2026 o corpo tem metade (14 x 20) e a grade e de 16 px, ~1,1
+## milhao de consultas. A 24 ela pulava a faixa onde o corpo novo cabe na
+## frente de um movel encostado na parede (20 px, com o ALCANCE de 30), e o
+## movel saia inalcancavel sem ser.
 
 const Mapa := preload("res://rua/mapa.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const CENA_DA_RUA := preload("res://rua/rua.tscn")
+const Jogador := preload("res://rua/jogador.gd")
 
-## Celula da grade: 24 px, com o corpo do jogador tendo 28 x 40.
-const PASSO := 24.0
+## Celula da grade: 16 px, menor que a faixa de alcance de um movel (ver acima)
+## e com os corpos de duas celulas vizinhas a 2 px um do outro - barreira
+## mais grossa que isso nao passa despercebida entre elas.
+const PASSO := 16.0
 ## O corpo do jogador, que e o que tem que caber. Ver rua/jogador.tscn.
-const CORPO := Vector2(28.0, 40.0)
+const CORPO := Vector2(14.0, 20.0)
 
-## Velocidade de caminhada, para traduzir distancia em segundos de dia. Tem que
-## bater com a VELOCIDADE do rua/jogador.gd.
-const VELOCIDADE := 280.0
+## Velocidade de caminhada, para traduzir distancia em segundos de dia - lida
+## do jogador: a copia a mao ficou para tras quando ele passou a andar na
+## metade (20/10/2026).
+const VELOCIDADE := Jogador.VELOCIDADE
 
 ## O menor predio em que o vao da porta (100 px, a 35% da fachada) e um movel
 ## cabem: frente de 200 px; fundo de 170 - paredes (40) mais o movel mais fundo
@@ -313,8 +322,11 @@ func _da_para_chegar_em_tudo() -> void:
 				(movel as Node2D).get("rotulo"), (movel as Node2D).position,
 				Mapa.lugar_em((movel as Node2D).position)])
 			ruins += 1
+	# A zona da porta lida da forma de verdade (era 220 x 160 escrito a mao,
+	# que so valia para a porta deitada e com o ALCANCE antigo).
 	var porta := _rua.get_node("EntradaDeCasa") as Node2D
-	var zona_da_porta := Rect2(porta.position - Vector2(110.0, 80.0), Vector2(220.0, 160.0))
+	var tamanho_da_porta := ((porta.get_node("Deteccao") as CollisionShape2D).shape as RectangleShape2D).size
+	var zona_da_porta := Rect2(porta.position - tamanho_da_porta / 2.0, tamanho_da_porta)
 	if not _tem_celula_em(alcancavel, zona_da_porta, PASSO):
 		_erro("a porta de casa e inalcancavel")
 	print("  %d moveis, %d inalcancaveis" % [quantos, ruins])
