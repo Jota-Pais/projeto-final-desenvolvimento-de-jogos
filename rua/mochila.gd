@@ -50,7 +50,21 @@ func _ready() -> void:
 ## estava.
 func ao_vasculhar(_rotulo: String, achados: Array[String]) -> void:
 	_pegar_as_balas(achados)
+	_pegar_os_arremessaveis(achados)
 	_guardar_os_documentos(achados)
+
+## A pedra e a garrafa vao para a mao, como as balas para o cinto: sao
+## equipamento contado (Travessia.arremessaveis, 21/10/2026).
+func _pegar_os_arremessaveis(achados: Array[String]) -> void:
+	var i := 0
+	while i < achados.size():
+		var achado: String = achados[i]
+		if achado in Travessia.ARREMESSAVEIS:
+			Travessia.guardar_arremessavel(achado)
+			achados.remove_at(i)
+			guardou.emit(achado)
+		else:
+			i += 1
 
 ## As balas saem da lista e **nao vao para a mochila**: sao equipamento, ficam
 ## no cinto, nao ocupam vaga e nao se perdem no dia que deu errado. Cada

@@ -97,16 +97,36 @@ func _linha_da_esquerda(jogador: Node) -> String:
 	# As balas do calibre da arma na mao, com o nome da municao ("15 balas
 	# 9mm", "8 cartuchos calibre 12"); os outros calibres estao na tela da
 	# mochila.
+	# O que esta na mao (rua/mao.gd, 21/10/2026): a arma com as balas do
+	# calibre dela, ou a pedra e a garrafa contadas; e o resto, para lembrar
+	# que o scroll troca.
 	var municao: String = Construcao.MUNICOES[Travessia.calibre_da_arma()]
-	if not Travessia.armado:
-		linhas.append("desarmado")
-	elif Travessia.municao == 0:
-		linhas.append("%s   sem %s" % [Travessia.arma, municao])
-	else:
-		linhas.append("%s   %d %s" % [Travessia.arma, Travessia.municao, municao])
+	match Travessia.na_mao:
+		"arma":
+			if Travessia.municao == 0:
+				linhas.append("%s   sem %s" % [Travessia.arma, municao])
+			else:
+				linhas.append("%s   %d %s" % [Travessia.arma, Travessia.municao, municao])
+		"pedra", "garrafa":
+			linhas.append("%s x%d   segure e solte para jogar" % [Travessia.na_mao, int(Travessia.arremessaveis[Travessia.na_mao])])
+		_:
+			linhas.append("maos vazias")
+	var outras := PackedStringArray()
+	for qual in Travessia.opcoes_na_mao():
+		if qual != Travessia.na_mao:
+			_nome_na_mao(outras, qual)
+	if not outras.is_empty():
+		linhas.append("[scroll] " + "  ".join(outras))
 	if jogador != null and jogador.get("agachado"):
 		linhas.append("agachado   [C]")
 	return "\n".join(linhas)
+
+## Como cada coisa da mao aparece na lista do scroll.
+func _nome_na_mao(lista: PackedStringArray, qual: String) -> void:
+	if qual == "arma":
+		lista.append(Travessia.arma)
+	else:
+		lista.append("%s x%d" % [qual, int(Travessia.arremessaveis[qual])])
 
 ## A mochila e a do DIA - o que voce esta carregando, e nao o que ja entregou.
 ## Some tudo se voce nao voltar pela porta de casa. Desde 30/09/2026 ela so

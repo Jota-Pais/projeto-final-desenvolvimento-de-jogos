@@ -193,8 +193,9 @@ func _process(delta: float) -> void:
 
 	# Desarmado (o dia 1 do tutorial, ate o Antonio dar a 9mm): nao ha arma na
 	# mao para desenhar nem gatilho para apertar.
-	visible = Travessia.armado
-	if not Travessia.armado:
+	# E so com a arma na mao (o scroll pode estar na pedra: rua/mao.gd).
+	visible = Travessia.armado and Travessia.na_mao == "arma"
+	if not visible:
 		return
 	# Com a mochila aberta ele esta com as duas maos no saco, nao no gatilho.
 	if TelaDaMochila.aberta:
@@ -218,7 +219,7 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 	if tecla == null or not tecla.pressed or tecla.echo or tecla.keycode != KEY_Q:
 		return
 	# Desarmado nao troca; e no tutorial a arma e a 9mm do Antonio, so ela.
-	if TelaDaMochila.aberta or not Travessia.armado or Travessia.no_tutorial():
+	if TelaDaMochila.aberta or not Travessia.armado or Travessia.na_mao != "arma" or Travessia.no_tutorial():
 		return
 	var i := ORDEM.find(Travessia.arma)
 	trocar(ORDEM[(i + 1) % ORDEM.size()])

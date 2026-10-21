@@ -27,10 +27,11 @@ sendo editada no Godot.
 |---|---|
 | `WASD` / setas | andar |
 | `Shift` | correr |
-| `C` | agachar e levantar — agachado, atrás de cobertura baixa (carro, entulho, sacos), o zumbi não te vê |
-| `E` (segurar) | vasculhar um móvel, entrar em casa |
+| `C` | agachar e levantar — agachado você não faz barulho, e atrás de cobertura baixa (carro, entulho, sacos) o zumbi não te vê; anda mais devagar |
+| `E` (segurar) | vasculhar um móvel, pegar pedra do chão, entrar em casa |
+| scroll do mouse | trocar o que está na mão: a arma, a pedra, a garrafa |
 | mouse | mirar |
-| botão esquerdo | atirar |
+| botão esquerdo | usar o que está na mão: com a arma, atirar; com a pedra ou a garrafa, segurar para mirar mais longe e soltar para jogar |
 | `Tab` | abrir a mochila |
 
 O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de luz
@@ -40,8 +41,12 @@ precisa de 4 documentos e o prazo é de 30 dias.
 
 Você começa armado, com uma **Beretta 9mm** e um pente — menos na partida que
 começa pelo título, em que o **tutorial** dá a arma no fim do dia 1. O que o
-vasculho rende são **balas** para ela e os **documentos** da cura; não existe
-outro item no jogo (30/09/2026), fora o do favor do tutorial.
+vasculho rende são **balas** para ela, os **documentos** da cura e, desde
+21/10/2026, **garrafas** — e no chão há **pedras** para pegar. Pedra e garrafa
+se jogam para chamar o zumbi para longe: onde cai faz barulho, e o zumbi perto
+vai ver. O que cada móvel rende está em `Construcao.RENDE` (proposta; a
+equipe vai criar outros itens). **O barulho:** correr perto de um zumbi o
+chama, andar colado também; agachado, nunca.
 
 Dentro de casa é **só mouse**: o que dá para usar acende quando o mouse passa, e
 clicar numa porta leva ao cômodo dela. As bolinhas do canto são a energia da
@@ -194,6 +199,9 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/relogio.gd` | a luz do dia, o custo do vasculho e a noite |
 | `rua/mochila.gd` | os documentos que você carrega, as balas indo para o cinto, e o que atravessa o fim do dia |
 | `rua/tela_da_mochila.gd` | a tela do `Tab`, com o mundo rodando atrás |
+| `rua/mao.gd` | **a mão** (21/10/2026): o scroll troca o que está na mão (`Travessia.na_mao`) e o botão esquerdo usa; com a pedra ou a garrafa, segurar carrega a distância até o limite e desenha a mira (o arco, o alvo e até onde o barulho chama), e soltar joga |
+| `rua/arremessado.gd` | a pedra ou a garrafa no ar e onde ela cai: o barulho chama todo zumbi perto (`foi_chamado`, o mesmo do tiro); a garrafa chama de mais longe e deixa cacos |
+| `design/sintetizar_arremesso.js` | os sons do arremesso (o assobio, a pedra no chão, a garrafa quebrando) sintetizados por regra em `som/arremesso/` — marcadores até a equipe de som trocar pelo arquivo de verdade |
 | `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas. Está na rua, escondida até alguém falar |
@@ -275,6 +283,7 @@ jogando dois minutos.
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |

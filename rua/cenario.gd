@@ -322,6 +322,10 @@ func _ready() -> void:
 			giro = PI / 2.0 if sorteio % 4 < 2 else -PI / 2.0
 		_criar_movel(movel["tipo"], movel["pos"], chave, 0, tamanho, giro, sorteio % 2 == 1)
 
+	# As pedras soltas no chao, que se pegam para arremessar (21/10/2026).
+	for ponto in DetalhesDaRua.PEDRAS_NO_CHAO:
+		var onde := Mapa.ponto_do_png(ponto)
+		_criar_movel("pedras", onde, "pedras@%.0f,%.0f" % [onde.x, onde.y], 0)
 	_plantar_arvores()
 	_criar_enfeites()
 	_criar_muros_do_mundo()
@@ -914,7 +918,7 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	movel.duracao = ficha["duracao"]
 	movel.tamanho = tamanho
 	movel.cor = ficha["cor"]
-	movel.solido = tipo != "lata"
+	movel.solido = tipo != "lata" and tipo != "pedras"
 	# `<tipo>.png` e a pegada da ficha; `<tipo>-em-pe.png` e a pegada
 	# transposta. Girado 90 graus, o desenho que serve e o da outra pegada:
 	# o movel de dentro com tamanho transposto gira e usa o da ficha; o carro
@@ -941,7 +945,7 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	# O sorteio roda para TODO movel, inclusive os que ja foram vasculhados: e
 	# a mesma semente todo dia, e pular um sorteio embaralharia o conteudo dos
 	# outros.
-	movel.achados = _sortear_achados(documento)
+	movel.achados = _sortear_achados(documento, tipo)
 	_indice_da_chave[chave] = _chaves_dos_moveis.size()
 	_chaves_dos_moveis.append(chave)
 	movel.nasce_vazio = Travessia.moveis_vazios.has(chave)
@@ -1067,17 +1071,26 @@ func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], chave: String
 ## Movel vazio existe de proposito: se todo movel desse algo, vasculhar
 ## deixaria de ser aposta. A mesma semente todo dia, entao o mesmo movel rende
 ## o mesmo sempre.
-func _sortear_achados(documento: int) -> Array[String]:
+func _sortear_achados(documento: int, tipo := "") -> Array[String]:
 	var achados: Array[String] = []
 	_moveis_gerados += 1
 	if documento > 0:
 		achados.append(Construcao.DOCUMENTOS[documento - 1])
-	# Cada caixinha e de um calibre sorteado, com peso igual (05/10/2026:
-	# municao por calibre; raridade e decisao de mesa).
+	# O que rende depende do movel (21/10/2026, Construcao.RENDE): nem todo
+	# vasculho da bala. Cada caixinha e de um calibre sorteado, com peso igual
+	# (05/10/2026: municao por calibre; raridade e decisao de mesa).
+	var rende: Dictionary = Construcao.RENDE.get(tipo, Construcao.RENDE_PADRAO)
 	var calibres: Array = Construcao.MUNICOES.keys()
-	for _vez in _sorteio.randi_range(0, 2):
+	var caixinhas := 0
+	if _sorteio.randf() < float(rende.get("balas", 0.0)):
+		caixinhas = 1 + int(rende.get("balas_a_mais", 0))
+	for _vez in caixinhas:
 		var calibre: String = calibres[_sorteio_de_calibre.randi_range(0, calibres.size() - 1)]
 		achados.append(Construcao.MUNICOES[calibre])
+	if _sorteio.randf() < float(rende.get("garrafa", 0.0)):
+		achados.append("garrafa")
+	for _vez in int(rende.get("pedras", 0)):
+		achados.append("pedra")
 	return achados
 
 

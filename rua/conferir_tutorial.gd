@@ -81,7 +81,7 @@ func _conferir() -> void:
 		_erro("a cena nao pos o jogador sob roteiro")
 	# As falas da cena (o grito depois do tiro, o portao) vao sendo passadas;
 	# a cena acaba no favor.
-	var fim := Time.get_ticks_msec() + 40000
+	var fim := Time.get_ticks_msec() + 90000
 	while Travessia.tutorial == "abertura" and Time.get_ticks_msec() < fim:
 		await _passar_as_falas(2.0)
 		await get_tree().process_frame

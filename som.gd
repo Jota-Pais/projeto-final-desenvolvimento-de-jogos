@@ -42,6 +42,9 @@ const VOLUME := {
 	"zumbi": -4.0,
 	"geladeira": -4.0,
 	"porta": -2.0,
+	"arremesso/arremessar": -10.0,
+	"arremesso/pedra": -4.0,
+	"arremesso/garrafa": -4.0,
 }
 
 ## Sem tela nao ha som: os conferidores rodam headless e saem no meio de um

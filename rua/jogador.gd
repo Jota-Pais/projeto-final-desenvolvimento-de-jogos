@@ -108,6 +108,15 @@ signal atingido()
 
 const VIDA_CHEIA := 100.0
 
+## O barulho dos passos (21/10/2026, Joao: "correr perto chama e andar muito
+## perto tambem chama, so agachado nao chamaria de maneira nenhuma, em troca de
+## ser mais lento"): correndo, todo zumbi a ate RAIO_CORRENDO vem ver o que
+## foi; andando, so o que esta colado (RAIO_ANDANDO). Agachado e silencio.
+## **Proposta** (40 px = 1 m).
+const RAIO_CORRENDO := 160.0
+const RAIO_ANDANDO := 56.0
+const BARULHO_A_CADA := 0.3
+
 ## Empurrao do toque do zumbi: some em ESPERA_DO_EMPURRAO segundos.
 ##
 ## E o feedback do toque junto com a barra - e, de bonus, costuma te tirar da
@@ -132,6 +141,8 @@ var direcao_do_roteiro := Vector2.ZERO
 var velocidade_do_roteiro := VELOCIDADE
 
 var _empurrao := Vector2.ZERO
+var _barulho := 0.0
+var _mao: Node2D
 ## O deslocamento do desenho de pe, para devolver o pe ao chao agachado.
 var _offset_de_pe := Vector2.ZERO
 
@@ -155,6 +166,11 @@ func _ready() -> void:
 	_arma.scale = Vector2.ONE * Boneco.ESCALA
 	($Camera as Camera2D).zoom = Vector2.ONE * ZOOM_DA_CAMERA
 	_offset_de_pe = _boneco.offset
+	# A mao: o scroll e o arremesso (rua/mao.gd).
+	_mao = Node2D.new()
+	_mao.set_script(load("res://rua/mao.gd"))
+	_mao.name = "Mao"
+	add_child(_mao)
 
 func _physics_process(delta: float) -> void:
 	var direcao := Input.get_vector(
@@ -181,6 +197,19 @@ func _physics_process(delta: float) -> void:
 
 	_animar(direcao, velocidade, delta)
 	_soar(direcao, velocidade == VELOCIDADE_CORRENDO)
+	_fazer_barulho(direcao, velocidade == VELOCIDADE_CORRENDO, delta)
+
+## Os passos chamam o zumbi perto (ver RAIO_CORRENDO): de tempos em tempos,
+## e nao a cada quadro, como o chamado do tiro.
+func _fazer_barulho(direcao: Vector2, correndo: bool, delta: float) -> void:
+	_barulho -= delta
+	if direcao == Vector2.ZERO or agachado or no_roteiro or _barulho > 0.0:
+		return
+	_barulho = BARULHO_A_CADA
+	var raio := RAIO_CORRENDO if correndo else RAIO_ANDANDO
+	for zumbi in get_tree().get_nodes_in_group("zumbi"):
+		if (zumbi as Node2D).global_position.distance_to(global_position) <= raio:
+			zumbi.foi_chamado(global_position)
 
 ## Agacha ou levanta. O boneco achata em volta do centro do corpo, e o
 ## deslocamento do desenho devolve o pe ao lugar (o pe esta `pe` px do desenho
@@ -229,8 +258,8 @@ func _soar(direcao: Vector2, correndo: bool) -> void:
 ## Correr e o mesmo andar mais rapido (decidido 30/09; animacao de corrida so
 ## com assinatura).
 func _animar(direcao: Vector2, velocidade: float, delta: float) -> void:
-	if Input.is_action_pressed("atirar") and not TelaDaMochila.aberta and Travessia.armado \
-			and not no_roteiro:
+	var com_a_arma := Input.is_action_pressed("atirar") and Travessia.armado and Travessia.na_mao == "arma"
+	if (com_a_arma or (_mao != null and _mao.mirando())) and not TelaDaMochila.aberta and not no_roteiro:
 		_mirando = SEGUNDOS_DE_MIRA
 	else:
 		_mirando = maxf(0.0, _mirando - delta)

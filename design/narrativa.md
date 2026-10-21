@@ -190,6 +190,22 @@ existe: correr (Shift), a visão do zumbi, o tiro e a Beretta 9mm.
   do traçado, no ponto (1214, 647) do desenho). Ainda sem rótulo no mapa.
 - **O "mercado" do favor é o Restaurante** (João, 20/10/2026), que fica dentro
   da região do tutorial; o Mercado do mapa fica fora dela.
+- **A cena de abertura e o caminho** (João, 21/10/2026, à noite): a cena é na
+  arte do jogo, sem o jogador no controle; ele anda devagar e apreensivo pela
+  rua, dá de cara com um zumbi que o ataca, e o tiro do Antônio o salva e
+  começa a conversa. Depois dela o Antônio entrega a missão e o rádio, e no
+  caminho até a pizzaria vai ensinando pelo rádio como o zumbi funciona: não
+  fazer barulho perto, não entrar no campo de visão, agachar, e jogar pedra
+  ou garrafa para chamar a atenção dele para outro lugar.
+- **Pedra, garrafa e a mão** (João, 21/10/2026): pedra se pega no chão,
+  garrafa se acha vasculhando — *"não quero mais que qualquer coisa que ele
+  vasculhar ache balas, vou criar alguns outros tipos de itens"*. O scroll
+  escolhe o que está na mão (arma, pedra, garrafa, depois equipamento
+  médico) e o botão esquerdo usa; a pedra se segura para jogar mais longe,
+  até um limite, e daí em diante segurar é só a mira.
+- **O barulho** (João, 21/10/2026): *"correr perto chama e andar muito perto
+  também chama, só agachado não chamaria de maneira nenhuma, em troca de ser
+  mais lento"*.
 - **O Restaurante é a Cover Pizzaria** (João, 21/10/2026): *"muda pra Cover
   Pizzaria, e pelo nome sim o restaurante será uma pizzaria"*. Salão na
   frente, cozinha com forno a lenha e depósito no fundo; o letreiro está no

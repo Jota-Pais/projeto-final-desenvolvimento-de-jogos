@@ -344,6 +344,9 @@ const MOVEIS := {
 	# As caminhonetes (fazenda e galpao do velho louco), idem.
 	"caminhonete": { "rotulo": "Caminhonete", "duracao": 3.0, "tamanho": Vector2(200.0, 84.0), "cor": Color("4f5560") },
 	"lata": { "rotulo": "Lata de lixo", "duracao": 1.5, "tamanho": Vector2(48.0, 48.0), "cor": Color("4a4f45") },
+	# As pedras soltas no chao (21/10/2026, Joao: "pega pedras no chao"):
+	# um vasculho rapido que so rende pedra, para arremessar.
+	"pedras": { "rotulo": "Pedras", "duracao": 0.6, "tamanho": Vector2(34.0, 22.0), "cor": Color("77736b") },
 	# Os quatro que chegaram com os lugares novos de 09/09/2026. O armario de
 	# armas da delegacia e o movel mais caro do mapa: 5,5 s de vasculho
 	# ininterrupto, com a delegacia sendo o lugar mais povoado.
@@ -388,6 +391,30 @@ const MUNICOES := {
 ## Quantas balas vem em cada achado, de qualquer calibre. E uma caixinha, nao
 ## uma bala. **Proposta** - calibragem, junto com Travessia.BALAS_DE_COMECO.
 const MUNICAO_POR_ACHADO := 6
+
+## O que cada movel rende, por tipo (21/10/2026, Joao: "nao quero mais que
+## qualquer que ele vasculhar ache balas, vou criar alguns outros tipos de
+## itens pra serem encontrados"): a chance de uma caixinha de balas e a de uma
+## garrafa, e as pedras do monte de pedras. Garrafa na geladeira e na
+## prateleira, bala no armario e no carro. **Proposta** - a tabela e da mesa,
+## e e aqui que os itens novos da equipe entram.
+const RENDE := {
+	"geladeira": { "balas": 0.1, "garrafa": 0.7 },
+	"prateleira": { "balas": 0.35, "garrafa": 0.45 },
+	"armario": { "balas": 0.55, "garrafa": 0.15 },
+	"comoda": { "balas": 0.45, "garrafa": 0.1 },
+	"estante": { "balas": 0.4, "garrafa": 0.2 },
+	"caixa": { "balas": 0.45, "garrafa": 0.15 },
+	"arquivo": { "balas": 0.4, "garrafa": 0.0 },
+	"carro": { "balas": 0.45, "garrafa": 0.3 },
+	"caminhonete": { "balas": 0.5, "garrafa": 0.3 },
+	"motorhome": { "balas": 0.5, "garrafa": 0.4 },
+	"trator": { "balas": 0.3, "garrafa": 0.2 },
+	"lata": { "balas": 0.05, "garrafa": 0.6 },
+	"armario_de_armas": { "balas": 1.0, "balas_a_mais": 1, "garrafa": 0.0 },
+	"pedras": { "balas": 0.0, "garrafa": 0.0, "pedras": 3 },
+}
+const RENDE_PADRAO := { "balas": 0.5, "garrafa": 0.15 }
 
 ## Se um achado e municao (de qualquer calibre).
 static func e_municao(achado: String) -> bool:

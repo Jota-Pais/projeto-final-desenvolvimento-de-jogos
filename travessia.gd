@@ -161,6 +161,49 @@ const ARMA_DE_COMECO := "Beretta 9mm"
 ## e nas ferramentas de conferencia, que testam a arma.
 var armado := true
 
+## O que esta na mao (21/10/2026, Joao: "ele poderia usar o scroll pra ver o
+## que tem na mao, armas, pedras, equipamentos medicos, e com o botao esquerdo
+## ele usa"): "arma", "pedra", "garrafa", ou "" com a mao vazia. O scroll
+## passa de um para o outro (rua/mao.gd); o botao esquerdo usa.
+var na_mao := "arma"
+
+## O que se arremessa para chamar o zumbi para longe, contado: a pedra que se
+## pega do chao e a garrafa que o vasculho rende. Equipamento, como as balas:
+## atravessa o dia e nao ocupa a mochila.
+const ARREMESSAVEIS := ["pedra", "garrafa"]
+var arremessaveis := { "pedra": 0, "garrafa": 0 }
+
+## O que da para ter na mao agora, na ordem do scroll.
+func opcoes_na_mao() -> Array[String]:
+	var lista: Array[String] = []
+	if armado:
+		lista.append("arma")
+	for qual in ARREMESSAVEIS:
+		if int(arremessaveis.get(qual, 0)) > 0:
+			lista.append(qual)
+	return lista
+
+## O scroll: a proxima (+1) ou a anterior (-1) coisa na mao.
+func passar_a_mao(passo: int) -> void:
+	var lista := opcoes_na_mao()
+	if lista.is_empty():
+		na_mao = ""
+		return
+	var i := lista.find(na_mao)
+	na_mao = lista[(i + passo + lista.size()) % lista.size()] if i >= 0 else lista[0]
+
+## Se o que esta na mao acabou (a ultima pedra jogada) ou nem existe ainda
+## (desarmado), a mao vai para o que tiver.
+func conferir_a_mao() -> void:
+	var lista := opcoes_na_mao()
+	if not na_mao in lista:
+		na_mao = lista[0] if not lista.is_empty() else ""
+
+func guardar_arremessavel(qual: String, quantos := 1) -> void:
+	arremessaveis[qual] = int(arremessaveis.get(qual, 0)) + quantos
+	if na_mao == "":
+		na_mao = qual
+
 ## Onde o tutorial esta (rua/tutorial.gd), ou "" sem tutorial. Atravessa os
 ## dias como o resto: o tutorial tem dois (Joao, 21/10/2026). So a partida que
 ## comeca pelo titulo tem tutorial - a cena da rua aberta direto, nao.
@@ -181,6 +224,8 @@ func comecar_partida(qual: int) -> void:
 	tutorial = "abertura"
 	tutorial_avisos.clear()
 	armado = false
+	na_mao = ""
+	arremessaveis = { "pedra": 0, "garrafa": 0 }
 	get_tree().change_scene_to_file(CENA_DA_RUA)
 
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
@@ -274,6 +319,8 @@ func recomecar() -> void:
 	dia = 1
 	arma = ARMA_DE_COMECO
 	armado = true
+	na_mao = "arma"
+	arremessaveis = { "pedra": 0, "garrafa": 0 }
 	tutorial = ""
 	tutorial_avisos.clear()
 	balas = balas_de_comeco()

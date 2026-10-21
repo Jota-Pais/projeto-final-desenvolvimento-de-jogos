@@ -161,18 +161,21 @@ func _comeca_com_ela() -> void:
 		print("  a HUD diz \"%s\"" % esquerda)
 	hud.free()
 
-	# Nenhum movel tem a arma, nem nada que nao seja bala ou documento - o loot
-	# generico saiu do jogo em 30/09/2026.
+	# Nenhum movel tem a arma, nem nada que nao seja bala, documento ou o que se
+	# arremessa - o loot generico saiu do jogo em 30/09/2026, e a pedra e a
+	# garrafa entraram em 21/10/2026 (Joao: "vou criar alguns outros tipos de
+	# itens pra serem encontrados").
 	var com_balas := 0
 	var estranhos := {}
 	for movel in _moveis():
 		if _caixinhas_em(movel) > 0:
 			com_balas += 1
 		for achado in movel.achados:
-			if not Construcao.e_municao(achado) and not Construcao.e_documento(achado):
+			if not Construcao.e_municao(achado) and not Construcao.e_documento(achado) \
+					and not achado in Travessia.ARREMESSAVEIS:
 				estranhos[achado] = true
 	if not estranhos.is_empty():
-		_erro("ha item que nao e bala nem documento no mapa: %s" % ", ".join(estranhos.keys()))
+		_erro("ha item que nao e bala, documento nem arremessavel no mapa: %s" % ", ".join(estranhos.keys()))
 	print("  balas em %d de %d moveis" % [com_balas, _moveis().size()])
 	if com_balas < 2:
 		_erro("as balas tem menos de duas fontes no mapa")

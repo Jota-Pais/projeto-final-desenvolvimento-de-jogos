@@ -193,3 +193,23 @@ class Tela {
   for (let i = 0; i < 4; i++) t.mancha(Math.floor(r() * 64), Math.floor(r() * 64), 7, 0.14);
   t.png(path.join(pasta, 'bloco.png'));
 }
+
+// --- o monte de pedras soltas (21/10/2026), que se pega com E para
+// arremessar: 40 x 28, fundo transparente, contorno preto. Sai na pasta dos
+// objetos (segundo argumento), onde o cenario procura o desenho de cada movel.
+const pastaDosObjetos = process.argv[3];
+if (pastaDosObjetos) {
+  const r = rng(17); const t = new Tela(40, 28, [0, 0, 0]);
+  for (let y = 0; y < 28; y++) for (let x = 0; x < 40; x++) t.set(x, y, [0, 0, 0], 0);
+  const pedras = [[12, 18, 7, 5], [24, 19, 8, 5], [18, 12, 6, 4], [31, 14, 5, 4], [8, 10, 4, 3], [26, 9, 4, 3], [16, 22, 4, 3]];
+  for (const [cx, cy, rx, ry] of pedras) {
+    const base = vezes(hex('#8a867e'), 0.85 + r() * 0.25);
+    for (let y = -ry - 1; y <= ry + 1; y++) for (let x = -rx - 1; x <= rx + 1; x++) {
+      const d = (x / rx) ** 2 + (y / ry) ** 2;
+      if (d > 1.25) continue;
+      let c = d > 1.0 ? [24, 20, 16] : vezes(base, 1.15 - 0.35 * ((x + y) / (rx + ry) + 0.5));
+      t.set(cx + x, cy + y, c, 255);
+    }
+  }
+  t.png(path.join(pastaDosObjetos, 'pedras.png'));
+}
