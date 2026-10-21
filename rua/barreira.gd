@@ -50,14 +50,23 @@ const TIPOS := {
 }
 
 ## As barricadas soltas (onibus, carro, cacamba, entulho): um retangulo girado,
-## em px de mundo, que segura tudo. O carro reaproveita o sprite dos carros da
-## rua, sem vasculho - e outro objeto, nao um movel.
+## em px de mundo, que segura tudo. O `tamanho` e (comprimento, largura): o
+## eixo comprido em x, que o `giro_graus` do dado aponta - horario a partir do
+## leste, a convencao do desenho (ate 21/10/2026 era o contrario, e toda
+## barricada ficava atravessada 90 graus). O carro reaproveita o sprite dos
+## carros da rua, que e em pe, sem vasculho - e outro objeto, nao um movel; a
+## tinta e, no tombado, a faixa escura do chassi o separam dos carros que se
+## vasculham. A `altura`, como a das barreiras, e a da regua do boneco
+## (~20,5 px por metro): hoje so desenha; e o que o agachar vai usar para
+## dizer que cacamba de 1 m esconde quem esta agachado e nao quem esta de pe.
 const OBJETOS := {
-	"onibus": { "tamanho": Vector2(110.0, 380.0), "cor": Color("8a7a4e") },
-	"carro_tombado": { "tamanho": Vector2(80.0, 180.0), "cor": Color("6b6e70"), "desenho": "res://rua/arte/objetos/carro-em-pe.png" },
-	"carro_queimado": { "tamanho": Vector2(80.0, 180.0), "cor": Color("3a3533"), "desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.32, 0.29, 0.27) },
-	"cacamba": { "tamanho": Vector2(90.0, 170.0), "cor": Color("8a5a3c") },
-	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "cor": Color("6f655a") },
+	"onibus": { "tamanho": Vector2(380.0, 110.0), "altura": 60.0, "cor": Color("8a7a4e") },
+	"carro_tombado": { "tamanho": Vector2(180.0, 80.0), "altura": 37.0, "cor": Color("6b6e70"),
+		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.7, 0.72, 0.78), "chassi": true },
+	"carro_queimado": { "tamanho": Vector2(180.0, 80.0), "altura": 30.0, "cor": Color("3a3533"),
+		"desenho": "res://rua/arte/objetos/carro-em-pe.png", "tinta": Color(0.32, 0.29, 0.27) },
+	"cacamba": { "tamanho": Vector2(170.0, 90.0), "altura": 20.0, "cor": Color("8a5a3c") },
+	"monte_entulho": { "tamanho": Vector2(120.0, 120.0), "altura": 23.0, "cor": Color("6f655a") },
 }
 
 ## Vao padrao, igual ao da porta de predio (Construcao.VAO), e o minimo que a
@@ -305,11 +314,38 @@ class Barricada extends Node2D:
 	func _draw() -> void:
 		var o: Dictionary = OBJETOS[tipo]
 		var tam: Vector2 = o["tamanho"]
-		draw_set_transform(Vector2.ZERO, giro)
 		if _desenho != null:
-			draw_texture_rect(_desenho, Rect2(-tam / 2.0, tam), false, o.get("tinta", Color.WHITE))
-		else:
-			draw_rect(Rect2(-tam / 2.0, tam), o["cor"])
-			draw_rect(Rect2(-tam / 2.0, tam).grow(-6.0), Color(o["cor"]).lightened(0.12))
-			draw_rect(Rect2(-tam / 2.0, tam), Color(0.0, 0.0, 0.0, 0.8), false, 2.0)
-		draw_set_transform(Vector2.ZERO)
+			# O sprite e em pe (comprido em y): gira um quarto de volta a menos.
+			draw_set_transform(Vector2.ZERO, giro - PI / 2.0)
+			var em_pe := Vector2(tam.y, tam.x)
+			draw_texture_rect(_desenho, Rect2(-em_pe / 2.0, em_pe), false, o.get("tinta", Color.WHITE))
+			if o.get("chassi", false):
+				# Tombado de lado: o chassi escuro aparece num dos lados compridos.
+				draw_rect(Rect2(em_pe.x / 2.0 - 14.0, -em_pe.y / 2.0 + 10.0, 10.0, em_pe.y - 20.0),
+					Color(0.12, 0.11, 0.1, 0.85))
+			draw_set_transform(Vector2.ZERO)
+			return
+		# Cinza, como as pecas de muro: a pegada girada no chao, o topo subido
+		# da altura e as faces que olham para a camera.
+		var cima := Vector2(0.0, -float(o["altura"]))
+		var meio := tam / 2.0
+		var pe := PackedVector2Array()
+		for c in [Vector2(-meio.x, -meio.y), Vector2(meio.x, -meio.y), meio, Vector2(-meio.x, meio.y)]:
+			pe.append((c as Vector2).rotated(giro))
+		var cor: Color = o["cor"]
+		var contorno := Color(0.0, 0.0, 0.0, 0.8)
+		for i in 4:
+			var p := pe[i]
+			var q := pe[(i + 1) % 4]
+			if ((p + q) / 2.0).y <= 0.0:
+				continue
+			var face := PackedVector2Array([p, q, q + cima, p + cima])
+			draw_colored_polygon(face, cor.darkened(0.35 if i % 2 == 0 else 0.5))
+			face.append(p)
+			draw_polyline(face, contorno, 1.0)
+		var topo := PackedVector2Array()
+		for p in pe:
+			topo.append(p + cima)
+		draw_colored_polygon(topo, cor)
+		topo.append(topo[0])
+		draw_polyline(topo, contorno, 1.0)

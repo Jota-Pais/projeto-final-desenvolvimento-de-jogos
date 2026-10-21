@@ -784,7 +784,10 @@ func _um_lugar_livre_no_anel() -> Vector2:
 	# zumbis para dentro dele - do lado de fora eles so empurrariam a barreira.
 	if Mapa.cerco_ligado and Mapa.dentro_do_cerco(_jogador.global_position):
 		return _um_lugar_livre_no_cerco(espaco, consulta)
+	return _um_lugar_no_anel(espaco, consulta)
 
+func _um_lugar_no_anel(espaco: PhysicsDirectSpaceState2D,
+		consulta: PhysicsShapeQueryParameters2D) -> Vector2:
 	var ultimo := _jogador.global_position
 	for _tentativa in 14:
 		var angulo := _sorteio.randf_range(0.0, TAU)
@@ -798,17 +801,19 @@ func _um_lugar_livre_no_anel() -> Vector2:
 	return ultimo
 
 ## Um ponto livre dentro do cerco, fora da tela (a meia diagonal da tela com o
-## zoom 2 e ~370 px) e fora de predio - dentro da sua casa ou da do Antonio,
-## seladas, ele ficaria preso. O anel nao serve aqui: a regiao e pequena, e de
-## 700 a 1300 px do jogador quase tudo cai do lado de fora. Sem ponto fora da
-## tela, fica o mais longe que achou.
+## zoom 2 e ~370 px), fora de predio e **de onde se chega ate voce**: a sua
+## casa e a do Antonio sao seladas, e o patio murado dele fica dentro da
+## regiao - zumbi ali ficaria preso. O anel nao serve aqui: a regiao e
+## pequena, e de 700 a 1300 px do jogador quase tudo cai do lado de fora. Sem
+## ponto fora da tela, fica o mais longe que achou; sem ponto nenhum, o anel.
 func _um_lugar_livre_no_cerco(espaco: PhysicsDirectSpaceState2D,
 		consulta: PhysicsShapeQueryParameters2D) -> Vector2:
 	var regiao := Mapa.regiao_do_tutorial()
 	var caixa := Rect2(regiao[0], Vector2.ZERO)
 	for p in regiao:
 		caixa = caixa.expand(p)
-	var melhor := _jogador.global_position
+	var jogador := _jogador.global_position
+	var melhor := Vector2.INF
 	for _tentativa in 40:
 		var ponto := Vector2(_sorteio.randf_range(caixa.position.x, caixa.end.x),
 			_sorteio.randf_range(caixa.position.y, caixa.end.y))
@@ -817,11 +822,15 @@ func _um_lugar_livre_no_cerco(espaco: PhysicsDirectSpaceState2D,
 		consulta.transform = Transform2D(0.0, ponto)
 		if not espaco.intersect_shape(consulta, 1).is_empty():
 			continue
-		if ponto.distance_to(_jogador.global_position) >= LONGE_DA_TELA:
+		# Celula livre, e nao so caminho: atras de um muro, na faixa estreita
+		# do patio do Antonio, a navegacao encaixaria o ponto do lado de fora.
+		if not _navegacao.livre(ponto) or _navegacao.caminho(ponto, jogador).is_empty():
+			continue
+		if ponto.distance_to(jogador) >= LONGE_DA_TELA:
 			return ponto
-		if ponto.distance_to(_jogador.global_position) > melhor.distance_to(_jogador.global_position):
+		if melhor == Vector2.INF or ponto.distance_to(jogador) > melhor.distance_to(jogador):
 			melhor = ponto
-	return melhor
+	return melhor if melhor != Vector2.INF else _um_lugar_no_anel(espaco, consulta)
 
 func _dentro_de_predio(ponto: Vector2) -> bool:
 	for construcao in Mapa.mundo()["construcoes"]:

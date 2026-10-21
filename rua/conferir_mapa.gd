@@ -46,6 +46,13 @@ const Jogador := preload("res://rua/jogador.gd")
 ## a barreira de borda pode correr um pouco do lado de fora dele.
 const FOLGA_DO_CERCO := 96.0
 
+## A grade da passada do cerco, mais fina que a do mapa: o corpo de 14 de
+## largura passa de lado numa fresta de 14, mas a grade so ve a fresta se um
+## centro de celula cair na faixa em que ele cabe - com 16 px, fresta de ate
+## 29 px podia escapar; com 8, toda fresta de 22 px ou mais e vista. Custa
+## quatro vezes as consultas, so na caixa em volta da regiao.
+const PASSO_DO_CERCO := 8.0
+
 ## Celula da grade: 16 px, menor que a faixa de alcance de um movel (ver acima)
 ## e com os corpos de duas celulas vizinhas a 2 px um do outro - barreira
 ## mais grossa que isso nao passa despercebida entre elas.
@@ -425,10 +432,11 @@ func _explicar_o_quarto(construcao: Dictionary, quarto: Rect2, livre: Dictionary
 ## a conferencia inverte: se der para chegar a pe em algum quarto dela, a porta
 ## parou de ser a unica entrada. A casa do Antonio (21/10/2026) e selada de
 ## vez: nem pela porta.
-func _esta_selada(construcao: Dictionary, alcancavel: Dictionary, quartos: Array[Rect2]) -> int:
+func _esta_selada(construcao: Dictionary, alcancavel: Dictionary, quartos: Array[Rect2],
+		passo := PASSO) -> int:
 	var abertos := 0
 	for j in quartos.size():
-		if _tem_celula_em(alcancavel, quartos[j], PASSO):
+		if _tem_celula_em(alcancavel, quartos[j], passo):
 			abertos += 1
 	if abertos > 0:
 		_erro("da para entrar em %s a pe: %d dos %d quartos se alcancam pela rua"
@@ -526,13 +534,13 @@ func _o_cerco_fecha() -> void:
 	var caixa := Rect2(regiao[0], Vector2.ZERO)
 	for p in regiao:
 		caixa = caixa.expand(p)
-	caixa = caixa.grow(FOLGA_DO_CERCO + PASSO * 4.0).intersection(Mapa.MUNDO)
+	caixa = caixa.grow(FOLGA_DO_CERCO + PASSO_DO_CERCO * 4.0).intersection(Mapa.MUNDO)
 
 	if not Mapa.dentro_do_cerco(_jogador.global_position):
 		_erro("o jogador nasce fora da regiao do tutorial, em %s (png)" % _no_png(_jogador.global_position))
 		return
-	var livre := _onde_cabe(caixa, PASSO)
-	var inicio := Vector2i((_jogador.global_position / PASSO).floor())
+	var livre := _onde_cabe(caixa, PASSO_DO_CERCO)
+	var inicio := Vector2i((_jogador.global_position / PASSO_DO_CERCO).floor())
 	if not livre.has(inicio):
 		_erro("o jogador nasce sem lugar para ficar de pe, em %s" % _jogador.global_position)
 		return
@@ -541,14 +549,14 @@ func _o_cerco_fecha() -> void:
 	var fora: Array[Vector2] = []
 	var dentro := 0
 	for celula in alcancavel:
-		var centro := _centro(celula, PASSO)
+		var centro := _centro(celula, PASSO_DO_CERCO)
 		if Geometry2D.is_point_in_polygon(centro, regiao):
 			dentro += 1
 		elif _distancia_ao_contorno(centro, regiao) > FOLGA_DO_CERCO:
 			fora.append(centro)
 	var livres_dentro := 0
 	for celula in livre:
-		if Geometry2D.is_point_in_polygon(_centro(celula, PASSO), regiao):
+		if Geometry2D.is_point_in_polygon(_centro(celula, PASSO_DO_CERCO), regiao):
 			livres_dentro += 1
 	print("  dentro da regiao cabe ficar de pe em %d celulas; da para chegar em %d" % [livres_dentro, dentro])
 	if not fora.is_empty():
@@ -566,13 +574,13 @@ func _o_cerco_fecha() -> void:
 			continue
 		quantos += 1
 		var tamanho := ((movel as Node2D).get_node("Deteccao").shape as RectangleShape2D).size
-		if not _tem_celula_em(alcancavel, Rect2(onde - tamanho / 2.0, tamanho), PASSO):
+		if not _tem_celula_em(alcancavel, Rect2(onde - tamanho / 2.0, tamanho), PASSO_DO_CERCO):
 			_erro("%s em %s (png %s) e inalcancavel dentro do cerco" % [
 				(movel as Node2D).get("rotulo"), onde, _no_png(onde)])
 			ruins += 1
 	var porta := _rua.get_node("EntradaDeCasa") as Node2D
 	var tamanho_da_porta := ((porta.get_node("Deteccao") as CollisionShape2D).shape as RectangleShape2D).size
-	if not _tem_celula_em(alcancavel, Rect2(porta.position - tamanho_da_porta / 2.0, tamanho_da_porta), PASSO):
+	if not _tem_celula_em(alcancavel, Rect2(porta.position - tamanho_da_porta / 2.0, tamanho_da_porta), PASSO_DO_CERCO):
 		_erro("a porta de casa e inalcancavel dentro do cerco")
 	print("  %d moveis dentro, %d inalcancaveis" % [quantos, ruins])
 
@@ -582,15 +590,15 @@ func _o_cerco_fecha() -> void:
 			continue
 		var quartos := Construcao.quartos_de(construcao)
 		if construcao.get("sua", false) or construcao.get("selada", false):
-			_esta_selada(construcao, alcancavel, quartos)
+			_esta_selada(construcao, alcancavel, quartos, PASSO_DO_CERCO)
 			continue
 		predios += 1
 		for j in quartos.size():
-			if not _tem_celula_em(alcancavel, quartos[j], PASSO):
+			if not _tem_celula_em(alcancavel, quartos[j], PASSO_DO_CERCO):
 				_erro("quarto %d de %s sem passagem dentro do cerco" % [j, _nome_de(construcao)])
 	for lugar in Mapa.lugares():
 		var r: Rect2 = lugar["rect"]
-		if Mapa.dentro_do_cerco(r.get_center()) and not _tem_celula_em(alcancavel, r, PASSO):
+		if Mapa.dentro_do_cerco(r.get_center()) and not _tem_celula_em(alcancavel, r, PASSO_DO_CERCO):
 			_erro("nao da para chegar a pe em %s dentro do cerco" % lugar["nome"])
 	print("  %d predios dentro do cerco" % predios)
 
@@ -609,11 +617,11 @@ func _a_navegacao_tambem_fecha(regiao: PackedVector2Array, livre: Dictionary, al
 	meio /= float(regiao.size())
 	var por_oitavo := {}
 	for celula in livre:
-		# Uma em cada 4 x 4 basta para achar um ponto por oitavo, e poupa a
+		# Uma em cada 8 x 8 basta para achar um ponto por oitavo, e poupa a
 		# distancia ao contorno de dezenas de milhares de celulas.
-		if alcancavel.has(celula) or celula.x % 4 != 0 or celula.y % 4 != 0:
+		if alcancavel.has(celula) or celula.x % 8 != 0 or celula.y % 8 != 0:
 			continue
-		var centro := _centro(celula, PASSO)
+		var centro := _centro(celula, PASSO_DO_CERCO)
 		if Geometry2D.is_point_in_polygon(centro, regiao) or _distancia_ao_contorno(centro, regiao) < FOLGA_DO_CERCO * 2.0:
 			continue
 		var oitavo := posmod(roundi((centro - meio).angle() / (TAU / 8.0)), 8)

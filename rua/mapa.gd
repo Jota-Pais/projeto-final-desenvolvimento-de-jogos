@@ -519,6 +519,20 @@ static func _barreiras(tudo: Dictionary, recorte: Rect2) -> void:
 			continue
 		tudo["barricadas"].append({ "nome": objeto.get("nome", ""), "tipo": objeto["tipo"], "grupo": grupo,
 			"pos": _do_png(objeto["ponto"], recorte), "giro": float(objeto.get("giro_graus", 0.0)) })
+	# A caixa de todas: quem pergunta longe dela (a arvore do outro lado do
+	# mapa) nao precisa olhar barreira por barreira.
+	var caixa := Rect2()
+	var primeira := true
+	for barreira in tudo["barreiras"]:
+		for p in barreira["pontos"]:
+			caixa = Rect2(p, Vector2.ZERO) if primeira else caixa.expand(p)
+			primeira = false
+	for barricada in tudo["barricadas"]:
+		for p in cantos_da_barricada(barricada):
+			caixa = Rect2(p, Vector2.ZERO) if primeira else caixa.expand(p)
+			primeira = false
+	if not primeira:
+		tudo["caixa_das_barreiras"] = caixa.grow(32.0)
 
 ## Os quatro cantos de uma barricada girada, em mundo.
 static func cantos_da_barricada(barricada: Dictionary) -> PackedVector2Array:
@@ -536,6 +550,8 @@ static func tem_barreira_em(area: Rect2) -> bool:
 ## A mesma pergunta sobre um mundo dado - a montagem chama isto antes de o
 ## mundo existir (mundo() ali entraria em laco).
 static func _tem_barreira_em(tudo: Dictionary, area: Rect2) -> bool:
+	if not tudo.has("caixa_das_barreiras") or not (tudo["caixa_das_barreiras"] as Rect2).intersects(area):
+		return false
 	for barreira in tudo["barreiras"]:
 		var pontos: PackedVector2Array = barreira["pontos"]
 		for i in range(1, pontos.size()):

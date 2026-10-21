@@ -120,6 +120,12 @@ func alcanca(ponto: Vector2) -> bool:
 		return false
 	return _regiao.has_point(Vector2i((ponto / CELULA).floor()))
 
+## Se a celula do proprio ponto esta livre - sem procurar a livre mais perto,
+## como o `caminho` faz. E o que diz que o ponto nao esta numa faixa de
+## barreira: o `caminho` dali encaixaria o ponto do outro lado dela.
+func livre(ponto: Vector2) -> bool:
+	return alcanca(ponto) and not _grade.is_point_solid(Vector2i((ponto / CELULA).floor()))
+
 ## O caminho entre dois pontos do mundo, ja em coordenada de mundo. Vazio se
 ## nao houver caminho **ou se algum dos dois estiver fora da janela**.
 func caminho(de: Vector2, ate: Vector2) -> PackedVector2Array:
