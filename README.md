@@ -87,11 +87,21 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
   título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda sem rumo
   pela rua de cima, um zumbi te pega e o Antônio o mata do quintal dele), a
-  conversa no portão, o favor no Restaurante com o rádio ensinando a correr, a
+  conversa no portão, o favor na Cover Pizzaria com o rádio ensinando a correr, a
   agachar e a vasculhar, e a volta ao portão, que dá a 9mm. Dia 2: explorar e
   atirar; o primeiro zumbi abatido fecha o tutorial. **As falas ainda são
   marcadores** (`[... — fala do João]`) até o texto do João entrar em
   `rua/falas_do_tutorial.gd`.
+- **A arquitetura** (21/10/2026, a pedido do João: "que o restaurante realmente
+  se pareça com um restaurante, que as casas não sejam só quadrados iguais").
+  Todo prédio tem telhado de verdade e a fachada sul de frente, na vista
+  inclinada dos muros. Os da região do tutorial foram feitos um por um
+  (`rua/arquitetura.gd`): casas em L com varanda, garagem e área de serviço,
+  oitão com a porta, a casa-búnquer do Antônio, a Delegacia em L com bandeira, o
+  Prédio abandonado de quatro andares com a quina desabada, e a **Cover
+  Pizzaria** (era o Restaurante) com toldo, deck, salão de toalha xadrez e
+  forno a lenha. As ruas de lá ganharam faixa, poste com fiação, bueiro,
+  mancha e lixo. Tudo por regra, sem custo de geração.
 
 ## As regras que o código implementa
 
@@ -153,7 +163,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `design/tracar_desenho.js` | lê o desenho, separa cada cor numa classe (grama, mata, pavimento, asfalto, milho, terra, água; vermelho, marrom e cinza são prédio), apaga texto e linha fina e escreve o traçado. `node design/tracar_desenho.js`, sem dependência |
 | `rua/mapa_tracado.json` | o traçado: polígonos de chão, retângulos de prédio, blocos sólidos e veículos, em px do desenho. **Gerado — não editar à mão** |
 | `rua/mapa.gd` | **o que cada coisa é**: os ROTULOS (nome, tipo, documento, a sua casa) apontados por coordenada do desenho, a ESCALA (24 px de mundo por px do desenho) e a montagem do mundo |
-| `rua/construcao.gd` | as regras de uma construção qualquer (parede, vão de porta, quarto), que móvel vai em cada quarto e o que sai de um móvel (balas) |
+| `rua/construcao.gd` | as regras de uma construção qualquer (parede, vão de porta, quarto), que móvel vai em cada quarto e o que sai de um móvel (balas). Desde 21/10/2026, a **planta com recortes**: cantos tirados do retângulo, e a casa vira L ou T — parede, piso, quarto e "estar dentro" seguem a forma (`recortes_de`, `contem`, `volumes_de`) |
 | `rua/cenario.gd` | desenha o chão e gera colisão, móveis e árvores a partir do mapa |
 | `rua/vasculhavel.gd` | **a core mechanic**: barra que enche enquanto `E` estiver segurado |
 | `rua/jogador.gd` | andar e correr, e para onde ele olha (para onde anda; para o mouse enquanto atira) — quem lê a tecla de vasculhar é o próprio móvel |
@@ -173,7 +183,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `design/recortar_fundo.gd` | tira o fundo chapado de um sprite gerado que veio com fundo apesar do pedido (inunda a partir das bordas): `Godot --headless --path . --script design/recortar_fundo.gd -- <entrada.png> <saida.png> [tolerância]` |
 | `design/juntar_folha.js` | junta linhas de animação de uma folha nova do PixelLab (outra conta) na folha antiga do mesmo boneco: `node design/juntar_folha.js <antiga.json> <nova.json> <saida.json> [animação...]` |
 | `design/desenhar_texturas.js` | desenha por regra as texturas dos prédios (parede, piso, telha, zinco, laje, 64 × 64, emendáveis) e os sprites de porta e janela: `node design/desenhar_texturas.js rua/arte/predios` |
-| `rua/arte/predios/` | as texturas e sprites acima; o cenário repete piso e parede nos retângulos de cada prédio, e os telhados repetem telha, zinco ou laje conforme a cor do prédio no desenho, com porta e janelas na linha da fachada |
+| `design/desenhar_arquitetura.js` | desenha por regra as texturas da arquitetura de 21/10/2026: telha romana, telha colonial, fibrocimento, reboco (claro, para a tinta de cada casa), tijolo à vista e bloco. Na textura de telhado a água cai para baixo; o `telhado.gd` gira para cada lado: `node design/desenhar_arquitetura.js rua/arte/predios` |
+| `rua/arte/predios/` | as texturas e sprites acima; o cenário repete piso e parede nos retângulos de cada prédio, e os telhados (`rua/telhado.gd`) usam telha, fibrocimento, zinco ou laje conforme o estilo de cada um |
 | `design/retocar_chao.gd` | aplica `rua/arte/chao/paleta.json` a um tileset recém-gerado e lista as cores que não conhece: `Godot --headless --script design/retocar_chao.gd -- entrada.png rua/arte/chao/paleta.json saida.png` |
 | `design/desenhar_armas.js` | desenha as oito armas em pixel a partir de um texto e grava os PNG: `node design/desenhar_armas.js rua/arte/armas`, sem dependência |
 
@@ -186,11 +197,17 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas. Está na rua, escondida até alguém falar |
-| `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, o item do favor num móvel do Restaurante, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
+| `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, o item do favor num móvel da Cover Pizzaria, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
 | `rua/falas_do_tutorial.gd` | **o texto das falas do tutorial**, e só ele — e o nome do item do favor. É aqui que o texto do João entra |
 | `rua/antonio.gd` | o Antônio na rua: parado no quintal dele, vira para o alvo e atira (clarão e som); quem decide quando é o roteiro |
 | `rua/arte/antonio/` | a folha do Antônio na rua (`Antonio_rua-Idle`, parado em 8 direções, gerada no PixelLab) e o retrato de 64 px da caixa de fala |
-| `rua/telhados.gd` | telhados por cima de tudo; some o da construção em que você está |
+| `rua/telhados.gd` | cria um telhado por construção e as coberturas, e esconde o telhado da construção em que você está |
+| `rua/telhado.gd` | **o telhado e a fachada de uma construção** (21/10/2026), na vista inclinada dos muros: telhado de duas águas, quatro águas, meia-água ou laje, com cumeeira, beiral e oitão; a fachada sul de frente, com a tinta, o barrado, as janelas por andar (grade, cortina, tábua, quebrada, chapa), a porta e o letreiro; e o que fica em cima (caixa d'água, antena, placa solar, chaminé, lona, buraco, mato). É um nó do Y-sort: quem passa na frente aparece na frente |
+| `rua/cobertura.gd` | a varanda, a garagem, a área de serviço, a lona e o pergolado em cima de um recorte da planta, e o toldo listrado da fachada; fica transparente com você embaixo |
+| `rua/arquitetura.gd` | **o estilo de cada prédio**: os da região do tutorial um por um (planta, telhado, fachada, extras, enfeites — a Cover Pizzaria com salão, cozinha e forno a lenha), e o resto do mapa por regra do tipo, com variação sorteada |
+| `rua/enfeite.gd` | os enfeites desenhados por regra: mesa e cadeira de plástico, guarda-sol, cavalete, botijão, lenha, lixeira, varal, churrasqueira, poste, orelhão, mastro, e por dentro da pizzaria mesa de toalha xadrez, balcão, forno, bancada. Os que têm pegada são cobertura baixa e entram na navegação |
+| `rua/detalhes_da_rua.gd` | o chão com detalhe da região: faixa amarela, faixa de pedestre, bueiro, mancha, buraco, rachadura, lixo, o piso de cada recorte (lajota, deck, cimento, entulho), e onde ficam os postes |
+| `rua/fiacao.gd` | os fios de poste em poste e os que descem para as casas, por cima de tudo |
 | `rua/entrada_de_casa.gd` | a porta da fachada da sua casa: sólida, e a única entrada. Segure `E` e o dia encerra |
 | `casa/casa.gd` | o modo Casa: a fala, o clique, a energia e as regras da noite (cura, prazo) |
 | `casa/comodos.gd` | **onde** fica cada coisa clicável em cada cômodo — dado, não cena, como o mapa da rua |
@@ -227,7 +244,8 @@ cerca ou uma barricada = `BARREIRAS` e `BARRICADAS` em `mapa.gd`, e rodar o
 - **O rótulo cai na mancha mais justa que contém o ponto.** Se o ponto do
   rótulo não cai em prédio nenhum, ele é um lugar (zona), com `rect` próprio ou
   o polígono de chão que o contém. Um rótulo pode trazer `rect` e `porta` à
-  mão, para a mancha que o traçador não cortou bem (o Restaurante).
+  mão, para a mancha que o traçador não cortou bem (o Restaurante do desenho,
+  hoje a Cover Pizzaria).
 - **Ponto de teste é por nome, nunca por coordenada.** `Mapa.lugar(nome)`,
   `Mapa.ponto_do_png(ponto)`, `Mapa.construcao_com_a_frente_livre(...)` — uma
   coordenada escrita à mão silenciosamente passa a medir mato quando o desenho
@@ -255,7 +273,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
-| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está no Restaurante, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |
 | `casa/conferir_casa.tscn` | os pontos de clique cabem na tela, todo cômodo se alcança, todo objeto responde, a energia gasta e apaga, o estudado atravessa a noite sem mexer na cura, o estágio dela anda com o prazo, todo cômodo tem foto | segundos |
 | `rua/retratar_mapa.tscn` | **gera** a imagem legendada do mapa em `design/mapa.png` — com `-- --regiao=oeste` (ou `centro`/`leste`, ou o nome de um lugar) na linha de comando, gera só aquele recorte em `design/mapa-<regiao>.png`. Para comparar com o desenho de origem |

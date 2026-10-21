@@ -318,6 +318,10 @@ func _linha_de_visao() -> void:
 				# jogador ia para o quarto do fundo; com a vista pela metade ele
 				# ficava longe demais, e o caso passava pela distancia.
 				var ao_lado := Construcao.eixo_da_fachada(casa) * Construcao.frente_de(casa) * 0.3
+				# Com a planta em L (21/10/2026), um dos lados da porta pode ser
+				# varanda: o jogador vai para o lado que e casa.
+				if not Construcao.contem(casa, porta + ao_lado - Construcao.normal_de(casa) * 60.0):
+					ao_lado = -ao_lado
 				zumbi.global_position = porta + ao_lado + para_fora * 60.0
 				_jogador.global_position = porta + ao_lado - para_fora * 60.0
 			1: _jogador.global_position = porta + para_fora * 45.0

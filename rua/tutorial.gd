@@ -10,9 +10,10 @@ extends Node
 ##     anda sem rumo pela rua de cima, perto da casa do Antonio; um zumbi o pega
 ##     desprevenido e o Antonio, do posto de sacos da quina da casa, o mata;
 ##     ele vai direto ao portao, e a conversa da o radio e o favor;
-##  2. **favor** - buscar o item no Restaurante. O radio ensina a correr, a
+##  2. **favor** - buscar o item na Cover Pizzaria (o Restaurante do desenho,
+##     pizzaria desde 21/10/2026). O radio ensina a correr, a
 ##     agachar e se esconder (cobertura baixa, rua/camadas.gd) e a vasculhar;
-##     o item esta num movel do Restaurante;
+##     o item esta num movel da pizzaria;
 ##  3. **voltar_ao_portao** - com o item, de volta ao portao: a entrega e a
 ##     **9mm** (o dia 1 comeca desarmado - Travessia.armado);
 ##  4. **ir_para_casa** - voltar antes de escurecer; o dia acaba pela porta.
@@ -44,7 +45,8 @@ const ONDE_ESTA_O_ANTONIO := Vector2(1205.2, 634.2)
 const CONVERSA_NO_PORTAO := Vector2(1211.25, 627.4)
 ## O beco entre a sua casa e a do Antonio: onde o radio ensina a agachar.
 const BECO := Vector2(1197.0, 645.0)
-const PORTA_DO_RESTAURANTE := Vector2(1187.5, 737.4)
+const PORTA_DA_PIZZARIA := Vector2(1187.5, 737.4)
+const NOME_DA_PIZZARIA := "Cover Pizzaria"
 
 ## A camera da cena, mais aberta que a do jogo, para o Antonio caber na tela
 ## junto com o jogador. Inteira, como a do jogo (ver Jogador.ZOOM_DA_CAMERA).
@@ -54,7 +56,7 @@ const VELOCIDADE_SEM_RUMO := 45.0
 ## Quanto perto do ponto conta como chegou (px de mundo).
 const PERTO := 60.0
 const PERTO_DO_BECO := 140.0
-const PERTO_DO_RESTAURANTE := 360.0
+const PERTO_DA_PIZZARIA := 360.0
 ## Quanto tempo depois do favor o radio ensina a agachar, se ele nao passou
 ## pelo beco.
 const AGACHAR_DEPOIS_DE := 25.0
@@ -125,8 +127,8 @@ func _process(delta: float) -> void:
 			_tempo_no_favor += delta
 			if onde.distance_to(_p(BECO)) < PERTO_DO_BECO or _tempo_no_favor > AGACHAR_DEPOIS_DE:
 				_radio_uma_vez("agachar", Falas.RADIO_AGACHAR)
-			if onde.distance_to(_p(PORTA_DO_RESTAURANTE)) < PERTO_DO_RESTAURANTE:
-				_radio_uma_vez("restaurante", Falas.RADIO_RESTAURANTE)
+			if onde.distance_to(_p(PORTA_DA_PIZZARIA)) < PERTO_DA_PIZZARIA:
+				_radio_uma_vez("pizzaria", Falas.RADIO_PIZZARIA)
 			_avisar_se_foi_visto()
 		"voltar_ao_portao":
 			_avisar_se_foi_visto()
@@ -314,25 +316,25 @@ func _avisar_se_foi_visto() -> void:
 # --- dia 1: o favor e a volta ------------------------------------------------
 
 func _comecar_o_favor() -> void:
-	_mostrar_objetivo("Buscar %s no Restaurante" % Falas.ITEM_DO_FAVOR, _p(PORTA_DO_RESTAURANTE))
-	_por_o_item_no_restaurante()
+	_mostrar_objetivo("Buscar %s na Cover Pizzaria" % Falas.ITEM_DO_FAVOR, _p(PORTA_DA_PIZZARIA))
+	_por_o_item_na_pizzaria()
 	_radio_uma_vez("correr", Falas.RADIO_CORRER)
 
-## O item vai para o movel do Restaurante mais perto da porta - e um vasculho
+## O item vai para o movel da pizzaria mais perto da porta - e um vasculho
 ## como qualquer outro, e e assim que o tutorial ensina a vasculhar.
-func _por_o_item_no_restaurante() -> void:
-	var restaurante := Rect2()
+func _por_o_item_na_pizzaria() -> void:
+	var pizzaria := Rect2()
 	for c in Mapa.mundo()["construcoes"]:
-		if c.get("nome", "") == "Restaurante":
-			restaurante = c["rect"]
-	var porta := _p(PORTA_DO_RESTAURANTE)
+		if c.get("nome", "") == NOME_DA_PIZZARIA:
+			pizzaria = c["rect"]
+	var porta := _p(PORTA_DA_PIZZARIA)
 	var melhor: Node2D = null
 	for filho in _cenario.get_children():
-		if filho is Area2D and "achados" in filho and restaurante.has_point((filho as Node2D).position):
+		if filho is Area2D and "achados" in filho and pizzaria.has_point((filho as Node2D).position):
 			if melhor == null or (filho as Node2D).position.distance_to(porta) < melhor.position.distance_to(porta):
 				melhor = filho
 	if melhor == null:
-		push_warning("tutorial: nenhum movel no Restaurante para o item do favor")
+		push_warning("tutorial: nenhum movel na pizzaria para o item do favor")
 		return
 	_movel_do_favor = melhor
 	melhor.receber(Falas.ITEM_DO_FAVOR)

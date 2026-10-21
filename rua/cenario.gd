@@ -45,6 +45,8 @@ const Navegacao := preload("res://rua/navegacao.gd")
 ## So para ler o TAMANHO dela na hora de registrar o obstaculo: a porta e irma
 ## do cenario na cena, e nao nasce aqui dentro como os outros corpos solidos.
 const EntradaDeCasa := preload("res://rua/entrada_de_casa.gd")
+const Enfeite := preload("res://rua/enfeite.gd")
+const DetalhesDaRua := preload("res://rua/detalhes_da_rua.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
@@ -320,6 +322,7 @@ func _ready() -> void:
 		_criar_movel(movel["tipo"], movel["pos"], chave, 0, tamanho, giro, sorteio % 2 == 1)
 
 	_plantar_arvores()
+	_criar_enfeites()
 	_criar_muros_do_mundo()
 	# Depois de tudo: a navegacao le a lista de obstaculos que acabou de encher.
 	_montar_navegacao()
@@ -558,7 +561,8 @@ func _draw() -> void:
 		var queimada: bool = construcao.get("queimada", false)
 		var piso: Texture2D = TEXTURA_PISO_QUEIMADO if queimada else TEXTURA_PISO
 		var parede_textura: Texture2D = TEXTURA_PAREDE_QUEIMADA if queimada else TEXTURA_PAREDE
-		draw_texture_rect(piso, Construcao.interior_de(construcao), true, tom)
+		for pedaco in Construcao.pisos_de(construcao):
+			draw_texture_rect(piso, pedaco, true, tom)
 		for parede in Construcao.paredes_externas(construcao):
 			draw_texture_rect(parede_textura, parede, true)
 		for parede in Construcao.paredes_internas(construcao):
@@ -1127,6 +1131,40 @@ func _adicionar_forma(corpo: StaticBody2D, area: Rect2) -> void:
 	var dono := corpo.create_shape_owner(corpo)
 	corpo.shape_owner_add_shape(dono, forma)
 	corpo.shape_owner_set_transform(dono, Transform2D(0.0, area.get_center()))
+
+## Os enfeites (21/10/2026): o que cada predio pediu em rua/arquitetura.gd, os
+## postes e o que fica solto na calcada (rua/detalhes_da_rua.gd). Quem tem
+## pegada (mesa, balcao, forno, lixeira) ganha corpo de cobertura baixa - da
+## para se agachar atras dela - e entra na navegacao do zumbi.
+func _criar_enfeites() -> void:
+	var corpo := StaticBody2D.new()
+	corpo.collision_layer = Camadas.COBERTURA_BAIXA
+	for construcao in Mapa.mundo()["construcoes"]:
+		var canto: Vector2 = (construcao["rect"] as Rect2).position
+		for pedido in construcao.get("enfeites", []):
+			_criar_enfeite(corpo, pedido["tipo"], canto + (pedido["em"] as Vector2),
+				pedido.get("variante", 0), pedido.get("olhando", "sul"))
+	for fileira in DetalhesDaRua.postes():
+		for i in fileira.size():
+			_criar_enfeite(corpo, "poste", fileira[i], i, "sul")
+	for pedido in DetalhesDaRua.NA_RUA:
+		_criar_enfeite(corpo, pedido["tipo"], Mapa.ponto_do_png(pedido["png"]), pedido.get("variante", 0), "sul")
+	if corpo.get_shape_owners().is_empty():
+		corpo.free()
+		return
+	add_child(corpo)
+
+func _criar_enfeite(corpo: StaticBody2D, tipo: String, pe: Vector2, variante: int, olhando: String) -> void:
+	var enfeite := Enfeite.new()
+	enfeite.tipo = tipo
+	enfeite.variante = variante
+	enfeite.olhando = olhando
+	# A origem a PE px acima do pe, como a dos bonecos: o Y-sort compara pe com pe.
+	enfeite.position = pe - Vector2(0.0, PE)
+	add_child(enfeite)
+	if Enfeite.solido(tipo):
+		var pegada: Vector2 = Enfeite.PEGADAS[tipo]
+		_adicionar_forma(corpo, Rect2(pe.x - pegada.x / 2.0, pe.y - pegada.y, pegada.x, pegada.y))
 
 ## Muros invisiveis na borda, para nao dar de sair do mundo e ficar olhando o
 ## vazio. Um corpo so, quatro formas.

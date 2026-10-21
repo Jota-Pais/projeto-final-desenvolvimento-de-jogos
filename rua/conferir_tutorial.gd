@@ -7,7 +7,7 @@ extends Node
 ##
 ##  1. a abertura: o jogador anda sob roteiro, o zumbi o pega e o Antonio o
 ##     mata, e a conversa no portao acaba no favor, com o jogador de volta no
-##     controle, a camera do jogo e o item num movel do Restaurante;
+##     controle, a camera do jogo e o item num movel da Cover Pizzaria;
 ##  2. o vasculho do movel entrega o item e manda voltar ao portao;
 ##  3. no portao, a entrega da a 9mm: armado, a Beretta na mao, um pente;
 ##  4. o dia 2 pede para atirar, e o primeiro zumbi abatido fecha o tutorial.
@@ -103,10 +103,10 @@ func _conferir() -> void:
 		_erro("o dia 1 devia comecar desarmado")
 	print("  conversa no portao; o favor: %s" % tutorial._objetivo.text)
 
-	print("\n2. o favor no Restaurante")
+	print("\n2. o favor na Cover Pizzaria")
 	var movel: Node = tutorial._movel_do_favor
 	if movel == null or not Falas.ITEM_DO_FAVOR in movel.achados:
-		_erro("o item do favor nao esta em movel nenhum do Restaurante")
+		_erro("o item do favor nao esta em movel nenhum da Cover Pizzaria")
 		return
 	print("  o item esta em '%s', em %s (%s)" % [movel.rotulo, movel.position, Mapa.lugar_em(movel.position)])
 	movel._esvaziar()

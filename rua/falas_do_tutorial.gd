@@ -7,7 +7,7 @@
 ## linhas seguidas do mesmo personagem saem na mesma caixa. Fala de radio e so
 ## a lista de linhas (quem fala e sempre o Antonio). Lista vazia nao toca.
 
-## O que o Antonio pede para buscar no Restaurante.
+## O que o Antonio pede para buscar na pizzaria.
 const ITEM_DO_FAVOR := "[o que o Antônio pediu]"
 
 const QUEM_E_VOCE := "Você"
@@ -22,18 +22,18 @@ const O_TIRO: Array = [
 ]
 
 ## 3. No portao: o pedido de ajuda, a recusa, a bronca por andar desarmado, o
-## radio e o favor - o que buscar no Restaurante.
+## radio e o favor - o que buscar na pizzaria.
 const PORTAO: Array = [
 	["Você", "[pede ajuda no portão — fala do João]"],
 	["Antônio", "[recusa: não deixa infectado nenhum chegar perto — fala do João]"],
 	["Antônio", "[bronca: andar desarmado num apocalipse — fala do João]"],
 	["Antônio", "[entrega o rádio — fala do João]"],
-	["Antônio", "[o favor: buscar o item no Restaurante — fala do João]"],
+	["Antônio", "[o favor: buscar o item na pizzaria — fala do João]"],
 ]
 
 ## 4. Saindo do portao: correr.
 const RADIO_CORRER: Array = [
-	"[rádio: o Restaurante fica ao sul, depois da avenida — fala do João]",
+	"[rádio: a Cover Pizzaria fica ao sul, depois da avenida — fala do João]",
 	"[rádio: segure Shift para correr — fala do João]",
 ]
 
@@ -48,8 +48,8 @@ const RADIO_FOI_VISTO: Array = [
 	"[rádio: ele te viu! sai da vista dele e se esconda — fala do João]",
 ]
 
-## 6. Chegando no Restaurante: vasculhar.
-const RADIO_RESTAURANTE: Array = [
+## 6. Chegando na pizzaria: vasculhar.
+const RADIO_PIZZARIA: Array = [
 	"[rádio: segure E num móvel para vasculhar — fala do João]",
 ]
 

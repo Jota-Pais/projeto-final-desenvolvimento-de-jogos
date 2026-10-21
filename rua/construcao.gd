@@ -246,6 +246,9 @@ const QUARTOS_POR_TIPO := {
 	"hotel": 3,
 	"bar": 1,
 	"restaurante": 1,
+	# A Cover Pizzaria (21/10/2026): salao na frente, cozinha e deposito no
+	# fundo.
+	"pizzaria": 3,
 	"lojas": 1,
 	"predio_em_construcao": 1,
 	"predio_abandonado": 3,
@@ -271,6 +274,7 @@ const UM_QUARTO_SO := {
 	"banco": "anexo",
 	"hotel": "bar",
 	"predio_abandonado": "anexo",
+	"pizzaria": "restaurante",
 }
 
 ## Que movel entra em cada quarto, por tipo de construcao.
@@ -312,6 +316,12 @@ const MOVEIS_POR_QUARTO := {
 	"hotel": [["comoda"], ["comoda", "armario"], ["geladeira", "estante"]],
 	"bar": [["geladeira", "geladeira", "caixa", "armario"]],
 	"restaurante": [["geladeira", "geladeira", "prateleira", "caixa"]],
+	# Os mesmos quatro moveis do restaurante, so que cada um no comodo dele: a
+	# geladeira de bebida e a caixa (de pizza) no salao, a outra geladeira na
+	# cozinha, a prateleira no deposito - um por parede, que dois juntos se
+	# encavalam (`posicoes_de_movel`). Mesa, balcao e forno sao enfeite (rua/arquitetura.gd), nao
+	# vasculho - o loot nao muda.
+	"pizzaria": [["geladeira", "caixa"], ["geladeira"], ["prateleira"]],
 	"lojas": [["armario", "prateleira", "caixa", "armario", "prateleira"]],
 	"predio_em_construcao": [["caixa", "caixa"]],
 	"predio_abandonado": [["caixa"], ["comoda"], ["estante"]],
@@ -514,14 +524,165 @@ static func paredes_externas(construcao: Dictionary) -> Array[Rect2]:
 		Vector2(meio - VAO / 2.0, PAREDE)))
 	lista.append(_rect_mundo(rect, porta, Vector2(meio + VAO / 2.0, profundidade - PAREDE),
 		Vector2(frente - meio - VAO / 2.0, PAREDE)))
-	return lista
+	var recortes := recortes_de(construcao)
+	if recortes.is_empty():
+		return lista
+	# Com recorte, a parede do retangulo sai onde o canto foi tirado, e as duas
+	# bordas do recorte que ficam dentro do retangulo viram parede.
+	var cortada := menos_todos(lista, recortes)
+	for recorte in recortes:
+		cortada.append_array(_paredes_do_recorte(rect, recorte))
+	return cortada
 
 ## O retangulo de piso, ja descontadas as paredes externas. Nao depende da
 ## porta: e um recuo simetrico de PAREDE nas quatro bordas do mundo, e isso vale
-## para as quatro orientacoes sem precisar do referencial canonico.
+## para as quatro orientacoes sem precisar do referencial canonico. Com
+## recorte, e a caixa do piso - o piso de verdade e `pisos_de`.
 static func interior_de(construcao: Dictionary) -> Rect2:
 	var r: Rect2 = construcao["rect"]
 	return Rect2(r.position + Vector2.ONE * PAREDE, r.size - Vector2.ONE * PAREDE * 2.0)
+
+## O piso como retangulos: o interior menos os recortes (e a parede deles).
+static func pisos_de(construcao: Dictionary) -> Array[Rect2]:
+	var interior: Array[Rect2] = [interior_de(construcao)]
+	return menos_todos(interior, _recortes_com_parede(construcao))
+
+# --- a planta com recortes (21/10/2026) ---------------------------------------
+
+## Os recortes da planta (Joao, 21/10/2026: "pode mudar a planta"): cantos
+## tirados do retangulo, que viram quintal, varanda ou garagem - a casa vira L
+## (um recorte), T ou degrau (dois). Cada recorte e { "canto", "tamanho" }, em
+## px de mundo, e o canto e o do MUNDO (noroeste, nordeste, sudoeste,
+## sudeste), nao o da fachada: quem escreve esta olhando o mapa. O dado mora
+## em rua/arquitetura.gd. Fora dos recortes tudo e como sempre foi - e
+## construcao sem recorte da exatamente o que dava antes.
+const CANTOS := {
+	"noroeste": Vector2(0.0, 0.0),
+	"nordeste": Vector2(1.0, 0.0),
+	"sudoeste": Vector2(0.0, 1.0),
+	"sudeste": Vector2(1.0, 1.0),
+}
+
+## Os recortes da construcao em mundo.
+static func recortes_de(construcao: Dictionary) -> Array[Rect2]:
+	var lista: Array[Rect2] = []
+	var r: Rect2 = construcao["rect"]
+	for recorte in construcao.get("recortes", []):
+		var canto: Vector2 = CANTOS[recorte["canto"]]
+		var tamanho: Vector2 = recorte["tamanho"]
+		lista.append(Rect2(r.position + (r.size - tamanho) * canto, tamanho))
+	return lista
+
+static func _recortes_com_parede(construcao: Dictionary) -> Array[Rect2]:
+	var lista: Array[Rect2] = []
+	for recorte in recortes_de(construcao):
+		lista.append(recorte.grow(PAREDE).intersection(construcao["rect"]))
+	return lista
+
+## Se o ponto esta dentro da construcao: no retangulo e fora dos recortes. E o
+## que decide "estar dentro" (o telhado que sai, Mapa.construcao_em).
+static func contem(construcao: Dictionary, ponto: Vector2) -> bool:
+	if not (construcao["rect"] as Rect2).has_point(ponto):
+		return false
+	for recorte in recortes_de(construcao):
+		if recorte.has_point(ponto):
+			return false
+	return true
+
+## As duas paredes de um recorte de canto: as bordas dele que ficam dentro do
+## retangulo, com a parede do lado de dentro da casa. A vertical cobre a
+## quina; a horizontal encosta nela.
+static func _paredes_do_recorte(rect: Rect2, n: Rect2) -> Array[Rect2]:
+	var lista: Array[Rect2] = []
+	var em_cima := n.position.y > rect.position.y + 0.5
+	var embaixo := n.end.y < rect.end.y - 0.5
+	var y0 := n.position.y - (PAREDE if em_cima else 0.0)
+	var y1 := n.end.y + (PAREDE if embaixo else 0.0)
+	if n.position.x > rect.position.x + 0.5:
+		lista.append(Rect2(n.position.x - PAREDE, y0, PAREDE, y1 - y0))
+	if n.end.x < rect.end.x - 0.5:
+		lista.append(Rect2(n.end.x, y0, PAREDE, y1 - y0))
+	if em_cima:
+		lista.append(Rect2(n.position.x, n.position.y - PAREDE, n.size.x, PAREDE))
+	if embaixo:
+		lista.append(Rect2(n.position.x, n.end.y, n.size.x, PAREDE))
+	return lista
+
+## `a` menos `b`: ate quatro retangulos (faixa de cima, de baixo e os dois
+## lados da faixa do meio). O que sobra fino demais e jogado fora.
+static func menos(a: Rect2, b: Rect2) -> Array[Rect2]:
+	var lista: Array[Rect2] = []
+	var corte := a.intersection(b)
+	if corte.get_area() < 0.5:
+		lista.append(a)
+		return lista
+	var pedacos := [
+		Rect2(a.position.x, a.position.y, a.size.x, corte.position.y - a.position.y),
+		Rect2(a.position.x, corte.end.y, a.size.x, a.end.y - corte.end.y),
+		Rect2(a.position.x, corte.position.y, corte.position.x - a.position.x, corte.size.y),
+		Rect2(corte.end.x, corte.position.y, a.end.x - corte.end.x, corte.size.y),
+	]
+	for p in pedacos:
+		if p.size.x > 0.5 and p.size.y > 0.5:
+			lista.append(p)
+	return lista
+
+static func menos_todos(lista: Array[Rect2], buracos: Array[Rect2]) -> Array[Rect2]:
+	var fora: Array[Rect2] = lista.duplicate()
+	for b in buracos:
+		var proxima: Array[Rect2] = []
+		for a in fora:
+			proxima.append_array(menos(a, b))
+		fora = proxima
+	return fora
+
+static func _maior(lista: Array[Rect2]) -> Rect2:
+	var melhor := Rect2()
+	for r in lista:
+		if r.get_area() > melhor.get_area():
+			melhor = r
+	return melhor
+
+## A planta em volumes para o telhado: colunas norte-sul, cortadas onde um
+## recorte comeca ou acaba, e coladas de volta quando duas vizinhas tem o
+## mesmo comeco e fim. Cada coluna e um retangulo com a borda de baixo (sul)
+## na borda da planta - e ali que a fachada aparece. Sem recorte, e o
+## retangulo inteiro.
+static func volumes_de(construcao: Dictionary) -> Array[Rect2]:
+	var r: Rect2 = construcao["rect"]
+	var recortes := recortes_de(construcao)
+	var lista: Array[Rect2] = []
+	if recortes.is_empty():
+		lista.append(r)
+		return lista
+	var xs: Array[float] = [r.position.x, r.end.x]
+	for n in recortes:
+		for x in [n.position.x, n.end.x]:
+			if x > r.position.x + 0.5 and x < r.end.x - 0.5 and not xs.has(x):
+				xs.append(x)
+	xs.sort()
+	for i in xs.size() - 1:
+		var xa := xs[i]
+		var xb := xs[i + 1]
+		var ya := r.position.y
+		var yb := r.end.y
+		for n in recortes:
+			if n.position.x <= xa + 0.5 and n.end.x >= xb - 0.5:
+				if n.position.y <= r.position.y + 0.5:
+					ya = maxf(ya, n.end.y)
+				else:
+					yb = minf(yb, n.position.y)
+		if yb - ya < 1.0:
+			continue
+		var coluna := Rect2(xa, ya, xb - xa, yb - ya)
+		if not lista.is_empty():
+			var anterior: Rect2 = lista.back()
+			if is_equal_approx(anterior.position.y, ya) and is_equal_approx(anterior.end.y, yb) \
+					and is_equal_approx(anterior.end.x, xa):
+				lista[lista.size() - 1] = anterior.merge(coluna)
+				continue
+		lista.append(coluna)
+	return lista
 
 ## A linha (canonica, medida do fundo) onde fica a divisoria que separa a sala
 ## do fundo da casa: a 45% da profundidade **interior**, contando da fachada.
@@ -556,12 +717,25 @@ static func paredes_internas(construcao: Dictionary) -> Array[Rect2]:
 		Vector2(PAREDE, v_vao - VAO / 2.0 - PAREDE)))
 	lista.append(_rect_mundo(rect, porta, Vector2(u_perp, v_vao + VAO / 2.0),
 		Vector2(PAREDE, v_div - (v_vao + VAO / 2.0))))
-	return lista
+	return menos_todos(lista, recortes_de(construcao))
 
 ## Os quartos, como retangulos de piso livre. E onde o movel vai. O primeiro e
 ## sempre a sala (onde a porta da rua da); o segundo e o terceiro sao o fundo,
 ## partido ao meio pela divisoria perpendicular.
 static func quartos_de(construcao: Dictionary) -> Array[Rect2]:
+	var quartos := _quartos_do_retangulo(construcao)
+	if not construcao.has("recortes"):
+		return quartos
+	# Com recorte, cada quarto perde o canto tirado e fica com o maior pedaco
+	# que sobrou - o recorte e desenhado para nao partir quarto ao meio.
+	var buracos := _recortes_com_parede(construcao)
+	var lista: Array[Rect2] = []
+	for quarto in quartos:
+		var sobra: Array[Rect2] = [quarto]
+		lista.append(_maior(menos_todos(sobra, buracos)))
+	return lista
+
+static func _quartos_do_retangulo(construcao: Dictionary) -> Array[Rect2]:
 	if QUARTOS_POR_TIPO[construcao["tipo"]] < 3:
 		var unico: Array[Rect2] = [interior_de(construcao)]
 		return unico

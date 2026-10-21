@@ -38,6 +38,7 @@
 
 const Construcao := preload("res://rua/construcao.gd")
 const Barreira := preload("res://rua/barreira.gd")
+const Arquitetura := preload("res://rua/arquitetura.gd")
 
 const ARQUIVO_DO_TRACADO := "res://rua/mapa_tracado.json"
 
@@ -61,13 +62,16 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## antiga ganhou os móveis de casa e a nova, selada, perdeu os dela.
 ## Versão 6 (21/10/2026): a casa do Antônio, vizinha da sua, ficou selada para
 ## o roteiro do tutorial e perdeu os móveis dela.
-const VERSAO_DO_MAPA := 6
+## Versão 7 (21/10/2026, mais tarde): a planta das casas da região rosa ganhou
+## recortes (rua/arquitetura.gd) e o Restaurante virou a Cover Pizzaria, de
+## três cômodos - os móveis de lá nasceram em outro lugar.
+const VERSAO_DO_MAPA := 7
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "b79463ac"
+const IMPRESSAO_ESPERADA := "516b5460"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
@@ -131,7 +135,9 @@ const ROTULOS := [
 	{ "nome": "Casa do Zé", "ponto": Vector2(727.0, 592.0), "tipo": "casa" },
 	# Retangulo a mao: a mancha e torta e o nome escrito em cima dela, em fonte
 	# miuda, parte a mancha ao meio para o tracador. A porta olha para a rua.
-	{ "nome": "Restaurante", "ponto": Vector2(1200.0, 740.0), "tipo": "restaurante",
+	# Era o Restaurante do desenho; e a Cover Pizzaria desde 21/10/2026 (Joao:
+	# "muda pra Cover Pizzaria, e pelo nome sim o restaurante sera uma pizzaria").
+	{ "nome": "Cover Pizzaria", "ponto": Vector2(1200.0, 740.0), "tipo": "pizzaria",
 		"rect": Rect2(1170.0, 737.0, 50.0, 16.0), "porta": "norte" },
 	{ "nome": "Posto", "ponto": Vector2(715.0, 508.0), "tipo": "posto" },
 	# Os dois anexos do posto, lidos nos prints do desenho em 15/10/2026: a
@@ -471,7 +477,7 @@ static func lugar_em(ponto: Vector2) -> String:
 static func construcao_em(ponto: Vector2) -> int:
 	var construcoes: Array = mundo()["construcoes"]
 	for i in construcoes.size():
-		if (construcoes[i]["rect"] as Rect2).has_point(ponto):
+		if Construcao.contem(construcoes[i], ponto):
 			return i
 	return -1
 
@@ -668,6 +674,9 @@ static func _montar() -> Dictionary:
 
 	_rotular(tudo, tracado, recorte)
 	_encolher_quem_nao_cabe(tudo)
+	# A planta de verdade e o estilo de cada predio (21/10/2026): os recortes
+	# entram antes dos zumbis, que nascem na frente da porta.
+	Arquitetura.aplicar(tudo["construcoes"], recorte, ESCALA)
 	# Antes dos zumbis: ponto de zumbi em cima de muro e pulado.
 	_barreiras(tudo, recorte)
 	_zumbis(tudo, recorte)

@@ -190,6 +190,10 @@ existe: correr (Shift), a visão do zumbi, o tiro e a Beretta 9mm.
   do traçado, no ponto (1214, 647) do desenho). Ainda sem rótulo no mapa.
 - **O "mercado" do favor é o Restaurante** (João, 20/10/2026), que fica dentro
   da região do tutorial; o Mercado do mapa fica fora dela.
+- **O Restaurante é a Cover Pizzaria** (João, 21/10/2026): *"muda pra Cover
+  Pizzaria, e pelo nome sim o restaurante será uma pizzaria"*. Salão na
+  frente, cozinha com forno a lenha e depósito no fundo; o letreiro está no
+  toldo da fachada.
 
 ⬜ **A personalidade aprofundada é trabalho da equipe de narrativa** — fala,
 história dele, o que ele sabe. O nome (Antônio) e o tipo (ranzinza, lunático,
