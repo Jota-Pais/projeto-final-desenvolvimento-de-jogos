@@ -99,8 +99,9 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   o storyboard do João é só o conceito, e cada quadro espera um PNG da equipe
   em `cena_inicial/arte/`. Sem ele, o quadro fica escuro e só o texto conta.
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
-  título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda sem rumo
-  pela rua de cima, um zumbi te pega e o Antônio o mata do quintal dele), a
+  título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda pela
+  calçada na frente da sua casa, um zumbi sai correndo do terreno ao lado, você
+  foge para a rua e o Antônio abre o portão e o mata), a
   conversa no portão, o favor na Cover Pizzaria com o rádio ensinando a correr, a
   agachar e a vasculhar, e a volta ao portão, que dá a 9mm. Dia 2: explorar e
   atirar; o primeiro zumbi abatido fecha o tutorial. **As falas ainda são
@@ -305,7 +306,7 @@ jogando dois minutos.
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte que existir é 16:9 e tem 1920 × 1080 ou mais | ~15 s |
-| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
 | `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |

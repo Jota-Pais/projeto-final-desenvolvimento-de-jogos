@@ -39,24 +39,43 @@ const RETRATO_DO_ANTONIO := preload("res://rua/arte/antonio/retrato.png")
 const RETRATO_DO_JOGADOR := preload("res://rua/arte/jogador/retrato.png")
 
 ## Os lugares do roteiro, em px do PNG do desenho (como os ROTULOS do mapa).
-## O jogador comeca a cena na rua de cima, a oeste da casa dele, e anda para
-## leste, para a casa do Antonio; o Antonio fica no quintal dele, que olha
-## para essa rua.
-const INICIO := Vector2(1156.0, 619.0)
+##
+## **A cena de abertura de 21/10/2026, noite** - o Joao riscou por cima da tela
+## do jogo: o jogador "esteja caminhando onde coloquei a linha azul" (a calcada
+## sul da rua de cima, na frente da casa dele, para o leste), "o zumbi vai vir
+## correndo da direcao vermelha" (do terreno entre a casa dele e a do Antonio),
+## "o personagem vai correr pra rua na frente da casa do Antonio e ele vai abrir
+## a porta e disparar pra salvar o personagem". A porta e o portao de chapa do
+## muro da frente do Antonio: ele corre para tras do muro e o Antonio atira do
+## vao. Ate entao o zumbi saia na frente dele na rua e o Antonio atirava do
+## quintal.
+const INICIO := Vector2(1177.0, 625.0)
 ## A caminhada apreensiva (Joao, 21/10/2026: "vai caminhar devagar pelas ruas
-## apreensivo e vai dar de cara com um zumbi"): cada passo e um ponto e, la,
-## os olhares em volta - [para onde, quantos segundos].
+## apreensivo"): cada passo e um ponto e, la, os olhares em volta - [para
+## onde, quantos segundos]. Pela calcada, olhando a propria casa e a rua; o
+## ultimo passo ja passou do vao de onde o zumbi sai.
 const CAMINHADA := [
-	{ "ponto": Vector2(1163.0, 618.6), "olhares": [[Vector2.UP, 0.9], [Vector2.DOWN, 0.7]] },
-	{ "ponto": Vector2(1170.0, 620.4), "olhares": [[Vector2.LEFT, 0.8]] },
-	{ "ponto": Vector2(1177.0, 619.4), "olhares": [[Vector2(1.0, -1.0), 0.5]] },
-	{ "ponto": Vector2(1183.0, 619.8) },
+	{ "ponto": Vector2(1181.5, 625.0), "olhares": [[Vector2.DOWN, 0.9], [Vector2.LEFT, 0.7]] },
+	{ "ponto": Vector2(1187.0, 625.1), "olhares": [[Vector2.UP, 0.8]] },
+	{ "ponto": Vector2(1193.0, 625.0), "olhares": [[Vector2(1.0, -1.0), 0.5]] },
+	{ "ponto": Vector2(1199.0, 625.0) },
 ]
-## Onde o zumbi aparece, em relacao ao jogador: na frente dele (a leste), na
-## rua, perto o bastante para ja o ver.
-const ZUMBI_NA_FRENTE := Vector2(230.0, -8.0)
-## O passo para tras quando da de cara com ele.
-const VELOCIDADE_DO_RECUO := 30.0
+## De onde o zumbi sai correndo: o terreno no vao entre a cerca da casa dele
+## e o muro do Antonio (a seta vermelha).
+const SAIDA_DO_ZUMBI := Vector2(1196.5, 637.0)
+## Quanto o jogador fica olhando o zumbi vir antes de correr (s).
+const SUSTO := 0.6
+## A fuga: da calcada para a rua, na frente do portao do Antonio.
+const FUGA := [Vector2(1204.5, 622.0), Vector2(1209.0, 620.6)]
+## O portao de chapa do muro da frente do Antonio (rua/mapa.gd, BARREIRAS), e
+## onde ele aparece quando o portao corre: no vao, do lado de dentro.
+const PORTAO_DO_ANTONIO := Vector2(1211.3, 630.5)
+const ANTONIO_NO_VAO := Vector2(1211.3, 631.2)
+const SEGUNDOS_DO_PORTAO := 0.7
+## O tiro sai quando o zumbi chega a PERTO_DO_TIRO px de mundo do jogador - ou,
+## se ele encalhar, depois de PERSEGUICAO_MAXIMA segundos assim mesmo.
+const PERTO_DO_TIRO := 110.0
+const PERSEGUICAO_MAXIMA := 6.0
 const TEMPO_DO_RADIO_NO_AR := 0.8
 const ONDE_ESTA_O_ANTONIO := Vector2(1205.2, 634.2)
 ## O ponto livre da calcada, 74 px de mundo ao norte da linha do portao, onde
@@ -308,46 +327,45 @@ func _abertura() -> void:
 	camera.zoom = Vector2.ONE * ZOOM_DA_CENA
 	camera.offset = Vector2.ZERO
 	_jogador.global_position = _p(INICIO)
+	_jogador.olhar_para(Vector2.RIGHT)
+	# O Antonio esta atras do portao fechado: so aparece quando o portao corre.
+	_antonio.global_position = _p(ANTONIO_NO_VAO)
+	_antonio.visible = false
 	_mostrar_objetivo("")
 	_cena(true, 0.0)
 	await _conversa(Falas.ABERTURA)
 
-	# A caminhada apreensiva: devagar, parando para olhar em volta.
+	# A caminhada apreensiva pela calcada: devagar, parando para olhar em volta.
 	for passo in CAMINHADA:
 		await _andar_ate(_p(passo["ponto"]), VELOCIDADE_SEM_RUMO)
 		for olhar in passo.get("olhares", []):
 			await _parar_olhando(olhar[0], olhar[1])
 
-	# De cara com o zumbi: ele sai na frente, ja vendo o jogador, que para,
-	# olha e recua.
-	var zumbi: Node2D = _cenario._criar_zumbi(_jogador.global_position + ZUMBI_NA_FRENTE)
-	zumbi._olhando = (_jogador.global_position - zumbi.global_position).normalized()
+	# O zumbi sai correndo do terreno, atras dele. A memoria do toque
+	# (rua/zumbi.gd) faz ele perseguir de longe, sem ter precisado ver.
+	var zumbi: Node2D = _cenario._criar_zumbi(_p(SAIDA_DO_ZUMBI))
+	zumbi._memoria_do_toque = PERSEGUICAO_MAXIMA + 2.0
+	# A camera abre para pegar o terreno, o jogador e o portao.
+	var meio := (_p(PORTAO_DO_ANTONIO) + _p(SAIDA_DO_ZUMBI)) / 2.0 - _jogador.global_position
+	create_tween().tween_property(camera, "offset", meio * 0.6, 0.9).set_trans(Tween.TRANS_SINE)
+	await get_tree().create_timer(0.35).timeout
 	_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
-	# A camera abre para pegar o zumbi, o jogador e o Antonio.
-	var no_meio := (_antonio.global_position - _jogador.global_position) / 2.0
-	create_tween().tween_property(camera, "offset", no_meio, 0.9).set_trans(Tween.TRANS_SINE)
-	await get_tree().create_timer(0.6).timeout
-	var pegou := [false]
-	var ao_ser_pego := func() -> void: pegou[0] = true
-	_jogador.atingido.connect(ao_ser_pego)
-	_jogador.velocidade_do_roteiro = VELOCIDADE_DO_RECUO
-	var recuo := _jogador.global_position - Vector2(ZUMBI_NA_FRENTE.x, 0.0).normalized() * 40.0
+	await get_tree().create_timer(SUSTO).timeout
+
+	# A fuga para a rua, e o portao do Antonio correndo enquanto isso.
+	_correr_o_portao(true)
+	for ponto in FUGA:
+		await _andar_ate(_p(ponto), Jogador.VELOCIDADE_CORRENDO, 3.0)
+	_jogador.direcao_do_roteiro = Vector2.ZERO
+
+	# O tiro do Antonio, do vao: quando o zumbi chega perto (ou encalhou).
 	var tempo := 0.0
-	while not pegou[0] and tempo < 7.0:
-		var falta := recuo - _jogador.global_position
-		_jogador.direcao_do_roteiro = falta.normalized() if falta.length() > 4.0 else Vector2.ZERO
-		if is_instance_valid(zumbi):
-			_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
+	while is_instance_valid(zumbi) and tempo < PERSEGUICAO_MAXIMA \
+			and zumbi.global_position.distance_to(_jogador.global_position) > PERTO_DO_TIRO:
+		_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
+		_antonio.olhar_para(zumbi.global_position)
 		await get_tree().physics_frame
 		tempo += get_physics_process_delta_time()
-		# Se o zumbi encalhou, ele chega de qualquer jeito: a cena nao espera.
-		if tempo > 4.0 and is_instance_valid(zumbi):
-			zumbi.global_position = zumbi.global_position.move_toward(_jogador.global_position, 6.0)
-	_jogador.direcao_do_roteiro = Vector2.ZERO
-	_jogador.atingido.disconnect(ao_ser_pego)
-
-	# O tiro do Antonio.
-	await get_tree().create_timer(0.35).timeout
 	if is_instance_valid(zumbi):
 		_antonio.atirar_em(zumbi.global_position)
 		zumbi.levar_tiro(1000.0, (zumbi.global_position - _antonio.global_position).normalized())
@@ -355,14 +373,15 @@ func _abertura() -> void:
 	_jogador.olhar_para(_antonio.global_position - _jogador.global_position)
 	await _conversa(Falas.O_TIRO)
 
-	# Direto ao portao.
+	# A conversa no portao aberto.
 	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE)
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
 	create_tween().tween_property(camera, "offset", Vector2(0.0, (_antonio.global_position.y - _jogador.global_position.y) / 2.0), 0.6)
 	await _conversa(Falas.PORTAO)
-	# A missao e o radio: ele joga o radio por cima do muro.
+	# A missao e o radio: ele entrega pelo vao e fecha o portao.
 	await _jogar_o_radio()
+	await _correr_o_portao(false)
 
 	_cena(false)
 	camera.zoom = Vector2.ONE * Jogador.ZOOM_DA_CAMERA
@@ -371,6 +390,36 @@ func _abertura() -> void:
 	_no_roteiro = false
 	Travessia.tutorial = "favor"
 	_comecar_o_favor()
+
+## O portao de chapa do Antonio: a peca do cenario que o desenha
+## (rua/barreira.gd), achada pelo lugar.
+func _portao_do_antonio() -> Node2D:
+	var onde := _p(PORTAO_DO_ANTONIO)
+	for filho in _cenario.get_children():
+		if filho.get("tipo") == "portao_chapa" and (filho as Node2D).global_position.distance_to(onde) < 40.0:
+			return filho
+	return null
+
+## O portao corre para tras do muro do lado leste, que e mais largo que ele:
+## a peca sobe meio px (o Y-sort a poe atras do muro) e anda a propria
+## largura. Abrindo, o Antonio aparece no vao. So o desenho corre - a colisao
+## e do muro inteiro, e ninguem entra na casa dele.
+func _correr_o_portao(abrir: bool) -> void:
+	var portao := _portao_do_antonio()
+	if abrir:
+		_antonio.visible = true
+	if portao == null:
+		return
+	if not portao.has_meta("fechado"):
+		portao.set_meta("fechado", portao.position)
+	var fechado: Vector2 = portao.get_meta("fechado")
+	var largura: float = (portao.get("b") - portao.get("a")).length()
+	var aberto := fechado + Vector2(largura, -0.5)
+	Som.tocar_em("porta", portao.global_position, 1600.0, 0.8 if abrir else 0.7)
+	var passo := create_tween()
+	passo.tween_property(portao, "position", aberto if abrir else fechado, SEGUNDOS_DO_PORTAO) \
+		.set_trans(Tween.TRANS_SINE)
+	await passo.finished
 
 ## O radio voando do Antonio para a mao do jogador, e o aviso de que chegou.
 func _jogar_o_radio() -> void:

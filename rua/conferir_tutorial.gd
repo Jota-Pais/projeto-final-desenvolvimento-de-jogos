@@ -94,7 +94,7 @@ func _conferir() -> void:
 	if _mortos() <= mortos_antes:
 		_erro("nenhum zumbi caiu na cena - o tiro do Antonio nao matou")
 	else:
-		print("  o zumbi pegou o jogador (vida %d) e o Antonio o matou" % jogador.vida)
+		print("  o zumbi correu atras do jogador (vida %d) e o Antonio o matou do portao" % jogador.vida)
 	if jogador.no_roteiro:
 		_erro("depois da conversa o jogador continua sob roteiro")
 	var zoom: Vector2 = (jogador.get_node("Camera") as Camera2D).zoom
