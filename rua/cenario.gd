@@ -47,6 +47,7 @@ const Navegacao := preload("res://rua/navegacao.gd")
 const EntradaDeCasa := preload("res://rua/entrada_de_casa.gd")
 const Enfeite := preload("res://rua/enfeite.gd")
 const DetalhesDaRua := preload("res://rua/detalhes_da_rua.gd")
+const Arquitetura := preload("res://rua/arquitetura.gd")
 
 const ESPESSURA_DO_MURO := 400.0
 
@@ -682,6 +683,9 @@ func _povoar(construcao: Dictionary) -> void:
 	# onde documento fica nao foi decidido, e isto e so o lugar que existe para
 	# ele nascer.
 	var numero_do_documento: int = construcao.get("documento", 0)
+	if construcao.has("mobilia"):
+		_mobiliar(construcao, chave_do_predio, numero_do_documento)
+		return
 	var quarto_do_documento := -1
 	if numero_do_documento > 0:
 		quarto_do_documento = mini(quartos.size(), vagas.size()) - 1
@@ -698,6 +702,27 @@ func _povoar(construcao: Dictionary) -> void:
 			_criar_movel(tipos[j], posicoes[j], chave, documento,
 				Construcao.tamanho_do_movel(construcao, tipos[j]),
 				GIRO_POR_PORTA.get(construcao["porta"], 0.0))
+
+## A mobilia escrita a mao (rua/arquitetura.gd, 21/10/2026): cada movel de
+## vasculho no lugar dele e virado para o lado que faz sentido, com a pegada do
+## tamanho do desenho. Os enfeites da mesma lista nascem em _criar_enfeites.
+## O documento vai no movel marcado com "documento".
+func _mobiliar(construcao: Dictionary, chave_do_predio: String, numero_do_documento: int) -> void:
+	var canto: Vector2 = (construcao["rect"] as Rect2).position
+	var lista: Array = construcao["mobilia"]
+	for i in lista.size():
+		var pedido: Dictionary = lista[i]
+		var tipo: String = pedido["tipo"]
+		if not Construcao.MOVEIS.has(tipo):
+			continue
+		var olhando: String = pedido.get("olhando", "sul")
+		var pegada: Vector2 = pedido.get("pegada", Arquitetura.PEGADA_JUSTA.get(tipo, Construcao.MOVEIS[tipo]["tamanho"]))
+		if olhando == "leste" or olhando == "oeste":
+			pegada = Vector2(pegada.y, pegada.x)
+		var pe: Vector2 = canto + (pedido["em"] as Vector2)
+		var documento := numero_do_documento if pedido.get("documento", false) else 0
+		_criar_movel(tipo, pe - Vector2(0.0, pegada.y / 2.0), "%s#m%d" % [chave_do_predio, i], documento,
+			pegada, 0.0, false, olhando)
 
 ## A chave estavel de uma construcao: tipo + a posicao dela, que nao muda a
 ## menos que a propria construcao se mova.
@@ -875,7 +900,7 @@ func _criar_zumbi(onde: Vector2, indice := -1) -> Node:
 ## tamanho e a orientacao que o mapa deu. Deixado em zero, usa o tamanho da
 ## tabela direto.
 func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
-		tamanho_override := Vector2.ZERO, giro := 0.0, espelhado := false) -> void:
+		tamanho_override := Vector2.ZERO, giro := 0.0, espelhado := false, olhando := "") -> void:
 	var ficha: Dictionary = Construcao.MOVEIS[tipo]
 	var tamanho: Vector2 = tamanho_override if tamanho_override != Vector2.ZERO else ficha["tamanho"]
 	var movel := CENA_DO_MOVEL.instantiate()
@@ -895,6 +920,11 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	var transposto := tamanho != (ficha["tamanho"] as Vector2)
 	var girado := absf(sin(giro)) > 0.5
 	movel.desenho = _desenho_de(tipo, transposto != girado)
+	if olhando != "":
+		# Mobilia escrita a mao: o desenho de frente, sempre, e quem diz para
+		# onde ele olha e o `olhando` (costas e lado sao do vasculhavel).
+		movel.desenho = _desenho_de(tipo, false)
+		movel.olhando = olhando
 	movel.giro = giro
 	movel.espelhado = espelhado
 	# Sprite partilhado entre tipos (os armarios especiais, `"desenho"` na
@@ -1144,6 +1174,15 @@ func _criar_enfeites() -> void:
 		for pedido in construcao.get("enfeites", []):
 			_criar_enfeite(corpo, pedido["tipo"], canto + (pedido["em"] as Vector2),
 				pedido.get("variante", 0), pedido.get("olhando", "sul"))
+		# A mobilia que nao e vasculho (a de vasculho nasceu em _mobiliar). A
+		# casa selada nao tem: ninguem entra para ver.
+		if construcao.get("sua", false) or construcao.get("selada", false):
+			continue
+		for pedido in construcao.get("mobilia", []):
+			if Construcao.MOVEIS.has(pedido["tipo"]):
+				continue
+			_criar_enfeite(corpo, pedido["tipo"], canto + (pedido["em"] as Vector2),
+				pedido.get("variante", 0), pedido.get("olhando", "sul"), pedido.get("tamanho", Vector2.ZERO))
 	for fileira in DetalhesDaRua.postes():
 		for i in fileira.size():
 			_criar_enfeite(corpo, "poste", fileira[i], i, "sul")
@@ -1154,16 +1193,18 @@ func _criar_enfeites() -> void:
 		return
 	add_child(corpo)
 
-func _criar_enfeite(corpo: StaticBody2D, tipo: String, pe: Vector2, variante: int, olhando: String) -> void:
+func _criar_enfeite(corpo: StaticBody2D, tipo: String, pe: Vector2, variante: int, olhando: String,
+		tamanho := Vector2.ZERO) -> void:
 	var enfeite := Enfeite.new()
 	enfeite.tipo = tipo
 	enfeite.variante = variante
 	enfeite.olhando = olhando
+	enfeite.tamanho = tamanho
 	# A origem a PE px acima do pe, como a dos bonecos: o Y-sort compara pe com pe.
 	enfeite.position = pe - Vector2(0.0, PE)
 	add_child(enfeite)
 	if Enfeite.solido(tipo):
-		var pegada: Vector2 = Enfeite.PEGADAS[tipo]
+		var pegada: Vector2 = Enfeite.pegada_de(tipo, olhando, tamanho)
 		_adicionar_forma(corpo, Rect2(pe.x - pegada.x / 2.0, pe.y - pegada.y, pegada.x, pegada.y))
 
 ## Muros invisiveis na borda, para nao dar de sair do mundo e ficar olhando o

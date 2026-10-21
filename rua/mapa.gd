@@ -65,13 +65,16 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## Versão 7 (21/10/2026, mais tarde): a planta das casas da região rosa ganhou
 ## recortes (rua/arquitetura.gd) e o Restaurante virou a Cover Pizzaria, de
 ## três cômodos - os móveis de lá nasceram em outro lugar.
-const VERSAO_DO_MAPA := 7
+## Versão 8 (21/10/2026, noite): a mobília da região rosa foi escrita à mão
+## (rua/arquitetura.gd) - cada móvel de vasculho no cômodo e na parede que
+## fazem sentido, com chave nova ("#m").
+const VERSAO_DO_MAPA := 8
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "516b5460"
+const IMPRESSAO_ESPERADA := "2bd9ec3b"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##

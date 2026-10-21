@@ -696,6 +696,10 @@ static func _v_da_divisoria(rect: Rect2, porta: String) -> float:
 ## nao se enxergar a casa toda de fora.
 static func paredes_internas(construcao: Dictionary) -> Array[Rect2]:
 	var lista: Array[Rect2] = []
+	# As paredes que a arquitetura pediu a mais (o banheiro, 21/10/2026),
+	# ja em mundo e com o vao da porta cortado (rua/arquitetura.gd).
+	for extra in construcao.get("paredes_extras", []):
+		lista.append(extra)
 	if QUARTOS_POR_TIPO[construcao["tipo"]] < 3:
 		return lista
 

@@ -133,6 +133,8 @@ func _ready() -> void:
 func _draw() -> void:
 	for construcao in Mapa.mundo()["construcoes"]:
 		_pisos_dos_recortes(construcao)
+		for piso in construcao.get("pisos_extras", []):
+			_piso_de_dentro(piso["tipo"], piso["rect"])
 	for linha in FAIXAS_DO_MEIO:
 		_faixa_do_meio(linha)
 	for faixa in FAIXAS_DE_PEDESTRE:
@@ -209,6 +211,73 @@ func _desabou(r: Rect2) -> void:
 	for k in 5:
 		var p := r.position + Vector2(r.size.x * (0.2 + k * 0.15), r.size.y * (0.3 + (k % 2) * 0.3))
 		draw_line(p, p + Vector2(30, -14 + k * 5), Color("5a3a2a"), 2.0)
+
+## O piso de um comodo (rua/arquitetura.gd, 21/10/2026): taco na sala e no
+## quarto, lajota na cozinha, azulejo no banheiro, granilite na Delegacia, o
+## xadrez preto e branco da pizzaria. Por cima, a sujeira de quem saqueou.
+func _piso_de_dentro(tipo: String, r: Rect2) -> void:
+	match tipo:
+		"taco":
+			draw_rect(r, Color("6e5238"))
+			var y := r.position.y
+			var k := 0
+			while y < r.end.y:
+				var alto := minf(8.0, r.end.y - y)
+				draw_rect(Rect2(r.position.x, y, r.size.x, alto), Color("735740") if k % 2 == 0 else Color("684c34"))
+				draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), Color("4e3826"), 1.0)
+				var x := r.position.x + float((k * 23) % 40)
+				while x < r.end.x:
+					draw_line(Vector2(x, y), Vector2(x, y + alto), Color("4e3826"), 1.0)
+					x += 40.0
+				y += 8.0
+				k += 1
+		"lajota":
+			_ladrilho(r, 20.0, Color("a3957d"), Color("9b8d76"), Color("6f6555"))
+		"azulejo":
+			_ladrilho(r, 10.0, Color("c4c8c2"), Color("bcc0ba"), Color("8e9490"))
+		"xadrez":
+			_ladrilho(r, 20.0, Color("cfc9bb"), Color("393530"), Color("2a2622"))
+		"granilite":
+			draw_rect(r, Color("8f8b82"))
+			var semente := int(r.position.x) * 13 + int(r.position.y)
+			for k in int(r.get_area() / 60.0):
+				var p := r.position + Vector2(float((semente * (k + 3) * 31) % 1009) / 1009.0 * r.size.x,
+					float((semente * (k + 7) * 17) % 997) / 997.0 * r.size.y)
+				draw_rect(Rect2(p, Vector2(1, 1)), [Color("b8b3a8"), Color("5e5a54"), Color("a07a5a")][k % 3] as Color)
+			var y := r.position.y + 60.0
+			while y < r.end.y:
+				draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), Color("6e6a62"), 1.0)
+				y += 60.0
+		_:
+			_cimento(r)
+			return
+	# A sujeira do saque e da chuva que entrou: manchas e marca de pe.
+	var s := int(r.position.x * 7.0 + r.position.y * 3.0)
+	for k in 3:
+		var p := r.position + Vector2(float((s * (k + 2) * 37) % 997) / 997.0, float((s * (k + 5) * 53) % 991) / 991.0) * r.size
+		draw_circle(p, 8.0 + float(k) * 5.0, Color(0.12, 0.09, 0.06, 0.18))
+
+func _ladrilho(r: Rect2, lado: float, a: Color, b: Color, junta: Color) -> void:
+	var y := r.position.y
+	var fila := 0
+	while y < r.end.y:
+		var x := r.position.x
+		var coluna := 0
+		while x < r.end.x:
+			var q := Rect2(x, y, minf(lado, r.end.x - x), minf(lado, r.end.y - y))
+			draw_rect(q, a if (fila + coluna) % 2 == 0 else b)
+			x += lado
+			coluna += 1
+		y += lado
+		fila += 1
+	var gx := r.position.x
+	while gx <= r.end.x:
+		draw_line(Vector2(gx, r.position.y), Vector2(gx, r.end.y), junta, 1.0)
+		gx += lado
+	var gy := r.position.y
+	while gy <= r.end.y:
+		draw_line(Vector2(r.position.x, gy), Vector2(r.end.x, gy), junta, 1.0)
+		gy += lado
 
 # --- a rua ---------------------------------------------------------------------------
 

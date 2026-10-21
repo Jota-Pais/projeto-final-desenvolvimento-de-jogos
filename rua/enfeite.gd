@@ -8,6 +8,13 @@ extends Node2D
 ## Quem diz onde cada um fica e o rua/arquitetura.gd (DECORACAO) e o
 ## rua/detalhes_da_rua.gd (postes); quem cria e o rua/cenario.gd, que tambem
 ## poe o corpo do que e `solido` na navegacao do zumbi.
+##
+## **A mobilia gerada** (21/10/2026, Joao: "o mesmo nivel de detalhamento nos
+## moveis que voce teve nas casas, cada um pra sua situacao"): os tipos de
+## MOBILIA tem desenho do PixelLab em rua/arte/objetos/mobilia/, de frente,
+## como os moveis de vasculho - encostados numa parede norte. Com `olhando`
+## para outro lado, aparecem as costas ou o lado, desenhados por regra na cor
+## do proprio desenho (o mesmo do rua/vasculhavel.gd). Nada gira.
 
 const Telhado := preload("res://rua/telhado.gd")
 
@@ -23,10 +30,6 @@ const FERRO := Color("4a4c4e")
 ## A pegada (px de mundo) de quem tem corpo; quem nao esta aqui nao barra.
 const PEGADAS := {
 	"mesa_plastico": Vector2(30, 22),
-	"mesa_toalha": Vector2(40, 28),
-	"balcao": Vector2(150, 30),
-	"forno_pizza": Vector2(84, 60),
-	"bancada": Vector2(96, 30),
 	"fogao_industrial": Vector2(70, 32),
 	"engradado": Vector2(26, 20),
 	"botijao": Vector2(16, 14),
@@ -38,12 +41,88 @@ const PEGADAS := {
 	"sacos_farinha": Vector2(50, 30),
 	"freezer": Vector2(64, 32),
 	"orelhao": Vector2(14, 14),
+	# A mobilia gerada: a pegada do que e opaco no desenho, de frente.
+	"mesa_toalha": Vector2(60, 30),
+	"balcao": Vector2(128, 30),
+	"forno_pizza": Vector2(66, 44),
+	"bancada": Vector2(90, 28),
+	"cama": Vector2(60, 74),
+	"sofa": Vector2(86, 30),
+	"rack_tv": Vector2(56, 22),
+	"mesa_jantar": Vector2(56, 40),
+	"pia_fogao": Vector2(86, 26),
+	"mesa_bar": Vector2(58, 34),
+	"mesa_escritorio": Vector2(60, 34),
+	# Por regra, sob medida (o `tamanho` do pedido manda quando vem).
+	"bancada_cozinha": Vector2(110, 26),
+	"box_chuveiro": Vector2(44, 44),
+	"vaso_sanitario": Vector2(18, 22),
+	"pia_banheiro": Vector2(22, 14),
+	"criado_mudo": Vector2(22, 16),
+	"guarda_roupa": Vector2(70, 26),
+	"cadeiras_espera": Vector2(66, 16),
+	"grade_cela": Vector2(120, 6),
+	"fogareiro": Vector2(18, 14),
 }
+
+## Os tipos com desenho gerado (rua/arte/objetos/mobilia/<tipo>.png).
+const MOBILIA := ["mesa_toalha", "balcao", "forno_pizza", "bancada", "cama", "sofa", "rack_tv",
+	"mesa_jantar", "pia_fogao", "mesa_bar", "guarda_sol", "mesa_escritorio"]
+const PASTA_DA_MOBILIA := "res://rua/arte/objetos/mobilia/"
+## Quanto um desenho pode subir alem da pegada: a espessura da parede atras
+## (o mesmo do rua/vasculhavel.gd).
+const FOLGA_SOBRE_A_PAREDE := 20.0
 
 var tipo := ""
 var variante := 0
-## Para que lado o enfeite olha (cadeira, moto): um dos quatro LADOS.
+## Para que lado o enfeite olha (cadeira, moto, a mobilia): um dos quatro
+## LADOS. "sul" e de frente para a camera.
 var olhando := "sul"
+## O tamanho, para o que e sob medida (bancada, tapete, grade): em mundo, ja
+## na orientacao dele. Zero = a pegada da tabela.
+var tamanho := Vector2.ZERO
+
+static var _texturas := {}
+static var _medidas := {}
+
+static func _textura(qual: String) -> Texture2D:
+	if not qual in MOBILIA:
+		return null
+	if not _texturas.has(qual):
+		var caminho: String = PASTA_DA_MOBILIA + qual + ".png"
+		_texturas[qual] = load(caminho) if ResourceLoader.exists(caminho) else null
+	return _texturas[qual]
+
+## A pegada em mundo: a da tabela (ou o `tamanho` pedido), deitada quando o
+## enfeite olha para um lado.
+static func pegada_de(qual: String, para: String, pedido: Vector2) -> Vector2:
+	if pedido != Vector2.ZERO:
+		return pedido
+	var p: Vector2 = PEGADAS.get(qual, Vector2.ZERO)
+	return Vector2(p.y, p.x) if para == "leste" or para == "oeste" else p
+
+## A cor media, a primeira e a ultima linha opaca do desenho, uma vez so.
+static func _medir(textura: Texture2D) -> Dictionary:
+	var chave := textura.resource_path
+	if _medidas.has(chave):
+		return _medidas[chave]
+	var imagem := textura.get_image()
+	var soma := Color(0, 0, 0, 0)
+	var n := 0
+	var topo := imagem.get_height()
+	var fundo := 0
+	for y in imagem.get_height():
+		for x in imagem.get_width():
+			var c := imagem.get_pixel(x, y)
+			if c.a > 0.5:
+				soma += c
+				n += 1
+				topo = mini(topo, y)
+				fundo = maxi(fundo, y)
+	var medida := { "cor": Color(soma.r / n, soma.g / n, soma.b / n) if n > 0 else MADEIRA,
+		"topo": topo, "fundo": fundo }
+	_medidas[chave] = medida
+	return medida
 
 func _ready() -> void:
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
@@ -54,7 +133,25 @@ static func solido(qual: String) -> bool:
 
 func _draw() -> void:
 	draw_set_transform(Vector2(0.0, PE))
+	var textura := _textura(tipo)
+	if textura != null:
+		_mobilia(textura)
+		return
 	match tipo:
+		"bancada_cozinha": _bancada_cozinha()
+		"box_chuveiro": _box_chuveiro()
+		"vaso_sanitario": _vaso_sanitario()
+		"pia_banheiro": _pia_banheiro()
+		"criado_mudo": _criado_mudo()
+		"guarda_roupa": _guarda_roupa()
+		"tapete": _tapete()
+		"roupas": _roupas()
+		"colchao": _colchao()
+		"grade_cela": _grade_cela()
+		"cadeiras_espera": _cadeiras_espera()
+		"papeis": _papeis()
+		"fogareiro": _fogareiro()
+		"latas": _latas()
 		"mesa_plastico": _mesa_plastico()
 		"cadeira_plastico": _cadeira(PLASTICO)
 		"cadeira": _cadeira(MADEIRA.lightened(0.1))
@@ -494,3 +591,294 @@ func _freezer() -> void:
 	_caixa(Rect2(-32, -16, 64, 32), 26.0, Color("dcdcd6"), Color("c2c2bc"))
 	draw_rect(Rect2(-28, -40, 56, 12), Color(0.6, 0.75, 0.82, 0.6))
 	draw_rect(Rect2(-28, -40, 56, 12), CONTORNO, false, 1.0)
+
+# --- a mobilia (21/10/2026) ----------------------------------------------------
+
+## A pegada deste enfeite em mundo, com o pe no meio da borda de baixo.
+func _base() -> Rect2:
+	var p := pegada_de(tipo, olhando, tamanho)
+	return Rect2(-p.x / 2.0, -p.y, p.x, p.y)
+
+## O desenho gerado: de frente, o opaco de baixo no pe e no maximo a folga da
+## parede acima da pegada; de costas ou de lado, a caixa na cor dele.
+func _mobilia(textura: Texture2D) -> void:
+	var medida := _medir(textura)
+	var base := _base()
+	if tipo == "rack_tv" and olhando == "norte":
+		_tv_de_costas(base)
+		return
+	if olhando != "sul" and solido(tipo):
+		_caixa_de_costas_ou_de_lado(base, medida["cor"], float(medida["fundo"] - medida["topo"] + 1) - base.size.y)
+		return
+	var tam := textura.get_size()
+	var fundo := float(medida["fundo"]) + 1.0
+	var topo := float(medida["topo"])
+	var y := -fundo
+	# Desenho mais alto que pegada + parede desce para dentro da sala.
+	y = maxf(y, base.position.y - FOLGA_SOBRE_A_PAREDE - topo)
+	draw_rect(Rect2(base.position.x + 3.0, -3.0, base.size.x, 5.0), SOMBRA)
+	draw_texture(textura, Vector2(roundf(-tam.x / 2.0), roundf(y)))
+
+## A TV de tubo vista de tras, virada para o sofa: o rack baixo de madeira e,
+## em cima, o fundo da TV - a caixa cinza que afina, com a grade de ventilacao
+## e o fio caindo.
+func _tv_de_costas(base: Rect2) -> void:
+	var rack := Rect2(base.position.x, base.end.y - 14.0, base.size.x, 14.0)
+	draw_rect(Rect2(base.position.x + 3.0, -2.0, base.size.x, 4.0), SOMBRA)
+	draw_rect(Rect2(base.position - Vector2(0, 14), base.size), MADEIRA.lightened(0.05))
+	draw_rect(rack, MADEIRA.darkened(0.25))
+	draw_rect(rack, CONTORNO, false, 1.0)
+	draw_rect(Rect2(base.position - Vector2(0, 14), base.size), CONTORNO, false, 1.0)
+	var meio := Vector2(0.0, base.position.y - 14.0 + base.size.y * 0.5)
+	var fundo := PackedVector2Array([meio + Vector2(-20, 4), meio + Vector2(20, 4), meio + Vector2(14, -30), meio + Vector2(-14, -30)])
+	draw_colored_polygon(fundo, Color("4a4c4a"))
+	draw_colored_polygon(PackedVector2Array([meio + Vector2(-14, -30), meio + Vector2(14, -30), meio + Vector2(10, -36), meio + Vector2(-10, -36)]), Color("5e605e"))
+	for k in 4:
+		draw_line(meio + Vector2(-8, -24 + k * 5), meio + Vector2(8, -24 + k * 5), Color("2e302e"), 1.0)
+	fundo.append(fundo[0])
+	draw_polyline(fundo, CONTORNO, 1.0)
+	draw_line(meio + Vector2(6, 4), meio + Vector2(12, 14), Color("1e1e1e"), 1.0)
+
+func _caixa_de_costas_ou_de_lado(base: Rect2, cor: Color, altura: float) -> void:
+	altura = clampf(altura, 10.0, 56.0)
+	var cima := Rect2(base.position - Vector2(0.0, altura), base.size)
+	var face := Rect2(Vector2(base.position.x, base.end.y - altura), Vector2(base.size.x, altura))
+	draw_rect(Rect2(base.position.x + 3.0, -2.0, base.size.x, 4.0), SOMBRA)
+	draw_rect(face, cor.darkened(0.28))
+	draw_rect(cima, cor.lightened(0.08))
+	draw_rect(cima.grow(-3.0), cor, false, 1.0)
+	if olhando == "norte":
+		for k in 2:
+			var x := face.position.x + face.size.x * float(k + 1) / 3.0
+			draw_line(Vector2(x, face.position.y + 2.0), Vector2(x, face.end.y - 2.0), cor.darkened(0.45), 1.0)
+	else:
+		draw_rect(Rect2(face.position.x, face.end.y - 4.0, face.size.x, 4.0), cor.darkened(0.45))
+		var frente := cima.position.x + (cima.size.x - 2.0 if olhando == "leste" else 0.0)
+		draw_rect(Rect2(frente, cima.position.y, 2.0, cima.size.y), cor.lightened(0.3))
+	draw_rect(face, CONTORNO, false, 1.0)
+	draw_rect(cima, CONTORNO, false, 1.0)
+
+## A bancada da cozinha, sob medida e encostada na parede: tampo de granito
+## com a cuba de inox (louca suja dentro) e o fogao de quatro bocas com a
+## panela; a frente de armario so aparece quando ela olha para o sul.
+func _bancada_cozinha() -> void:
+	var base := _base()
+	var altura := 20.0
+	var cima := Rect2(base.position - Vector2(0.0, altura), base.size)
+	var face := Rect2(Vector2(base.position.x, base.end.y - altura), Vector2(base.size.x, altura))
+	draw_rect(Rect2(base.position.x + 3.0, -2.0, base.size.x, 4.0), SOMBRA)
+	var armario := Color("cfc7b4")
+	draw_rect(face, armario.darkened(0.12))
+	if olhando == "sul":
+		var portas := maxi(2, int(face.size.x / 22.0))
+		for k in portas:
+			var r := Rect2(face.position.x + 2.0 + k * (face.size.x - 4.0) / portas, face.position.y + 3.0,
+				(face.size.x - 4.0) / portas - 2.0, face.size.y - 6.0)
+			draw_rect(r, armario.darkened(0.04))
+			draw_rect(r, armario.darkened(0.3), false, 1.0)
+			draw_rect(Rect2(r.get_center() + Vector2(-2, -6), Vector2(4, 1)), Color("6a6a66"))
+			if k == portas - 1 and variante % 2 == 0:
+				# A porta que ficou aberta: o escuro de dentro.
+				draw_rect(r.grow(-1.0), Color("2a241e"))
+	draw_rect(Rect2(face.position.x, face.end.y - 3.0, face.size.x, 3.0), Color("3a332c"))
+	draw_rect(cima, Color("7f7b74"))
+	var semente := int(absf(base.position.x) * 3.0 + base.size.y * 7.0)
+	for k in 30:
+		var p := cima.position + Vector2(float((semente * (k + 3)) % 97) / 97.0, float((semente * (k + 11)) % 89) / 89.0) * cima.size
+		draw_rect(Rect2(p, Vector2(1, 1)), Color("a29e96") if k % 2 else Color("5e5a54"))
+	var deitada := cima.size.x >= cima.size.y
+	var ao_longo := cima.size.x if deitada else cima.size.y
+	var de_lado := cima.size.y if deitada else cima.size.x
+	var onde := func(t: float) -> Vector2:
+		return cima.position + (Vector2(ao_longo * t, de_lado * 0.5) if deitada else Vector2(de_lado * 0.5, ao_longo * t))
+	# A cuba, com a louca.
+	var cuba: Vector2 = onde.call(0.28)
+	var tam_cuba := Vector2(24, 14) if deitada else Vector2(14, 24)
+	draw_rect(Rect2(cuba - tam_cuba / 2.0, tam_cuba), Color("b7bcbf"))
+	draw_rect(Rect2(cuba - tam_cuba / 2.0 + Vector2(2, 2), tam_cuba - Vector2(4, 4)), Color("8c9296"))
+	draw_circle(cuba + Vector2(-3, 1), 3.0, Color("d8d4c8"))
+	draw_circle(cuba + Vector2(3, -1), 3.0, Color("c9b38a"))
+	draw_rect(Rect2(cuba - tam_cuba / 2.0, tam_cuba), CONTORNO, false, 1.0)
+	# O fogao, com a panela esquecida.
+	var fogao: Vector2 = onde.call(0.72)
+	var tam_fogao := Vector2(26, 18) if deitada else Vector2(18, 26)
+	draw_rect(Rect2(fogao - tam_fogao / 2.0, tam_fogao), Color("e3dfd4"))
+	draw_rect(Rect2(fogao - tam_fogao / 2.0 + Vector2(2, 2), tam_fogao - Vector2(4, 4)), Color("2e2e2c"))
+	for dx in [-1.0, 1.0]:
+		for dy in [-1.0, 1.0]:
+			var b := fogao + Vector2(dx * tam_fogao.x / 4.5, dy * tam_fogao.y / 4.5)
+			draw_arc(b, 3.0, 0.0, TAU, 8, Color("6a6a66"), 1.0)
+	draw_circle(fogao + Vector2(tam_fogao.x / 4.5, -tam_fogao.y / 4.5), 4.0, Color("4a4c4e"))
+	draw_rect(Rect2(fogao - tam_fogao / 2.0, tam_fogao), CONTORNO, false, 1.0)
+	draw_rect(cima, CONTORNO, false, 1.0)
+	draw_rect(face, CONTORNO, false, 1.0)
+
+## O box: o piso de azulejo pequeno, o ralo, o vidro e o chuveiro na parede.
+func _box_chuveiro() -> void:
+	var base := _base()
+	draw_rect(base, Color("c9cfd0"))
+	var x := base.position.x
+	while x < base.end.x:
+		draw_line(Vector2(x, base.position.y), Vector2(x, base.end.y), Color("9aa2a4"), 1.0)
+		x += 6.0
+	var y := base.position.y
+	while y < base.end.y:
+		draw_line(Vector2(base.position.x, y), Vector2(base.end.x, y), Color("9aa2a4"), 1.0)
+		y += 6.0
+	draw_circle(base.get_center(), 3.0, Color("5a6266"))
+	draw_circle(base.get_center() + Vector2(6, -8), 6.0, Color(0.2, 0.1, 0.05, 0.25))
+	# O chuveiro na parede de tras e o cano.
+	draw_line(Vector2(0, base.position.y - 26.0), Vector2(0, base.position.y - 6.0), Color("8a8e90"), 2.0)
+	draw_circle(Vector2(0, base.position.y - 6.0), 4.0, Color("b0b4b6"))
+	# O vidro da frente, de pe: um quadro com reflexo.
+	var vidro := Rect2(base.position.x, base.end.y - 46.0, base.size.x, 46.0)
+	draw_rect(vidro, Color(0.75, 0.88, 0.92, 0.18))
+	draw_line(vidro.position + Vector2(6, 40), vidro.position + Vector2(20, 6), Color(1, 1, 1, 0.3), 2.0)
+	draw_rect(vidro, Color("9aa0a2"), false, 1.0)
+	draw_rect(base, CONTORNO, false, 1.0)
+
+func _vaso_sanitario() -> void:
+	var base := _base()
+	var branco := Color("e6e3da")
+	draw_rect(Rect2(base.position.x + 1, base.position.y - 12, base.size.x - 2, 10), branco.darkened(0.06))
+	draw_rect(Rect2(base.position.x + 1, base.position.y - 16, base.size.x - 2, 5), branco)
+	draw_rect(Rect2(base.position.x + 1, base.position.y - 16, base.size.x - 2, 14), CONTORNO, false, 1.0)
+	_elipse(Vector2(0, base.position.y + 10), Vector2(8, 9), branco)
+	_elipse(Vector2(0, base.position.y + 11), Vector2(5, 6), Color("8fa3a8"))
+	draw_rect(Rect2(-4, -6, 8, 6), branco.darkened(0.15))
+
+func _pia_banheiro() -> void:
+	var base := _base()
+	# O espelho na parede, por cima da pia.
+	var espelho := Rect2(-9, base.position.y - 40.0, 18, 16)
+	draw_rect(espelho, Color("7f97a0"))
+	draw_line(espelho.position + Vector2(3, 13), espelho.position + Vector2(12, 3), Color(1, 1, 1, 0.35), 1.0)
+	draw_line(espelho.position + Vector2(10, 2), espelho.position + Vector2(16, 12), Color("2a2a2a"), 1.0)
+	draw_rect(espelho, CONTORNO, false, 1.0)
+	draw_rect(Rect2(-3, -14, 6, 14), Color("d8d4ca"))
+	draw_rect(Rect2(-3, -14, 6, 14), CONTORNO, false, 1.0)
+	_elipse(Vector2(0, -16), Vector2(11, 6), Color("e6e3da"))
+	_elipse(Vector2(0, -16), Vector2(7, 3), Color("a8b4b8"))
+
+func _criado_mudo() -> void:
+	var base := _base()
+	_caixa(base, 16.0, MADEIRA.lightened(0.08), MADEIRA)
+	draw_rect(Rect2(base.position.x + 3, base.end.y - 11, base.size.x - 6, 6), MADEIRA.darkened(0.2), false, 1.0)
+	# O abajur, de cupula torta.
+	draw_line(Vector2(-4, base.position.y - 14), Vector2(-4, base.position.y - 24), Color("3a3a38"), 1.0)
+	draw_colored_polygon(PackedVector2Array([Vector2(-10, base.position.y - 24), Vector2(2, base.position.y - 26),
+		Vector2(0, base.position.y - 34), Vector2(-8, base.position.y - 33)]), Color("c9b98a"))
+
+## O guarda-roupa de MDF branco, tres portas e o espelho do meio: alto, de
+## frente, encostado na parede norte do quarto.
+func _guarda_roupa() -> void:
+	var base := _base()
+	var altura := 64.0
+	var cima := Rect2(base.position - Vector2(0.0, altura), base.size)
+	var face := Rect2(Vector2(base.position.x, base.end.y - altura), Vector2(base.size.x, altura))
+	draw_rect(Rect2(base.position.x + 3.0, -2.0, base.size.x, 4.0), SOMBRA)
+	var mdf := Color("d6d0c2")
+	draw_rect(face, mdf.darkened(0.08))
+	var terco := face.size.x / 3.0
+	for k in 3:
+		var r := Rect2(face.position.x + k * terco + 1.0, face.position.y + 2.0, terco - 2.0, face.size.y - 6.0)
+		draw_rect(r, Color("8fa0a6") if k == 1 else mdf)
+		if k == 1:
+			draw_line(r.position + Vector2(3, r.size.y - 6), r.position + Vector2(r.size.x - 4, 8), Color(1, 1, 1, 0.3), 2.0)
+		draw_rect(r, mdf.darkened(0.3), false, 1.0)
+		draw_rect(Rect2(r.position.x + (r.size.x - 3.0 if k == 0 else 1.0), r.get_center().y - 4.0, 2, 8), Color("6a6a66"))
+	if variante % 2 == 0:
+		# Uma porta aberta e a roupa caindo.
+		var aberta := Rect2(face.position.x + 1.0, face.position.y + 2.0, terco - 2.0, face.size.y - 6.0)
+		draw_rect(aberta, Color("2a241e"))
+		draw_rect(Rect2(aberta.position.x + 3, aberta.position.y + 6, 8, 20), Color("6a7a9a"))
+		draw_rect(Rect2(aberta.position.x + 12, aberta.position.y + 8, 7, 16), Color("9a5a4a"))
+	draw_rect(cima, mdf.lightened(0.05))
+	draw_rect(face, CONTORNO, false, 1.0)
+	draw_rect(cima, CONTORNO, false, 1.0)
+
+func _tapete() -> void:
+	var base := _base()
+	var cores := [Color("7a4a3a"), Color("4a5a6a"), Color("6a6a4a")]
+	var cor: Color = cores[variante % cores.size()]
+	draw_rect(base, cor)
+	draw_rect(base.grow(-4.0), cor.lightened(0.15), false, 2.0)
+	draw_rect(base.grow(-8.0), cor.darkened(0.15), false, 1.0)
+	for k in 3:
+		draw_circle(base.get_center() + Vector2(-10 + k * 10, 0), 3.0, cor.lightened(0.25))
+	draw_circle(base.get_center() + Vector2(8, 4), 6.0, Color(0.15, 0.1, 0.06, 0.25))
+	draw_rect(base, CONTORNO, false, 1.0)
+
+func _roupas() -> void:
+	var cores := [Color("6a7a9a"), Color("9a5a4a"), Color("d8d4c8"), Color("4a5a3a")]
+	for k in 4:
+		var p := Vector2(-14 + k * 9, -4 - (k % 2) * 6)
+		var cor: Color = cores[(k + variante) % cores.size()]
+		draw_colored_polygon(PackedVector2Array([p, p + Vector2(10, -2), p + Vector2(12, 6), p + Vector2(1, 8)]), cor)
+		draw_polyline(PackedVector2Array([p, p + Vector2(10, -2), p + Vector2(12, 6), p + Vector2(1, 8), p]), CONTORNO, 1.0)
+
+func _colchao() -> void:
+	var base := _base()
+	var r := Rect2(base.position - Vector2(0, 6), base.size)
+	draw_rect(Rect2(r.position.x, r.end.y, r.size.x, 6), Color("8a8270"))
+	draw_rect(r, Color("b8b09a"))
+	var y := r.position.y + 4.0
+	while y < r.end.y:
+		draw_line(Vector2(r.position.x + 2, y), Vector2(r.end.x - 2, y), Color("a39b84"), 1.0)
+		y += 8.0
+	draw_circle(r.get_center() + Vector2(-6, 8), 9.0, Color(0.35, 0.25, 0.12, 0.35))
+	# O cobertor embolado.
+	draw_colored_polygon(PackedVector2Array([r.position + Vector2(4, r.size.y * 0.45), r.position + Vector2(r.size.x - 2, r.size.y * 0.38),
+		r.end - Vector2(6, 10), Vector2(r.position.x + 8, r.end.y - 4)]), Color("5a6a4a"))
+	draw_rect(r, CONTORNO, false, 1.0)
+
+## A grade da cela: barras de pe ao longo da pegada, com a porta aberta no
+## meio (variante 1) para ninguem ficar preso sem querer.
+func _grade_cela() -> void:
+	var base := _base()
+	var altura := 52.0
+	var ao_longo_x := base.size.x >= base.size.y
+	var comprimento := base.size.x if ao_longo_x else base.size.y
+	var t := 0.0
+	while t <= comprimento:
+		var porta := variante % 2 == 1 and absf(t - comprimento / 2.0) < 16.0
+		if not porta:
+			var p := base.position + (Vector2(t, base.size.y) if ao_longo_x else Vector2(base.size.x / 2.0, t))
+			draw_line(p, p - Vector2(0, altura), Color("3a3c3e"), 2.0)
+		t += 6.0
+	var a := base.position + (Vector2(0, base.size.y) if ao_longo_x else Vector2(base.size.x / 2.0, 0))
+	var b := a + (Vector2(comprimento, 0) if ao_longo_x else Vector2(0, comprimento))
+	for h in [altura, altura * 0.5, 2.0]:
+		draw_line(a - Vector2(0, h), b - Vector2(0, h), Color("4a4c4e"), 2.0)
+
+func _cadeiras_espera() -> void:
+	var base := _base()
+	draw_rect(Rect2(base.position.x, -4, base.size.x, 3), Color("5a5c5e"))
+	for k in 3:
+		var x := base.position.x + 2.0 + k * (base.size.x - 4.0) / 3.0
+		var w := (base.size.x - 4.0) / 3.0 - 2.0
+		draw_rect(Rect2(x, -18, w, 10), Color("3f6a8f"))
+		draw_rect(Rect2(x, -30, w, 12), Color("355a7a"))
+		draw_rect(Rect2(x, -30, w, 22), CONTORNO, false, 1.0)
+
+func _papeis() -> void:
+	for k in 7:
+		var p := Vector2(-20 + (k * 13) % 40, -6 - (k * 7) % 14)
+		var dir := Vector2(cos(k * 1.7), sin(k * 1.7))
+		var lado := Vector2(-dir.y, dir.x)
+		var folha := PackedVector2Array([p, p + dir * 9.0, p + dir * 9.0 + lado * 7.0, p + lado * 7.0])
+		draw_colored_polygon(folha, Color(0.88, 0.86, 0.8, 0.95))
+		draw_line(p + lado * 2.0, p + dir * 7.0 + lado * 2.0, Color(0.3, 0.3, 0.35, 0.6), 1.0)
+
+func _fogareiro() -> void:
+	_sombra_redonda(9.0)
+	draw_rect(Rect2(-8, -10, 16, 10), Color("4a4c4e"))
+	draw_arc(Vector2(0, -12), 6.0, 0.0, TAU, 10, Color("8a8c8e"), 2.0)
+	draw_rect(Rect2(10, -14, 8, 14), Color("3e6fa0"))
+	draw_rect(Rect2(-8, -10, 16, 10), CONTORNO, false, 1.0)
+
+func _latas() -> void:
+	for k in 5:
+		var p := Vector2(-12 + k * 6, -2 - (k % 2) * 5)
+		draw_rect(Rect2(p - Vector2(2, 5), Vector2(5, 6)), [Color("a83a32"), Color("c9a032"), Color("8a8c8e")][k % 3] as Color)
+		draw_rect(Rect2(p - Vector2(2, 5), Vector2(5, 6)), CONTORNO, false, 1.0)

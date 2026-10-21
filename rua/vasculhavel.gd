@@ -66,6 +66,15 @@ signal vasculhando(segundos: float)
 ## especiais, que partilham um sprite de armario de metal (a cor da ficha,
 ## normalizada pelo cenario).
 @export var tinta := Color.WHITE
+## Para onde a frente do movel olha (21/10/2026). O desenho gerado e de
+## frente, com a frente para baixo: so serve encostado numa parede NORTE
+## ("sul", o padrao). Encostado na parede sul ele mostra as costas
+## ("norte"), e numa parede de lado mostra o lado ("leste" ou "oeste") - os
+## dois desenhados por regra, na cor do proprio desenho. Nada de girar o
+## sprite: girado, a estante aparecia deitada (Joao: "estantes viradas pro
+## lado errado"). Com olhar de lado, `tamanho` ja vem com fundo e largura
+## trocados.
+@export var olhando := "sul"
 
 ## Quanto progresso se perde por segundo quando ninguem esta vasculhando.
 ##
@@ -289,6 +298,9 @@ func _ao_ser_atingido() -> void:
 ## de 90 graus a pegada que ele ve e a transposta, porque o `tamanho` ja veio
 ## transposto do cenario (Construcao.tamanho_do_movel, mapa.gd "deitado").
 func _desenhar_o_desenho() -> void:
+	if olhando != "sul":
+		_desenhar_de_costas_ou_de_lado()
+		return
 	var pegada := tamanho if absf(sin(giro)) < 0.5 else Vector2(tamanho.y, tamanho.x)
 	var tam := desenho.get_size()
 	# O pe do desenho na borda de baixo da pegada - mas um desenho mais alto
@@ -301,6 +313,58 @@ func _desenhar_o_desenho() -> void:
 	draw_texture_rect(desenho, Rect2(Vector2(-tam.x / 2.0, topo), tam), false,
 		tinta * (TINTA_DO_VAZIO if _vazio else Color.WHITE))
 	draw_set_transform(Vector2.ZERO)
+
+## A cor media e a altura do que e opaco no desenho, uma vez por desenho.
+static var _medidas := {}
+
+static func _medir(textura: Texture2D) -> Dictionary:
+	var chave := textura.resource_path
+	if _medidas.has(chave):
+		return _medidas[chave]
+	var imagem := textura.get_image()
+	var soma := Color(0, 0, 0, 0)
+	var n := 0
+	var topo := imagem.get_height()
+	var fundo := 0
+	for y in imagem.get_height():
+		for x in imagem.get_width():
+			var c := imagem.get_pixel(x, y)
+			if c.a > 0.5:
+				soma += c
+				n += 1
+				topo = mini(topo, y)
+				fundo = maxi(fundo, y)
+	var medida := { "cor": Color(soma.r / n, soma.g / n, soma.b / n) if n > 0 else Color("6b5b3f"),
+		"altura": float(fundo - topo + 1) if n > 0 else 48.0 }
+	_medidas[chave] = medida
+	return medida
+
+## As costas ou o lado: uma caixa na vista inclinada, na cor do desenho - o
+## tampo levantado pela altura do movel e a face que da para o sul. De costas
+## e o fundo liso com as emendas; de lado, a lateral com o rodape.
+func _desenhar_de_costas_ou_de_lado() -> void:
+	var medida := _medir(desenho)
+	var cor: Color = medida["cor"] * tinta * (TINTA_DO_VAZIO if _vazio else Color.WHITE)
+	var altura := clampf(float(medida["altura"]) - tamanho.y, 12.0, 60.0)
+	var base := Rect2(-tamanho / 2.0, tamanho)
+	var cima := Rect2(base.position - Vector2(0.0, altura), base.size)
+	var face := Rect2(Vector2(base.position.x, base.end.y - altura), Vector2(base.size.x, altura))
+	draw_rect(Rect2(base.position + Vector2(3.0, base.size.y - 2.0), Vector2(base.size.x, 4.0)), Color(0, 0, 0, 0.25))
+	draw_rect(face, cor.darkened(0.28))
+	draw_rect(cima, cor.lightened(0.08))
+	draw_rect(cima.grow(-3.0), cor, false, 1.0)
+	if olhando == "norte":
+		# As costas: duas emendas do compensado e a sombra do pe.
+		for k in 2:
+			var x := face.position.x + face.size.x * float(k + 1) / 3.0
+			draw_line(Vector2(x, face.position.y + 2.0), Vector2(x, face.end.y - 2.0), cor.darkened(0.45), 1.0)
+	else:
+		# O lado: o rodape e, no tampo, a beira da frente mais clara.
+		draw_rect(Rect2(face.position.x, face.end.y - 4.0, face.size.x, 4.0), cor.darkened(0.45))
+		var frente := cima.position.x + (cima.size.x - 2.0 if olhando == "leste" else 0.0)
+		draw_rect(Rect2(frente, cima.position.y, 2.0, cima.size.y), cor.lightened(0.3))
+	draw_rect(face, Color(0.07, 0.06, 0.05, 0.9), false, 1.0)
+	draw_rect(cima, Color(0.07, 0.06, 0.05, 0.9), false, 1.0)
 
 func _draw() -> void:
 	var caixa := Rect2(-tamanho / 2.0, tamanho)

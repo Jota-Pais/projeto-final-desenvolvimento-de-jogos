@@ -53,6 +53,22 @@ const TONS := {
 	"suja": Color(0.9, 0.88, 0.84),
 }
 
+## A pegada de cada movel de vasculho na mobilia escrita a mao: a do que e
+## opaco no desenho, e nao a da ficha (rua/construcao.gd, MOVEIS), que e de
+## antes do corpo do jogador cair pela metade e nao deixava caber dois moveis
+## num quarto. Largura x fundo, com a frente para o sul.
+const PEGADA_JUSTA := {
+	"geladeira": Vector2(46, 30),
+	"estante": Vector2(58, 26),
+	"comoda": Vector2(62, 32),
+	"armario": Vector2(60, 30),
+	"prateleira": Vector2(108, 34),
+	"caixa": Vector2(48, 40),
+	"arquivo": Vector2(50, 32),
+	"armario_de_armas": Vector2(50, 30),
+	"maca": Vector2(52, 30),
+}
+
 ## As alturas da fachada (px de tela inclinada, na regua do boneco: o muro de
 ## 2 m tem 41 px de face, rua/barreira.gd). Um andar de casa tem ~2,7 m.
 const ALTURA_DE_ANDAR := 52.0
@@ -101,6 +117,30 @@ const PREDIOS := [
 	# A casa ao sul da sua: porta para o sul, entao a fachada de verdade
 	# aparece - oitao de telha colonial em cima da porta e a varanda do lado.
 	{ "ponto": Vector2(1192.0, 685.0),
+		"mobilia": [
+			# Sala (na frente): sofa de costas para a divisoria, a TV de frente para ele, a estante.
+			{ "tipo": "sofa", "em": Vector2(70.0, 351.0) },
+			{ "tipo": "estante", "em": Vector2(160.0, 349.0) },
+			{ "tipo": "tapete", "em": Vector2(70.0, 392.0), "tamanho": Vector2(80.0, 30.0) },
+			{ "tipo": "rack_tv", "em": Vector2(70.0, 425.0), "olhando": "norte" },
+			{ "tipo": "vaso", "em": Vector2(176.0, 525.0) },
+			# Cozinha (fundo leste, entra pela sala): geladeira e bancada na parede norte, a mesa no meio.
+			{ "tipo": "geladeira", "em": Vector2(198.0, 50.0) },
+			{ "tipo": "bancada_cozinha", "em": Vector2(268.0, 46.0), "tamanho": Vector2(90.0, 26.0) },
+			{ "tipo": "botijao", "em": Vector2(300.0, 72.0) },
+			{ "tipo": "mesa_jantar", "em": Vector2(245.0, 200.0) },
+			# Quarto (fundo oeste, entra pela cozinha): cama e comoda na parede norte.
+			{ "tipo": "cama", "em": Vector2(56.0, 96.0) },
+			{ "tipo": "comoda", "em": Vector2(122.0, 52.0) },
+			{ "tipo": "tapete", "em": Vector2(56.0, 140.0), "variante": 1, "tamanho": Vector2(50.0, 26.0) },
+			{ "tipo": "roupas", "em": Vector2(110.0, 160.0), "variante": 1 },
+			# Banheiro (no fundo do quarto): vaso, pia com espelho e box.
+			{ "tipo": "vaso_sanitario", "em": Vector2(40.0, 245.0) },
+			{ "tipo": "pia_banheiro", "em": Vector2(75.0, 237.0) },
+			{ "tipo": "box_chuveiro", "em": Vector2(131.0, 300.0) },
+		],
+		"paredes": [Rect2(20.0, 201.0, 80.0, 20.0), Rect2(145.0, 201.0, 8.2, 20.0)],
+		"pisos": [["taco", Rect2(20.0, 321.6, 296.0, 90.4)], ["taco", Rect2(20.0, 412.0, 166.0, 120.0)], ["lajota", Rect2(173.2, 20.0, 142.8, 281.6)], ["taco", Rect2(20.0, 20.0, 133.2, 181.0)], ["azulejo", Rect2(20.0, 221.0, 133.2, 80.6)]],
 		"recortes": [{ "canto": "sudeste", "tamanho": Vector2(130.0, 120.0), "cobertura": "varanda" }],
 		"telhado": { "forma": "duas_aguas", "cumeeira": "y", "material": "colonial", "tom": "desbotada" },
 		"puxado": { "forma": "meia_agua", "queda": "sul", "material": "colonial", "tom": "velha", "altura": 44.0 },
@@ -119,6 +159,27 @@ const PREDIOS := [
 	# tapando o que a chuva abriu. O recorte e a varanda do nordeste: os do
 	# fundo fechavam a passagem do quarto do fundo (conferir_mapa).
 	{ "ponto": Vector2(1237.0, 676.0),
+		"mobilia": [
+			# Sala de jantar (frente): a mesa no canto da porta, a estante na parede norte.
+			{ "tipo": "mesa_jantar", "em": Vector2(80.0, 150.0) },
+			{ "tipo": "estante", "em": Vector2(240.0, 156.0) },
+			{ "tipo": "vaso", "em": Vector2(300.0, 150.0) },
+			# Cozinha (fundo leste): bancada e geladeira encostadas na parede leste, de lado.
+			{ "tipo": "bancada_cozinha", "em": Vector2(303.0, 440.0), "olhando": "oeste", "tamanho": Vector2(26.0, 160.0) },
+			{ "tipo": "geladeira", "em": Vector2(301.0, 500.0), "olhando": "oeste" },
+			{ "tipo": "lixeira", "em": Vector2(190.0, 520.0) },
+			# Quarto (fundo oeste): cama na parede do banheiro, comoda de lado na parede oeste.
+			{ "tipo": "cama", "em": Vector2(56.0, 426.0) },
+			{ "tipo": "comoda", "em": Vector2(36.0, 520.0), "olhando": "leste" },
+			{ "tipo": "tapete", "em": Vector2(100.0, 470.0), "tamanho": Vector2(44.0, 30.0) },
+			{ "tipo": "roupas", "em": Vector2(120.0, 500.0) },
+			# Banheiro (na ponta norte do quarto).
+			{ "tipo": "vaso_sanitario", "em": Vector2(90.0, 274.0) },
+			{ "tipo": "pia_banheiro", "em": Vector2(125.0, 266.0) },
+			{ "tipo": "box_chuveiro", "em": Vector2(44.0, 330.0) },
+		],
+		"paredes": [Rect2(20.0, 330.0, 80.0, 20.0), Rect2(145.0, 330.0, 8.2, 20.0)],
+		"pisos": [["taco", Rect2(20.0, 20.0, 166.0, 110.0)], ["taco", Rect2(20.0, 130.0, 296.0, 100.4)], ["lajota", Rect2(173.2, 250.4, 142.8, 281.6)], ["azulejo", Rect2(20.0, 250.4, 133.2, 79.6)], ["taco", Rect2(20.0, 350.0, 133.2, 182.0)]],
 		"recortes": [{ "canto": "nordeste", "tamanho": Vector2(130.0, 110.0), "cobertura": "varanda" }],
 		"telhado": { "forma": "quatro_aguas", "material": "romana", "tom": "velha" },
 		"puxado": { "forma": "meia_agua", "queda": "leste", "material": "fibrocimento", "tom": "suja", "altura": 44.0 },
@@ -139,6 +200,24 @@ const PREDIOS := [
 	# A casinha do oeste, na beira do cerco: tijolo a vista, meia-agua de
 	# fibrocimento com pneu segurando a telha, varanda de lona.
 	{ "ponto": Vector2(1130.0, 640.0),
+		"mobilia": [
+			# O canto de dormir (oeste): cama na parede da frente, a TV de frente para ela, a comoda de lado.
+			{ "tipo": "cama", "em": Vector2(60.0, 96.0) },
+			{ "tipo": "rack_tv", "em": Vector2(100.0, 160.0), "olhando": "norte" },
+			{ "tipo": "comoda", "em": Vector2(36.0, 230.0), "olhando": "leste" },
+			{ "tipo": "roupas", "em": Vector2(150.0, 120.0) },
+			# O canto da cozinha (leste): geladeira na parede da frente, pia com fogao na parede da varanda, a mesa.
+			{ "tipo": "geladeira", "em": Vector2(300.0, 50.0) },
+			{ "tipo": "pia_fogao", "em": Vector2(414.0, 156.0) },
+			{ "tipo": "mesa_jantar", "em": Vector2(290.0, 230.0) },
+			{ "tipo": "latas", "em": Vector2(200.0, 290.0) },
+			# O banheiro no canto sudeste.
+			{ "tipo": "vaso_sanitario", "em": Vector2(420.0, 260.0) },
+			{ "tipo": "pia_banheiro", "em": Vector2(455.0, 252.0) },
+			{ "tipo": "box_chuveiro", "em": Vector2(462.0, 316.0) },
+		],
+		"paredes": [Rect2(384.0, 216.0, 20.0, 40.0), Rect2(384.0, 300.0, 20.0, 16.0), Rect2(404.0, 216.0, 80.0, 20.0)],
+		"pisos": [["taco", Rect2(20.0, 20.0, 304.0, 110.0)], ["taco", Rect2(20.0, 130.0, 364.0, 186.0)], ["taco", Rect2(384.0, 130.0, 100.0, 86.0)], ["azulejo", Rect2(404.0, 236.0, 80.0, 80.0)]],
 		"recortes": [{ "canto": "nordeste", "tamanho": Vector2(160.0, 110.0), "cobertura": "lona" }],
 		"telhado": { "forma": "meia_agua", "queda": "sul", "material": "fibrocimento", "tom": "suja" },
 		"puxado": { "forma": "meia_agua", "queda": "sul", "material": "fibrocimento", "tom": "suja", "altura": 46.0 },
@@ -156,6 +235,29 @@ const PREDIOS := [
 	# A casa de porta para o leste, ao lado da pizzaria: telha romana nova, a
 	# garagem coberta no canto da frente.
 	{ "ponto": Vector2(1266.0, 721.0),
+		"mobilia": [
+			# Sala (leste, a da porta): sofa na parede norte, a TV de frente, a estante.
+			{ "tipo": "sofa", "em": Vector2(380.0, 51.0) },
+			{ "tipo": "estante", "em": Vector2(470.0, 47.0) },
+			{ "tipo": "tapete", "em": Vector2(380.0, 118.0), "tamanho": Vector2(70.0, 28.0) },
+			{ "tipo": "rack_tv", "em": Vector2(380.0, 150.0), "olhando": "norte" },
+			# Cozinha (sudoeste, entra pela sala): geladeira e bancada na divisoria, a mesa.
+			{ "tipo": "geladeira", "em": Vector2(45.0, 203.0) },
+			{ "tipo": "botijao", "em": Vector2(80.0, 199.0) },
+			{ "tipo": "bancada_cozinha", "em": Vector2(246.0, 199.0), "tamanho": Vector2(82.0, 26.0) },
+			{ "tipo": "mesa_jantar", "em": Vector2(150.0, 290.0) },
+			# Quarto (noroeste): cama, criado-mudo e comoda na parede norte.
+			{ "tipo": "cama", "em": Vector2(160.0, 96.0) },
+			{ "tipo": "criado_mudo", "em": Vector2(205.0, 36.0) },
+			{ "tipo": "comoda", "em": Vector2(252.0, 52.0) },
+			{ "tipo": "roupas", "em": Vector2(230.0, 125.0) },
+			# Banheiro (na ponta oeste do quarto).
+			{ "tipo": "vaso_sanitario", "em": Vector2(36.0, 44.0) },
+			{ "tipo": "pia_banheiro", "em": Vector2(70.0, 36.0) },
+			{ "tipo": "box_chuveiro", "em": Vector2(44.0, 153.0) },
+		],
+		"paredes": [Rect2(100.0, 20.0, 20.0, 70.0), Rect2(100.0, 135.0, 20.0, 18.2)],
+		"pisos": [["taco", Rect2(308.4, 20.0, 199.6, 166.0)], ["taco", Rect2(308.4, 186.0, 49.6, 130.0)], ["lajota", Rect2(20.0, 173.2, 268.4, 142.8)], ["azulejo", Rect2(20.0, 20.0, 80.0, 133.2)], ["taco", Rect2(120.0, 20.0, 168.4, 133.2)]],
 		"recortes": [{ "canto": "sudeste", "tamanho": Vector2(150.0, 130.0), "cobertura": "garagem" }],
 		"telhado": { "forma": "quatro_aguas", "material": "romana", "tom": "desbotada" },
 		"puxado": { "forma": "duas_aguas", "cumeeira": "y", "material": "romana", "tom": "desbotada", "altura": 48.0 },
@@ -192,45 +294,94 @@ const PREDIOS := [
 		# servico. Em px a partir do canto noroeste; o caminho da porta aos
 		# moveis e os vaos das divisorias ficam livres (conferir_mapa).
 		"enfeites": [
-			{ "tipo": "mesa_toalha", "em": Vector2(770.0, 52.0) }, { "tipo": "mesa_toalha", "em": Vector2(890.0, 52.0), "variante": 1 },
-			{ "tipo": "mesa_toalha", "em": Vector2(1010.0, 52.0), "variante": 2 }, { "tipo": "mesa_toalha", "em": Vector2(1130.0, 52.0) },
-			{ "tipo": "mesa_toalha", "em": Vector2(340.0, 112.0), "variante": 2 },
-			{ "tipo": "balcao", "em": Vector2(1090.0, 148.0) },
-			{ "tipo": "forno_pizza", "em": Vector2(85.0, 282.0) },
-			{ "tipo": "bancada", "em": Vector2(330.0, 222.0) },
-			{ "tipo": "fogao_industrial", "em": Vector2(450.0, 222.0) },
-			{ "tipo": "lenha", "em": Vector2(75.0, 352.0) },
-			{ "tipo": "sacos_farinha", "em": Vector2(300.0, 350.0) },
-			{ "tipo": "freezer", "em": Vector2(640.0, 216.0) },
-			{ "tipo": "sacos_farinha", "em": Vector2(830.0, 350.0) },
-			{ "tipo": "engradado", "em": Vector2(1100.0, 214.0), "variante": 1 },
-			{ "tipo": "mesa_plastico", "em": Vector2(75.0, 72.0) }, { "tipo": "mesa_plastico", "em": Vector2(195.0, 72.0), "variante": 1 },
-			{ "tipo": "cadeira_plastico", "em": Vector2(45.0, 76.0), "olhando": "leste" },
-			{ "tipo": "cadeira_plastico", "em": Vector2(105.0, 76.0), "olhando": "oeste" },
-			{ "tipo": "cadeira_plastico", "em": Vector2(165.0, 76.0), "olhando": "leste" },
-			{ "tipo": "cadeira_plastico", "em": Vector2(232.0, 96.0), "variante": 4 },
-			{ "tipo": "vaso", "em": Vector2(14.0, 112.0) }, { "tipo": "vaso", "em": Vector2(266.0, 16.0), "variante": 1 },
-			{ "tipo": "mesa_plastico", "em": Vector2(560.0, -112.0), "variante": 1 },
-			{ "tipo": "guarda_sol", "em": Vector2(560.0, -111.0) },
-			{ "tipo": "cadeira_plastico", "em": Vector2(528.0, -106.0), "olhando": "leste" },
-			{ "tipo": "cadeira_plastico", "em": Vector2(592.0, -106.0), "olhando": "oeste" },
+			{ "tipo": "mesa_bar", "em": Vector2(80.0, 96.0) },
+			{ "tipo": "mesa_bar", "em": Vector2(200.0, 96.0), "variante": 1 },
+			{ "tipo": "vaso", "em": Vector2(14.0, 112.0) },
+			{ "tipo": "vaso", "em": Vector2(266.0, 16.0), "variante": 1 },
+			{ "tipo": "mesa_bar", "em": Vector2(560.0, -106.0), "variante": 1 },
+			{ "tipo": "guarda_sol", "em": Vector2(560.0, -105.0) },
 			{ "tipo": "cavalete", "em": Vector2(340.0, -70.0) },
 			{ "tipo": "mesa_plastico", "em": Vector2(1140.0, -72.0), "variante": 3 },
 			{ "tipo": "moto", "em": Vector2(1150.0, -150.0) },
 			{ "tipo": "lixeira", "em": Vector2(262.0, -30.0) },
-			{ "tipo": "botijao", "em": Vector2(950.0, 372.0) }, { "tipo": "botijao", "em": Vector2(968.0, 377.0), "variante": 1 },
+			{ "tipo": "botijao", "em": Vector2(950.0, 372.0) },
+			{ "tipo": "botijao", "em": Vector2(968.0, 377.0), "variante": 1 },
 			{ "tipo": "botijao", "em": Vector2(986.0, 372.0), "variante": 2 },
 			{ "tipo": "lenha", "em": Vector2(1100.0, 376.0) },
 			{ "tipo": "lixeira", "em": Vector2(1168.0, 372.0), "variante": 2 },
 			{ "tipo": "saco_de_lixo", "em": Vector2(1060.0, 378.0), "variante": 1 },
 			{ "tipo": "engradado", "em": Vector2(1022.0, 376.0), "variante": 4 },
-		] },
+		],
+		"mobilia": [
+			# Salao: o balcao e a geladeira de bebida na parede da porta, a caixa de pizza do lado, as mesas de toalha xadrez.
+			{ "tipo": "caixa", "em": Vector2(330.0, 60.0) },
+			{ "tipo": "balcao", "em": Vector2(560.0, 50.0) },
+			{ "tipo": "geladeira", "em": Vector2(668.0, 50.0) },
+			{ "tipo": "mesa_toalha", "em": Vector2(760.0, 62.0) },
+			{ "tipo": "mesa_toalha", "em": Vector2(880.0, 62.0), "variante": 1 },
+			{ "tipo": "mesa_toalha", "em": Vector2(1000.0, 62.0), "variante": 2 },
+			{ "tipo": "mesa_toalha", "em": Vector2(1120.0, 62.0) },
+			{ "tipo": "mesa_toalha", "em": Vector2(540.0, 136.0) },
+			{ "tipo": "mesa_toalha", "em": Vector2(660.0, 136.0), "variante": 1 },
+			{ "tipo": "mesa_toalha", "em": Vector2(780.0, 136.0), "variante": 2 },
+			{ "tipo": "mesa_toalha", "em": Vector2(1050.0, 136.0) },
+			{ "tipo": "mesa_toalha", "em": Vector2(1150.0, 136.0), "variante": 1 },
+			# Cozinha: o forno a lenha, a bancada de massa, a geladeira, o fogao e a pia na parede norte; a lenha no canto.
+			{ "tipo": "forno_pizza", "em": Vector2(70.0, 219.0) },
+			{ "tipo": "bancada", "em": Vector2(170.0, 203.0) },
+			{ "tipo": "geladeira", "em": Vector2(245.0, 205.0) },
+			{ "tipo": "fogao_industrial", "em": Vector2(310.0, 207.0) },
+			{ "tipo": "bancada_cozinha", "em": Vector2(400.0, 201.0), "tamanho": Vector2(80.0, 26.0) },
+			{ "tipo": "sacos_farinha", "em": Vector2(495.0, 205.0) },
+			{ "tipo": "lenha", "em": Vector2(52.0, 352.0) },
+			# Deposito: a prateleira, o freezer, farinha e engradados.
+			{ "tipo": "prateleira", "em": Vector2(630.0, 209.0) },
+			{ "tipo": "freezer", "em": Vector2(740.0, 207.0) },
+			{ "tipo": "sacos_farinha", "em": Vector2(830.0, 205.0) },
+			{ "tipo": "engradado", "em": Vector2(1010.0, 200.0), "variante": 1 },
+			{ "tipo": "engradado", "em": Vector2(1040.0, 202.0), "variante": 2 },
+			{ "tipo": "engradado", "em": Vector2(1150.0, 200.0) },
+			{ "tipo": "latas", "em": Vector2(700.0, 340.0) },
+		],
+		"pisos": [["xadrez", Rect2(300.0, 20.0, 880.0, 135.0)], ["lajota", Rect2(20.0, 174.8, 522.0, 189.2)], ["cimento", Rect2(562.0, 174.8, 618.0, 49.2)], ["cimento", Rect2(562.0, 224.0, 318.0, 140.0)]],
+	},
 
 	# A Delegacia: predio publico em L, telha colonial de quatro aguas, branco
 	# com barrado azul, grade em toda janela e o letreiro em cima da porta. So o
 	# canto sudeste sai: a parede oeste dela e parte do cerco do tutorial, e o
 	# recorte sudoeste abria um furo nele (conferir_mapa).
 	{ "ponto": Vector2(1122.0, 712.0),
+		"mobilia": [
+			# Atendimento (frente): as mesas e o arquivo na divisoria, as cadeiras de espera, papel no chao.
+			{ "tipo": "mesa_escritorio", "em": Vector2(300.0, 606.0) },
+			{ "tipo": "mesa_escritorio", "em": Vector2(480.0, 606.0), "variante": 1 },
+			{ "tipo": "mesa_escritorio", "em": Vector2(660.0, 606.0) },
+			{ "tipo": "arquivo", "em": Vector2(800.0, 604.0) },
+			{ "tipo": "cadeiras_espera", "em": Vector2(1000.0, 588.0) },
+			{ "tipo": "cadeiras_espera", "em": Vector2(1080.0, 588.0) },
+			{ "tipo": "mesa_escritorio", "em": Vector2(1340.0, 606.0), "variante": 1 },
+			{ "tipo": "mesa_escritorio", "em": Vector2(1460.0, 606.0) },
+			{ "tipo": "papeis", "em": Vector2(420.0, 690.0) },
+			{ "tipo": "papeis", "em": Vector2(700.0, 730.0), "variante": 1 },
+			{ "tipo": "papeis", "em": Vector2(950.0, 900.0) },
+			# Carceragem e armas (fundo leste): duas celas com a porta aberta, o armario de armas com o documento.
+			{ "tipo": "grade_cela", "em": Vector2(822.0, 200.0), "variante": 1, "tamanho": Vector2(196.0, 6.0) },
+			{ "tipo": "grade_cela", "em": Vector2(1010.0, 200.0), "variante": 1, "tamanho": Vector2(180.0, 6.0) },
+			{ "tipo": "grade_cela", "em": Vector2(920.0, 194.0), "tamanho": Vector2(6.0, 174.0) },
+			{ "tipo": "colchao", "em": Vector2(790.0, 130.0), "tamanho": Vector2(40.0, 70.0) },
+			{ "tipo": "vaso_sanitario", "em": Vector2(880.0, 44.0) },
+			{ "tipo": "colchao", "em": Vector2(990.0, 130.0), "tamanho": Vector2(40.0, 70.0) },
+			{ "tipo": "vaso_sanitario", "em": Vector2(1070.0, 44.0) },
+			{ "tipo": "armario_de_armas", "em": Vector2(1300.0, 50.0), "documento": true },
+			{ "tipo": "mesa_escritorio", "em": Vector2(1450.0, 56.0) },
+			# Escritorio do delegado (fundo oeste): mesas, caixas de arquivo morto, papelada.
+			{ "tipo": "mesa_escritorio", "em": Vector2(150.0, 56.0), "variante": 1 },
+			{ "tipo": "mesa_escritorio", "em": Vector2(300.0, 56.0) },
+			{ "tipo": "caixa", "em": Vector2(500.0, 60.0) },
+			{ "tipo": "papeis", "em": Vector2(200.0, 300.0) },
+			{ "tipo": "papeis", "em": Vector2(400.0, 420.0), "variante": 1 },
+		],
+		"pisos": [["granilite", Rect2(20.0, 572.4, 1520.0, 205.6)], ["granilite", Rect2(20.0, 778.0, 1100.0, 210.0)], ["granilite", Rect2(20.0, 20.0, 684.0, 532.4)], ["cimento", Rect2(724.0, 20.0, 816.0, 532.4)]],
 		"recortes": [{ "canto": "sudeste", "tamanho": Vector2(420.0, 210.0), "cobertura": "" }],
 		"telhado": { "forma": "quatro_aguas", "material": "colonial", "tom": "desbotada" },
 		"puxado": { "forma": "quatro_aguas", "material": "colonial", "tom": "velha", "altura": 58.0 },
@@ -245,6 +396,19 @@ const PREDIOS := [
 			{ "tipo": "vaso", "em": Vector2(1160.0, 830.0) },
 		] },
 	{ "ponto": Vector2(1100.0, 695.0),
+		"mobilia": [
+			# Deposito de apreensoes: moto, bicicletas, pneus e engradados.
+			{ "tipo": "caixa", "em": Vector2(440.0, 60.0) },
+			{ "tipo": "moto", "em": Vector2(200.0, 200.0) },
+			{ "tipo": "bicicleta", "em": Vector2(320.0, 220.0) },
+			{ "tipo": "bicicleta", "em": Vector2(360.0, 228.0) },
+			{ "tipo": "pneu", "em": Vector2(600.0, 200.0) },
+			{ "tipo": "pneu", "em": Vector2(614.0, 206.0) },
+			{ "tipo": "engradado", "em": Vector2(700.0, 60.0), "variante": 1 },
+			{ "tipo": "engradado", "em": Vector2(730.0, 62.0), "variante": 2 },
+			{ "tipo": "papeis", "em": Vector2(500.0, 180.0) },
+		],
+		"pisos": [["cimento", Rect2(20.0, 20.0, 848.0, 224.0)]],
 		"telhado": { "forma": "laje", "material": "laje", "tom": "suja" },
 		"fachada": { "parede": "bloco", "tinta": "branco", "janelas": "grade", "altura": 56.0 },
 		"extras": [{ "tipo": "caixa_dagua", "em": Vector2(0.15, 0.5) }, { "tipo": "ar_condicionado", "em": Vector2(0.6, 0.5) }] },
@@ -253,6 +417,27 @@ const PREDIOS := [
 	# (o recorte, com o entulho dela no chao), janelas quebradas e mato na
 	# laje. O anexo, dois andares, do mesmo jeito.
 	{ "ponto": Vector2(1293.0, 640.0),
+		"mobilia": [
+			# Saguao: a caixa na parede da frente e o acampamento de quem passou por aqui.
+			{ "tipo": "caixa", "em": Vector2(100.0, 60.0) },
+			{ "tipo": "colchao", "em": Vector2(600.0, 160.0), "tamanho": Vector2(50.0, 80.0) },
+			{ "tipo": "fogareiro", "em": Vector2(560.0, 230.0) },
+			{ "tipo": "latas", "em": Vector2(600.0, 250.0) },
+			{ "tipo": "saco_de_lixo", "em": Vector2(660.0, 300.0), "variante": 1 },
+			{ "tipo": "papeis", "em": Vector2(300.0, 400.0) },
+			{ "tipo": "cadeira_plastico", "em": Vector2(450.0, 300.0), "variante": 4 },
+			{ "tipo": "roupas", "em": Vector2(640.0, 190.0) },
+			# Fundo oeste: a comoda e outro colchao.
+			{ "tipo": "comoda", "em": Vector2(100.0, 704.0) },
+			{ "tipo": "colchao", "em": Vector2(200.0, 900.0), "tamanho": Vector2(50.0, 80.0) },
+			{ "tipo": "roupas", "em": Vector2(240.0, 960.0) },
+			{ "tipo": "latas", "em": Vector2(120.0, 1100.0) },
+			# Fundo leste: a estante e o que sobrou.
+			{ "tipo": "estante", "em": Vector2(430.0, 698.0) },
+			{ "tipo": "pneu", "em": Vector2(600.0, 900.0) },
+			{ "tipo": "saco_de_lixo", "em": Vector2(650.0, 1000.0) },
+			{ "tipo": "cadeira_plastico", "em": Vector2(500.0, 1100.0), "variante": 4 },
+		],
 		"recortes": [{ "canto": "sudeste", "tamanho": Vector2(260.0, 300.0), "cobertura": "desabou" }],
 		"telhado": { "forma": "laje", "material": "laje", "tom": "velha" },
 		"puxado": { "forma": "laje", "material": "laje", "tom": "velha", "altura": 170.0 },
@@ -262,6 +447,12 @@ const PREDIOS := [
 			{ "tipo": "caixa_dagua_tombada", "em": Vector2(0.75, 0.15) }, { "tipo": "buraco", "em": Vector2(0.45, 0.7) }],
 		"enfeites": [{ "tipo": "saco_de_lixo", "em": Vector2(520.0, 1470.0), "variante": 1 }, { "tipo": "pneu", "em": Vector2(700.0, 1300.0) }] },
 	{ "ponto": Vector2(1280.0, 630.0),
+		"mobilia": [
+			{ "tipo": "caixa", "em": Vector2(280.0, 60.0) },
+			{ "tipo": "colchao", "em": Vector2(100.0, 400.0), "tamanho": Vector2(50.0, 80.0) },
+			{ "tipo": "latas", "em": Vector2(200.0, 420.0) },
+			{ "tipo": "saco_de_lixo", "em": Vector2(260.0, 600.0) },
+		],
 		"telhado": { "forma": "laje", "material": "laje", "tom": "velha" },
 		"fachada": { "parede": "reboco", "tinta": "rosa", "janelas": "quebradas", "altura": 100.0, "pichacao": true },
 		"extras": [{ "tipo": "mato", "em": Vector2(0.5, 0.4) }, { "tipo": "entulho", "em": Vector2(0.3, 0.7) }] },
@@ -361,6 +552,21 @@ static func aplicar(construcoes: Array, recorte_do_desenho: Rect2, escala: float
 				estilo[chave] = predio[chave]
 		if predio.has("enfeites"):
 			alvo["enfeites"] = predio["enfeites"]
+		# A mobilia fica em coordenada do predio (o cenario soma o canto); as
+		# paredes do banheiro e os pisos vao para o mundo.
+		if predio.has("mobilia"):
+			alvo["mobilia"] = predio["mobilia"]
+		var canto: Vector2 = (alvo["rect"] as Rect2).position
+		if predio.has("paredes"):
+			var paredes: Array = []
+			for r in predio["paredes"]:
+				paredes.append(Rect2((r as Rect2).position + canto, (r as Rect2).size))
+			alvo["paredes_extras"] = paredes
+		if predio.has("pisos"):
+			var pisos: Array = []
+			for piso in predio["pisos"]:
+				pisos.append({ "tipo": piso[0], "rect": Rect2((piso[1] as Rect2).position + canto, (piso[1] as Rect2).size) })
+			alvo["pisos_extras"] = pisos
 		if predio.has("recortes"):
 			alvo["recortes"] = predio["recortes"]
 			_conferir_recortes(alvo)
