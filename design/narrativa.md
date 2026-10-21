@@ -120,8 +120,68 @@ O primeiro NPC que o jogador encontra, e quem dá o tutorial.
   precisa carregar o resto.
 - **Em algum momento o protagonista pode contar a ele sobre a namorada.**
 
-⬜ **A personalidade aprofundada é trabalho da equipe de narrativa** — nome,
-fala, história dele, o que ele sabe.
+#### O roteiro do tutorial — conceito do João, 20/10/2026 (ainda não aplicado)
+
+Texto para guiar o desenvolvimento quando o tutorial entrar; nada disto está
+no jogo. Do jeito que o João escreveu, só com a digitação corrigida:
+
+> o personagem vai ter vizinho antonio, ele vai ser que vai dar o tutorial do
+> jogo via um radio.
+>
+> no primeiro do dia o personagem principal vai estar completamente perdido,
+> sem saber pra onde ir ou o que fazer, e aí entra o antonio, antonio é um
+> homem ranzinza, lunático e antissocial, ele sempre achou que ia acontecer um
+> apocalipse zumbi, ele tinha um bunker, estoques de comida e agua, sempre se
+> preparando e adivinha? ele estava certo! agora ele está completamente seguro
+> e preparado para o apocalipse, mas não o seu vizinho.
+>
+> o personagem principal em uma cinematic (com a mesma arte do jogo) vai sair
+> de casa meio assustado com a situação, mas sendo obrigado a fazer isso pra
+> tentar encontrar uma solução pra infecção de sua namorada. ele vai estar
+> andando e vai ser atacado por um zumbi, mas de repente o zumbi cai morto no
+> chão, foi o vizinho esquisito. o personagem principal vai direto pra porta
+> dele pedir ajuda. ele recusa. diz que nunca vai correr o risco de um
+> infectado entrar na casa dele, e diz que o personagem principal não deveria
+> andar por ai num apocalipse zumbi sem uma arma.
+> mesmo sendo ranzinza o vizinho se comove com a situação, ele entrega um radio
+> para o personagem principal e pronto, agora temos uma maneira imersiva de dar
+> o tutorial do jogo.
+>
+> o vizinho vai pedir um favor para o personagem, ele vai ir até o mercado
+> buscar alguma coisa pro antonio e isso vai servir como um tutorial, ele vai
+> aprender a correr, agachar e se esconder de zumbis e quando o protagonista
+> voltar ele vai ganhar uma 9mm de recompensa
+
+Em passos, para quando virar código:
+
+1. **Dia 1, cena de abertura** (cinematic com a arte do jogo): ele sai de casa
+   assustado, por causa dela.
+2. **O ataque:** um zumbi o pega na rua e cai morto — tiro do Antônio.
+3. **A porta do búnquer:** ele pede ajuda; o Antônio recusa (não deixa
+   infectado nenhum chegar perto), reclama que ele anda desarmado e, comovido,
+   entrega o **rádio**. Daqui em diante o tutorial fala pelo rádio.
+4. **O favor:** buscar alguma coisa no mercado - o Restaurante, ver abaixo -
+   para o Antônio. No caminho, o rádio ensina **correr, agachar e se
+   esconder** de zumbis.
+5. **A volta:** entregar o que buscou e ganhar a **9mm**.
+
+O que isso pede que o jogo ainda não tem: cena roteirizada na rua, conversa
+na porta (o "sistema só de conversa" de "Os outros NPCs"), falas de rádio na
+tela, missão de buscar e entregar, **agachar** (não existe) e uma regra de
+**se esconder** (hoje só existe a visão em cone cortada por parede). Já
+existe: correr (Shift), a visão do zumbi, o tiro e a Beretta 9mm.
+
+⬜ **Começar desarmado**: a 9mm como recompensa troca a regra de 30/09/2026
+("você começa armado"), pelo menos no dia 1.
+- **A casa do Antônio** é a mais fortificada do bairro e fica ao lado da sua
+  (João, 20/10/2026): a vizinha colada a leste, na mesma calçada (prédio 36
+  do traçado, no ponto (1214, 647) do desenho). Ainda sem rótulo no mapa.
+- **O "mercado" do favor é o Restaurante** (João, 20/10/2026), que fica dentro
+  da região do tutorial; o Mercado do mapa fica fora dela.
+
+⬜ **A personalidade aprofundada é trabalho da equipe de narrativa** — fala,
+história dele, o que ele sabe. O nome (Antônio) e o tipo (ranzinza, lunático,
+antissocial, búnquer com estoque) são do João, 20/10/2026.
 
 ⬜ **Ele sai de cena em algum momento?** Morre, vira zumbi, fecha a porta de
 vez, ou simplesmente continua no rádio até o fim? Em aberto.
