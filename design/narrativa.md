@@ -171,8 +171,20 @@ tela, missão de buscar e entregar, **agachar** (não existe) e uma regra de
 **se esconder** (hoje só existe a visão em cone cortada por parede). Já
 existe: correr (Shift), a visão do zumbi, o tiro e a Beretta 9mm.
 
-⬜ **Começar desarmado**: a 9mm como recompensa troca a regra de 30/09/2026
-("você começa armado"), pelo menos no dia 1.
+**Decidido pelo João em 21/10/2026, para a entrega do tutorial:**
+
+- **A cena de abertura** é na rua perto da casa do Antônio: o protagonista
+  anda meio sem rumo, um zumbi o pega desprevenido e o Antônio o mata,
+  salvando o protagonista.
+- **O tutorial tem dois dias.** O dia 1 é o do roteiro acima (portão,
+  rádio, o favor no Restaurante, a 9mm); o **dia 2** é para explorar um pouco
+  e ter a chance de usar a arma.
+- **Agachar:** *"eu me escondo, quem eu vejo não"* — agachado atrás de
+  cobertura, o zumbi não te vê; você continua vendo ele.
+- **O dia 1 começa desarmado**: a 9mm é a recompensa do favor.
+- **As falas** (o portão, o rádio, o que o Antônio pede no Restaurante) são
+  do João, a escrever.
+- Nenhum zumbi colado na sua casa no começo.
 - **A casa do Antônio** é a mais fortificada do bairro e fica ao lado da sua
   (João, 20/10/2026): a vizinha colada a leste, na mesma calçada (prédio 36
   do traçado, no ponto (1214, 647) do desenho). Ainda sem rótulo no mapa.

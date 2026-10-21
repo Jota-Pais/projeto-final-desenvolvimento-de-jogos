@@ -300,6 +300,9 @@ const BARREIRAS := [
 	{ "nome": "Restaurante: calço de reboco caído entre o carro V89 e a fachada (leste)", "tipo": "entulho_linha", "grupo": "", "estado": "destruido",
 		"pontos": [Vector2(1202.0, 735.3), Vector2(1202.0, 736.5)],
 		"vaos": [] },
+	{ "nome": "Prédio abandonado: muro de bloco do terreno, com buracos", "tipo": "muro_bloco", "grupo": "", "estado": "destruido",
+		"pontos": [Vector2(1249.0, 615.5), Vector2(1310.0, 743.0), Vector2(1333.5, 743.0)],
+		"vaos": [{ "ponto": Vector2(1256.0, 630.6), "largura_mundo": 110.0, "portao": null }, { "ponto": Vector2(1290.0, 701.0), "largura_mundo": 110.0, "portao": null }, { "ponto": Vector2(1322.0, 743.0), "largura_mundo": 110.0, "portao": null }] },
 ]
 
 ## As barricadas soltas (Barreira.OBJETOS): `tipo`, `ponto` (px do PNG),
@@ -393,6 +396,11 @@ const RECUO_DO_NASCIMENTO := 110.0
 
 ## Quanto um zumbi nasce afastado da porta de cada prédio.
 const RECUO_DO_ZUMBI := 260.0
+
+## Nenhum ponto de zumbi a menos disto de onde o jogador nasce (21/10/2026, a
+## pedido do João): eram três na rua de cima, a 650-1.200 px do portão - os
+## das casas dos lotes #22 e #24 e o da casinha.
+const SEM_ZUMBI_PERTO_DE_CASA := 1300.0
 
 ## O tamanho (em px de mundo) do lugar de uma zona sem `rect` próprio: uma
 ## janela em volta do ponto do rótulo, cortada pela mancha de chão que o
@@ -687,7 +695,7 @@ static func _barreiras(tudo: Dictionary, recorte: Rect2) -> void:
 		var altura := float(barreira.get("altura", 0.0))
 		for trecho in Barreira.trechos(pontos, vaos):
 			tudo["barreiras"].append({ "nome": nome, "tipo": barreira["tipo"], "grupo": grupo,
-				"pontos": trecho, "altura": altura })
+				"pontos": trecho, "altura": altura, "cor": barreira.get("cor", "") })
 		for vao in vaos:
 			if vao["portao"] != null:
 				tudo["barreiras"].append({ "nome": "%s (portão)" % nome, "tipo": vao["portao"],
@@ -942,6 +950,11 @@ static func _zumbis(tudo: Dictionary, recorte: Rect2) -> void:
 
 static func _da_para_nascer(tudo: Dictionary, onde: Vector2) -> bool:
 	if not MUNDO.grow(-200.0).has_point(onde):
+		return false
+	# Nada colado na sua casa (Joao, 21/10/2026: "precisa tirar esses zumbis
+	# muito colados na casa do personagem no comeco").
+	var nascimento := Construcao.porta_de(_sua_casa) + Construcao.normal_de(_sua_casa) * RECUO_DO_NASCIMENTO
+	if onde.distance_to(nascimento) < SEM_ZUMBI_PERTO_DE_CASA:
 		return false
 	var corpo := Rect2(onde - Vector2(40.0, 40.0), Vector2(80.0, 80.0))
 	for construcao in tudo["construcoes"]:

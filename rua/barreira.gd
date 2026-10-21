@@ -165,6 +165,16 @@ static func pecas(a: Vector2, b: Vector2) -> Array[PackedVector2Array]:
 ## largura do periodo e a distancia entre os pilares. Sem arte, cinza.
 const PASTA_DA_ARTE := "res://rua/arte/barreiras/"
 
+## A tinta do muro pintado (o `cor` do dado): a arte do reboco e off-white, e a
+## cor de verdade, desbotada, sai multiplicando (Joao, 20/10: "muro branco,
+## amarelo, verde-agua ou rosa").
+const TINTAS := {
+	"branco": Color(1.0, 1.0, 1.0),
+	"amarelo": Color(1.0, 0.9, 0.62),
+	"rosa": Color(1.0, 0.8, 0.78),
+	"verde-agua": Color(0.78, 0.95, 0.88),
+}
+
 static func arte_de(tipo: String) -> Dictionary:
 	var arte := {}
 	for parte in ["face", "topo", "pilar"]:
@@ -212,12 +222,16 @@ class Peca extends Node2D:
 	## A altura da face desta barreira, quando o dado traz uma (o muro alto do
 	## Antonio); 0 e a do tipo.
 	var altura := 0.0
+	## A tinta da arte (TINTAS), pela cor que o dado da ao muro.
+	var tinta := Color.WHITE
 
 	func montar(tipo_da_peca: String, de: Vector2, ate: Vector2,
 			ponta_em_de := false, ponta_em_ate := false, arte_do_tipo := {},
-			s_de := 0.0, pilares_no_mundo := PackedVector2Array(), altura_da_barreira := 0.0) -> void:
+			s_de := 0.0, pilares_no_mundo := PackedVector2Array(), altura_da_barreira := 0.0,
+			cor := "") -> void:
 		tipo = tipo_da_peca
 		altura = altura_da_barreira
+		tinta = TINTAS.get(cor, Color.WHITE)
 		position = (de + ate) / 2.0
 		a = de - position
 		b = ate - position
@@ -254,14 +268,14 @@ class Peca extends Node2D:
 			var face := PackedVector2Array([p, q, q + cima, p + cima])
 			if arte.has("face"):
 				_com_textura(face, arte["face"], s_dos_lados[i][0], s_dos_lados[i][1], 1.0, 0.0,
-					Color(0.72, 0.72, 0.72) if i % 2 == 1 else Color.WHITE)
+					tinta * (Color(0.72, 0.72, 0.72) if i % 2 == 1 else Color.WHITE))
 			else:
 				_face(face, cor.darkened(0.5 if i % 2 == 1 else 0.35), vazada)
 		var topo := PackedVector2Array([pe[0] + cima, pe[1] + cima, pe[2] + cima, pe[3] + cima])
 		if arte.has("topo"):
 			# O lado de tras do topo (o do norte) e a linha de cima da textura.
 			var v_menos := 0.0 if meia.y >= 0.0 else 1.0
-			_com_textura(topo, arte["topo"], s_em_a, s_em_b, v_menos, 1.0 - v_menos, Color.WHITE)
+			_com_textura(topo, arte["topo"], s_em_a, s_em_b, v_menos, 1.0 - v_menos, tinta)
 		elif vazada:
 			# O topo de grade e alambrado e so o arremate, nao uma laje.
 			draw_line(a + cima, b + cima, cor, 2.0)
@@ -273,7 +287,7 @@ class Peca extends Node2D:
 			var pilar: Texture2D = arte["pilar"]
 			for p in pilares:
 				draw_texture(pilar, p + Vector2(-pilar.get_width() / 2.0,
-					espessura / 2.0 + 1.0 - pilar.get_height()))
+					espessura / 2.0 + 1.0 - pilar.get_height()), tinta)
 
 	## Um quadrilatero com a textura repetida ao longo do muro: `s` (distancia
 	## ao longo dele) vira a coluna da textura, e os dois primeiros pontos sao a
