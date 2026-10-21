@@ -62,7 +62,14 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   dela, parte por parte, com o close recortado. Grão e noite esverdeada por
   cima. **Os 3 de energia e o que custa energia são proposta**, e o que é texto
   da narrativa aparece entre colchetes.
-- **Sem áudio** ainda. As fotos da casa ficam em `casa/arte/<cômodo>.png`
+- **O áudio entrou** (20/10/2026), com os sons da pasta `sons` do Drive da
+  equipe: música no menu, tiro de cada arma, estojo, impacto, clique sem bala,
+  engatilhar ao trocar (`Q`), passos (na rua e no piso de dentro), ambiente
+  dentro dos lugares e na casa, gemido do zumbi (de onde ele está), dano,
+  porta, geladeira, botão sob o mouse e o game over. Ficaram de fora
+  `NAO_USAR_MOMENTANEAMENTE` e as falas de `personagens/` (`.m4a`, que o Godot
+  não abre, e o jogo ainda não tem NPC). **Volumes são proposta** — estão todos
+  em `Som.VOLUME`. As fotos da casa ficam em `casa/arte/<cômodo>.png`
   (1280 × 720, cortadas em 16:9 de `design/casa-equipe/` por
   `design/casa_fotos.js`); o quarto é a foto da equipe refeita macabra
   (gerador + `design/sujar_quarto.js`).
@@ -121,6 +128,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | arquivo | o quê |
 |---|---|
 | `travessia.gd` | autoload. O dia, o prazo, o que chegou em casa — o **único** lugar onde a rua e a casa se encontram |
+| `som.gd` | autoload. **O áudio**: `Som.tocar("armas/Beretta")` para efeito, `Som.tocar_em(nome, ponto)` para o que sai de um lugar do mundo, `Som.musica` e `Som.ambiente` para os loops (com fade, atravessando a troca de cena), e o volume de cada som. Headless fica mudo |
+| `som/` | os sons, na mesma árvore da pasta `sons` do Drive (raiz, `armas/`, `menu/`), com os nomes sem acento. Som novo = largar o arquivo aqui e chamar pelo caminho sem extensão; o som do tiro de cada arma é o `som` da ficha em `rua/arma.gd` |
 | `design/urussanga.png` | **o desenho do mapa**, feito pelo João — a fonte de tudo o que está na rua |
 | `design/tracar_desenho.js` | lê o desenho, separa cada cor numa classe (grama, mata, pavimento, asfalto, milho, terra, água; vermelho, marrom e cinza são prédio), apaga texto e linha fina e escreve o traçado. `node design/tracar_desenho.js`, sem dependência |
 | `rua/mapa_tracado.json` | o traçado: polígonos de chão, retângulos de prédio, blocos sólidos e veículos, em px do desenho. **Gerado — não editar à mão** |

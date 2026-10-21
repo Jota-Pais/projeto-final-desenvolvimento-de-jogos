@@ -167,6 +167,15 @@ const COR_FUNDO_DA_VIDA := Color("241d1c")
 const SEGUNDOS_ENTRE_RECALCULOS := 0.4
 const TOLERANCIA_DO_PASSO := 26.0
 
+## O gemido (som do Drive, 20/10/2026). Ele geme ao te ver - e o aviso de que
+## a perseguicao comecou, antes de voce olhar para ele - e, vagando ou
+## procurando, de vez em quando, entre GEMIDO_MINIMO e GEMIDO_MAXIMO segundos.
+## Sai do ponto onde ele esta: alem de ALCANCE_DO_GEMIDO px nao se ouve, e e
+## o que faz o som dizer de que lado ele vem. **Numeros: proposta.**
+const GEMIDO_MINIMO := 6.0
+const GEMIDO_MAXIMO := 16.0
+const ALCANCE_DO_GEMIDO := 450.0
+
 ## Desenha o cone de visao na tela. **Auxilio de prototipo**, nao decisao de
 ## design: sem ver o cone nao da para entender por que ele te viu ou nao.
 const MOSTRAR_A_VISTA := true
@@ -210,6 +219,9 @@ var _passo := 0
 var _recalcular := 0.0
 var _alvo_de_vaguear := Vector2.ZERO
 var _tempo_vagando := 0.0
+## Quanto falta para o proximo gemido a toa. Comeca sorteado, para a horda
+## nao gemer em coro no primeiro segundo.
+var _proximo_gemido := randf_range(0.0, GEMIDO_MAXIMO)
 
 var vida := VIDA_CHEIA
 ## Levou o tiro que mata: e um corpo no chao, fora do grupo "zumbi" e da fisica.
@@ -264,7 +276,14 @@ func _physics_process(delta: float) -> void:
 	_virar(delta)
 	_animar()
 	_tocar_no_jogador()
+	_proximo_gemido -= delta
+	if _proximo_gemido <= 0.0 and _estado != Estado.PERSEGUINDO:
+		_gemer()
 	queue_redraw()
+
+func _gemer() -> void:
+	_proximo_gemido = randf_range(GEMIDO_MINIMO, GEMIDO_MAXIMO)
+	Som.tocar_em("zumbi", global_position, ALCANCE_DO_GEMIDO, randf_range(0.85, 1.15))
 
 ## Para onde a cara aponta, por estado. **Quem persegue olha para voce**, e
 ## nao para onde esta andando: ate 30/09/2026 a cara seguia a velocidade, e no
@@ -306,6 +325,7 @@ func _decidir(delta: float) -> void:
 	if _ve_o_jogador() or _memoria_do_toque > 0.0:
 		if _estado != Estado.PERSEGUINDO:
 			_chamar_a_horda()
+			_gemer()
 		_estado = Estado.PERSEGUINDO
 		_ultima_posicao = _jogador.global_position
 		return

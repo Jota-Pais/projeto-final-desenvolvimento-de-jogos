@@ -68,7 +68,11 @@ const TelaDaMochila := preload("res://rua/tela_da_mochila.gd")
 ## o calibre (Construcao.MUNICOES);
 ## `desenho` e o PNG em rua/arte/armas/, `mao` o pixel do cabo que fica na
 ## mao, `cano` a distancia da mao a boca do cano, e `coice` quanto ela recua
-## no tiro. **Numeros: proposta de 05/10/2026.** `alcance` e `estrondo` cairam
+## no tiro. `som` e o disparo em res://som/armas/ (20/10/2026, os sons do
+## Drive: a CTT40 e a Fireagle, que nao tem som proprio, usam o `rifle_22`, e
+## a M4 o da T4, o fuzil da Taurus), e `estojo` se ela cospe o estojo no tiro
+## - o revolver e a de dois canos guardam o deles.
+## **Numeros: proposta de 05/10/2026.** `alcance` e `estrondo` cairam
 ## pela metade em 20/10/2026, junto com o boneco e o zoom 2 da camera (decisao
 ## do Joao): na tela o tiro vai e se ouve ate onde ia antes.
 const ARMAS := {
@@ -76,41 +80,49 @@ const ARMAS := {
 		"classe": "curta", "dano": 25.0, "projeteis": 1, "abertura": 0.0,
 		"espera": 0.6, "automatica": false, "alcance": 400.0, "estrondo": 850.0,
 		"municao": ".38", "desenho": "revolver-38", "mao": Vector2(1.0, 5.0), "cano": 10.0, "coice": 3.0,
+		"som": "Revolver", "estojo": false,
 	},
 	"Beretta 9mm": {
 		"classe": "curta", "dano": 20.0, "projeteis": 1, "abertura": 0.0,
 		"espera": 0.45, "automatica": false, "alcance": 450.0, "estrondo": 900.0,
 		"municao": "9mm", "desenho": "beretta-9mm", "mao": Vector2(2.0, 4.0), "cano": 10.0, "coice": 3.0,
+		"som": "Beretta", "estojo": true,
 	},
 	"Doze 2 canos": {
 		"classe": "escopeta", "dano": 12.0, "projeteis": 6, "abertura": 16.0,
 		"espera": 1.2, "automatica": false, "alcance": 225.0, "estrondo": 1100.0,
 		"municao": "12", "desenho": "doze-2-canos", "mao": Vector2(9.0, 4.0), "cano": 16.0, "coice": 6.0,
+		"som": "12", "estojo": false,
 	},
 	"Benelli semiauto": {
 		"classe": "escopeta", "dano": 10.0, "projeteis": 6, "abertura": 14.0,
 		"espera": 0.6, "automatica": false, "alcance": 225.0, "estrondo": 1100.0,
 		"municao": "12", "desenho": "benelli-semiauto", "mao": Vector2(9.0, 4.0), "cano": 16.0, "coice": 5.0,
+		"som": "12", "estojo": true,
 	},
 	"CTT40": {
 		"classe": "submetralhadora", "dano": 14.0, "projeteis": 1, "abertura": 4.0,
 		"espera": 0.09, "automatica": false, "alcance": 375.0, "estrondo": 950.0,
 		"municao": ".40", "desenho": "ctt40", "mao": Vector2(1.0, 5.0), "cano": 14.0, "coice": 2.0,
+		"som": "rifle_22", "estojo": true,
 	},
 	"Fireagle 9mm": {
 		"classe": "submetralhadora", "dano": 12.0, "projeteis": 1, "abertura": 5.0,
 		"espera": 0.07, "automatica": false, "alcance": 375.0, "estrondo": 950.0,
 		"municao": "9mm", "desenho": "fireagle-9mm", "mao": Vector2(1.0, 5.0), "cano": 16.0, "coice": 2.0,
+		"som": "rifle_22", "estojo": true,
 	},
 	"Fall": {
 		"classe": "fuzil", "dano": 45.0, "projeteis": 1, "abertura": 1.5,
 		"espera": 0.3, "automatica": true, "alcance": 700.0, "estrondo": 1300.0,
 		"municao": "7,62", "desenho": "fall", "mao": Vector2(9.0, 4.0), "cano": 20.0, "coice": 4.0,
+		"som": "Fall", "estojo": true,
 	},
 	"M4": {
 		"classe": "fuzil", "dano": 30.0, "projeteis": 1, "abertura": 2.0,
 		"espera": 0.11, "automatica": true, "alcance": 650.0, "estrondo": 1250.0,
 		"municao": "5,56", "desenho": "m4", "mao": Vector2(8.0, 4.0), "cano": 19.0, "coice": 3.0,
+		"som": "T4", "estojo": true,
 	},
 }
 
@@ -185,6 +197,9 @@ func _process(delta: float) -> void:
 		else Input.is_action_just_pressed("atirar")
 	if quer_atirar and _espera <= 0.0 and Travessia.municao > 0:
 		_atirar()
+	elif Input.is_action_just_pressed("atirar") and Travessia.municao <= 0:
+		# Sem bala o gatilho ainda faz barulho - so para voce, nao para a horda.
+		Som.tocar("armas/click_arma_sem_municao", 1.0, 1)
 
 ## `Q` passa para a proxima arma da lista. **Auxilio de prototipo**: como se
 ## consegue uma arma no jogo ainda nao foi decidido, e sem isto nao da para
@@ -197,6 +212,10 @@ func _unhandled_key_input(evento: InputEvent) -> void:
 		return
 	var i := ORDEM.find(Travessia.arma)
 	trocar(ORDEM[(i + 1) % ORDEM.size()])
+	# Aqui e nao no `trocar`: o _ready tambem troca, e a rua nao nasce
+	# engatilhando.
+	Som.tocar("armas/carregando_12" if ficha()["classe"] == "escopeta" \
+		else "armas/engatilhando_pistola", 1.0, 1)
 
 ## A ficha da arma na mao.
 func ficha() -> Dictionary:
@@ -256,11 +275,19 @@ func _atirar() -> void:
 		var consulta := PhysicsRayQueryParameters2D.create(de, de + direcao * float(f["alcance"]))
 		consulta.exclude = excluir
 		var batida := get_world_2d().direct_space_state.intersect_ray(consulta)
-		if not batida.is_empty() and (batida["collider"] as Node).is_in_group("zumbi"):
+		if batida.is_empty():
+			continue
+		Som.tocar_em("armas/impacto_bala", batida["position"], 500.0, randf_range(0.9, 1.1))
+		if (batida["collider"] as Node).is_in_group("zumbi"):
 			(batida["collider"] as Node).levar_tiro(float(f["dano"]), direcao)
 
 	# O estrondo sai de qualquer jeito, acertando ou nao. Errar o tiro e o pior
-	# resultado possivel: gastou municao e chamou todo mundo.
+	# resultado possivel: gastou municao e chamou todo mundo. O tom varia um
+	# pouco a cada tiro, para a rajada da M4 nao soar como o mesmo tiro colado.
+	Som.tocar("armas/" + f["som"], randf_range(0.95, 1.05), 6)
+	if f["estojo"]:
+		get_tree().create_timer(0.25).timeout.connect(
+			Som.tocar.bind("armas/estojo_caindo", randf_range(0.9, 1.1), 3))
 	_o_estrondo_chama()
 	atirou.emit(_mira)
 

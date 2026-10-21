@@ -22,14 +22,20 @@ const COR_CORPO := Color("d8cbb6")
 const COR_LETRA_MIUDA := Color("8a7f70")
 const COR_GAME_OVER := Color("c0463c")
 
+## O som das duas derrotas e o `possivel_game_over` do Drive - o nome diz que
+## e candidato. A vitoria fica com a musica do menu ate a equipe ter uma.
 func _ready() -> void:
+	Som.ambiente("")
 	match Travessia.desfecho:
 		Travessia.Desfecho.VITORIA:
 			_vitoria()
+			Som.musica("menu/menu")
 		Travessia.Desfecho.CAIU_NA_RUA:
 			_caiu_na_rua_em_parodia()
+			Som.musica("possivel_game_over", false)
 		_:
 			_derrota_em_parodia()
+			Som.musica("possivel_game_over", false)
 	($Conteudo/Numeros as Label).text = _os_numeros()
 
 func _unhandled_input(evento: InputEvent) -> void:

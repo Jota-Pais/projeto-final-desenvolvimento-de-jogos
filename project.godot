@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 Travessia="*res://travessia.gd"
+Som="*res://som.gd"
 
 [display]
 

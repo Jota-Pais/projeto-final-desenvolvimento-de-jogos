@@ -31,6 +31,21 @@ func _ready() -> void:
 	($Conteudo/Modos/Voltar as Button).pressed.connect(_mostrar.bind(_principal))
 	($Conteudo/ComoSeJoga/Voltar as Button).pressed.connect(_mostrar.bind(_principal))
 	_mostrar(_principal)
+	_ligar_o_som()
+
+## A musica do menu e o som de passar pelo botao - de mouse ou de seta, que
+## e o foco andando. O Som e buscado pelo caminho, como o Travessia (ver o
+## cabecalho): sem os autoloads a tela fica muda em vez de nao abrir.
+func _ligar_o_som() -> void:
+	var som := get_node_or_null("/root/Som")
+	if som == null:
+		return
+	som.musica("menu/menu")
+	som.ambiente("")
+	for botao in find_children("*", "Button", true, false):
+		var passar: Callable = som.tocar.bind("menu/mouse_passar_botao", 1.0, 1)
+		(botao as Button).mouse_entered.connect(passar)
+		(botao as Button).focus_entered.connect(passar)
 
 func _unhandled_input(evento: InputEvent) -> void:
 	if evento.is_action_pressed("ui_cancel") and not _principal.visible:

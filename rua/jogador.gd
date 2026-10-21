@@ -76,6 +76,19 @@ const OLHANDO_PARA_LONGE := -0.3
 const RECUO := 2.0
 const SEGUNDOS_DO_RECUO := 0.1
 
+## Para saber se ele esta dentro de uma construcao: e o que troca o passo e o
+## som de fundo (ver _soar).
+const Mapa := preload("res://rua/mapa.gd")
+
+## Os passos, por onde ele pisa (sons do Drive, 20/10/2026). Cada um e um loop
+## de varios passos, nao um passo so: toca enquanto ele anda e para quando ele
+## para. Dentro e o piso de madeira, que nao tem versao correndo - correr
+## acelera o loop.
+const PASSO_NA_RUA := "andar_previa"
+const PASSO_NA_RUA_CORRENDO := "andar_previa_2"
+const PASSO_DENTRO := "andar_madeira_previa"
+const TOM_DO_PASSO_CORRENDO := 1.3
+
 
 ## Emitido ao ser tocado. O Vasculhavel escuta para interromper o vasculho, e a
 ## tela da mochila para se fechar - quem apanha para de arrumar a mochila.
@@ -103,10 +116,15 @@ var _empurrao := Vector2.ZERO
 ## Para onde ele esta olhando: comeca de frente para a tela.
 var _olhando := Vector2.DOWN
 var _mirando := 0.0
+var _passos: AudioStreamPlayer
 
 
 func _ready() -> void:
 	_arma.atirou.connect(_ao_atirar)
+	_passos = AudioStreamPlayer.new()
+	add_child(_passos)
+	# A rua nao tem musica: o que se ouve e passo, tiro e zumbi.
+	Som.musica("")
 	# A arma na mao encolhe com o boneco: o sprite, a mao, o braco e o clarao
 	# vivem no espaco dela. O tiro sai de coordenada global e nao muda.
 	_arma.scale = Vector2.ONE * Boneco.ESCALA
@@ -129,6 +147,29 @@ func _physics_process(delta: float) -> void:
 		Vector2.ZERO, FORCA_DO_EMPURRAO / ESPERA_DO_EMPURRAO * delta)
 
 	_animar(direcao, velocidade, delta)
+	_soar(direcao, velocidade == VELOCIDADE_CORRENDO)
+
+## Os passos e o fundo. Dentro de uma construcao o passo e no piso e o fundo
+## e o ambiente de dentro; na rua, passo na rua e silencio em volta - e la
+## fora que o zumbi tem que se ouvir.
+func _soar(direcao: Vector2, correndo: bool) -> void:
+	var dentro := Mapa.construcao_em(global_position) >= 0
+	Som.ambiente("ambiente_dentro_lugares" if dentro else "")
+	if direcao == Vector2.ZERO or Som.mudo:
+		_passos.stop()
+		return
+	var nome := PASSO_DENTRO if dentro else (PASSO_NA_RUA_CORRENDO if correndo else PASSO_NA_RUA)
+	if _passos.get_meta("nome", "") != nome:
+		_passos.set_meta("nome", nome)
+		var stream := Som.carregar(nome)
+		if stream != null:
+			stream.loop = true
+		_passos.stream = stream
+		_passos.volume_db = Som.VOLUME.get(nome, 0.0)
+		_passos.stop()
+	_passos.pitch_scale = TOM_DO_PASSO_CORRENDO if correndo and dentro else 1.0
+	if not _passos.playing and _passos.stream != null:
+		_passos.play()
 
 ## Para onde ele olha, e o que o boneco mostra. **Olha para onde anda, e para o
 ## mouse so com a arma na mao** (decidido 30/09/2026). "Na mao" aqui e
@@ -189,6 +230,7 @@ func _ao_atirar(direcao: Vector2) -> void:
 func levar_dano(quanto: float, de_onde: Vector2) -> void:
 	vida = maxf(0.0, vida - quanto)
 	_empurrao = de_onde.normalized() * FORCA_DO_EMPURRAO
+	Som.tocar("dano_personagem", randf_range(0.95, 1.05), 1)
 	atingido.emit()
 	queue_redraw()
 

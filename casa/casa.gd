@@ -67,7 +67,16 @@ class Pips extends Control:
 			if i < energia:
 				draw_circle(c, 5.0, Color(0.9, 0.95, 0.93, 0.95))
 
+## O som da casa (20/10/2026, sons do Drive): o ambiente de dentro de fundo -
+## o mesmo dos lugares da rua -, o som do botao ao passar o mouse num objeto
+## ou numa escolha, a porta ao trocar de comodo e ao sair de manha, e a
+## geladeira.
+const SOM_DE_PASSAR := "menu/mouse_passar_botao"
+const COMODOS_COM_PORTA := ["cozinha", "quarto"]
+
 func _ready() -> void:
+	Som.musica("")
+	Som.ambiente("ambiente_dentro_lugares")
 	_montar()
 	_desenho.estagio = Ela.estagio(Travessia.dia, Travessia.PRAZO_DA_CURA)
 	_desenho.zumbis_na_rua = _zumbis_na_rua()
@@ -220,6 +229,9 @@ func _botao(opcao: Dictionary) -> Button:
 	botao.add_theme_stylebox_override("hover", aceso)
 	botao.add_theme_stylebox_override("pressed", aceso)
 	botao.add_theme_stylebox_override("disabled", apagado)
+	botao.mouse_entered.connect(func() -> void:
+		if not botao.disabled:
+			Som.tocar(SOM_DE_PASSAR, 1.0, 1))
 	var acao: Callable = opcao["acao"]
 	botao.pressed.connect(func() -> void:
 		_fechar_fala()
@@ -260,6 +272,9 @@ func _passar(pos: Vector2) -> void:
 	if _caixa.visible:
 		return
 	var ponto := Comodos.ponto_em(comodo, _na_tela(pos))
+	# Soa so ao acender um objeto novo, nao a cada pixel em cima dele.
+	if not ponto.is_empty() and ponto["id"] != _desenho.destaque:
+		Som.tocar(SOM_DE_PASSAR, 1.0, 1)
 	_desenho.destaque = ponto.get("id", "")
 	_legenda.text = ponto.get("nome", "")
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not ponto.is_empty() else Control.CURSOR_ARROW
@@ -281,6 +296,10 @@ func _clicar(ponto: Dictionary) -> void:
 
 ## Troca de comodo com um piscar de preto, como porta que abre.
 func _ir(destino: String) -> void:
+	# Virar na sala ou ir ao corredor nao passa por porta; entrar e sair da
+	# cozinha e do quarto, sim.
+	if destino in COMODOS_COM_PORTA or comodo in COMODOS_COM_PORTA:
+		Som.tocar("porta", randf_range(0.95, 1.05), 1)
 	comodo = destino
 	_desenho.destaque = ""
 	_legenda.text = ""
@@ -311,8 +330,11 @@ func _televisao() -> void:
 ## desde que a rua so rende balas e documentos, nao chega nada para guardar
 ## aqui. Fica clicavel porque a casa e ponto e clique, e o que ela diz e
 ## [texto da narrativa].
+## O som da geladeira e o mesmo ao abrir e ao fechar: fecha quando a fala
+## fecha.
 func _geladeira() -> void:
-	_falar("Vazia.")
+	Som.tocar("geladeira")
+	_falar("Vazia.", [], Som.tocar.bind("geladeira"))
 
 func _pesquisa() -> void:
 	var tem := Travessia.documentos.size()
@@ -402,6 +424,7 @@ func encerrar_a_noite() -> void:
 	if Travessia.e_o_ultimo_dia():
 		Travessia.acabar_o_jogo(Travessia.Desfecho.PRAZO_ESGOTADO)
 		return
+	Som.tocar("porta")
 	Travessia.sair_para_a_rua()
 
 ## A linha que abre a noite: como o dia acabou e quanto falta.

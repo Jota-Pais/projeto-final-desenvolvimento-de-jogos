@@ -135,6 +135,8 @@ func _process(delta: float) -> void:
 func _entrar() -> void:
 	_entrando = true
 	print("Entrou em casa - fim do dia %d" % Travessia.dia)
+	# O Som e autoload: a porta bate aqui e termina de bater ja na casa.
+	Som.tocar("porta")
 	# O unico jeito bom de acabar o dia, e o unico que passa por aqui.
 	Travessia.entrar_em_casa(Travessia.FimDoDia.PELA_PORTA)
 
