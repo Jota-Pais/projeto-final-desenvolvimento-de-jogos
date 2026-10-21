@@ -2,11 +2,13 @@ extends Control
 ## O menu do jogo (Joao, 15/10/2026: "o jogo merecia um menu tambem"). E a
 ## cena principal do projeto: nome do jogo, Jogar, Como se joga e Sair. Jogar
 ## abre a escolha do modo (Travessia.Modo: campanha ou hardcore) e so entao a
-## rua comeca. Recomecar, no fim de jogo, volta para ca.
+## partida comeca: a cena inicial (cena_inicial/), e depois a rua. Recomecar,
+## no fim de jogo, volta para ca.
 ##
 ## E uma tela SO de texto, como a casa e o fim de jogo: quem fizer arte troca
 ## isto por uma de verdade. O que precisa sobreviver a troca e o caminho -
-## Jogar, modo, rua - e o preco de cair na rua dito em cada modo.
+## Jogar, modo, cena inicial, rua - e o preco de cair na rua dito em cada
+## modo.
 ##
 ## Tres paineis no mesmo VBox, um visivel por vez: Principal, Modos e
 ## ComoSeJoga. Esc volta ao principal; o foco nasce no primeiro botao de cada

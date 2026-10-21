@@ -34,6 +34,7 @@ sendo editada no Godot.
 | botão esquerdo | usar o que está na mão: com a arma, atirar; com a pedra ou a garrafa, segurar para mirar mais longe e soltar para jogar |
 | `Tab` | abrir a mochila |
 | `M` | abrir o mapa: só o que você já viu, o resto debaixo da neblina; o scroll aproxima, `M` ou `Esc` fecha. O jogo não para |
+| `E` / `Esc` na cena inicial | `E` completa o texto que está sendo escrito, ou passa para o próximo; `Esc` pula a cena e vai direto para a rua |
 
 O dia começa com você na calçada, em frente à sua casa. O dia tem 420 s de luz
 (07:00 às 19:00) e **vasculhar gasta luz em dobro**. Volte à porta de casa antes
@@ -90,6 +91,13 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   cerco. **A peça sem arte do PixelLab ainda sai cinza.** A casa colada a
   leste da sua é a do Antônio, o vizinho do roteiro do tutorial
   (`design/narrativa.md`): selada, ninguém entra.
+- **A cena inicial** (21/10/2026, a pedido do João: "uma cutscene no começo do
+  jogo, sem ser na arte do jogo") vem entre a escolha do modo e a rua: seis
+  quadros — a fuga pelo túnel, o zumbi rastejante, a mordida, você a levando no
+  colo, a chegada em casa e a promessa na cama —, contados numa caixa de texto
+  em segunda pessoa, com o texto aprovado por ele. **A arte ainda não existe**:
+  o storyboard do João é só o conceito, e cada quadro espera um PNG da equipe
+  em `cena_inicial/arte/`. Sem ele, o quadro fica escuro e só o texto conta.
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
   título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda sem rumo
   pela rua de cima, um zumbi te pega e o Antônio o mata do quintal dele), a
@@ -239,6 +247,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `casa/filtro.gdshader` | a noite esverdeada, o grão e a vinheta por cima da casa |
 | `titulo.tscn` + `titulo.gd` | **a cena principal, o menu**: Jogar (que abre a escolha entre campanha e hardcore), Como se joga e Sair, sobre a capa |
 | `arte/titulo/` | a capa do menu (`capa.png`, 320 × 180 gerada no PixelLab, mostrada ×4) e a fonte do título, Creepster, com a licença OFL ao lado |
+| `cena_inicial/cena_inicial.tscn` + `.gd` | **a cena inicial** (21/10/2026), entre o título e a rua: seis quadros com a câmera andando devagar, troca com fade, tarjas e a caixa de texto embaixo. O texto de cada quadro (aprovado pelo João) e os sons, que são os de `som/`, estão em `QUADROS`. Anda sozinha, no tempo de leitura das falas do rádio; `E` adianta, `Esc` pula. `Travessia.comecar_partida` abre ela, e ela abre a rua |
+| `cena_inicial/arte/<n>.png` | a arte de cada quadro, de 1 a 6. **Ainda não existe — é da equipe**: 16:9, de 1920 × 1080 para cima, sem texto nenhum (o texto é da cena). As tarjas tapam 12 % em cima e embaixo, então o que importa fica no meio |
 | `fim_de_jogo.gd` | as três telas de fim de partida: a cura pronta, o prazo esgotado e, no hardcore, a queda na rua |
 
 Mudar o mapa = mexer no **desenho** e rodar `node design/tracar_desenho.js` e
@@ -295,6 +305,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
+| `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte que existir é 16:9 e tem 1920 × 1080 ou mais | ~15 s |
 | `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura pega o jogador e o Antônio o mata, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
 | `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |

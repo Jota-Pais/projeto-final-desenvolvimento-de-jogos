@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://cena_inicial/conferir_cena_inicial.gd" id="1_conferir"]
+
+[node name="ConferirCenaInicial" type="Node"]
+script = ExtResource("1_conferir")

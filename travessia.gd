@@ -28,6 +28,7 @@ const CENA_DO_TITULO := "res://titulo.tscn"
 const CENA_DA_RUA := "res://rua/rua.tscn"
 const CENA_DA_CASA := "res://casa/casa.tscn"
 const CENA_DO_FIM := "res://fim_de_jogo.tscn"
+const CENA_INICIAL := "res://cena_inicial/cena_inicial.tscn"
 
 ## Os dois modos de jogo (Joao, 15/10/2026: "cria dois modos, um hardcore e
 ## um campanha, o hardcore morreu = perdeu, o campanha morreu = o personagem
@@ -222,7 +223,7 @@ func no_tutorial() -> bool:
 	return tutorial != "" and tutorial != "fim"
 
 ## Chamado pelo titulo: a partida nova, no modo escolhido, comeca no tutorial e
-## desarmada.
+## desarmada. Antes da rua vem a cena inicial (cena_inicial/), que acaba nela.
 func comecar_partida(qual: int) -> void:
 	modo = qual as Modo
 	tutorial = "abertura"
@@ -231,7 +232,7 @@ func comecar_partida(qual: int) -> void:
 	armado = false
 	na_mao = ""
 	arremessaveis = { "pedra": 0, "garrafa": 0 }
-	get_tree().change_scene_to_file(CENA_DA_RUA)
+	get_tree().change_scene_to_file(CENA_INICIAL)
 
 ## O que ficou na rua no dia que deu errado. A casa mostra no lugar do que
 ## teria chegado: sem isso, nao voltar pela porta seria indistinguivel de ter
