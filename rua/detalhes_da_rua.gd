@@ -11,21 +11,18 @@ extends Node2D
 ## dois leem POSTES daqui. Tudo em px do PNG do desenho, como os ROTULOS.
 
 const Mapa := preload("res://rua/mapa.gd")
+const Chao := preload("res://rua/chao_da_cidade.gd")
 const Construcao := preload("res://rua/construcao.gd")
 const Telhado := preload("res://rua/telhado.gd")
 
-## A faixa amarela tracejada no meio das ruas de mao dupla da regiao.
-const FAIXAS_DO_MEIO := [
-	# A rua de cima, da beira do cerco a rotatoria.
-	[Vector2(1083.0, 620.0), Vector2(1219.0, 620.0)],
-	# A que desce da rotatoria para o sudeste.
-	[Vector2(1238.0, 628.0), Vector2(1251.0, 657.0), Vector2(1264.0, 688.0), Vector2(1280.0, 726.0), Vector2(1289.0, 746.0)],
-	# A avenida em diagonal, do oeste ate a pizzaria.
-	[Vector2(1072.0, 652.0), Vector2(1115.0, 678.0), Vector2(1135.0, 689.0), Vector2(1180.0, 708.0), Vector2(1218.0, 725.0), Vector2(1272.0, 738.0)],
-]
+## A faixa amarela tracejada vai no eixo de toda rua de mao dupla (desde
+## 21/10/2026 sai do rua/chao_da_cidade.gd, nao de pontos a mao): rua mais
+## estreita que isto (px de mundo) nao tem faixa.
+const RUA_DE_MAO_DUPLA := 200.0
 
-## As faixas de pedestre: o meio, para onde a rua corre (graus, 0 = leste) e
-## a largura da rua (px de mundo).
+## As faixas de pedestre: perto de onde ficam (o ponto vai para o eixo da rua
+## mais perto, e a faixa pega o rumo e a largura dela). `rumo` e `largura`
+## ficam de lembranca do que eram a mao.
 const FAIXAS_DE_PEDESTRE := [
 	{ "ponto": Vector2(1212.0, 620.0), "rumo": 0.0, "largura": 240.0 },
 	{ "ponto": Vector2(1166.0, 620.0), "rumo": 0.0, "largura": 240.0 },
@@ -89,9 +86,13 @@ static func postes() -> Array:
 		_postes_prontos.append(lista)
 	return _postes_prontos
 
-## A classe de chao num ponto: a do menor poligono que o contem (e a ordem em
-## que o rua/ruas.gd pinta: o menor por cima).
+## A classe de chao num ponto. Primeiro o chao da cidade (rua/ruas.gd):
+## "asfalto", "calcada", "quintal", "patio", "baldio"; fora dele, a do menor
+## poligono do desenho que o contem (o menor e o que fica por cima).
 static func classe_em(ponto: Vector2) -> String:
+	var da_cidade := Chao.classe_em(ponto)
+	if da_cidade != "":
+		return da_cidade
 	var melhor := ""
 	var menor := INF
 	for p in Mapa.mundo()["poligonos"]:
@@ -108,31 +109,49 @@ static func classe_em(ponto: Vector2) -> String:
 			continue
 		menor = float(p["area"])
 		melhor = p["classe"]
-	return melhor
+	# O pavimento e o asfalto do desenho viraram o chao da cidade.
+	return "" if melhor in ["pavimento", "asfalto"] else melhor
 
-## O ponto de calcada mais perto do guia que tem asfalto a ate 40 px: a beira
-## do meio-fio. Sem nenhum num raio de 300 px, fica o guia.
+## O lugar do poste: na calcada, do lado da rua em que o guia esta, a
+## BEIRA_DO_POSTE px do meio-fio.
+const BEIRA_DO_POSTE := 22.0
 static func _na_calcada(guia: Vector2) -> Vector2:
-	var melhor := guia
-	var menor := INF
-	for raio in range(0, 301, 12):
+	var perto := eixo_mais_perto(guia)
+	if perto.is_empty():
+		return guia.round()
+	var ponto: Vector2 = perto["ponto"]
+	var lado := (guia - ponto).normalized()
+	if lado == Vector2.ZERO:
+		var d: Vector2 = perto["direcao"]
+		lado = Vector2(-d.y, d.x)
+	return (ponto + lado * (float(perto["largura"]) / 2.0 + BEIRA_DO_POSTE)).round()
+
+## O que foi posto a mao na calcada antiga (a placa, o orelhao, a lixeira) e
+## caiu no asfalto da rua refeita (21/10/2026) vai para a calcada mais perto,
+## um palmo para dentro dela.
+static func fora_do_asfalto(p: Vector2) -> Vector2:
+	if classe_em(p) != "asfalto":
+		return p
+	for raio in range(24, 480, 12):
 		for k in 24:
-			var a := TAU * k / 24.0
-			var p := guia + Vector2(cos(a), sin(a)) * float(raio)
-			if classe_em(p) != "pavimento" or Mapa.construcao_em(p) >= 0:
-				continue
-			var beira := false
-			for j in 8:
-				var b := TAU * j / 8.0
-				if classe_em(p + Vector2(cos(b), sin(b)) * 40.0) == "asfalto":
-					beira = true
-					break
-			if beira and guia.distance_to(p) < menor:
-				menor = guia.distance_to(p)
-				melhor = p
-		if menor < INF:
-			break
-	return melhor.round()
+			var dir := Vector2.from_angle(TAU * k / 24.0)
+			if classe_em(p + dir * float(raio)) == "calcada":
+				return (p + dir * float(raio + 18)).round()
+	return p
+
+## O ponto do eixo de rua mais perto de `p`: { ponto, direcao, largura } (vazio
+## sem rua nenhuma).
+static func eixo_mais_perto(p: Vector2) -> Dictionary:
+	var melhor := {}
+	var menor := INF
+	for eixo in Chao.eixos():
+		var pontos: PackedVector2Array = eixo["pontos"]
+		for k in pontos.size() - 1:
+			var q := Geometry2D.get_closest_point_to_segment(p, pontos[k], pontos[k + 1])
+			if q.distance_to(p) < menor:
+				menor = q.distance_to(p)
+				melhor = { "ponto": q, "direcao": (pontos[k + 1] - pontos[k]).normalized(), "largura": eixo["largura"] }
+	return melhor
 
 func _ready() -> void:
 	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
@@ -143,10 +162,15 @@ func _draw() -> void:
 		_pisos_dos_recortes(construcao)
 		for piso in construcao.get("pisos_extras", []):
 			_piso_de_dentro(piso["tipo"], piso["rect"])
-	for linha in FAIXAS_DO_MEIO:
-		_faixa_do_meio(linha)
+	_gastar_a_cidade()
+	_rebaixos()
+	for eixo in Chao.eixos():
+		if float(eixo["largura"]) >= RUA_DE_MAO_DUPLA:
+			_faixa_do_meio(eixo)
 	for faixa in FAIXAS_DE_PEDESTRE:
-		_faixa_de_pedestre(Mapa.ponto_do_png(faixa["ponto"]), deg_to_rad(faixa["rumo"]), faixa["largura"])
+		var perto := eixo_mais_perto(Mapa.ponto_do_png(faixa["ponto"]))
+		if not perto.is_empty():
+			_faixa_de_pedestre(perto["ponto"], (perto["direcao"] as Vector2).angle(), float(perto["largura"]) - 24.0)
 	_espalhar()
 
 # --- o piso dos recortes ----------------------------------------------------------
@@ -289,17 +313,31 @@ func _ladrilho(r: Rect2, lado: float, a: Color, b: Color, junta: Color) -> void:
 
 # --- a rua ---------------------------------------------------------------------------
 
-func _faixa_do_meio(linha: Array) -> void:
-	for i in linha.size() - 1:
-		var a := Mapa.ponto_do_png(linha[i])
-		var b := Mapa.ponto_do_png(linha[i + 1])
+## O tracejado amarelo no eixo, longe do cruzamento (na ponta que nao sai do
+## mapa, ele para a uma largura de rua do no), em traco de 48 px.
+func _faixa_do_meio(eixo: Dictionary) -> void:
+	var pontos: PackedVector2Array = eixo["pontos"]
+	var largura := float(eixo["largura"])
+	var total := 0.0
+	for i in pontos.size() - 1:
+		total += pontos[i].distance_to(pontos[i + 1])
+	var borda: Array = eixo["borda"]
+	var de := 0.0 if borda[0] else largura
+	var ate := total if borda[1] else total - largura
+	var andado := 0.0
+	for i in pontos.size() - 1:
+		var a := pontos[i]
+		var b := pontos[i + 1]
 		var comprimento := a.distance_to(b)
 		var dir := (b - a) / comprimento
-		var t := 0.0
+		# O tracejado continua de um trecho para o outro (a fase e do total).
+		var t := fposmod(-andado, 96.0)
 		while t < comprimento:
 			var fim := minf(t + 48.0, comprimento)
-			draw_line(a + dir * t, a + dir * fim, AMARELO, 5.0)
+			if andado + t >= de and andado + fim <= ate:
+				draw_line(a + dir * t, a + dir * fim, AMARELO, 5.0)
 			t += 96.0
+		andado += comprimento
 
 func _faixa_de_pedestre(centro: Vector2, rumo: float, largura: float) -> void:
 	var ao_longo := Vector2(cos(rumo), sin(rumo))
@@ -344,7 +382,7 @@ func _espalhar() -> void:
 					_mancha(p, Color(0.35, 0.05, 0.04, 0.45), 10.0 + float(qual % 5) * 2.0)
 				else:
 					_rachadura(p, giro, sorteio)
-			"pavimento":
+			"calcada", "patio":
 				if qual < 40:
 					_rachadura(p, giro, sorteio)
 				elif qual < 62:
@@ -355,9 +393,154 @@ func _espalhar() -> void:
 					_mancha(p, Color(0.1, 0.08, 0.06, 0.2), 12.0)
 				else:
 					_mato_na_junta(p, sorteio)
-			"gramado", "grama":
+			"gramado", "grama", "quintal":
 				if qual < 30:
 					_papel(p, giro)
+			"baldio":
+				if qual < 30:
+					_papel(p, giro)
+				elif qual < 55:
+					_entulho(p, sorteio)
+				elif qual < 75:
+					_folhas(p, sorteio)
+
+# --- a cidade inteira (21/10/2026) -------------------------------------------------
+
+## O desgaste por regra no mapa inteiro (questionario de 21/10: "asfalto sem
+## xadrez", "calcada gasta"). No asfalto, a cada PASSO_NO_ASFALTO px do eixo:
+## remendo, rachadura, mancha de oleo, buraco, e o bueiro na beira a cada
+## BUEIRO_A_CADA. Na calcada, ao longo do meio-fio: lajota que falta,
+## rachadura, mato na junta - o dobro perto do terreno baldio. O sorteio e
+## fixo: a cidade e a mesma todo dia.
+const PASSO_NO_ASFALTO := 140.0
+const BUEIRO_A_CADA := 520.0
+const PASSO_NA_CALCADA := 64.0
+const LAJOTA := 16.0
+func _gastar_a_cidade() -> void:
+	var sorteio := RandomNumberGenerator.new()
+	sorteio.seed = 2026102101
+	for eixo in Chao.eixos():
+		var pontos: PackedVector2Array = eixo["pontos"]
+		var largura := float(eixo["largura"])
+		var andado := 0.0
+		for i in pontos.size() - 1:
+			var a := pontos[i]
+			var b := pontos[i + 1]
+			var dir := (b - a).normalized()
+			var lado := Vector2(-dir.y, dir.x)
+			var t := 0.0
+			while t < a.distance_to(b):
+				var centro := a + dir * t
+				var p := centro + lado * sorteio.randf_range(-0.35, 0.35) * largura
+				var qual := sorteio.randi() % 100
+				if qual < 18:
+					_remendo(p, dir, sorteio)
+				elif qual < 36:
+					_rachadura(p, sorteio.randf() * TAU, sorteio)
+				elif qual < 46:
+					_mancha(p, Color(0.05, 0.05, 0.06, 0.28), 10.0 + float(qual % 6) * 3.0)
+				elif qual < 50:
+					_buraco(p)
+				if fmod(andado + t, BUEIRO_A_CADA) < PASSO_NO_ASFALTO:
+					var beira := 1.0 if sorteio.randf() < 0.5 else -1.0
+					_bueiro(centro + lado * beira * (largura / 2.0 - 18.0))
+				t += PASSO_NO_ASFALTO
+			andado += a.distance_to(b)
+	var w := Chao.largura_da_calcada()
+	for anel in Chao.meio_fio():
+		var n: int = anel.size()
+		for i in n:
+			var a: Vector2 = anel[i]
+			var b: Vector2 = anel[(i + 1) % n]
+			var dir := (b - a).normalized()
+			# Para longe da rua (a rua fica a esquerda de quem anda pelo anel).
+			var fora := Vector2(dir.y, -dir.x)
+			var t := sorteio.randf() * PASSO_NA_CALCADA
+			while t < a.distance_to(b):
+				var p := a + dir * t + fora * sorteio.randf_range(14.0, w - 14.0)
+				t += PASSO_NA_CALCADA
+				if classe_em(p) != "calcada" or Mapa.construcao_em(p) >= 0:
+					continue
+				var perto_do_baldio := classe_em(a + dir * t + fora * (w + 30.0)) == "baldio"
+				var qual := sorteio.randi() % 100
+				if perto_do_baldio:
+					qual = qual / 2
+				if qual < 10:
+					_lajota_faltando(p, sorteio)
+				elif qual < 22:
+					_rachadura(p, sorteio.randf() * TAU, sorteio)
+				elif qual < 30:
+					_mato_na_junta(p, sorteio)
+				elif qual < 34:
+					_mancha(p, Color(0.1, 0.08, 0.06, 0.18), 10.0)
+
+## O meio-fio rebaixado na frente de cada portao (a rampa da garagem): a
+## pedra do meio-fio desce e a calcada faz rampa ate ela.
+func _rebaixos() -> void:
+	for barreira in Mapa.mundo()["barreiras"]:
+		if not String(barreira["nome"]).ends_with("(portão)"):
+			continue
+		var pontos: Array = barreira["pontos"]
+		var a: Vector2 = pontos[0]
+		var b: Vector2 = pontos[pontos.size() - 1]
+		var centro := (a + b) / 2.0
+		var vao := clampf(a.distance_to(b), 60.0, 140.0)
+		var melhor := {}
+		var menor := 260.0
+		for anel in Chao.meio_fio():
+			var n: int = anel.size()
+			for i in n:
+				var q := Geometry2D.get_closest_point_to_segment(centro, anel[i], anel[(i + 1) % n])
+				if q.distance_to(centro) < menor:
+					menor = q.distance_to(centro)
+					melhor = { "ponto": q, "dir": (anel[(i + 1) % n] - anel[i]).normalized() }
+		if melhor.is_empty():
+			continue
+		_rebaixo(melhor["ponto"], melhor["dir"], vao)
+
+func _rebaixo(c: Vector2, dir: Vector2, vao: float) -> void:
+	var fora := Vector2(dir.y, -dir.x)
+	var meio := vao / 2.0
+	var rampa := PackedVector2Array([c - dir * (meio + 16.0), c + dir * (meio + 16.0),
+		c + dir * meio + fora * 36.0, c - dir * meio + fora * 36.0])
+	draw_colored_polygon(rampa, Color("76736b"))
+	var k := -meio
+	while k <= meio:
+		draw_line(c + dir * k + fora * 4.0, c + dir * k + fora * 32.0, Color(0.0, 0.0, 0.0, 0.12), 1.0)
+		k += 6.0
+	draw_line(c - dir * meio, c + dir * meio, Color("68655e"), 5.0)
+	rampa.append(rampa[0])
+	draw_polyline(rampa, Color(0.0, 0.0, 0.0, 0.25), 1.0)
+
+## O remendo de asfalto: um retangulo de outro cinza, no rumo da rua.
+func _remendo(p: Vector2, dir: Vector2, sorteio: RandomNumberGenerator) -> void:
+	var lado := Vector2(-dir.y, dir.x)
+	var c := sorteio.randf_range(26.0, 70.0) / 2.0
+	var l := sorteio.randf_range(18.0, 40.0) / 2.0
+	var pontos := PackedVector2Array([p - dir * c - lado * l, p + dir * c - lado * l, p + dir * c + lado * l, p - dir * c + lado * l])
+	draw_colored_polygon(pontos, Color("3b3b3d") if sorteio.randf() < 0.6 else Color("505052"))
+	pontos.append(pontos[0])
+	draw_polyline(pontos, Color(0.0, 0.0, 0.0, 0.3), 1.0)
+
+## A lajota que falta: a terra aparece no quadrado da lajota (a grade de 16 px
+## do ladrilho da calcada e a do mundo), as vezes duas, com mato.
+func _lajota_faltando(p: Vector2, sorteio: RandomNumberGenerator) -> void:
+	var canto := (p / LAJOTA).floor() * LAJOTA
+	var quantas := 1 + int(sorteio.randf() < 0.5) + int(sorteio.randf() < 0.25)
+	for k in quantas:
+		var q := canto + Vector2(LAJOTA * float(k % 2), LAJOTA * float(k / 2))
+		draw_rect(Rect2(q, Vector2(LAJOTA, LAJOTA)), Color("3e342b"))
+		draw_rect(Rect2(q + Vector2(1, 1), Vector2(LAJOTA - 2, LAJOTA - 2)), Color("4e4134"))
+		draw_rect(Rect2(q + Vector2(1, 1), Vector2(LAJOTA - 2, 2)), Color(0.0, 0.0, 0.0, 0.25))
+	if sorteio.randf() < 0.6:
+		_mato_na_junta(canto + Vector2(8, 13), sorteio)
+
+## Um montinho de entulho no terreno baldio.
+func _entulho(p: Vector2, sorteio: RandomNumberGenerator) -> void:
+	for k in 7:
+		var q := p + Vector2(sorteio.randf_range(-12, 12), sorteio.randf_range(-6, 6))
+		var cor := [Color("7d5a48"), Color("7a7468"), Color("5d5a52")][k % 3] as Color
+		draw_rect(Rect2(q, Vector2(sorteio.randf_range(3, 7), sorteio.randf_range(2, 4))), cor)
 
 func _bueiro(p: Vector2) -> void:
 	draw_circle(p, 13.0, Color("3a3a38"))

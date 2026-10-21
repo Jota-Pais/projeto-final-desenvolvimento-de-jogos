@@ -159,10 +159,6 @@ const COR_POR_CLASSE := {
 ## 14/10/2026), esticado ao tamanho sorteado e espelhado por sorteio. Fica no
 ## _draw do cenario, por baixo de quem anda, porque e rasteiro.
 const MATO := preload("res://rua/arte/objetos/mato.png")
-## O patio de cada predio e so uma tinta por cima do terreno em tiles, nao
-## mais uma mancha chapada (14/10/2026). Leve: com as ruas em textura
-## (15/10) a 30 % virava uma mancha escura por cima da calcada.
-const ALFA_DO_LOTE := 0.15
 ## As copas geradas (14/10/2026): uma viva e uma
 ## seca. `base` e a linha do pe do tronco no PNG, medida na imagem - e o que
 ## encosta no chao. Qual sai em cada arvore e sorteio da posicao, para o mesmo
@@ -544,11 +540,10 @@ func _draw() -> void:
 				_desenhar_poligono(furo, COR_GRAMA)
 	_desenhar_mato(mundo)
 
-	# O lote de cada predio: a mancha inteira que ele era no desenho, por
-	# baixo dos retangulos - o que sobrou do corte continua sendo patio dele.
-	for lote in mundo["lotes"]:
-		var cor_do_lote: Color = Mapa.CLASSE_DO_PREDIO[lote["classe"]]["lote"]
-		_desenhar_poligono(lote["pontos"], Color(cor_do_lote, ALFA_DO_LOTE))
+	# O lote de cada predio (a mancha inteira que ele era no desenho) nao se
+	# pinta mais aqui desde 21/10/2026: ele e o quintal ou o patio do predio no
+	# chao da cidade (rua/chao_da_cidade.gd), e a mancha escura por cima fazia
+	# losango torto em volta da casa.
 
 	for obstaculo in mundo["obstaculos"]:
 		draw_texture_rect(TEXTURA_BLOCO, obstaculo["rect"], true)
@@ -1203,7 +1198,8 @@ func _criar_enfeites() -> void:
 		for i in fileira.size():
 			_criar_enfeite(corpo, "poste", fileira[i], i, "sul")
 	for pedido in DetalhesDaRua.NA_RUA:
-		_criar_enfeite(corpo, pedido["tipo"], Mapa.ponto_do_png(pedido["png"]), pedido.get("variante", 0), "sul")
+		var onde := DetalhesDaRua.fora_do_asfalto(Mapa.ponto_do_png(pedido["png"]))
+		_criar_enfeite(corpo, pedido["tipo"], onde, pedido.get("variante", 0), "sul")
 	if corpo.get_shape_owners().is_empty():
 		corpo.free()
 		return

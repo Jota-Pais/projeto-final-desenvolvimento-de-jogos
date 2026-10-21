@@ -77,7 +77,10 @@ func _conferir() -> void:
 
 	print("1. a abertura")
 	var mortos_antes := _mortos()
-	if not await _esperar(func() -> bool: return jogador.no_roteiro, 5.0):
+	# 20 s e nao 5 (21/10/2026): o tempo e de relogio, e a rua leva uns 5 s
+	# para abrir nesta maquina quando ela esta carregada - o que se confere aqui
+	# e a cena comecar, nao a pressa.
+	if not await _esperar(func() -> bool: return jogador.no_roteiro, 20.0):
 		_erro("a cena nao pos o jogador sob roteiro")
 	# As falas da cena (o grito depois do tiro, o portao) vao sendo passadas;
 	# a cena acaba no favor.

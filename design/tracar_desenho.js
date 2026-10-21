@@ -924,4 +924,22 @@ function depurar(classe, W, H, poligonos, predios, obstaculos, veiculos) {
   console.error(`depuração em ${DEPURACAO}`);
 }
 
-principal();
+// O design/tracar_ruas.js usa as mesmas classes (21/10/2026): rodado direto,
+// traça; carregado com require, só empresta as funções.
+if (require.main === module) principal();
+
+/** As classes do chão como o traçado as vê, sem veículo (px do recorte). */
+function classesDoChao(entrada) {
+  const png = lerPng(entrada);
+  const rec = recorteNaoBranco(png);
+  const { w: W, h: H } = rec;
+  const classe = classificar(png, rec);
+  abrir(classe, W, H, 'pavimento');
+  apagarFinos(classe, W, H);
+  preencherTexto(png, rec, classe);
+  preencherIncertos(classe, W, H);
+  absorverMiudos(classe, W, H);
+  return { rec, W, H, classe: preencherVeiculos(classe, W, H), comVeiculos: classe };
+}
+
+module.exports = { lerPng, escreverPng, classesDoChao, CLASSES, INDICE, DE_PREDIO };
