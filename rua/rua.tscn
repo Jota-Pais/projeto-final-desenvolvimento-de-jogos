@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://rua/chao.gd" id="0_chao"]
 [ext_resource type="Script" path="res://rua/relogio.gd" id="1_relogio"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://rua/mochila.gd" id="7_mochila"]
 [ext_resource type="PackedScene" path="res://rua/tela_da_mochila.tscn" id="8_tela"]
 [ext_resource type="Script" path="res://rua/ruas.gd" id="9_ruas"]
+[ext_resource type="PackedScene" path="res://rua/caixa_de_fala.tscn" id="10_falas"]
 
 [node name="Rua" type="Node2D"]
 texture_filter = 1
@@ -46,3 +47,5 @@ position = Vector2(4667.5, 9910)
 [node name="Hud" parent="." instance=ExtResource("6_hud")]
 
 [node name="TelaDaMochila" parent="." instance=ExtResource("8_tela")]
+
+[node name="CaixaDeFala" parent="." instance=ExtResource("10_falas")]
