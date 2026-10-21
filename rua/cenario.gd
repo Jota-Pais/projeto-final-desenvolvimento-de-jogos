@@ -402,7 +402,8 @@ func _criar_barreiras(mundo: Dictionary) -> void:
 							deles.append(p)
 					var peca := Barreira.Peca.new()
 					peca.montar(barreira["tipo"], pedacos[k][0], pedacos[k][1],
-						k == 0 and ponta_em_de, ultimo and ponta_em_ate, arte, s_de, deles)
+						k == 0 and ponta_em_de, ultimo and ponta_em_ate, arte, s_de, deles,
+						float(barreira.get("altura", 0.0)))
 					add_child(peca)
 
 	for barricada in mundo["barricadas"]:

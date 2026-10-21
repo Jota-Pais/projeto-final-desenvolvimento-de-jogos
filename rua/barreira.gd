@@ -209,11 +209,15 @@ class Peca extends Node2D:
 	var arte := {}
 	var s_em_a := 0.0
 	var pilares := PackedVector2Array()
+	## A altura da face desta barreira, quando o dado traz uma (o muro alto do
+	## Antonio); 0 e a do tipo.
+	var altura := 0.0
 
 	func montar(tipo_da_peca: String, de: Vector2, ate: Vector2,
 			ponta_em_de := false, ponta_em_ate := false, arte_do_tipo := {},
-			s_de := 0.0, pilares_no_mundo := PackedVector2Array()) -> void:
+			s_de := 0.0, pilares_no_mundo := PackedVector2Array(), altura_da_barreira := 0.0) -> void:
 		tipo = tipo_da_peca
+		altura = altura_da_barreira
 		position = (de + ate) / 2.0
 		a = de - position
 		b = ate - position
@@ -229,7 +233,7 @@ class Peca extends Node2D:
 		var t: Dictionary = TIPOS[tipo]
 		var cor: Color = t["cor"]
 		var vazada: bool = t["vazada"]
-		var cima := Vector2(0.0, -float(t["altura"]))
+		var cima := Vector2(0.0, -(altura if altura > 0.0 else float(t["altura"])))
 		var espessura := float(t["espessura"])
 		var meia := (b - a).orthogonal().normalized() * espessura / 2.0
 		var pe := PackedVector2Array([a - meia, b - meia, b + meia, a + meia])
