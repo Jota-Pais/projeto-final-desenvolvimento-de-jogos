@@ -93,9 +93,10 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   (`design/narrativa.md`): selada, ninguém entra.
 - **A cena inicial** (21/10/2026, a pedido do João: "uma cutscene no começo do
   jogo, sem ser na arte do jogo") vem entre a escolha do modo e a rua: seis
-  quadros — a fuga pelo túnel, o zumbi rastejante, a mordida, você a levando no
-  colo, a chegada em casa e a promessa na cama —, contados numa caixa de texto
-  em segunda pessoa, com o texto aprovado por ele. **A arte ainda não existe**:
+  quadros — a fuga pelo túnel, o zumbi rastejante, a mordida, o Fabiano levando
+  a Letícia no colo, a chegada em casa e a promessa na cama —, contados numa
+  caixa de texto em terceira pessoa, com o texto aprovado por ele e fechando
+  com o Fabiano indo atrás da cura. **A arte ainda não existe**:
   o storyboard do João é só o conceito, e cada quadro espera um PNG da equipe
   em `cena_inicial/arte/`. Sem ele, o quadro fica escuro e só o texto conta.
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo

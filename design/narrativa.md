@@ -51,8 +51,12 @@ para desenvolver uma cura — com prazo.
 ela fica presa **no quarto**, acorrentada à cabeceira da cama, e ele dorme no
 sofá da sala.
 
-⬜ Nem ele nem ela têm nome. Nenhum dos dois tem profissão, e não se sabe por
-que ele saberia trabalhar numa cura.
+**21/10/2026, decisão do João:** ele é o **Fabiano** e ela, a **Letícia**, a
+namorada dele. Os nomes entraram na cena inicial (`cena_inicial/`); as falas do
+jogo continuam chamando ele de "Você".
+
+⬜ Nenhum dos dois tem profissão, e não se sabe por que ele saberia trabalhar
+numa cura.
 
 ## 2. Ideia controle
 
@@ -95,11 +99,12 @@ gráfico é por dia, por semana ou por ato.
 
 ### O protagonista
 
-⬜ Sem nome e sem descrição. É quem o jogador controla na rua.
+O **Fabiano** (nome do João, 21/10/2026). ⬜ Sem descrição. É quem o jogador
+controla na rua.
 
 ### Ela
 
-⬜ Sem nome. Mordida, transformada, presa no quarto (era o porão até 16/10/2026). É o prazo do jogo em
+A **Letícia** (nome do João, 21/10/2026), a namorada dele. Mordida, transformada, presa no quarto (era o porão até 16/10/2026). É o prazo do jogo em
 forma de pessoa, e não aparece na rua.
 
 ### O sobrevivente do búnquer — **proposta do João, 16/09/2026**

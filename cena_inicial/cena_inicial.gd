@@ -14,9 +14,10 @@ extends Control
 ## cobre a tela inteira e as tarjas tapam ALTURA_DA_TARJA em cima e embaixo, entao
 ## o que importa fica no meio. Sem o PNG o quadro fica escuro e so o texto conta.
 ##
-## O texto e o que o Joao aprovou em 21/10/2026: em segunda pessoa, contando so
-## o que esta no storyboard, numa caixa embaixo ("faz tudo em uma caixa de
-## texto explicando exatamente o que aconteceu"). A cena anda sozinha - cada
+## O texto e o que o Joao aprovou em 21/10/2026: em terceira pessoa, com os
+## nomes que ele deu - Fabiano e Leticia -, contando o que esta no storyboard e
+## fechando na frase dele, numa caixa embaixo ("faz tudo em uma caixa de texto
+## explicando exatamente o que aconteceu"). A cena anda sozinha - cada
 ## texto fica o tempo de ler, pela regra das falas do radio
 ## (rua/caixa_de_fala.gd) -, o E adianta e o Esc pula tudo.
 
@@ -28,8 +29,9 @@ const PASTA_DA_ARTE := "res://cena_inicial/arte/"
 ## narracao, em italico; quem fala tem o nome na frente. Os sons sao [segundos
 ## depois de a fala comecar, nome em som/, tom, dB a mais] - os de som/ que
 ## cabem em cada quadro (Joao, 21/10/2026): a horda na fuga, o zumbi no
-## agarrao, a porta na chegada e, no fim, os grunhidos dela, que sao o zumbi
-## baixo. A mordida fica sem som proprio: o dano_personagem e a voz dele.
+## agarrao, a porta na chegada e, no fim, os grunhidos do storyboard, que sao o
+## zumbi baixo por baixo da ultima frase (o texto deles saiu, o som ficou). A
+## mordida fica sem som proprio: o dano_personagem e a voz dele.
 ## `correndo` poe os passos de corrida por baixo do quadro inteiro.
 ##
 ## `zoom` e `centro` (opcionais, para quando a arte chegar) sao o movimento
@@ -39,7 +41,7 @@ const QUADROS: Array = [
 	{
 		"correndo": true,
 		"falas": [
-			["", "Você e ela fugiam pelo túnel, com a horda logo atrás.",
+			["", "Fabiano e Letícia fugiam pelo túnel, com a horda logo atrás.",
 				[[0.0, "zumbi", 0.85, 0.0], [1.6, "zumbi", 1.05, -4.0], [3.1, "zumbi", 0.75, -2.0]]],
 		],
 	},
@@ -51,13 +53,13 @@ const QUADROS: Array = [
 	},
 	{
 		"falas": [
-			["", "Ela caiu, e o zumbi a mordeu na perna.", []],
+			["", "Letícia caiu, e o zumbi a mordeu na perna.", []],
 		],
 	},
 	{
 		"correndo": true,
 		"falas": [
-			["", "Você a pegou no colo e fugiu com ela.",
+			["", "Fabiano a pegou no colo e fugiu com ela.",
 				[[0.6, "zumbi", 0.9, -4.0], [2.4, "zumbi", 0.8, -6.0]]],
 		],
 	},
@@ -70,8 +72,8 @@ const QUADROS: Array = [
 	{
 		"falas": [
 			["", "Deitou-a na cama.", []],
-			["Você", "Eu vou dar um jeito em você, meu amor... Eu prometo!", []],
-			["", "E ela começou a grunhir como eles.",
+			["Fabiano", "Eu vou dar um jeito em você, meu amor... Eu prometo!", []],
+			["", "E então Fabiano foi atrás de conseguir uma cura para a sua namorada.",
 				[[0.0, "zumbi", 0.8, -10.0], [1.5, "zumbi", 0.72, -12.0]]],
 		],
 	},
