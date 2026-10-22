@@ -164,6 +164,7 @@ func _draw() -> void:
 		_pisos_dos_recortes(construcao)
 		for piso in construcao.get("pisos_extras", []):
 			_piso_de_dentro(piso["tipo"], piso["rect"])
+		_pisos_dos_vaos(construcao)
 	_gastar_a_cidade()
 	_rebaixos()
 	for eixo in Chao.eixos():
@@ -174,6 +175,33 @@ func _draw() -> void:
 		if not perto.is_empty():
 			_faixa_de_pedestre(perto["ponto"], (perto["direcao"] as Vector2).angle(), float(perto["largura"]) - 24.0)
 	_espalhar()
+
+# --- o piso dos vaos de dentro -----------------------------------------------------
+
+## O chao dos vaos das paredes de dentro (22/10/2026, Joao, da pizzaria: "as
+## portas so dao pra ver de um lado"). O piso feito a mao de cada comodo para
+## na linha da parede; o vao, sem piso nenhum, mostrava o chao de base - escuro
+## como a parede - e parecia parede vista dos dois comodos. Cada vao
+## (Construcao.vaos_internos) ganha o piso do comodo de um dos lados. So nos
+## predios com piso a mao: nos outros o chao de base e o mesmo dentro dos
+## comodos e no vao.
+func _pisos_dos_vaos(construcao: Dictionary) -> void:
+	var pisos: Array = construcao.get("pisos_extras", [])
+	if pisos.is_empty():
+		return
+	for vao in Construcao.vaos_internos(construcao):
+		var deitado := vao.size.x >= vao.size.y
+		var para_o_lado := Vector2(0.0, vao.size.y / 2.0 + 4.0) if deitado else Vector2(vao.size.x / 2.0 + 4.0, 0.0)
+		var tipo := ""
+		for lado in [vao.get_center() - para_o_lado, vao.get_center() + para_o_lado]:
+			for piso in pisos:
+				if (piso["rect"] as Rect2).has_point(lado):
+					tipo = piso["tipo"]
+					break
+			if tipo != "":
+				break
+		if tipo != "":
+			_piso_de_dentro(tipo, vao)
 
 # --- o piso dos recortes ----------------------------------------------------------
 

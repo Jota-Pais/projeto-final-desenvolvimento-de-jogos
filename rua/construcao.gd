@@ -62,6 +62,9 @@ const PAREDE := 20.0
 ## Vao de porta: 3,6 corpos de largura. Generoso de proposito - porta apertada
 ## com zumbi atras e frustracao, nao tensao.
 const VAO := 100.0
+## O maior vao que conta como porta, para o piso dos vaos (vaos_internos): o
+## do banheiro tem ~45, o da divisoria VAO.
+const MAIOR_VAO := VAO * 1.5
 
 ## As quatro direcoes que uma porta pode encarar, com o vetor unitario que sai
 ## por ela (a "normal" da fachada, apontando para fora do predio).
@@ -749,6 +752,60 @@ static func paredes_internas(construcao: Dictionary) -> Array[Rect2]:
 	lista.append(_rect_mundo(rect, porta, Vector2(u_perp, v_vao + VAO / 2.0),
 		Vector2(PAREDE, v_div - (v_vao + VAO / 2.0))))
 	return menos_todos(lista, recortes_de(construcao))
+
+## Os vaos de passagem das paredes de dentro, em mundo (22/10/2026): o pedaco
+## da linha de uma parede de dentro entre a ponta dela e a proxima parede na
+## mesma linha (outra divisoria ou a parede de fora), quando cabe uma porta -
+## ate MAIOR_VAO. Saem das paredes prontas, e nao da conta de
+## paredes_internas, entao valem tambem para as paredes que a arquitetura
+## pediu a mais (o banheiro). Quem usa: o piso dos vaos (rua/detalhes_da_rua.gd).
+static func vaos_internos(construcao: Dictionary) -> Array[Rect2]:
+	var de_dentro := paredes_internas(construcao)
+	var todas: Array[Rect2] = paredes_externas(construcao) + de_dentro
+	var vaos: Array[Rect2] = []
+	for parede in de_dentro:
+		var deitada := _deitada(parede)
+		for para_o_fim in [true, false]:
+			var vao := _vao_na_ponta(parede, deitada, para_o_fim, todas)
+			if vao.has_area() and not vaos.any(func(v: Rect2) -> bool: return v.is_equal_approx(vao)):
+				vaos.append(vao)
+	return vaos
+
+
+## Se a parede corre na horizontal. Pela espessura, e nao pela proporcao: o
+## toco de parede do lado de uma porta (8 x 20, 20 x 16) e mais curto que
+## grosso, e pela proporcao viraria uma parede na outra direcao, com um vao
+## falso na ponta.
+static func _deitada(parede: Rect2) -> bool:
+	var alta_como_parede := absf(parede.size.y - PAREDE) < 0.5
+	var larga_como_parede := absf(parede.size.x - PAREDE) < 0.5
+	if alta_como_parede != larga_como_parede:
+		return alta_como_parede
+	return parede.size.x >= parede.size.y
+
+## Da ponta de `parede` (a do fim ou a do comeco, no eixo comprido) ate a
+## primeira parede que cruza a faixa dela; vazio se encostam ou se a distancia
+## nao e de porta.
+static func _vao_na_ponta(parede: Rect2, deitada: bool, para_o_fim: bool, todas: Array[Rect2]) -> Rect2:
+	var eixo := 0 if deitada else 1
+	var lado := 1 - eixo
+	var ponta: float = parede.end[eixo] if para_o_fim else parede.position[eixo]
+	var mais_perto := INF
+	for outra in todas:
+		if outra == parede:
+			continue
+		# Cruza a faixa da parede (a espessura dela)?
+		if outra.end[lado] <= parede.position[lado] + 0.5 or outra.position[lado] >= parede.end[lado] - 0.5:
+			continue
+		var distancia: float = (outra.position[eixo] - ponta) if para_o_fim else (ponta - outra.end[eixo])
+		if distancia >= -0.5 and distancia < mais_perto:
+			mais_perto = maxf(distancia, 0.0)
+	if mais_perto <= 0.5 or mais_perto > MAIOR_VAO:
+		return Rect2()
+	var vao := parede
+	vao.position[eixo] = ponta if para_o_fim else ponta - mais_perto
+	vao.size[eixo] = mais_perto
+	return vao
 
 ## Os quartos, como retangulos de piso livre. E onde o movel vai. O primeiro e
 ## sempre a sala (onde a porta da rua da); o segundo e o terceiro sao o fundo,
