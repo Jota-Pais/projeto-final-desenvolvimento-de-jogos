@@ -1,18 +1,24 @@
 {
   "character": {
-    "id": "5eca85f2-e8c1-4986-a129-df5d9dd7b37d",
-    "name": "Antonio v3 (cabelo comprido)",
-    "nota": "folha montada em 21/10/2026 das 8 rotacoes do PixelLab (conta 4), no layout do export de personagem: so a linha das rotacoes paradas; animacoes entram como linhas novas"
+    "id": "e6cb8c4e-4317-4b3a-a690-026e217684a3",
+    "name": "Idle",
+    "prompt": "zombie apocalypse survivor game, desaturated gloomy colors, grey-green and brown tones; chubby man in his forties with messy wavy shoulder-length dark brown hair, thick black rectangular sunglasses, goatee, faded black rock band t-shirt with a big white and red band logo print on the chest, red plaid flannel shirt worn wide open, jeans, sneakers",
+    "size": {
+      "width": 112,
+      "height": 112
+    },
+    "directions": 8,
+    "view": "high top-down"
   },
   "spritesheet": {
     "path": "Antonio_rua-Idle.png",
     "cell_size": {
-      "width": 112,
-      "height": 112
+      "width": 116,
+      "height": 116
     },
     "sheet_size": {
-      "width": 896,
-      "height": 112
+      "width": 928,
+      "height": 232
     },
     "columns": 8,
     "pivot": "cell-center",
@@ -31,9 +37,17 @@
           "west",
           "south-west"
         ]
+      },
+      {
+        "row": 1,
+        "type": "animation",
+        "frame_count": 8,
+        "animation": "atirar",
+        "animation_group_id": "39a1a9d1-b718-43c2-a45a-47a719e9d724",
+        "direction": "north-west"
       }
     ]
   },
-  "export_version": "montada",
-  "export_date": "2026-10-21"
+  "export_version": "1.0",
+  "export_date": "2026-10-22T02:18:29.478629+00:00"
 }

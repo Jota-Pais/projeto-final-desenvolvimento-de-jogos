@@ -74,6 +74,14 @@ const FUGA := [Vector2(1204.5, 622.0), Vector2(1209.0, 620.6)]
 const PORTAO_DO_ANTONIO := Vector2(1211.3, 630.5)
 const ANTONIO_NO_VAO := Vector2(1211.3, 631.2)
 const SEGUNDOS_DO_PORTAO := 0.7
+## Depois do tiro ele chega na calcada, na frente do portao aberto - era para
+## la que corria -, e da de cara com a arma do Antonio ("meu deus! por favor
+## nao me mate"). Da rua, onde a fuga acaba, os dois nao cabem na tela acima
+## da caixa de fala, no zoom do jogo.
+const DEPOIS_DO_TIRO := Vector2(1210.8, 625.2)
+## Quanto a camera desce numa conversa com os dois na tela (px de mundo): poe
+## o par no meio do vao entre a tarja de cima e a caixa de fala, que e alta.
+const DESCE_NA_CONVERSA := 21.0
 ## O tiro sai quando o zumbi chega a PERTO_DO_TIRO px de mundo do jogador - ou,
 ## se ele encalhar, depois de PERSEGUICAO_MAXIMA segundos assim mesmo.
 const PERTO_DO_TIRO := 110.0
@@ -388,6 +396,8 @@ func _abertura() -> void:
 	# camera pega o portao tambem.
 	_no_quadro = [_jogador, zumbi, _p(PORTAO_DO_ANTONIO)]
 	_correr_o_portao(true)
+	# Ele aparece no vao ja erguendo a arma para o zumbi.
+	_antonio.mirar(zumbi.global_position)
 	for ponto in FUGA:
 		await _andar_ate(_p(ponto), Jogador.VELOCIDADE_CORRENDO, 3.0)
 	_jogador.direcao_do_roteiro = Vector2.ZERO
@@ -410,10 +420,14 @@ func _abertura() -> void:
 	# depois do tiro") e o resto e com ele fechado.
 	_no_quadro = [_jogador, _antonio]
 	await get_tree().create_timer(0.6).timeout
+	await _andar_ate(_p(DEPOIS_DO_TIRO), Jogador.VELOCIDADE)
 	_jogador.olhar_para(_antonio.global_position - _jogador.global_position)
 	_antonio.olhar_para(_jogador.global_position)
+	_no_quadro.clear()
+	create_tween().tween_property(camera, "offset", _meio_da_conversa(), 0.4)
 	await _conversa(Falas.O_TIRO)
 	await _correr_o_portao(false)
+	_antonio.baixar_a_arma()
 	await _conversa(Falas.PORTAO_FECHADO)
 
 	# "Nao, espera!": ele corre ate o portao fechado.
@@ -421,7 +435,7 @@ func _abertura() -> void:
 	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE_CORRENDO)
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
-	create_tween().tween_property(camera, "offset", Vector2(0.0, (_antonio.global_position.y - _jogador.global_position.y) / 2.0), 0.6)
+	create_tween().tween_property(camera, "offset", _meio_da_conversa(), 0.6)
 	await _conversa(Falas.PORTAO)
 	# "Quer saber? Pega isso.": o radio por cima do muro, e o favor.
 	await _jogar_o_radio()
@@ -434,6 +448,11 @@ func _abertura() -> void:
 	_no_roteiro = false
 	Travessia.tutorial = "favor"
 	_comecar_o_favor()
+
+## O deslocamento da camera (a partir do jogador) que poe ele e o Antonio no
+## meio do vao entre a tarja de cima e a caixa de fala.
+func _meio_da_conversa() -> Vector2:
+	return (_antonio.global_position - _jogador.global_position) / 2.0 + Vector2(0.0, DESCE_NA_CONVERSA)
 
 ## A camera da cena vai, devagar, para o meio do que esta em `_no_quadro`.
 func _enquadrar(delta: float) -> void:
