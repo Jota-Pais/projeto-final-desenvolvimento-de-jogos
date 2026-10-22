@@ -169,7 +169,7 @@
       {
         "row": 17,
         "type": "animation",
-        "frame_count": 5,
+        "frame_count": 3,
         "animation": "agachado",
         "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
         "direction": "south"

@@ -343,7 +343,12 @@ const PREDIOS := [
 			{ "tipo": "engradado", "em": Vector2(1150.0, 200.0) },
 			{ "tipo": "latas", "em": Vector2(700.0, 340.0) },
 		],
-		"pisos": [["xadrez", Rect2(300.0, 20.0, 880.0, 135.0)], ["lajota", Rect2(20.0, 174.8, 522.0, 189.2)], ["cimento", Rect2(562.0, 174.8, 618.0, 49.2)], ["cimento", Rect2(562.0, 224.0, 318.0, 140.0)]],
+		"pisos": [["xadrez", Rect2(300.0, 20.0, 880.0, 135.0)], ["lajota", Rect2(20.0, 174.8, 522.0, 189.2)], ["cimento", Rect2(562.0, 174.8, 618.0, 49.2)], ["cimento", Rect2(562.0, 224.0, 318.0, 140.0)],
+			# O chao dos dois vaos das divisorias (21/10/2026, Joao: "as portas so
+			# dao pra ver de um lado"): sem ele o vao mostrava o piso de base,
+			# escuro como a parede, e parecia parede dos dois comodos. Os numeros
+			# sao os de Construcao.paredes_internas para esta planta.
+			["cimento", Rect2(874.8, 154.8, 100.0, 20.0)], ["lajota", Rect2(542.0, 219.4, 20.0, 100.0)]],
 	},
 
 	# A Delegacia: predio publico em L, telha colonial de quatro aguas, branco

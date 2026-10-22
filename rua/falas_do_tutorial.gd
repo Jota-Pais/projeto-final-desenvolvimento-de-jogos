@@ -1,7 +1,8 @@
 ## As falas do tutorial (21/10/2026). **O texto e do Joao e da equipe de
 ## narrativa** - aqui so mora o lugar de cada fala no roteiro (rua/tutorial.gd
-## diz quando cada uma toca). O que esta entre colchetes e provisorio: diz o
-## que a fala precisa fazer, esperando o texto.
+## diz quando cada uma toca). Nao sobrou marcador entre colchetes (Joao,
+## 21/10/2026: "retira as falas placeholder, arruma todas elas pra uma fala de
+## vdd").
 ##
 ## Toda fala e uma lista de [quem, linha]; linhas seguidas do mesmo personagem
 ## saem na mesma caixa. De perto (a conversa no portao) o jogo para; pelo
@@ -17,7 +18,9 @@
 ## pediu: cada uma vem de um obstaculo de zumbis no caminho, e o Antonio fala
 ## "explicitamente, 'ah, tem zumbis ali bloqueando o caminho, faz o
 ## seguinte...'". Sao as RADIO_ de 4a a 4j e a RADIO_PIZZARIA - para ele
-## reescrever. Elas tocam uma de cada vez (rua/tutorial.gd, AULAS).
+## reescrever. Elas tocam uma de cada vez (rua/tutorial.gd, AULAS). Tambem sao
+## minhas, no tom da conversa dele, a volta (RADIO_PEGOU), a entrega da 9mm
+## (PORTAO_VOLTA) e as palavras do fim da beta (FIM_DA_BETA).
 
 ## O que o Antonio pede para buscar na pizzaria (o roteiro: "eu esqueci de
 ## reabastecer meu estoque de pepperoni").
@@ -151,13 +154,16 @@ const RADIO_PIZZARIA: Array = [
 
 ## 6. Com o item na mao: voltar.
 const RADIO_PEGOU: Array = [
-	["Antônio", "[rádio: achou, agora volta pro portão — fala do João]"],
+	["Você", "Achei. Tava na geladeira."],
+	["Antônio", "Aêê! Isso aí, muleque! Agora volta pro portão, e com cuidado com o meu pepperoni."],
 ]
 
 ## 7. De volta ao portao: a entrega e a 9mm.
 const PORTAO_VOLTA: Array = [
-	["Antônio", "[recebe o item — fala do João]"],
-	["Antônio", "[dá a 9mm — fala do João]"],
+	["Antônio", "Meu pepperoni! Passa pra cá, passa pra cá."],
+	["Você", "Tá aqui. Agora cadê a arma que você prometeu?"],
+	["Antônio", "Promessa é promessa. Toma: uma Beretta 9mm, com um pente cheio."],
+	["Antônio", "Mas não sai gastando bala à toa, que o tiro faz barulho e chama os outros."],
 ]
 
 ## 8. Logo depois da 9mm: o fim da beta (Joao, 21/10/2026: "faz o antonio

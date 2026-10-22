@@ -282,6 +282,13 @@ func _piso_de_dentro(tipo: String, r: Rect2) -> void:
 			while y < r.end.y:
 				draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), Color("6e6a62"), 1.0)
 				y += 60.0
+		"cimento":
+			# Por dentro, liso, sem a moldura e o contorno do _cimento de fora
+			# (21/10/2026): um comodo em L feito de dois retangulos ganhava uma
+			# linha de parede falsa na emenda - no deposito da pizzaria, bem no
+			# caminho da cozinha (Joao: "na hr de entrar na cozinha eu passo pela
+			# parede").
+			draw_rect(r, Color("96938a"))
 		_:
 			_cimento(r)
 			return
