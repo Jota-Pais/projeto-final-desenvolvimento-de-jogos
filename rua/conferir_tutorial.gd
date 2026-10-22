@@ -106,19 +106,37 @@ func _conferir() -> void:
 		_erro("o dia 1 devia comecar desarmado")
 	print("  conversa no portao; o favor: %s" % tutorial._objetivo.text)
 
-	print("\n2. o favor na Cover Pizzaria")
+	if not Falas.ITEM_DO_FAVOR in tutorial._objetivo.text and not "pizzaria" in tutorial._objetivo.text.to_lower():
+		print("  o objetivo nao entrega aonde nem o que antes da chegada")
+	else:
+		_erro("o objetivo do favor entrega a piada antes da chegada: '%s'" % tutorial._objetivo.text)
+
+	print("\n2. os obstaculos do caminho")
+	await _conferir_os_obstaculos(tutorial)
+
+	print("\n3. o favor na Cover Pizzaria")
 	var movel: Node = tutorial._movel_do_favor
 	if movel == null or not Falas.ITEM_DO_FAVOR in movel.achados:
 		_erro("o item do favor nao esta em movel nenhum da Cover Pizzaria")
 		return
 	print("  o item esta em '%s', em %s (%s)" % [movel.rotulo, movel.position, Mapa.lugar_em(movel.position)])
+	# Entrar na pizzaria e a chegada: a piada do pepperoni e o objetivo que
+	# agora diz o que e onde.
+	jogador.global_position = (movel as Node2D).global_position + Vector2(0.0, 30.0)
+	if not await _esperar(func() -> bool: return Travessia.tutorial_avisos.has("chegada"), 3.0):
+		_erro("entrar na pizzaria nao tocou a chegada (o planta e %s, o jogador em %s)" % [
+			tutorial._pizzaria, jogador.global_position])
+	elif not Falas.ITEM_DO_FAVOR in tutorial._objetivo.text:
+		_erro("depois da chegada o objetivo devia dizer o que buscar: '%s'" % tutorial._objetivo.text)
+	else:
+		print("  a chegada tocou; '%s'" % tutorial._objetivo.text)
 	movel._esvaziar()
 	if Travessia.tutorial != "voltar_ao_portao":
 		_erro("vasculhar o movel nao entregou o item (etapa '%s')" % Travessia.tutorial)
 		return
 	print("  vasculhado: '%s'" % tutorial._objetivo.text)
 
-	print("\n3. a volta e a 9mm")
+	print("\n4. a volta e a 9mm")
 	jogador.global_position = Mapa.ponto_do_png(tutorial.CONVERSA_NO_PORTAO) + Vector2(0.0, -20.0)
 	# A conversa corta o radio: abre na hora.
 	if not await _esperar(func() -> bool: return CaixaDeFala.aberta, 3.0):
@@ -137,7 +155,7 @@ func _conferir() -> void:
 		print("  armado: %s com %d balas; '%s'" % [Travessia.arma,
 			Travessia.balas[Travessia.CALIBRE_DE_COMECO], tutorial._objetivo.text])
 
-	print("\n4. o dia 2")
+	print("\n5. o dia 2")
 	Travessia.dia = 2
 	_montar_a_rua()
 	tutorial = _rua.get_node("Tutorial")
@@ -155,6 +173,59 @@ func _conferir() -> void:
 		_erro("o primeiro zumbi abatido nao fechou o tutorial (etapa '%s')" % Travessia.tutorial)
 	else:
 		print("  o primeiro zumbi abatido fechou o tutorial")
+
+## Os zumbis de posto (rua/tutorial.gd, OBSTACULOS e o da porta): cada um no
+## lugar, longe da porta de casa, longe dos outros obstaculos (para um nao
+## chamar o outro), parado ali; chegar perto toca a aula do obstaculo; e o da
+## porta larga o posto quando ouve alguma coisa.
+func _conferir_os_obstaculos(tutorial: Node) -> void:
+	var jogador := _rua.get_node("Jogador") as Node2D
+	var casa := Mapa.onde_fica_a_porta_de_casa()
+	var todos: Array = []
+	for i in tutorial._obstaculos.size():
+		for z in tutorial._obstaculos[i]:
+			todos.append([i, z])
+	todos.append([tutorial._obstaculos.size(), tutorial._zumbi_da_porta])
+	for par in todos:
+		var z: Node2D = par[1]
+		if not is_instance_valid(z) or not z.de_posto():
+			_erro("um zumbi de obstaculo (%d) nao esta de posto" % par[0])
+			return
+		if z.global_position.distance_to(casa) < Mapa.SEM_ZUMBI_PERTO_DE_CASA:
+			_erro("zumbi de obstaculo a %.0f px da porta de casa" % z.global_position.distance_to(casa))
+		for outro in todos:
+			if outro[0] != par[0] and z.global_position.distance_to((outro[1] as Node2D).global_position) <= z.ALCANCE_DO_CHAMADO:
+				_erro("os obstaculos %d e %d estao perto o bastante para um chamar o outro" % [par[0], outro[0]])
+	var antes: Array = []
+	for par in todos:
+		antes.append((par[1] as Node2D).global_position)
+	await get_tree().create_timer(1.0).timeout
+	for k in todos.size():
+		if (todos[k][1] as Node2D).global_position.distance_to(antes[k]) > 2.0:
+			_erro("o zumbi de posto do obstaculo %d saiu do lugar sem ver nem ouvir nada" % todos[k][0])
+	print("  %d zumbis de posto em %d obstaculos e na porta, parados" % [todos.size(), tutorial._obstaculos.size()])
+	# Chegar perto de cada obstaculo toca a aula dele.
+	for i in tutorial.OBSTACULOS.size():
+		var aula: String = tutorial.OBSTACULOS[i]["aula"]
+		var z: Node2D = tutorial._obstaculos[i][0]
+		jogador.global_position = z.global_position + Vector2(0.0, -tutorial.AVISO_DO_OBSTACULO + 40.0)
+		if not await _esperar(func() -> bool: return Travessia.tutorial_avisos.has(aula), 3.0):
+			_erro("chegar perto do obstaculo '%s' nao tocou a aula" % aula)
+	var porta: Node2D = tutorial._zumbi_da_porta
+	jogador.global_position = porta.global_position + Vector2(0.0, -tutorial.AVISO_DO_OBSTACULO + 40.0)
+	if not await _esperar(func() -> bool: return Travessia.tutorial_avisos.has("pedras"), 3.0):
+		_erro("chegar perto da porta sem pedra nao mandou pegar pedra")
+	Travessia.arremessaveis["pedra"] = 1
+	if not await _esperar(func() -> bool: return Travessia.tutorial_avisos.has("arremesso"), 3.0):
+		_erro("com pedra, perto da porta, o radio nao ensinou a jogar")
+	print("  as aulas tocaram: %s" % ", ".join(PackedStringArray(Travessia.tutorial_avisos.keys())))
+	# O barulho tira o da porta do posto.
+	porta.foi_chamado(porta.global_position + Vector2(200.0, 0.0))
+	if porta.de_posto():
+		_erro("o zumbi da porta ouviu o barulho e continuou de posto")
+	# O jogador volta para longe de tudo, e o radio para.
+	jogador.global_position = Mapa.ponto_do_png(tutorial.CONVERSA_NO_PORTAO)
+	Travessia.arremessaveis["pedra"] = 0
 
 func _mortos() -> int:
 	var n := 0

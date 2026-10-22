@@ -62,10 +62,12 @@ const NA_RUA := [
 
 ## As pedras soltas no chao, que se pegam com E para arremessar (21/10/2026):
 ## perto do entulho e no caminho do portao do Antonio ate a pizzaria, que e
-## onde o radio ensina a jogar.
+## onde o radio ensina a jogar. A ultima e a da aula (rua/tutorial.gd,
+## RADIO_PEDRAS): na calcada da avenida, fora da vista do zumbi da porta.
 const PEDRAS_NO_CHAO := [
 	Vector2(1219.0, 626.5), Vector2(1196.0, 662.0), Vector2(1178.0, 700.0), Vector2(1192.0, 731.0),
 	Vector2(1148.0, 668.0), Vector2(1262.0, 702.0), Vector2(1238.0, 748.0), Vector2(1112.0, 662.0),
+	Vector2(1207.0, 724.0),
 ]
 
 ## Quantos detalhes soltos (mancha, rachadura, lixo) espalhar na regiao.

@@ -234,6 +234,13 @@ var _tempo_vagando := 0.0
 ## nao gemer em coro no primeiro segundo.
 var _proximo_gemido := randf_range(0.0, GEMIDO_MAXIMO)
 
+## O posto (21/10/2026): o zumbi que o tutorial poe parado num ponto, olhando
+## para um lado - o obstaculo das aulas do radio (Joao: "tem zumbis ali
+## bloqueando o caminho, faz o seguinte..."). Vagando, ele fica ali e nao
+## vaga; viu voce ou ouviu alguma coisa (`foi_chamado`), larga o posto de vez
+## e e um zumbi como os outros. NAN = sem posto. Ver `guardar`.
+var posto := Vector2(NAN, NAN)
+
 var vida := VIDA_CHEIA
 ## Levou o tiro que mata: e um corpo no chao, fora do grupo "zumbi" e da fisica.
 var morto := false
@@ -347,6 +354,7 @@ func _decidir(delta: float) -> void:
 			_chamar_a_horda()
 			_gemer()
 		_estado = Estado.PERSEGUINDO
+		posto = Vector2(NAN, NAN)
 		_ultima_posicao = _jogador.global_position
 		return
 
@@ -549,6 +557,7 @@ func esquecer_quem_ignorar() -> void:
 func foi_chamado(onde: Vector2) -> void:
 	if _estado == Estado.PERSEGUINDO:
 		return
+	posto = Vector2(NAN, NAN)
 	_ultima_posicao = onde
 	_caminho = PackedVector2Array()
 	_recalcular = 0.0
@@ -567,9 +576,23 @@ func _direcao_do_estado(delta: float) -> Vector2:
 		return Vector2.ZERO
 	return _seguir(delta, _ultima_posicao)
 
+## Fica de posto em `onde`, olhando para `olhando` (ver `posto`). Quem chama
+## e o tutorial, logo depois de criar o zumbi.
+func guardar(onde: Vector2, olhando: Vector2) -> void:
+	posto = onde
+	global_position = onde
+	_olhando = olhando.normalized()
+
+func de_posto() -> bool:
+	return not is_nan(posto.x)
+
 ## Arrasta-se sem rumo, mudando de alvo de vez em quando ou quando trava. Sem
 ## caminho: zumbi vagando esbarrar na parede e virar e o comportamento certo.
+## De posto, nao sai do lugar (a cara fica onde `guardar` a pos: parado, o
+## `_virar` nao mexe nela).
 func _vaguear(delta: float) -> Vector2:
+	if de_posto():
+		return Vector2.ZERO
 	_tempo_vagando -= delta
 	var chegou := global_position.distance_to(_alvo_de_vaguear) < 20.0
 	if _tempo_vagando <= 0.0 or chegou or (velocity.length() < 4.0 and _tempo_vagando < 2.2):

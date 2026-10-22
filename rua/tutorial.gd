@@ -7,17 +7,18 @@ extends Node
 ## Dia 1:
 ##
 ##  1. **abertura** - a cena, na arte do jogo e sem o jogador no controle: ele
-##     anda devagar e apreensivo pela rua de cima, parando para olhar em volta;
-##     da de cara com um zumbi, que o ataca, e o tiro do Antonio, do quintal
-##     dele, o mata; ele vai ao portao, e a conversa da a missao e o radio, que
-##     o Antonio joga por cima do muro;
-##  2. **favor** - buscar o item na Cover Pizzaria (o Restaurante do desenho,
-##     pizzaria desde 21/10/2026). No caminho o radio da as aulas, cada uma
-##     quando o caminho a pede: como o zumbi ve (o cone), pegar pedra do chao,
-##     o barulho dos passos (rua/jogador.gd), agachar atras de cobertura baixa
-##     (rua/camadas.gd), arremessar pedra ou garrafa para tirar o zumbi parado
-##     na porta da pizzaria (rua/mao.gd), e vasculhar; o item esta num movel
-##     da pizzaria;
+##     anda devagar e apreensivo pela calcada, um zumbi sai correndo do terreno
+##     ao lado, ele foge para a rua e o Antonio abre o portao e o mata; depois,
+##     a conversa do roteiro do Joao (o susto, o portao fechando, o radio
+##     jogado por cima do muro, o favor em troca de uma arma);
+##  2. **favor** - buscar "uma... uma coisa" num lugar que o Antonio nao diz:
+##     a Cover Pizzaria (o Restaurante do desenho), e a coisa e pepperoni. A
+##     conversa passa para o radio (a apresentacao) e, no caminho, cada aula
+##     vem de um obstaculo de zumbis de posto (OBSTACULOS): como o zumbi ve (o
+##     cone), o barulho dos passos e agachar (rua/jogador.gd), pegar pedra,
+##     arremessar para tirar o zumbi da porta (rua/mao.gd) e cobertura baixa
+##     (rua/camadas.gd). Entrando na pizzaria, a piada do pepperoni e o
+##     vasculho; o item esta num movel de la;
 ##  3. **voltar_ao_portao** - com o item, de volta ao portao: a entrega e a
 ##     **9mm** (o dia 1 comeca desarmado - Travessia.armado);
 ##  4. **ir_para_casa** - voltar antes de escurecer; o dia acaba pela porta.
@@ -33,7 +34,6 @@ const Mapa := preload("res://rua/mapa.gd")
 const Falas := preload("res://rua/falas_do_tutorial.gd")
 const Antonio := preload("res://rua/antonio.gd")
 const Jogador := preload("res://rua/jogador.gd")
-const DetalhesDaRua := preload("res://rua/detalhes_da_rua.gd")
 
 const RETRATO_DO_ANTONIO := preload("res://rua/arte/antonio/retrato.png")
 const RETRATO_DO_JOGADOR := preload("res://rua/arte/jogador/retrato.png")
@@ -81,10 +81,42 @@ const ONDE_ESTA_O_ANTONIO := Vector2(1205.2, 634.2)
 ## O ponto livre da calcada, 74 px de mundo ao norte da linha do portao, onde
 ## o boneco aparece inteiro (marca "conversa_portao_antonio" do desenho).
 const CONVERSA_NO_PORTAO := Vector2(1211.25, 627.4)
-## O beco entre a sua casa e a do Antonio: onde o radio ensina a agachar.
-const BECO := Vector2(1197.0, 645.0)
 const PORTA_DA_PIZZARIA := Vector2(1187.5, 737.4)
 const NOME_DA_PIZZARIA := "Cover Pizzaria"
+## Onde o item do favor vai, se a pizzaria tiver (o rotulo do movel); entre
+## eles, o mais perto da porta.
+const MOVEIS_DO_ITEM := ["Geladeira", "Freezer"]
+
+## Os obstaculos do caminho (Joao, 21/10/2026: o jogador aprende as mecanicas
+## "todas elas com o objetivo de passar por alguma parte, na maioria delas por
+## obstrucao dos zumbis em algum lugar, e o Antonio deve falar explicitamente:
+## 'ah, tem zumbis ali bloqueando o caminho, faz o seguinte...'"). Cada um e um
+## ou mais zumbis de posto (rua/zumbi.gd, `guardar`: parados, olhando para um
+## lado, ate te verem ou ouvirem) no caminho a pe do portao a pizzaria, que
+## desce pela rua da rotatoria, corta o gramado ao longo da cerca e atravessa
+## a avenida do lado do onibus. A aula toca quando o jogador chega a
+## AVISO_DO_OBSTACULO do primeiro zumbi do obstaculo, se ele ainda esta de
+## posto. Em px do PNG; o segundo vetor de cada zumbi e para onde ele olha.
+## Todos fora dos 1300 px da porta de casa (Mapa.SEM_ZUMBI_PERTO_DE_CASA) e a
+## mais de ALCANCE_DO_CHAMADO um do outro, para um nao chamar o outro.
+const OBSTACULOS := [
+	# Como eles veem: no fim da cerca, olhando para quem desce o gramado - a
+	# luz dele fecha o caminho, e a volta e por fora dela.
+	{ "aula": "como_veem", "falas": Falas.RADIO_COMO_VEEM, "zumbis": [[Vector2(1215.0, 695.0), Vector2.UP]] },
+	# O barulho: dois de costas para o vao entre o onibus e o meio da
+	# avenida. Andando no vao, passa colado neles; agachado, nao.
+	{ "aula": "barulho", "falas": Falas.RADIO_BARULHO, "zumbis": [
+		[Vector2(1203.5, 710.0), Vector2(1.0, 1.0)], [Vector2(1203.5, 717.5), Vector2(1.0, 1.0)]] },
+]
+## O zumbi de posto na porta da pizzaria, olhando para a avenida: o obstaculo
+## da pedra e do arremesso (RADIO_PEDRAS, RADIO_ARREMESSO). Em px do PNG.
+const ZUMBI_DA_PORTA := Vector2(1190.0, 733.6)
+## Em volta de cada zumbi de posto, os pontos de zumbi do mapa nao povoam no
+## favor (rua/cenario.gd, `ceder_pontos_perto`): o obstaculo e so ele.
+const CEDIDO_EM_VOLTA := 480.0
+## A quantos px de mundo do obstaculo o radio avisa. O zumbi enxerga a 260:
+## sobra o tempo de ler o "para ai!" antes de entrar na luz dele.
+const AVISO_DO_OBSTACULO := 640.0
 
 ## A camera da cena: a mesma visao do jogo desde 21/10/2026 (Joao: "o zoom
 ## ta muito grande, deixa na mesma visao do jogo mais ou menos" - era 1, a
@@ -98,18 +130,6 @@ const RAPIDEZ_DO_QUADRO := 4.0
 const VELOCIDADE_SEM_RUMO := 36.0
 ## Quanto perto do ponto conta como chegou (px de mundo).
 const PERTO := 60.0
-const PERTO_DO_BECO := 140.0
-const PERTO_DA_PIZZARIA := 360.0
-## Quanto tempo depois do favor o radio ensina a agachar, se ele nao passou
-## pelo beco.
-const AGACHAR_DEPOIS_DE := 40.0
-## Quando o radio explica como eles veem, depois do portao.
-const COMO_VEEM_DEPOIS_DE := 9.0
-## Quanto perto de uma pedra no chao o radio manda pegar, de um zumbi ele
-## fala do barulho, e da pizzaria ele ensina a arremessar.
-const PERTO_DAS_PEDRAS := 200.0
-const PERTO_DO_ZUMBI := 320.0
-const PERTO_PARA_ARREMESSAR := 560.0
 const AVISO_NA_TELA := 3.0
 ## A altura de cada tarja da cena, em fracao da tela.
 const ALTURA_DA_TARJA := 0.1
@@ -130,9 +150,12 @@ var _seta: Control
 ## Para onde a seta aponta (mundo), ou NAN sem alvo.
 var _alvo := Vector2(NAN, NAN)
 var _no_roteiro := false
-var _tempo_no_favor := 0.0
 var _movel_do_favor: Node
-## O zumbi parado na porta da pizzaria, que a aula do arremesso tira de la.
+## A planta da Cover Pizzaria (mundo): entrar nela e "chegar no lugar".
+var _pizzaria := Rect2()
+## Os zumbis de cada obstaculo do caminho, na ordem de OBSTACULOS.
+var _obstaculos: Array = []
+## O zumbi de posto na porta da pizzaria, que a aula do arremesso tira de la.
 var _zumbi_da_porta: Node2D
 var _aviso: Label
 var _tempo_do_aviso := 0.0
@@ -198,26 +221,22 @@ func _process(delta: float) -> void:
 			_aviso.text = ""
 	match Travessia.tutorial:
 		"favor":
-			# As aulas do radio no caminho ate a pizzaria, cada uma quando o
-			# caminho a pede (Joao, 21/10/2026).
-			_tempo_no_favor += delta
-			if _tempo_no_favor > COMO_VEEM_DEPOIS_DE:
-				_radio_uma_vez("como_veem", Falas.RADIO_COMO_VEEM)
-			for pedras in DetalhesDaRua.PEDRAS_NO_CHAO:
-				if onde.distance_to(_p(pedras)) < PERTO_DAS_PEDRAS:
+			# As aulas do radio no caminho ate a pizzaria, cada uma de um
+			# obstaculo de zumbis (Joao, 21/10/2026).
+			for i in _obstaculos.size():
+				var primeiro: Node2D = _obstaculos[i][0]
+				if _de_posto(primeiro) and onde.distance_to(primeiro.global_position) < AVISO_DO_OBSTACULO:
+					_radio_uma_vez(OBSTACULOS[i]["aula"], OBSTACULOS[i]["falas"])
+			# A porta da pizzaria: sem pedra, pegar; com pedra, jogar.
+			if _de_posto(_zumbi_da_porta) and onde.distance_to(_zumbi_da_porta.global_position) < AVISO_DO_OBSTACULO:
+				if int(Travessia.arremessaveis.get("pedra", 0)) > 0 or int(Travessia.arremessaveis.get("garrafa", 0)) > 0:
+					_radio_uma_vez("arremesso", Falas.RADIO_ARREMESSO)
+				else:
 					_radio_uma_vez("pedras", Falas.RADIO_PEDRAS)
-			if _zumbi_perto(PERTO_DO_ZUMBI) and not _jogador.agachado:
-				_radio_uma_vez("barulho", Falas.RADIO_BARULHO)
-			if onde.distance_to(_p(BECO)) < PERTO_DO_BECO or _tempo_no_favor > AGACHAR_DEPOIS_DE:
-				_radio_uma_vez("agachar", Falas.RADIO_AGACHAR)
-			var porta := _p(PORTA_DA_PIZZARIA)
-			if onde.distance_to(porta) < PERTO_PARA_ARREMESSAR and is_instance_valid(_zumbi_da_porta) \
-					and not _zumbi_da_porta.get("morto"):
-				_radio_uma_vez("arremesso", Falas.RADIO_ARREMESSO)
 			if int(Travessia.arremessaveis.get("garrafa", 0)) > 0:
 				_radio_uma_vez("garrafa", Falas.RADIO_GARRAFA)
-			if onde.distance_to(porta) < PERTO_DA_PIZZARIA:
-				_radio_uma_vez("pizzaria", Falas.RADIO_PIZZARIA)
+			if _pizzaria.has_point(onde) and not Travessia.tutorial_avisos.has("chegada"):
+				_chegar_na_pizzaria()
 			_avisar_se_foi_visto()
 		"voltar_ao_portao":
 			_avisar_se_foi_visto()
@@ -383,23 +402,29 @@ func _abertura() -> void:
 	if is_instance_valid(zumbi):
 		_antonio.atirar_em(zumbi.global_position)
 		zumbi.levar_tiro(1000.0, (zumbi.global_position - _antonio.global_position).normalized())
-	# Depois do tiro o Antonio fecha o portao (Joao, 21/10/2026: "faz o
-	# antonio fechar o portao depois do tiro") e fala de dentro.
+	# Depois do tiro, com o portao ainda aberto e a arma virada para ele, o
+	# susto (o roteiro do Joao, 21/10/2026: "meu deus! por favor nao me
+	# mate" / "te matar? eu acabei de te salvar" / *fecha o portao*). Dai o
+	# Antonio fecha o portao (Joao, 21/10: "faz o antonio fechar o portao
+	# depois do tiro") e o resto e com ele fechado.
 	_no_quadro = [_jogador, _antonio]
 	await get_tree().create_timer(0.6).timeout
-	await _correr_o_portao(false)
 	_jogador.olhar_para(_antonio.global_position - _jogador.global_position)
+	_antonio.olhar_para(_jogador.global_position)
 	await _conversa(Falas.O_TIRO)
+	await _correr_o_portao(false)
+	await _conversa(Falas.PORTAO_FECHADO)
 
-	# A conversa no portao fechado.
+	# "Nao, espera!": ele corre ate o portao fechado.
 	_no_quadro.clear()
-	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE)
+	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE_CORRENDO)
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
 	create_tween().tween_property(camera, "offset", Vector2(0.0, (_antonio.global_position.y - _jogador.global_position.y) / 2.0), 0.6)
 	await _conversa(Falas.PORTAO)
-	# A missao e o radio: ele joga o radio por cima do muro.
+	# "Quer saber? Pega isso.": o radio por cima do muro, e o favor.
 	await _jogar_o_radio()
+	await _conversa(Falas.PORTAO_DEPOIS_DO_RADIO)
 
 	_cena(false)
 	camera.zoom = Vector2.ONE * Jogador.ZOOM_DA_CAMERA
@@ -508,7 +533,7 @@ func _conversa(falas: Array) -> void:
 		while i < falas.size() and falas[i][0] == quem:
 			linhas.append(falas[i][1])
 			i += 1
-		var retrato: Texture2D = RETRATO_DO_ANTONIO if quem == Falas.QUEM_E_O_ANTONIO else RETRATO_DO_JOGADOR
+		var retrato := _retrato_de(quem)
 		_caixa.calar_o_radio()
 		while _caixa.ocupada():
 			await get_tree().process_frame
@@ -516,15 +541,29 @@ func _conversa(falas: Array) -> void:
 		while _caixa.ocupada() or get_tree().paused:
 			await get_tree().process_frame
 
-func _radio(linhas: Array) -> void:
-	_caixa.pelo_radio(Falas.QUEM_E_O_ANTONIO, PackedStringArray(linhas), RETRATO_DO_ANTONIO)
+## Uma fala pelo radio: como a conversa, uma caixa por bloco de linhas do
+## mesmo personagem, com o retrato dele - desde o roteiro do Joao o Fabiano
+## tambem fala pelo radio (a apresentacao, a chegada). Entram na fila da caixa
+## e o jogo segue.
+func _radio(falas: Array) -> void:
+	var i := 0
+	while i < falas.size():
+		var quem: String = falas[i][0]
+		var linhas := PackedStringArray()
+		while i < falas.size() and falas[i][0] == quem:
+			linhas.append(falas[i][1])
+			i += 1
+		_caixa.pelo_radio(quem, linhas, _retrato_de(quem))
+
+func _retrato_de(quem: String) -> Texture2D:
+	return RETRATO_DO_ANTONIO if quem == Falas.QUEM_E_O_ANTONIO else RETRATO_DO_JOGADOR
 
 ## A fala de radio que so toca uma vez na partida.
-func _radio_uma_vez(chave: String, linhas: Array) -> void:
+func _radio_uma_vez(chave: String, falas: Array) -> void:
 	if Travessia.tutorial_avisos.has(chave):
 		return
 	Travessia.tutorial_avisos[chave] = true
-	_radio(linhas)
+	_radio(falas)
 
 ## A primeira vez que um zumbi te ve e vem atras.
 func _avisar_se_foi_visto() -> void:
@@ -538,23 +577,51 @@ func _avisar_se_foi_visto() -> void:
 # --- dia 1: o favor e a volta ------------------------------------------------
 
 func _comecar_o_favor() -> void:
-	_mostrar_objetivo("Buscar %s na Cover Pizzaria" % Falas.ITEM_DO_FAVOR, _p(PORTA_DA_PIZZARIA))
 	_por_o_item_na_pizzaria()
-	_por_o_zumbi_na_porta()
+	_mostrar_objetivo_do_favor()
+	_por_os_obstaculos()
 	var mao := _jogador.get_node_or_null("Mao")
 	if mao != null and not mao.arremessou.is_connected(_ao_arremessar):
 		mao.arremessou.connect(_ao_arremessar)
+	# "** comunicacao passa para o radio" (o roteiro): a apresentacao, e o
+	# caminho.
+	_radio_uma_vez("apresentacao", Falas.RADIO_APRESENTACAO)
 	_radio_uma_vez("correr", Falas.RADIO_CORRER)
 
-## O zumbi parado na porta da pizzaria, para a aula do arremesso: o que ja
-## estiver ali, ou um novo.
-func _por_o_zumbi_na_porta() -> void:
-	var porta := _p(PORTA_DA_PIZZARIA)
-	for zumbi in get_tree().get_nodes_in_group("zumbi"):
-		if not zumbi.get("morto") and (zumbi as Node2D).global_position.distance_to(porta) < 260.0:
-			_zumbi_da_porta = zumbi
-			return
-	_zumbi_da_porta = _cenario._criar_zumbi(porta + Vector2(60.0, -90.0))
+## O objetivo nao diz aonde nem o que antes da chegada: o Antonio so disse "um
+## lugar" e "uma... uma coisa", e a piada da chegada e descobrir que e um
+## restaurante. A seta aponta a pizzaria assim mesmo.
+func _mostrar_objetivo_do_favor() -> void:
+	if Travessia.tutorial_avisos.has("chegada"):
+		_mostrar_objetivo("Achar o %s na %s" % [Falas.ITEM_DO_FAVOR, NOME_DA_PIZZARIA], _alvo_do_favor())
+	else:
+		_mostrar_objetivo("Buscar o que o Antônio pediu", _alvo_do_favor())
+
+func _alvo_do_favor() -> Vector2:
+	if is_instance_valid(_movel_do_favor):
+		return (_movel_do_favor as Node2D).global_position
+	return _p(PORTA_DA_PIZZARIA)
+
+## Os zumbis de posto do caminho (OBSTACULOS) e o da porta da pizzaria. Nascem
+## de novo a cada dia em que o favor (re)comeca: sao o caminho, nao o
+## povoamento.
+func _por_os_obstaculos() -> void:
+	_obstaculos.clear()
+	for obstaculo in OBSTACULOS:
+		var zumbis: Array = []
+		for z in obstaculo["zumbis"]:
+			zumbis.append(_zumbi_de_posto(z[0], z[1]))
+		_obstaculos.append(zumbis)
+	_zumbi_da_porta = _zumbi_de_posto(ZUMBI_DA_PORTA, Vector2.UP)
+
+func _zumbi_de_posto(onde_no_png: Vector2, olhando: Vector2) -> Node2D:
+	_cenario.ceder_pontos_perto(_p(onde_no_png), CEDIDO_EM_VOLTA)
+	var zumbi: Node2D = _cenario._criar_zumbi(_p(onde_no_png))
+	zumbi.guardar(_p(onde_no_png), olhando)
+	return zumbi
+
+func _de_posto(zumbi: Node2D) -> bool:
+	return is_instance_valid(zumbi) and not zumbi.get("morto") and zumbi.de_posto()
 
 ## O primeiro arremesso durante o favor: o radio confirma.
 func _ao_arremessar(_qual: String, _onde: Vector2) -> void:
@@ -563,12 +630,12 @@ func _ao_arremessar(_qual: String, _onde: Vector2) -> void:
 	await get_tree().create_timer(1.5).timeout
 	_radio_uma_vez("arremesso_bom", Falas.RADIO_ARREMESSO_BOM)
 
-## Um zumbi vivo a menos de `raio` do jogador.
-func _zumbi_perto(raio: float) -> bool:
-	for zumbi in get_tree().get_nodes_in_group("zumbi"):
-		if not zumbi.get("morto") and (zumbi as Node2D).global_position.distance_to(_jogador.global_position) < raio:
-			return true
-	return false
+## Entrou na pizzaria: a piada do pepperoni pelo radio (o roteiro do Joao), o
+## objetivo agora diz o que e onde, e o vasculho.
+func _chegar_na_pizzaria() -> void:
+	_radio_uma_vez("chegada", Falas.CHEGADA)
+	_radio_uma_vez("pizzaria", Falas.RADIO_PIZZARIA)
+	_mostrar_objetivo_do_favor()
 
 ## O item vai para o movel da pizzaria mais perto da porta - e um vasculho
 ## como qualquer outro, e e assim que o tutorial ensina a vasculhar.
@@ -577,11 +644,17 @@ func _por_o_item_na_pizzaria() -> void:
 	for c in Mapa.mundo()["construcoes"]:
 		if c.get("nome", "") == NOME_DA_PIZZARIA:
 			pizzaria = c["rect"]
+	_pizzaria = pizzaria
 	var porta := _p(PORTA_DA_PIZZARIA)
 	var melhor: Node2D = null
 	for filho in _cenario.get_children():
 		if filho is Area2D and "achados" in filho and pizzaria.has_point((filho as Node2D).position):
-			if melhor == null or (filho as Node2D).position.distance_to(porta) < melhor.position.distance_to(porta):
+			# Pepperoni fica no frio: geladeira ou freezer antes de qualquer
+			# outro movel (era a caixa registradora, a mais perto da porta).
+			var frio: bool = filho.rotulo in MOVEIS_DO_ITEM
+			var melhor_frio: bool = melhor != null and melhor.rotulo in MOVEIS_DO_ITEM
+			if melhor == null or (frio and not melhor_frio) or (frio == melhor_frio \
+					and (filho as Node2D).position.distance_to(porta) < melhor.position.distance_to(porta)):
 				melhor = filho
 	if melhor == null:
 		push_warning("tutorial: nenhum movel na pizzaria para o item do favor")
@@ -589,7 +662,6 @@ func _por_o_item_na_pizzaria() -> void:
 	_movel_do_favor = melhor
 	melhor.receber(Falas.ITEM_DO_FAVOR)
 	melhor.vasculhado.connect(_ao_vasculhar_o_favor)
-	_alvo = melhor.global_position
 
 func _ao_vasculhar_o_favor(_rotulo: String, achados: Array[String]) -> void:
 	if not Falas.ITEM_DO_FAVOR in achados:
@@ -600,7 +672,7 @@ func _ao_vasculhar_o_favor(_rotulo: String, achados: Array[String]) -> void:
 	_voltar_ao_portao()
 
 func _voltar_ao_portao() -> void:
-	_mostrar_objetivo("Levar %s ao portão do Antônio" % Falas.ITEM_DO_FAVOR, _p(CONVERSA_NO_PORTAO))
+	_mostrar_objetivo("Levar o %s ao portão do Antônio" % Falas.ITEM_DO_FAVOR, _p(CONVERSA_NO_PORTAO))
 
 ## No portao com o item: a entrega e a 9mm.
 func _entregar() -> void:

@@ -1,22 +1,27 @@
 ## As falas do tutorial (21/10/2026). **O texto e do Joao e da equipe de
 ## narrativa** - aqui so mora o lugar de cada fala no roteiro (rua/tutorial.gd
 ## diz quando cada uma toca). O que esta entre colchetes e provisorio: diz o
-## que a fala precisa fazer (e, nas aulas do radio, o que ela ensina, para o
-## tutorial ja funcionar com o marcador), esperando o texto.
+## que a fala precisa fazer, esperando o texto.
 ##
-## Conversa (`PORTAO`, `PORTAO_VOLTA`, `O_TIRO`) e uma lista de [quem, linha];
-## linhas seguidas do mesmo personagem saem na mesma caixa. Fala de radio e so
-## a lista de linhas (quem fala e sempre o Antonio). Lista vazia nao toca.
+## Toda fala e uma lista de [quem, linha]; linhas seguidas do mesmo personagem
+## saem na mesma caixa. De perto (a conversa no portao) o jogo para; pelo
+## radio (as constantes RADIO_ e a CHEGADA), nao. Lista vazia nao toca.
 ##
-## O roteiro (Joao, 21/10/2026): a cena de abertura sem o jogador no controle -
-## ele anda devagar e apreensivo pela rua, da de cara com um zumbi, e o tiro do
-## Antonio o salva e comeca a conversa; o Antonio da a missao e o radio, e no
-## caminho ate a pizzaria vai ensinando como o zumbi funciona: nao fazer
-## barulho perto, nao entrar na vista dele, agachar, e jogar pedra ou garrafa
-## para chamar a atencao dele para outro lugar.
+## **O roteiro da conversa e do Joao (21/10/2026, noite)**, passado para ca
+## com acento, maiuscula e pontuacao, sem mexer nas palavras (ficaram o "pra",
+## o "ta", o "muleque"): da abertura ate a apresentacao pelo radio, e a piada
+## da chegada na pizzaria. O protagonista e o **Fabiano**; a caixa ainda diz
+## "Voce" para ele (QUEM_E_VOCE).
+##
+## **As aulas do radio no caminho sao proposta minha**, no estilo que ele
+## pediu: cada uma vem de um obstaculo de zumbis no caminho, e o Antonio fala
+## "explicitamente, 'ah, tem zumbis ali bloqueando o caminho, faz o
+## seguinte...'". Sao as RADIO_ de 4a a 4g e a RADIO_PIZZARIA - para ele
+## reescrever.
 
-## O que o Antonio pede para buscar na pizzaria.
-const ITEM_DO_FAVOR := "[o que o Antônio pediu]"
+## O que o Antonio pede para buscar na pizzaria (o roteiro: "eu esqueci de
+## reabastecer meu estoque de pepperoni").
+const ITEM_DO_FAVOR := "pepperoni"
 
 const QUEM_E_VOCE := "Você"
 const QUEM_E_O_ANTONIO := "Antônio"
@@ -24,83 +29,113 @@ const QUEM_E_O_ANTONIO := "Antônio"
 ## 1. A cena de abertura: o que ele pensa andando apreensivo (opcional).
 const ABERTURA: Array = []
 
-## 2. Logo depois do tiro: o Antonio grita da casa (opcional).
+## 2. Logo depois do tiro, com o portao ainda aberto e o Antonio de arma na
+## mao. Depois disto o Antonio fecha o portao.
 const O_TIRO: Array = [
-	["Antônio", "[grita da casa depois do tiro — fala do João]"],
+	["Você", "Meu Deus! Por favor, não me mate!"],
+	["Antônio", "Te matar? Eu acabei de te salvar."],
 ]
 
-## 3. No portao: o pedido de ajuda, a recusa, a bronca por andar desarmado, o
-## favor (a missao) e o radio - a caixa de fala avisa que o radio foi entregue.
+## 2b. O portao acabou de fechar.
+const PORTAO_FECHADO: Array = [
+	["Você", "Não, espera!"],
+]
+
+## 3. No portao fechado, ate o Antonio jogar o radio por cima do muro.
 const PORTAO: Array = [
-	["Você", "[pede ajuda no portão — fala do João]"],
-	["Antônio", "[recusa: não deixa infectado nenhum chegar perto — fala do João]"],
-	["Antônio", "[bronca: andar desarmado num apocalipse — fala do João]"],
-	["Antônio", "[a missão: buscar o item na Cover Pizzaria — fala do João]"],
-	["Antônio", "[joga o rádio por cima do muro: vai te guiando por ele — fala do João]"],
+	["Você", "Muito obrigado, você salvou minha vida."],
+	["Antônio", "Hm, de nada..."],
+	["Antônio", "Melhor tomar cuidado. Não se sai por aí num apocalipse zumbi sem uma arma."],
+	["Você", "Arma? Mas por que eu teria uma arma em casa?"],
+	["Antônio", "Ai, muleque, você tá muito ferrado..."],
+	["Antônio", "Quer saber? Pega isso."],
 ]
 
-## 4. Saindo do portao, as aulas do radio, uma por vez, na ordem em que o
-## caminho as pede.
+## 3b. Com o radio na mao: o favor.
+const PORTAO_DEPOIS_DO_RADIO: Array = [
+	["Você", "Ahn? Que isso?"],
+	["Antônio", "É um rádio."],
+	["Você", "Eu sei, mas por quê?"],
+	["Antônio", "Você vai fazer um favor pra mim, e em troca, eu te dou uma arma."],
+	["Você", "Um favor? O que você quer?"],
+	["Antônio", "Preciso que vá a um lugar pra mim, buscar uma... uma coisa. Vai ser tranquilo."],
+	["Você", "Tá bom, então. Acho que não tenho muita escolha."],
+]
 
-## 4a. Logo depois do portao: o caminho e correr.
+## 4. A conversa passa para o radio: a apresentacao, logo que o jogador volta
+## ao controle.
+const RADIO_APRESENTACAO: Array = [
+	["Antônio", "A propósito, meu nome é Antônio, mas pode me chamar de Rei do Apocalipse."],
+	["Você", "Tá bom, Antônio... Meu nome é Fabiano."],
+]
+
+## 4a. Logo depois da apresentacao: o caminho e correr.
 const RADIO_CORRER: Array = [
-	"[rádio: a Cover Pizzaria fica ao sul, depois da avenida — fala do João]",
-	"[rádio: segure Shift para correr, mas longe deles — fala do João]",
+	["Antônio", "Esse tiro deve ter chamado atenção. Segura Shift pra correr enquanto não tem nenhum por perto."],
+	["Antônio", "O lugar fica pro sul, depois da avenida. Vou te guiando por aqui."],
 ]
 
-## 4b. Como eles veem: o cone na frente.
+## 4b. Obstaculo: um zumbi parado no fim da cerca, olhando para quem desce.
+## Aula: como eles veem.
 const RADIO_COMO_VEEM: Array = [
-	"[rádio: eles enxergam só na frente, naquele cone claro; fora dele você passa — fala do João]",
-	"[rádio: entrou na vista, ele vem atrás até te perder — fala do João]",
+	["Antônio", "Opa, para aí! Tem um zumbi parado no caminho, olhando pra cá."],
+	["Antônio", "Tá vendo aquela luz no chão na frente dele? É só até ali que ele enxerga."],
+	["Antônio", "Faz o seguinte: dá a volta por fora da luz e passa por trás dele. Se ele te vir, vem atrás até te perder de vista."],
 ]
 
-## 4c. Perto da primeira pedra no chao: pegar.
-const RADIO_PEDRAS: Array = [
-	"[rádio: pega essas pedras do chão (segure E) — fala do João]",
-	"[rádio: pedra e garrafa servem pra chamar a atenção deles pra longe — fala do João]",
-]
-
-## 4d. O primeiro zumbi perto: o barulho.
+## 4c. Obstaculo: dois zumbis de costas do lado do onibus, na avenida. Aula:
+## o barulho dos passos e agachar.
 const RADIO_BARULHO: Array = [
-	"[rádio: devagar: correr perto deles faz barulho, e andar colado também — fala do João]",
-	"[rádio: agachado (C) você não faz barulho nenhum, só fica mais lento — fala do João]",
+	["Antônio", "Opa, tem dois ali do lado do ônibus, bem no caminho. Ainda bem que tão de costas."],
+	["Antônio", "Faz o seguinte: aperta C e passa agachado. Andando colado eles te ouvem, e correndo então, de longe."],
+	["Antônio", "Agachado você não faz barulho nenhum, só fica mais lento."],
 ]
 
-## 4e. Chegando no beco ou perto da primeira cobertura: agachar e se esconder.
-const RADIO_AGACHAR: Array = [
-	"[rádio: agachado atrás de carro, caçamba ou entulho, eles não te veem — fala do João]",
+## 4d. Obstaculo: o zumbi parado na porta da pizzaria, e o jogador sem pedra.
+## Aula: pegar pedra do chao.
+const RADIO_PEDRAS: Array = [
+	["Antônio", "Ah, não... tem um zumbi parado bem na porta de onde você vai entrar. A gente tem que tirar ele de lá."],
+	["Antônio", "Faz o seguinte: tá vendo aquelas pedras no chão? Segura E em cima delas pra pegar."],
 ]
 
-## 4f. Perto da pizzaria, com um zumbi na porta: arremessar.
+## 4e. O mesmo obstaculo, com pedra na mochila. Aula: arremessar e se esconder
+## atras de cobertura baixa.
 const RADIO_ARREMESSO: Array = [
-	"[rádio: tem um parado na porta da pizzaria — fala do João]",
-	"[rádio: role o scroll até a pedra, segure o botão esquerdo para mirar longe dele e solte — fala do João]",
-	"[rádio: ele vai atrás do barulho e a porta fica livre — fala do João]",
+	["Antônio", "Agora rola o scroll até a pedra, segura o botão esquerdo pra mirar perto dele, longe da porta, e solta."],
+	["Antônio", "Ele vai atrás do barulho e a porta fica livre."],
+	["Antônio", "Se precisar chegar mais perto, agacha atrás de um carro: agachado atrás de carro, caçamba ou entulho, eles não te veem."],
 ]
 
-## 4g. Logo depois do primeiro arremesso.
+## 4f. Logo depois do primeiro arremesso.
 const RADIO_ARREMESSO_BOM: Array = [
-	"[rádio: isso, ele foi ver o barulho; entra agora — fala do João]",
+	["Antônio", "Isso, ele foi ver o barulho! Entra agora."],
 ]
 
-## 4h. A primeira garrafa achada.
+## 4g. A primeira garrafa achada.
 const RADIO_GARRAFA: Array = [
-	"[rádio: garrafa quebra e faz mais barulho que pedra, chama de mais longe — fala do João]",
+	["Antônio", "Achou uma garrafa? Ela quebra e faz mais barulho que pedra, chama eles de mais longe."],
 ]
 
-## 4i. A primeira vez que um zumbi te ve e vem atras (opcional).
+## 4h. A primeira vez que um zumbi te ve e vem atras.
 const RADIO_FOI_VISTO: Array = [
-	"[rádio: ele te viu! sai da vista dele e se esconda — fala do João]",
+	["Antônio", "Ele te viu! Sai da vista dele, entra num lugar fechado. Eles são mais lentos que você."],
 ]
 
-## 5. Chegando na pizzaria: vasculhar.
+## 5. Entrando na pizzaria (o roteiro: "quando o personagem chegar no lugar").
+const CHEGADA: Array = [
+	["Você", "Pera, você me fez passar tudo isso pra ir num restaurante?"],
+	["Antônio", "É, eu esqueci de reabastecer meu estoque de pepperoni. Como eu vou viver sem meu pepperoni?"],
+	["Você", "Uhhhh..."],
+]
+
+## 5b. Logo depois da chegada: vasculhar.
 const RADIO_PIZZARIA: Array = [
-	"[rádio: segure E num móvel para vasculhar — fala do João]",
+	["Antônio", "Procura aí dentro. Segura E num móvel pra vasculhar."],
 ]
 
 ## 6. Com o item na mao: voltar.
 const RADIO_PEGOU: Array = [
-	"[rádio: achou, agora volta pro portão — fala do João]",
+	["Antônio", "[rádio: achou, agora volta pro portão — fala do João]"],
 ]
 
 ## 7. De volta ao portao: a entrega e a 9mm.
@@ -111,16 +146,16 @@ const PORTAO_VOLTA: Array = [
 
 ## 7b. Depois da 9mm: voltar para casa antes de escurecer.
 const RADIO_IR_PARA_CASA: Array = [
-	"[rádio: volta pra casa antes de escurecer; segure E na porta — fala do João]",
+	["Antônio", "[rádio: volta pra casa antes de escurecer; segure E na porta — fala do João]"],
 ]
 
 ## 8. Dia 2, de manha: explorar e usar a arma.
 const DIA_2_MANHA: Array = [
-	"[rádio: bom dia; hoje explore a região — fala do João]",
-	"[rádio: role o scroll até a arma, mire com o mouse e clique para atirar; o tiro chama os outros — fala do João]",
+	["Antônio", "[rádio: bom dia; hoje explore a região — fala do João]"],
+	["Antônio", "[rádio: role o scroll até a arma, mire com o mouse e clique para atirar; o tiro chama os outros — fala do João]"],
 ]
 
 ## 9. Dia 2: o primeiro zumbi abatido - o fim do tutorial.
 const DIA_2_PRIMEIRO_ZUMBI: Array = [
-	"[rádio: boa! o tutorial acaba aqui — fala do João]",
+	["Antônio", "[rádio: boa! o tutorial acaba aqui — fala do João]"],
 ]

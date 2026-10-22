@@ -1055,6 +1055,18 @@ func _anotar_ponto_limpo(indice: int) -> void:
 	_pontos_limpos[indice] = true
 	_zumbis_vivos.erase(indice)
 
+## Os pontos do mapa a menos de `raio` de `onde` nao povoam hoje, como os
+## limpos a tiro, e o zumbi que ja estiver de pe por eles sai. E o tutorial
+## (rua/tutorial.gd) pondo os zumbis de posto dele no lugar: o zumbi do ponto
+## da pizzaria vagava em volta da porta e baguncava a aula do arremesso.
+func ceder_pontos_perto(onde: Vector2, raio: float) -> void:
+	for i in _pontos_de_zumbi.size():
+		if _pontos_de_zumbi[i].distance_to(onde) >= raio:
+			continue
+		if _zumbis_vivos.has(i) and is_instance_valid(_zumbis_vivos[i]):
+			(_zumbis_vivos[i] as Node).queue_free()
+		_anotar_ponto_limpo(i)
+
 func _anotar_movel_vazio(_rotulo: String, _achados: Array[String], chave: String) -> void:
 	Travessia.moveis_vazios[chave] = true
 

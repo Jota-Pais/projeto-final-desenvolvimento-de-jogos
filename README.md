@@ -102,11 +102,15 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda pela
   calçada na frente da sua casa, um zumbi sai correndo do terreno ao lado, você
   foge para a rua e o Antônio abre o portão e o mata), a
-  conversa no portão, o favor na Cover Pizzaria com o rádio ensinando a correr, a
-  agachar e a vasculhar, e a volta ao portão, que dá a 9mm. Dia 2: explorar e
-  atirar; o primeiro zumbi abatido fecha o tutorial. **As falas ainda são
-  marcadores** (`[... — fala do João]`) até o texto do João entrar em
-  `rua/falas_do_tutorial.gd`.
+  conversa no portão (o roteiro do João: o susto, o portão fechando, o rádio
+  por cima do muro e o favor em troca de uma arma), a apresentação pelo rádio
+  (você é o Fabiano; ele, o "Rei do Apocalipse"), o caminho até a Cover
+  Pizzaria, em que cada aula vem de um obstáculo de zumbis de posto (como eles
+  veem, o barulho e agachar, a pedra e o arremesso para tirar o da porta), a
+  piada do pepperoni na chegada, o vasculho, e a volta ao portão, que dá a
+  9mm. Dia 2: explorar e atirar; o primeiro zumbi abatido fecha o tutorial.
+  **Ainda são marcadores** (`[... — fala do João]`) as falas da volta ao
+  portão em diante; as aulas do caminho são proposta, no estilo que ele pediu.
 - **A arquitetura** (21/10/2026, a pedido do João: "que o restaurante realmente
   se pareça com um restaurante, que as casas não sejam só quadrados iguais").
   Todo prédio tem telhado de verdade e a fachada sul de frente, na vista
@@ -182,7 +186,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/cenario.gd` | desenha o chão e gera colisão, móveis e árvores a partir do mapa |
 | `rua/vasculhavel.gd` | **a core mechanic**: barra que enche enquanto `E` estiver segurado. Desde 21/10/2026 o móvel sabe para onde olha (`olhando`): de frente é o desenho gerado (encostado na parede norte); de costas ou de lado, uma caixa na cor do desenho — nada mais gira |
 | `rua/jogador.gd` | andar e correr, e para onde ele olha (para onde anda; para o mouse enquanto atira) — quem lê a tecla de vasculhar é o próprio móvel |
-| `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe; a vida dele, o tiro que fere e o que derruba (corpo no chão) |
+| `rua/zumbi.gd` | visão em cone cortada por parede, chamado de horda, toque que interrompe; a vida dele, o tiro que fere e o que derruba (corpo no chão); o **posto** (`guardar`): o zumbi que o tutorial põe parado olhando para um lado, até te ver ou ouvir |
 | `rua/boneco.gd` | **a arte entrando**: lê a folha PNG + JSON que o PixelLab exporta e vira `AnimatedSprite2D`, uma animação por ação e direção (`andar_sul`, `vagar_noroeste`…), pé na caixa de colisão, escala 0,5 (20/10/2026: jogador e zumbi com metade do tamanho e da velocidade, câmera com zoom 2 — na tela o boneco fica como antes e o mundo, duas vezes maior). `mostrar()` para o que repete, `tocar()` para o que acontece uma vez (`atirar`, `dano`, `morrer`) — e devolve `false` se a folha não tem, para o código mostrar uma versão de graça. O jogador e o zumbi têm um |
 | `rua/arte/<quem>/` | a folha de sprites de cada personagem, como o PixelLab exporta (PNG + JSON de layout): jogador com `andar`; zumbi com `vagar`, `toque` (ataque, 8 direções) e `morrer` (só no sul — o último quadro serve de morto no chão para as outras). **Gerada — não editar à mão**: retoque é no servidor |
 | `rua/arte/armas/` | um PNG por arma (de 12 × 7 a 30 × 9 px), desenhado à mão em texto por `design/desenhar_armas.js`; trocável, mantendo o pixel do cabo da ficha |
@@ -224,8 +228,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
 | `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas. Está na rua, escondida até alguém falar |
-| `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, o item do favor num móvel da Cover Pizzaria, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
-| `rua/falas_do_tutorial.gd` | **o texto das falas do tutorial**, e só ele — e o nome do item do favor. É aqui que o texto do João entra |
+| `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, os obstáculos do caminho (`OBSTACULOS`, zumbis de posto que puxam cada aula do rádio), o item do favor na geladeira da Cover Pizzaria, a chegada, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
+| `rua/falas_do_tutorial.gd` | **o texto das falas do tutorial**, e só ele — e o nome do item do favor (pepperoni). É aqui que o texto do João entra: o roteiro da conversa dele já está, as aulas do caminho são proposta |
 | `rua/antonio.gd` | o Antônio na rua: parado no quintal dele, vira para o alvo e atira (clarão e som); quem decide quando é o roteiro |
 | `rua/arte/antonio/` | a folha do Antônio na rua (`Antonio_rua-Idle`, parado em 8 direções, gerada no PixelLab) e o retrato de 64 px da caixa de fala |
 | `rua/arte/jogador/retrato.png` | o retrato do protagonista na caixa de fala (21/10/2026, assustado), gerado no PixelLab a partir do busto da rotação sul; a íris saiu cinza e foi pintada do verde da folha |
@@ -306,7 +310,7 @@ jogando dois minutos.
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte que existir é 16:9 e tem 1920 × 1080 ou mais | ~15 s |
-| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o objetivo não entrega a piada antes da chegada, os zumbis de posto estão no lugar (longe de casa, longe um do outro, parados) e cada um puxa a sua aula, o da porta larga o posto com o barulho, entrar na pizzaria toca a chegada, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
 | `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |

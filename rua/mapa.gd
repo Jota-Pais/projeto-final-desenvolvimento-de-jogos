@@ -71,13 +71,15 @@ const MUNDO := Rect2(0.0, 0.0, 22008.0, 12720.0)
 ## enfeite novo na lista nao mexe na identidade).
 ## Versão 9 (21/10/2026, noite): os montes de pedras soltas da região rosa
 ## (rua/detalhes_da_rua.gd), que se pegam para arremessar.
-const VERSAO_DO_MAPA := 9
+## Versão 10 (21/10/2026, noite): mais um monte de pedras, o da aula da pedra
+## na calçada da avenida (rua/tutorial.gd, o zumbi da porta da pizzaria).
+const VERSAO_DO_MAPA := 10
 
 ## Hash (8 dígitos hex) da lista de chaves de todo móvel gerado num dia comum,
 ## na ordem em que nascem - comparada pelo conferir_mapa. Recalcula rodando
 ## `conferir_mapa.tscn` e copiando o valor de "IMPRESSAO DIGITAL DOS MOVEIS",
 ## depois de conferir que a mudança foi de propósito.
-const IMPRESSAO_ESPERADA := "0e37acde"
+const IMPRESSAO_ESPERADA := "cfbd7838"
 
 ## Os rótulos do desenho: o que cada mancha é.
 ##
