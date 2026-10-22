@@ -108,7 +108,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "south"
+        "direction": "south-east"
       },
       {
         "row": 10,
@@ -116,7 +116,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "south-east"
+        "direction": "east"
       },
       {
         "row": 11,
@@ -124,7 +124,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "east"
+        "direction": "north-east"
       },
       {
         "row": 12,
@@ -132,7 +132,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "north-east"
+        "direction": "north"
       },
       {
         "row": 13,
@@ -140,7 +140,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "north"
+        "direction": "north-west"
       },
       {
         "row": 14,
@@ -148,7 +148,7 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "north-west"
+        "direction": "west"
       },
       {
         "row": 15,
@@ -156,18 +156,10 @@
         "frame_count": 6,
         "animation": "agachado_andando",
         "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
-        "direction": "west"
-      },
-      {
-        "row": 16,
-        "type": "animation",
-        "frame_count": 6,
-        "animation": "agachado_andando",
-        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
         "direction": "south-west"
       },
       {
-        "row": 17,
+        "row": 16,
         "type": "animation",
         "frame_count": 3,
         "animation": "agachado",
@@ -175,7 +167,7 @@
         "direction": "south"
       },
       {
-        "row": 18,
+        "row": 17,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -183,7 +175,7 @@
         "direction": "south-east"
       },
       {
-        "row": 19,
+        "row": 18,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -191,7 +183,7 @@
         "direction": "east"
       },
       {
-        "row": 20,
+        "row": 19,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -199,7 +191,7 @@
         "direction": "west"
       },
       {
-        "row": 21,
+        "row": 20,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -207,7 +199,7 @@
         "direction": "south-west"
       },
       {
-        "row": 22,
+        "row": 21,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -215,7 +207,7 @@
         "direction": "north"
       },
       {
-        "row": 23,
+        "row": 22,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
@@ -223,20 +215,29 @@
         "direction": "north-west"
       },
       {
-        "row": 24,
+        "row": 23,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
         "animation_group_id": "90b836e0-902f-489d-80a6-c658fc2bfb18",
         "direction": "north-east",
         "espelhado_de": "agachado_costas north-west"
+      },
+      {
+        "row": 24,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "2592ea78-152d-4784-9a6a-89a9272786f7",
+        "direction": "south",
+        "quadros_de": "agachado_andando_sul_2 south 0,0,1,2,2,1"
       }
     ]
   },
   "export_version": "1.0",
-  "export_date": "2026-10-22T12:12:18.291Z",
+  "export_date": "2026-10-22T12:22:09.535Z",
   "juntado_de": [
     "Jogador_rua-Idle.json",
-    "Jogador-116.json"
+    "Jogador-116b.json"
   ]
 }
