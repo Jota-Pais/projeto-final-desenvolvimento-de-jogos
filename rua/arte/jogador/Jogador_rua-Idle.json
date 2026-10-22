@@ -196,7 +196,7 @@
         "frame_count": 5,
         "animation": "agachado",
         "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
-        "direction": "north-east"
+        "direction": "west"
       },
       {
         "row": 21,
@@ -204,36 +204,37 @@
         "frame_count": 5,
         "animation": "agachado",
         "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
-        "direction": "north"
+        "direction": "south-west"
       },
       {
         "row": 22,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
-        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
-        "direction": "north-west"
+        "animation_group_id": "90b836e0-902f-489d-80a6-c658fc2bfb18",
+        "direction": "north"
       },
       {
         "row": 23,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
-        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
-        "direction": "west"
+        "animation_group_id": "90b836e0-902f-489d-80a6-c658fc2bfb18",
+        "direction": "north-west"
       },
       {
         "row": 24,
         "type": "animation",
         "frame_count": 5,
         "animation": "agachado",
-        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
-        "direction": "south-west"
+        "animation_group_id": "90b836e0-902f-489d-80a6-c658fc2bfb18",
+        "direction": "north-east",
+        "espelhado_de": "agachado_costas north-west"
       }
     ]
   },
   "export_version": "1.0",
-  "export_date": "2026-10-22T02:04:30.919Z",
+  "export_date": "2026-10-22T12:12:18.291Z",
   "juntado_de": [
     "Jogador_rua-Idle.json",
     "Jogador-116.json"

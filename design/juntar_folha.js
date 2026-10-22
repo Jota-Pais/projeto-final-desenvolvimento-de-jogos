@@ -6,7 +6,13 @@
 // (ou todas as linhas de animacao da nova, se nenhuma for pedida), apagando
 // antes da antiga qualquer linha com o mesmo nome de animacao. Sem dependencia.
 //
-// Uso: node design/juntar_folha.js <antiga.json> <nova.json> <saida.json> [animacao...]
+// Trocar so algumas direcoes (22/10/2026: o agachado de costas e o andar
+// abaixado de frente gerados de novo): `nova@direcao=velha` copia a linha
+// `nova` daquela direcao (direcao do PixelLab: north, south-west...) com o nome
+// `velha`, e apaga da antiga so a linha `velha` daquela direcao. Sem `@direcao`,
+// todas as direcoes de `nova`.
+//
+// Uso: node design/juntar_folha.js <antiga.json> <nova.json> <saida.json> [animacao | nova@direcao=velha ...]
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -51,10 +57,23 @@ if (celA.width !== celN.width || celA.height !== celN.height) throw new Error('c
 const cw = celA.width, ch = celA.height;
 const pngA = lerPng(path.join(path.dirname(antigaJson), antiga.spritesheet.path));
 const pngN = lerPng(path.join(path.dirname(novaJson), nova.spritesheet.path));
-const linhasNovas = nova.spritesheet.rows.filter((r) => r.type === 'animation' && (pedidas.length === 0 || pedidas.includes(semVersao(r.animation))));
+// Cada pedido: { de, dir, para } - `animacao` vira { de: animacao, para: animacao }.
+const trocas = pedidas.map((p) => {
+  const [origem, para] = p.includes('=') ? p.split('=') : [p, null];
+  const [de, dir] = origem.split('@');
+  return { de, dir: dir || null, para: para || de };
+});
+const pedida = (r) => trocas.find((t) => semVersao(r.animation) === t.de && (!t.dir || r.direction === t.dir));
+const linhasNovas = nova.spritesheet.rows
+  .filter((r) => r.type === 'animation' && (trocas.length === 0 || pedida(r)))
+  .map((r) => (trocas.length === 0 ? r : { ...r, animation: pedida(r).para }));
 if (linhasNovas.length === 0) throw new Error('nenhuma linha de animacao para copiar da folha nova');
 const nomesNovos = new Set(linhasNovas.map((r) => semVersao(r.animation)));
-const linhasAntigas = antiga.spritesheet.rows.filter((r) => r.type !== 'animation' || !nomesNovos.has(semVersao(r.animation)));
+// Da antiga sai a linha que a nova substitui: o mesmo nome, e a mesma direcao
+// quando o pedido nomeou direcao.
+const substituida = (r) => linhasNovas.some((n) => semVersao(n.animation) === semVersao(r.animation) &&
+  (trocas.length === 0 || !trocas.find((t) => t.para === semVersao(n.animation) && t.dir) || n.direction === r.direction));
+const linhasAntigas = antiga.spritesheet.rows.filter((r) => r.type !== 'animation' || !substituida(r));
 const colunas = Math.max(antiga.spritesheet.columns, nova.spritesheet.columns, ...linhasNovas.map((r) => r.frame_count));
 const w = colunas * cw, h = (linhasAntigas.length + linhasNovas.length) * ch;
 const px = Buffer.alloc(w * h * 4);
