@@ -5,8 +5,9 @@ extends Node
 ## Comeca a partida nova como o titulo comeca (Travessia.comecar_partida) e
 ## confere:
 ##
-##  1. a arte: cada PNG que existe em cena_inicial/arte/ e 16:9 e tem 1920 x
-##     1080 ou mais. Quadro sem arte e aviso, e nao falha - a arte e da equipe;
+##  1. a arte: cada imagem em cena_inicial/arte/ e 16:9 e tem 1280 x 720 (a
+##     janela do jogo) ou mais. Quadro sem arte e aviso, e nao falha - fica
+##     escuro, com o texto;
 ##  2. a partida nova abre a cena inicial, e nao a rua direto, com o tutorial
 ##     na abertura e desarmado;
 ##  3. o E completa o texto que esta sendo escrito, e o segundo E passa adiante;
@@ -92,17 +93,17 @@ func _a_arte() -> void:
 	print("1. a arte")
 	var sem_arte: Array[String] = []
 	for n in range(1, CenaInicial.QUADROS.size() + 1):
-		var caminho := CenaInicial.PASTA_DA_ARTE + "%d.png" % n
-		if not ResourceLoader.exists(caminho):
+		var caminho := CenaInicial.arte_do_quadro(n)
+		if caminho == "":
 			sem_arte.append(str(n))
 			continue
 		var tamanho := (load(caminho) as Texture2D).get_size()
-		if tamanho.x < 1920 or tamanho.y < 1080:
-			_erro("o quadro %d tem %d x %d, menos que 1920 x 1080" % [n, tamanho.x, tamanho.y])
+		if tamanho.x < 1280 or tamanho.y < 720:
+			_erro("o quadro %d tem %d x %d, menos que a janela, 1280 x 720" % [n, tamanho.x, tamanho.y])
 		elif absf(tamanho.x / tamanho.y - 16.0 / 9.0) > 0.02:
 			_erro("o quadro %d tem %d x %d, que nao e 16:9" % [n, tamanho.x, tamanho.y])
 		else:
-			print("  quadro %d: %d x %d" % [n, tamanho.x, tamanho.y])
+			print("  quadro %d: %s, %d x %d" % [n, caminho.get_file(), tamanho.x, tamanho.y])
 	if not sem_arte.is_empty():
 		print("  aviso: sem arte ainda no(s) quadro(s) %s - fica(m) escuro(s), so com o texto" % ", ".join(sem_arte))
 

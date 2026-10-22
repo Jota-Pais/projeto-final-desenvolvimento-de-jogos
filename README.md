@@ -96,9 +96,10 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   quadros — a fuga pelo túnel, o zumbi rastejante, a mordida, o Fabiano levando
   a Letícia no colo, a chegada em casa e a promessa na cama —, contados numa
   caixa de texto em terceira pessoa, com o texto aprovado por ele e fechando
-  com o Fabiano indo atrás da cura. **A arte ainda não existe**:
-  o storyboard do João é só o conceito, e cada quadro espera um PNG da equipe
-  em `cena_inicial/arte/`. Sem ele, o quadro fica escuro e só o texto conta.
+  com o Fabiano indo atrás da cura. **A arte é do Renan**, aprovada pelo João
+  em 21/10/2026, e foi feita a partir do storyboard dele, que era só o
+  conceito. Do quadro 1 para o 2, que têm o mesmo enquadramento, a troca é uma
+  fusão sem escurecer: o zumbi rastejante aparece na mesma cena.
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
   título, no dia 1, desarmado: a cena de abertura (você anda pela
   calçada na frente da sua casa, um zumbi sai correndo do terreno ao lado, você
@@ -254,8 +255,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `casa/ela.gd` | o estágio da transformação dela ao longo do prazo, e o laudo de cada parte do corpo |
 | `titulo.tscn` + `titulo.gd` | **a cena principal, o menu**: Jogar (que abre a escolha entre campanha e hardcore), Como se joga e Sair, sobre a capa |
 | `arte/titulo/` | a capa do menu (`capa.png`, 320 × 180 gerada no PixelLab, mostrada ×4) e a fonte do título, Creepster, com a licença OFL ao lado |
-| `cena_inicial/cena_inicial.tscn` + `.gd` | **a cena inicial** (21/10/2026), entre o título e a rua: seis quadros com a câmera andando devagar, troca com fade, tarjas e a caixa de texto embaixo. O texto de cada quadro (aprovado pelo João) e os sons, que são os de `som/`, estão em `QUADROS`. Anda sozinha, no tempo de leitura das falas do rádio; `E` adianta, `Esc` pula. `Travessia.comecar_partida` abre ela, e ela abre a rua |
-| `cena_inicial/arte/<n>.png` | a arte de cada quadro, de 1 a 6. **Ainda não existe — é da equipe**: 16:9, de 1920 × 1080 para cima, sem texto nenhum (o texto é da cena). As tarjas tapam 12 % em cima e embaixo, então o que importa fica no meio |
+| `cena_inicial/cena_inicial.tscn` + `.gd` | **a cena inicial** (21/10/2026), entre o título e a rua: seis quadros com a câmera andando devagar (o movimento de cada um em `QUADROS`), troca com fade (do 1 para o 2, fusão), tarjas e a caixa de texto embaixo. O texto de cada quadro (aprovado pelo João) e os sons, que são os de `som/`, estão em `QUADROS`; a fala do Fabiano sai com a voz do PP, a mesma do "Você" no jogo. Anda sozinha, no tempo de leitura das falas do rádio; `E` adianta, `Esc` pula. `Travessia.comecar_partida` abre ela, e ela abre a rua |
+| `cena_inicial/arte/<n>.jpg` | a arte de cada quadro, de 1 a 6, **do Renan** (21/10/2026, aprovada pelo João): 1376 × 768, que na janela do jogo sai praticamente 1:1. Arte nova entra no mesmo lugar, em `.jpg` ou `.png`: 16:9, de 1280 × 720 para cima, sem legenda (o texto é da cena). As tarjas tapam 12 % em cima e embaixo, então o que importa fica no meio |
 | `fim_de_jogo.gd` | as três telas de fim de partida: a cura pronta, o prazo esgotado e, no hardcore, a queda na rua |
 
 Mudar o mapa = mexer no **desenho** e rodar `node design/tracar_desenho.js` e
@@ -312,7 +313,7 @@ jogando dois minutos.
 | `rua/conferir_mochila.tscn` | documento para a mochila e balas para o cinto, o que atravessa o fim do dia, o mundo não repondo, quanto o mapa rende, a HUD e a tela da mochila |
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
-| `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte que existir é 16:9 e tem 1920 × 1080 ou mais | ~15 s |
+| `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte de cada quadro é 16:9 e tem 1280 × 720 ou mais | ~15 s |
 | `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o objetivo não entrega a piada antes da chegada, os zumbis de posto estão no lugar (longe de casa, longe um do outro, parados) e as aulas tocam uma de cada vez (a do barulho espera passar do primeiro, o arremesso espera pegar a pedra), o da porta larga o posto com o barulho, entrar na pizzaria toca a chegada, o item está na geladeira da Cover Pizzaria, a entrega dá a Beretta com um pente e o fim da beta fecha o tutorial, e o dia seguinte é livre | ~30 s |
 | `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |

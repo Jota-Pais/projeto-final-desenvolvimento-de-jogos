@@ -6,13 +6,15 @@ extends Control
 ## casa. Toca so na partida nova: o titulo chama Travessia.comecar_partida, que
 ## abre esta cena, e ela acaba na rua, na abertura do tutorial (rua/tutorial.gd).
 ##
-## **A arte ainda nao existe.** O storyboard do Joao (21/10/2026) e so o
+## **A arte e do Renan** (21/10/2026, aprovada pelo Joao: "aprovado, pode subir
+## tudo pro jogo agora"), feita a partir do storyboard do Joao, que era so o
 ## conceito - "nao quero que use a mesma arte, ele e apenas um conceito, sua
-## producao deve ser de um nivel muito maior" -, e a arte vai para a equipe.
-## Cada quadro e um PNG em `cena_inicial/arte/<n>.png` (de 1 a 6), 16:9, de
-## 1920 x 1080 para cima e sem texto nenhum: o texto e desta cena. O quadro
-## cobre a tela inteira e as tarjas tapam ALTURA_DA_TARJA em cima e embaixo, entao
-## o que importa fica no meio. Sem o PNG o quadro fica escuro e so o texto conta.
+## producao deve ser de um nivel muito maior". Cada quadro e uma imagem em
+## `cena_inicial/arte/<n>.jpg` (ou .png), de 1 a 6, 16:9, de 1280 x 720 para
+## cima e sem legenda: o texto e desta cena. As do Renan tem 1376 x 768 e na
+## janela do jogo saem praticamente 1:1. O quadro cobre a tela inteira e as
+## tarjas tapam ALTURA_DA_TARJA em cima e embaixo, entao o que importa fica no
+## meio. Sem a imagem o quadro fica escuro e so o texto conta.
 ##
 ## O texto e o que o Joao aprovou em 21/10/2026: em terceira pessoa, com os
 ## nomes que ele deu - Fabiano e Leticia -, contando o que esta no storyboard e
@@ -34,42 +36,59 @@ const PASTA_DA_ARTE := "res://cena_inicial/arte/"
 ## mordida fica sem som proprio: o dano_personagem e a voz dele.
 ## `correndo` poe os passos de corrida por baixo do quadro inteiro.
 ##
-## `zoom` e `centro` (opcionais, para quando a arte chegar) sao o movimento
-## lento da camera no quadro: o zoom de/para e o ponto da imagem no meio da
-## tela de/para, em fracao da imagem. Sem eles, ZOOM e o meio.
+## `zoom` e `centro` sao o movimento lento da camera no quadro: o zoom de/para
+## e o ponto da imagem no meio da tela de/para, em fracao da imagem. Sem eles,
+## ZOOM e o meio. A borda da imagem nunca entra na tela, entao quanto maior o
+## zoom, mais longe do meio o centro pode ir. `funde` troca do quadro anterior
+## para este sem escurecer, um por cima do outro: o 1 e o 2 do Renan sao o
+## mesmo enquadramento, e o zumbi rastejante aparece na mesma cena - por isso
+## o 2 comeca na camera em que o 1 acaba.
 const QUADROS: Array = [
 	{
 		"correndo": true,
+		"zoom": [1.0, 1.1],
+		"centro": [Vector2(0.5, 0.5), Vector2(0.52, 0.52)],
 		"falas": [
 			["", "Fabiano e Letícia fugiam pelo túnel, com a horda logo atrás.",
 				[[0.0, "zumbi", 0.85, 0.0], [1.6, "zumbi", 1.05, -4.0], [3.1, "zumbi", 0.75, -2.0]]],
 		],
 	},
 	{
+		"funde": true,
+		"zoom": [1.1, 1.16],
+		"centro": [Vector2(0.52, 0.52), Vector2(0.565, 0.56)],
 		"falas": [
 			["", "Um zumbi, rastejando no chão, agarrou a perna dela.",
 				[[0.2, "zumbi", 0.7, 0.0]]],
 		],
 	},
 	{
+		"zoom": [1.0, 1.12],
+		"centro": [Vector2(0.5, 0.5), Vector2(0.45, 0.55)],
 		"falas": [
 			["", "Letícia caiu, e o zumbi a mordeu na perna.", []],
 		],
 	},
 	{
 		"correndo": true,
+		"zoom": [1.0, 1.1],
+		"centro": [Vector2(0.5, 0.5), Vector2(0.5, 0.47)],
 		"falas": [
 			["", "Fabiano a pegou no colo e fugiu com ela.",
 				[[0.6, "zumbi", 0.9, -4.0], [2.4, "zumbi", 0.8, -6.0]]],
 		],
 	},
 	{
+		"zoom": [1.12, 1.0],
+		"centro": [Vector2(0.47, 0.5), Vector2(0.5, 0.5)],
 		"falas": [
 			["", "Chegou em casa com ela nos braços.",
 				[[0.4, "porta", 1.0, 0.0]]],
 		],
 	},
 	{
+		"zoom": [1.0, 1.12],
+		"centro": [Vector2(0.5, 0.5), Vector2(0.48, 0.54)],
 		"falas": [
 			["", "Deitou-a na cama.", []],
 			["Fabiano", "Eu vou dar um jeito em você, meu amor... Eu prometo!", []],
@@ -79,6 +98,10 @@ const QUADROS: Array = [
 	},
 ]
 
+## A voz de quem fala, enquanto a fala e escrita (Som.falar): a do Fabiano e a
+## mesma do "Voce" nas falas do jogo (VOZES em rua/falas_do_tutorial.gd).
+const VOZES := { "Fabiano": "pp" }
+
 ## Os passos de corrida dos quadros `correndo` (o mesmo loop do jogador
 ## correndo na rua, rua/jogador.gd).
 const PASSOS := "andar_previa_2"
@@ -87,6 +110,8 @@ const PASSOS := "andar_previa_2"
 const ALTURA_DA_TARJA := 0.12
 ## A troca de quadro: escurece e clareia, em segundos cada metade.
 const SEGUNDOS_DO_FADE := 0.8
+## A troca sem escurecer (`funde`): quanto o quadro anterior leva para sumir.
+const SEGUNDOS_DA_FUSAO := 1.2
 ## O Esc escurece mais rapido.
 const SEGUNDOS_DO_PULO := 0.3
 ## O ultimo texto fica mais um tanto antes da rua: os grunhidos ficam no ar.
@@ -114,12 +139,26 @@ var _duracao := 1.0
 var _sons_tocados := 0
 ## Segurar a textura: carregada so dentro do _draw, ela sai branca.
 var _textura: Texture2D
+## Onde o quadro foi desenhado por ultimo: e de onde o seguinte funde.
+var _onde := Rect2()
+## Na troca sem escurecer: o quadro anterior, parado onde estava, e o quanto
+## dele ainda aparece por cima (1 a 0).
+var _anterior: Texture2D
+var _onde_anterior := Rect2()
+var _fusao := 0.0
 var _transicao: Tween
 
 var _tela: Control
 var _cortina: ColorRect
 var _texto: RichTextLabel
 var _passos: AudioStreamPlayer
+
+## A imagem do quadro `n` (de 1 a 6), ou "" se ainda nao tem.
+static func arte_do_quadro(n: int) -> String:
+	for extensao in [".png", ".jpg"]:
+		if ResourceLoader.exists(PASTA_DA_ARTE + str(n) + extensao):
+			return PASTA_DA_ARTE + str(n) + extensao
+	return ""
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -138,7 +177,7 @@ func _process(delta: float) -> void:
 		_pular()
 		return
 	_tempo += delta
-	if _textura != null:
+	if _textura != null or _fusao > 0.0:
 		_tela.queue_redraw()
 	if _fase == Fase.FALANDO:
 		_falando(delta)
@@ -216,39 +255,52 @@ func _montar_a_tela() -> void:
 	add_child(dica)
 
 ## O quadro cobrindo a tela, com a camera andando devagar do comeco ao fim
-## dele. A borda da imagem nunca entra na tela.
+## dele, e o anterior sumindo por cima na troca sem escurecer. A borda da
+## imagem nunca entra na tela.
 func _desenhar_o_quadro() -> void:
-	if _textura == null:
-		return
-	var q: Dictionary = QUADROS[_quadro]
-	var zoom: Array = q.get("zoom", ZOOM)
-	var centro: Array = q.get("centro", [Vector2(0.5, 0.5), Vector2(0.5, 0.5)])
-	var andou := smoothstep(0.0, 1.0, _tempo / _duracao)
-	var tela := _tela.size
-	var imagem := Vector2(_textura.get_size())
-	var tamanho := imagem * maxf(tela.x / imagem.x, tela.y / imagem.y) * lerpf(zoom[0], zoom[1], andou)
-	var canto := tela / 2.0 - (centro[0] as Vector2).lerp(centro[1], andou) * tamanho
-	canto = canto.clamp(tela - tamanho, Vector2.ZERO)
-	_tela.draw_texture_rect(_textura, Rect2(canto, tamanho), false)
+	if _textura != null:
+		var q: Dictionary = QUADROS[_quadro]
+		var zoom: Array = q.get("zoom", ZOOM)
+		var centro: Array = q.get("centro", [Vector2(0.5, 0.5), Vector2(0.5, 0.5)])
+		var andou := smoothstep(0.0, 1.0, _tempo / _duracao)
+		var tela := _tela.size
+		var imagem := Vector2(_textura.get_size())
+		var tamanho := imagem * maxf(tela.x / imagem.x, tela.y / imagem.y) * lerpf(zoom[0], zoom[1], andou)
+		var canto := tela / 2.0 - (centro[0] as Vector2).lerp(centro[1], andou) * tamanho
+		_onde = Rect2(canto.clamp(tela - tamanho, Vector2.ZERO), tamanho)
+		_tela.draw_texture_rect(_textura, _onde, false)
+	if _anterior != null and _fusao > 0.0:
+		_tela.draw_texture_rect(_anterior, _onde_anterior, false, Color(1.0, 1.0, 1.0, _fusao))
 
 func _comecar_o_quadro(qual: int) -> void:
+	var fundindo: bool = QUADROS[qual].get("funde", false) and _textura != null
+	if fundindo:
+		_anterior = _textura
+		_onde_anterior = _onde
+		_fusao = 1.0
 	_quadro = qual
 	_tempo = 0.0
 	_fase = Fase.ENTRANDO
 	_texto.text = ""
-	var caminho := PASTA_DA_ARTE + "%d.png" % (qual + 1)
-	_textura = load(caminho) as Texture2D if ResourceLoader.exists(caminho) else null
+	var caminho := arte_do_quadro(qual + 1)
+	_textura = load(caminho) as Texture2D if caminho != "" else null
 	_duracao = _duracao_do_quadro(qual)
 	_tela.queue_redraw()
 	if QUADROS[qual].get("correndo", false):
 		_correr()
 	_transicao = create_tween()
-	_transicao.tween_property(_cortina, "modulate:a", 0.0, SEGUNDOS_DO_FADE)
+	if fundindo:
+		_transicao.tween_property(self, "_fusao", 0.0, SEGUNDOS_DA_FUSAO)
+		_transicao.tween_callback(func() -> void: _anterior = null)
+	else:
+		_transicao.tween_property(_cortina, "modulate:a", 0.0, SEGUNDOS_DO_FADE)
 	_transicao.tween_callback(_comecar_a_fala.bind(0))
 
-## Da cortina abrindo a cortina fechada, se ninguem apertar nada.
+## Da entrada a saida do quadro, se ninguem apertar nada.
 func _duracao_do_quadro(qual: int) -> float:
-	var segundos := SEGUNDOS_DO_FADE * 2.0
+	var funde_no_seguinte: bool = qual + 1 < QUADROS.size() and QUADROS[qual + 1].get("funde", false)
+	var segundos: float = SEGUNDOS_DA_FUSAO if QUADROS[qual].get("funde", false) else SEGUNDOS_DO_FADE
+	segundos += SEGUNDOS_DO_FADE / 2.0 if funde_no_seguinte else SEGUNDOS_DO_FADE
 	for fala in QUADROS[qual]["falas"]:
 		var letras := (fala[1] as String).length()
 		segundos += letras / CaixaDeFala.LETRAS_POR_SEGUNDO + _leitura(letras)
@@ -276,9 +328,10 @@ func _comecar_a_fala(qual: int) -> void:
 	_lendo = _leitura((fala[1] as String).length())
 	if _quadro == QUADROS.size() - 1 and qual == QUADROS[_quadro]["falas"].size() - 1:
 		_lendo += PAUSA_NO_FIM
+	Som.falar(VOZES.get(quem, ""))
 
 ## O texto sendo escrito e depois lido. O E completa o que esta sendo escrito
-## ou, ja inteiro, passa adiante.
+## ou, ja inteiro, passa adiante. A voz cala quando o texto fica inteiro.
 func _falando(delta: float) -> void:
 	_tempo_da_fala += delta
 	var sons: Array = QUADROS[_quadro]["falas"][_fala][2]
@@ -291,6 +344,8 @@ func _falando(delta: float) -> void:
 	if _letras < total:
 		_letras = total if adiantou else minf(total, _letras + delta * CaixaDeFala.LETRAS_POR_SEGUNDO)
 		_texto.visible_characters = int(_letras)
+		if _letras >= total:
+			Som.calar_a_voz()
 		return
 	_lendo -= delta
 	if _lendo <= 0.0 or adiantou:
@@ -303,10 +358,17 @@ func _acabar_o_quadro() -> void:
 	_fase = Fase.SAINDO
 	_parar_de_correr(SEGUNDOS_DO_FADE)
 	_transicao = create_tween()
+	var seguinte := _quadro + 1
+	if seguinte < QUADROS.size() and QUADROS[seguinte].get("funde", false):
+		# Sem escurecer: so o texto sai, e o quadro seguinte entra por baixo
+		# deste.
+		_transicao.tween_property(_texto, "modulate:a", 0.0, SEGUNDOS_DO_FADE / 2.0)
+		_transicao.tween_callback(_comecar_o_quadro.bind(seguinte))
+		return
 	_transicao.tween_property(_cortina, "modulate:a", 1.0, SEGUNDOS_DO_FADE)
 	_transicao.parallel().tween_property(_texto, "modulate:a", 0.0, SEGUNDOS_DO_FADE)
-	if _quadro + 1 < QUADROS.size():
-		_transicao.tween_callback(_comecar_o_quadro.bind(_quadro + 1))
+	if seguinte < QUADROS.size():
+		_transicao.tween_callback(_comecar_o_quadro.bind(seguinte))
 	else:
 		_transicao.tween_callback(_ir_para_a_rua)
 
@@ -314,6 +376,7 @@ func _pular() -> void:
 	_fase = Fase.FIM
 	if _transicao != null:
 		_transicao.kill()
+	Som.calar_a_voz()
 	_parar_de_correr(SEGUNDOS_DO_PULO)
 	_transicao = create_tween()
 	_transicao.tween_property(_cortina, "modulate:a", 1.0, SEGUNDOS_DO_PULO)
