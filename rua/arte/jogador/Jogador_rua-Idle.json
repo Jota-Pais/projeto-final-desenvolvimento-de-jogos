@@ -18,7 +18,7 @@
     },
     "sheet_size": {
       "width": 928,
-      "height": 1044
+      "height": 2900
     },
     "columns": 8,
     "pivot": "cell-center",
@@ -101,9 +101,141 @@
         "animation": "andar-v3",
         "animation_group_id": "56674f9d-0bbc-429d-9dc1-559076473358",
         "direction": "south-west"
+      },
+      {
+        "row": 9,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "south"
+      },
+      {
+        "row": 10,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "south-east"
+      },
+      {
+        "row": 11,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "east"
+      },
+      {
+        "row": 12,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "north-east"
+      },
+      {
+        "row": 13,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "north"
+      },
+      {
+        "row": 14,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "north-west"
+      },
+      {
+        "row": 15,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "west"
+      },
+      {
+        "row": 16,
+        "type": "animation",
+        "frame_count": 6,
+        "animation": "agachado_andando",
+        "animation_group_id": "0cda3447-97be-40a2-9f92-b5aee413ca18",
+        "direction": "south-west"
+      },
+      {
+        "row": 17,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "south"
+      },
+      {
+        "row": 18,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "south-east"
+      },
+      {
+        "row": 19,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "east"
+      },
+      {
+        "row": 20,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "north-east"
+      },
+      {
+        "row": 21,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "north"
+      },
+      {
+        "row": 22,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "north-west"
+      },
+      {
+        "row": 23,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "west"
+      },
+      {
+        "row": 24,
+        "type": "animation",
+        "frame_count": 5,
+        "animation": "agachado",
+        "animation_group_id": "bdeb5e68-b411-4cd5-869e-9b6c4578d779",
+        "direction": "south-west"
       }
     ]
   },
   "export_version": "1.0",
-  "export_date": "2026-10-02T13:29:58.249864+00:00"
+  "export_date": "2026-10-22T02:04:30.919Z",
+  "juntado_de": [
+    "Jogador_rua-Idle.json",
+    "Jogador-116.json"
+  ]
 }

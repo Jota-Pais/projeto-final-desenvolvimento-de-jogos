@@ -155,6 +155,14 @@ func _nome_de_um_lado(acao: String, direcao: Vector2) -> String:
 	flip_h = para_o_leste if lado == "oeste" else not para_o_leste
 	return "%s_%s" % [acao, lado]
 
+## Se uma animacao de `tocar()` ainda esta rodando.
+func tocando() -> bool:
+	return _uma_vez
+
+## Se a folha tem `acao` (em qualquer direcao: confere a do sul).
+func tem(acao: String) -> bool:
+	return sprite_frames != null and sprite_frames.has_animation("%s_sul" % acao)
+
 func _ao_terminar() -> void:
 	if not _uma_vez:
 		return

@@ -40,8 +40,11 @@ const VELOCIDADE_CORRENDO := 230.0
 ## Agachar (21/10/2026, para o tutorial): C liga e desliga. Agachado ele anda
 ## devagar e nao corre, e a cobertura baixa - cacamba, carro, entulho, sacos -
 ## o esconde da vista do zumbi (rua/camadas.gd; Joao: "eu me escondo, quem eu
-## vejo nao"). O desenho e o boneco achatado, com o pe no chao, ate vir uma
-## animacao. **Numeros: proposta.**
+## vejo nao"). **Numeros: proposta.** O desenho vem da folha desde 21/10/2026
+## (Joao: "o personagem abaixado que vc tinha deixado so feito por codigo"):
+## `agachado` (o PixelLab `crouching`, de pe ate abaixado) toca uma vez ao
+## agachar e para no ultimo quadro; andando, `agachado_andando`. Sem elas na
+## folha, o boneco achatado com o pe no chao (ALTURA_AGACHADO), como era.
 const VELOCIDADE_AGACHADO := 70.0
 const ALTURA_AGACHADO := 0.72
 
@@ -223,6 +226,13 @@ func _fazer_barulho(direcao: Vector2, correndo: bool, delta: float) -> void:
 ## abaixo do centro).
 func agachar(sim: bool) -> void:
 	agachado = sim
+	if _boneco.tem("agachado"):
+		if sim:
+			_boneco.tocar("agachado", _olhando)
+		else:
+			# Levantar e voltar ao parado/andar: o `_animar` do quadro seguinte.
+			_boneco.mostrar("parado", _olhando)
+		return
 	var fator := ALTURA_AGACHADO if sim else 1.0
 	_boneco.scale.y = Boneco.ESCALA * fator
 	_boneco.offset.y = _offset_de_pe.y + _boneco.pe * (1.0 - fator) / fator
@@ -280,8 +290,16 @@ func _animar(direcao: Vector2, velocidade: float, delta: float) -> void:
 			_olhando = para_o_mouse.normalized()
 	elif direcao != Vector2.ZERO:
 		_olhando = direcao
-	var acao := "parado" if direcao == Vector2.ZERO else "andar"
-	_boneco.mostrar(acao, _olhando, velocidade / VELOCIDADE)
+	if agachado and _boneco.tem("agachado"):
+		# Agachado: andando, o passo abaixado no ritmo dele; parado, o ultimo
+		# quadro do `agachado` - depois que ele terminou de abaixar.
+		if direcao != Vector2.ZERO:
+			_boneco.mostrar("agachado_andando", _olhando, velocidade / VELOCIDADE_AGACHADO)
+		elif not _boneco.tocando():
+			_boneco.ultimo_quadro("agachado", _olhando)
+	else:
+		var acao := "parado" if direcao == Vector2.ZERO else "andar"
+		_boneco.mostrar(acao, _olhando, velocidade / VELOCIDADE)
 	_segurar_a_arma()
 
 ## A arma na mao aponta para onde ele olha. Olhando para longe da camera
