@@ -1,6 +1,6 @@
 extends Node
 ## O tutorial (21/10/2026, para a entrega do Joao): o roteiro de
-## design/narrativa.md virando jogo, em dois dias, dentro do cerco da regiao
+## design/narrativa.md virando jogo, no dia 1, dentro do cerco da regiao
 ## rosa. **As falas nao moram aqui** - estao em rua/falas_do_tutorial.gd, com o
 ## texto do Joao; aqui e so quando cada uma toca.
 ##
@@ -19,12 +19,14 @@ extends Node
 ##     arremessar para tirar o zumbi da porta (rua/mao.gd) e cobertura baixa
 ##     (rua/camadas.gd). Entrando na pizzaria, a piada do pepperoni e o
 ##     vasculho; o item esta num movel de la;
-##  3. **voltar_ao_portao** - com o item, de volta ao portao: a entrega e a
-##     **9mm** (o dia 1 comeca desarmado - Travessia.armado);
-##  4. **ir_para_casa** - voltar antes de escurecer; o dia acaba pela porta.
-##
-## Dia 2 (**dia_2**): explorar e usar a arma. O primeiro zumbi abatido fecha o
-## tutorial (**fim**).
+##  3. **voltar_ao_portao** - com o item, de volta ao portao: a entrega, a
+##     **9mm** (o dia 1 comeca desarmado - Travessia.armado) e o fim da beta:
+##     o Antonio agradece por jogar e diz que por enquanto e isso (Joao,
+##     21/10/2026: "depois que o personagem terminar a primeira missao ... faz o
+##     antonio agradecer ele por jogar a beta do jogo e que e isso por
+##     enquanto, mas ele pode se sentir livre pra jogar e explorar"). Dai o
+##     tutorial acaba (**fim**) e o jogo segue livre. Ate entao vinham o
+##     "voltar para casa antes de escurecer" e um dia 2 de atirar num zumbi.
 ##
 ## A etapa mora em Travessia.tutorial e atravessa os dias: se o dia 1 acabar
 ## no meio (caiu, amanheceu na rua), o dia seguinte retoma de onde parou. So a
@@ -102,21 +104,39 @@ const MOVEIS_DO_ITEM := ["Geladeira", "Freezer"]
 const OBSTACULOS := [
 	# Como eles veem: no fim da cerca, olhando para quem desce o gramado - a
 	# luz dele fecha o caminho, e a volta e por fora dela.
-	{ "aula": "como_veem", "falas": Falas.RADIO_COMO_VEEM, "zumbis": [[Vector2(1215.0, 695.0), Vector2.UP]] },
-	# O barulho: dois de costas para o vao entre o onibus e o meio da
-	# avenida. Andando no vao, passa colado neles; agachado, nao.
-	{ "aula": "barulho", "falas": Falas.RADIO_BARULHO, "zumbis": [
-		[Vector2(1203.5, 710.0), Vector2(1.0, 1.0)], [Vector2(1203.5, 717.5), Vector2(1.0, 1.0)]] },
+	{ "aula": "como_veem", "zumbis": [[Vector2(1215.0, 695.0), Vector2.UP]] },
+	# O barulho: dois de costas para o onibus (Joao, 21/10/2026), olhando para
+	# o meio da avenida. Andando no vao entre eles e o onibus, passa colado
+	# neles; agachado, nao. Vindo do fim da cerca, chega por tras deles.
+	{ "aula": "barulho", "zumbis": [
+		[Vector2(1203.5, 710.0), Vector2.RIGHT], [Vector2(1203.5, 717.5), Vector2.RIGHT]] },
 ]
 ## O zumbi de posto na porta da pizzaria, olhando para a avenida: o obstaculo
-## da pedra e do arremesso (RADIO_PEDRAS, RADIO_ARREMESSO). Em px do PNG.
+## da pedra e do arremesso. Em px do PNG.
 const ZUMBI_DA_PORTA := Vector2(1190.0, 733.6)
+## As aulas do caminho, na ordem: uma de cada vez (ver `_seguir_as_aulas`).
+## "porta" avisa do zumbi da porta e da cobertura, "pedras" manda pegar,
+## "arremesso" manda jogar, "arremesso_bom" e o "isso!" quando ele sai.
+const AULAS := ["como_veem", "barulho", "porta", "pedras", "arremesso", "arremesso_bom"]
+const FALAS_DAS_AULAS := {
+	"como_veem": Falas.RADIO_COMO_VEEM,
+	"barulho": Falas.RADIO_BARULHO,
+	"porta": Falas.RADIO_PORTA,
+	"pedras": Falas.RADIO_PEDRAS,
+	"arremesso": Falas.RADIO_ARREMESSO,
+	"arremesso_bom": Falas.RADIO_ARREMESSO_BOM,
+}
 ## Em volta de cada zumbi de posto, os pontos de zumbi do mapa nao povoam no
 ## favor (rua/cenario.gd, `ceder_pontos_perto`): o obstaculo e so ele.
 const CEDIDO_EM_VOLTA := 480.0
-## A quantos px de mundo do obstaculo o radio avisa. O zumbi enxerga a 260:
-## sobra o tempo de ler o "para ai!" antes de entrar na luz dele.
-const AVISO_DO_OBSTACULO := 640.0
+## A quantos px de mundo do obstaculo a aula dele comeca. O zumbi enxerga a
+## 260: sobra o tempo de ler o "para ai!" antes de entrar na luz dele.
+const AVISO_DO_OBSTACULO := 520.0
+## Quantos px ao sul do zumbi mais ao sul do obstaculo o jogador ja passou
+## dele (a aula acaba).
+const PASSOU_DO_OBSTACULO := 60.0
+## Quanto depois do arremesso se confere se o zumbi da porta saiu (s).
+const ESPERA_DO_ARREMESSO := 2.0
 
 ## A camera da cena: a mesma visao do jogo desde 21/10/2026 (Joao: "o zoom
 ## ta muito grande, deixa na mesma visao do jogo mais ou menos" - era 1, a
@@ -188,11 +208,7 @@ func _ready() -> void:
 		push_warning("tutorial: falta jogador, cenario ou caixa de fala na cena")
 		return
 	_por_o_antonio()
-	_cenario.zumbi_morreu.connect(_ao_morrer_um_zumbi)
 
-	# O dia 1 acabou depois da 9mm: hoje e o dia 2.
-	if Travessia.tutorial == "ir_para_casa" and Travessia.dia >= 2:
-		Travessia.tutorial = "dia_2"
 	match Travessia.tutorial:
 		"abertura":
 			await _abertura()
@@ -200,10 +216,6 @@ func _ready() -> void:
 			_comecar_o_favor()
 		"voltar_ao_portao":
 			_voltar_ao_portao()
-		"ir_para_casa":
-			_ir_para_casa()
-		"dia_2":
-			_dia_2()
 
 func _p(ponto_do_png: Vector2) -> Vector2:
 	return Mapa.ponto_do_png(ponto_do_png)
@@ -221,18 +233,7 @@ func _process(delta: float) -> void:
 			_aviso.text = ""
 	match Travessia.tutorial:
 		"favor":
-			# As aulas do radio no caminho ate a pizzaria, cada uma de um
-			# obstaculo de zumbis (Joao, 21/10/2026).
-			for i in _obstaculos.size():
-				var primeiro: Node2D = _obstaculos[i][0]
-				if _de_posto(primeiro) and onde.distance_to(primeiro.global_position) < AVISO_DO_OBSTACULO:
-					_radio_uma_vez(OBSTACULOS[i]["aula"], OBSTACULOS[i]["falas"])
-			# A porta da pizzaria: sem pedra, pegar; com pedra, jogar.
-			if _de_posto(_zumbi_da_porta) and onde.distance_to(_zumbi_da_porta.global_position) < AVISO_DO_OBSTACULO:
-				if int(Travessia.arremessaveis.get("pedra", 0)) > 0 or int(Travessia.arremessaveis.get("garrafa", 0)) > 0:
-					_radio_uma_vez("arremesso", Falas.RADIO_ARREMESSO)
-				else:
-					_radio_uma_vez("pedras", Falas.RADIO_PEDRAS)
+			_seguir_as_aulas(onde)
 			if int(Travessia.arremessaveis.get("garrafa", 0)) > 0:
 				_radio_uma_vez("garrafa", Falas.RADIO_GARRAFA)
 			if _pizzaria.has_point(onde) and not Travessia.tutorial_avisos.has("chegada"):
@@ -537,7 +538,7 @@ func _conversa(falas: Array) -> void:
 		_caixa.calar_o_radio()
 		while _caixa.ocupada():
 			await get_tree().process_frame
-		_caixa.falar(quem, linhas, retrato)
+		_caixa.falar(quem, linhas, retrato, Falas.VOZES.get(quem, ""))
 		while _caixa.ocupada() or get_tree().paused:
 			await get_tree().process_frame
 
@@ -553,7 +554,7 @@ func _radio(falas: Array) -> void:
 		while i < falas.size() and falas[i][0] == quem:
 			linhas.append(falas[i][1])
 			i += 1
-		_caixa.pelo_radio(quem, linhas, _retrato_de(quem))
+		_caixa.pelo_radio(quem, linhas, _retrato_de(quem), Falas.VOZES.get(quem, ""))
 
 func _retrato_de(quem: String) -> Texture2D:
 	return RETRATO_DO_ANTONIO if quem == Falas.QUEM_E_O_ANTONIO else RETRATO_DO_JOGADOR
@@ -623,12 +624,82 @@ func _zumbi_de_posto(onde_no_png: Vector2, olhando: Vector2) -> Node2D:
 func _de_posto(zumbi: Node2D) -> bool:
 	return is_instance_valid(zumbi) and not zumbi.get("morto") and zumbi.de_posto()
 
-## O primeiro arremesso durante o favor: o radio confirma.
+## As aulas do caminho, uma de cada vez e na ordem de AULAS (Joao, 21/10/2026:
+## "o dialogo nao ta tendo um gatilho com as coisas que vao acontecendo muito
+## bom, ele so sai falando, ele tem que ensinar o cara a pegar a pedra, e
+## arremessar tambem, um de cada vez"). Ate entao cada obstaculo avisava a
+## 640 px, os avisos se sobrepunham e o radio emendava aula com aula. Agora a
+## aula seguinte so comeca quando a de antes acabou, o radio esta livre e o
+## jogador esta onde ela e pedida (`_aula_comeca`); e acaba quando ele fez o
+## que ela pede ou ja passou dela (`_aula_acaba`). A que acabou antes de
+## comecar (ja tinha pedra, o zumbi largou o posto) passa calada.
+func _seguir_as_aulas(onde: Vector2) -> void:
+	for aula in AULAS:
+		if Travessia.tutorial_avisos.has("feita:" + aula):
+			continue
+		if _aula_acaba(aula, onde):
+			Travessia.tutorial_avisos["feita:" + aula] = true
+			continue
+		if not Travessia.tutorial_avisos.has(aula) and not _caixa.ocupada() and _aula_comeca(aula, onde):
+			Travessia.tutorial_avisos[aula] = true
+			_radio(FALAS_DAS_AULAS[aula])
+		return
+
+func _aula_comeca(aula: String, onde: Vector2) -> bool:
+	match aula:
+		"como_veem", "barulho":
+			var primeiro: Node2D = _obstaculos[_obstaculo_da_aula(aula)][0]
+			return is_instance_valid(primeiro) and onde.distance_to(primeiro.global_position) < AVISO_DO_OBSTACULO
+		"porta":
+			return onde.distance_to(_zumbi_da_porta.global_position) < AVISO_DO_OBSTACULO
+	# Pedra, arremesso e o "isso!": logo depois da de antes.
+	return true
+
+func _aula_acaba(aula: String, onde: Vector2) -> bool:
+	var porta_livre := not _de_posto(_zumbi_da_porta)
+	match aula:
+		"como_veem", "barulho":
+			# Passou deles, ou eles largaram o posto (viram, ouviram, tiro).
+			var zumbis: Array = _obstaculos[_obstaculo_da_aula(aula)]
+			if not _de_posto(zumbis[0]):
+				return true
+			var mais_ao_sul := -INF
+			for zumbi in zumbis:
+				if is_instance_valid(zumbi):
+					mais_ao_sul = maxf(mais_ao_sul, (zumbi as Node2D).global_position.y)
+			return onde.y > mais_ao_sul + PASSOU_DO_OBSTACULO
+		"porta":
+			return Travessia.tutorial_avisos.has("porta") or porta_livre
+		"pedras":
+			return _tem_o_que_jogar() or porta_livre
+		"arremesso":
+			return porta_livre
+		"arremesso_bom":
+			# So quando foi o arremesso que tirou ele dali.
+			return Travessia.tutorial_avisos.has("arremesso_bom") or not Travessia.tutorial_avisos.has("arremessou")
+	return true
+
+func _obstaculo_da_aula(aula: String) -> int:
+	for i in OBSTACULOS.size():
+		if OBSTACULOS[i]["aula"] == aula:
+			return i
+	return -1
+
+func _tem_o_que_jogar() -> bool:
+	return int(Travessia.arremessaveis.get("pedra", 0)) > 0 or int(Travessia.arremessaveis.get("garrafa", 0)) > 0
+
+## Cada arremesso durante a aula: se o zumbi da porta continua de posto um
+## tempo depois, o barulho caiu longe dele, e o radio manda jogar mais perto.
+## O "isso!" e a aula `arremesso_bom`, quando ele sai.
 func _ao_arremessar(_qual: String, _onde: Vector2) -> void:
 	if Travessia.tutorial != "favor":
 		return
-	await get_tree().create_timer(1.5).timeout
-	_radio_uma_vez("arremesso_bom", Falas.RADIO_ARREMESSO_BOM)
+	if not Travessia.tutorial_avisos.has("arremesso"):
+		return
+	Travessia.tutorial_avisos["arremessou"] = true
+	await get_tree().create_timer(ESPERA_DO_ARREMESSO).timeout
+	if Travessia.tutorial_avisos.has("arremesso") and _de_posto(_zumbi_da_porta) and not _caixa.ocupada():
+		_radio(Falas.RADIO_ARREMESSO_ERROU)
 
 ## Entrou na pizzaria: a piada do pepperoni pelo radio (o roteiro do Joao), o
 ## objetivo agora diz o que e onde, e o vasculho.
@@ -674,7 +745,7 @@ func _ao_vasculhar_o_favor(_rotulo: String, achados: Array[String]) -> void:
 func _voltar_ao_portao() -> void:
 	_mostrar_objetivo("Levar o %s ao portão do Antônio" % Falas.ITEM_DO_FAVOR, _p(CONVERSA_NO_PORTAO))
 
-## No portao com o item: a entrega e a 9mm.
+## No portao com o item: a entrega, a 9mm e o fim da beta.
 func _entregar() -> void:
 	if _no_roteiro:
 		return
@@ -685,11 +756,13 @@ func _entregar() -> void:
 	_antonio.olhar_para(_jogador.global_position)
 	await _conversa(Falas.PORTAO_VOLTA)
 	_dar_a_9mm()
+	await _conversa(Falas.FIM_DA_BETA)
 	_jogador.no_roteiro = false
 	_no_roteiro = false
-	Travessia.tutorial = "ir_para_casa"
-	_ir_para_casa()
-	_radio(Falas.RADIO_IR_PARA_CASA)
+	Travessia.tutorial = "fim"
+	_mostrar_objetivo("Fim da beta — explore à vontade")
+	await get_tree().create_timer(FIM_NA_TELA).timeout
+	_mostrar_objetivo("")
 
 ## A recompensa: a Beretta 9mm na mao, com um pente.
 func _dar_a_9mm() -> void:
@@ -702,21 +775,3 @@ func _dar_a_9mm() -> void:
 		Travessia.balas.get(Travessia.CALIBRE_DE_COMECO, 0), Travessia.BALAS_DE_COMECO)
 	Som.tocar("armas/engatilhando_pistola", 1.0, 1)
 
-func _ir_para_casa() -> void:
-	_mostrar_objetivo("Voltar para casa antes de escurecer — segure E na porta",
-		Mapa.onde_fica_a_porta_de_casa())
-
-# --- dia 2 -------------------------------------------------------------------
-
-func _dia_2() -> void:
-	_mostrar_objetivo("Explore o bairro — mire com o mouse e atire num zumbi")
-	_radio_uma_vez("dia_2", Falas.DIA_2_MANHA)
-
-func _ao_morrer_um_zumbi(_zumbi: Node) -> void:
-	if Travessia.tutorial != "dia_2":
-		return
-	Travessia.tutorial = "fim"
-	_radio_uma_vez("primeiro_zumbi", Falas.DIA_2_PRIMEIRO_ZUMBI)
-	_mostrar_objetivo("Tutorial concluído")
-	await get_tree().create_timer(FIM_NA_TELA).timeout
-	_mostrar_objetivo("")

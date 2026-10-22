@@ -4,9 +4,9 @@ extends Node
 ##
 ## Os arquivos estao em `res://som/`, na mesma arvore da pasta "sons" do Drive
 ## da equipe (20/10/2026): a raiz, `armas/` e `menu/`. Quem chama pede pelo
-## caminho sem extensao - `Som.tocar("armas/Beretta")`. Ficaram de fora o
-## `NAO_USAR_MOMENTANEAMENTE` (o nome diz) e `personagens/`, que e fala de NPC
-## em .m4a (o Godot nao abre m4a, e o jogo ainda nao tem NPC).
+## caminho sem extensao - `Som.tocar("armas/Beretta")`. Ficou de fora o
+## `NAO_USAR_MOMENTANEAMENTE` (o nome diz). A `personagens/` (as vozes da
+## caixa de fala) entrou em 21/10/2026, convertida - ver `falar`.
 ##
 ## Tres canais, e nenhum deles e de cena - por isso o som atravessa a troca de
 ## cena (a porta de casa bate na rua e se ouve ja na casa):
@@ -52,9 +52,27 @@ const VOLUME := {
 ## vazamento na saida. Headless, o Som fica mudo e o resto do jogo nao nota.
 var mudo := DisplayServer.get_name() == "headless"
 
+## A voz de quem fala na caixa de fala (21/10/2026, Joao: "tem sons pras
+## falas dos personagens, pra tocar enquanto as palavras aparecem"). Sao as
+## gravacoes da pasta "personagens" do Drive (mulher, PP, velho, veterano,
+## vizinho) - m4a, que o Godot nao abre -, convertidas para wav e cortadas nos
+## trechos de fala de cada uma, com o volume igualado (vieram baixas):
+## `personagens/<voz>_<n>`, de 1 em diante. Os trechos curtos e quase mudos
+## (respiracao, ruido) ficaram de fora.
+const PASTA_DAS_VOZES := "personagens/"
+## Quanto antes do fim de um trecho a voz ainda pode comecar (s): cada linha
+## entra num ponto sorteado do trecho, para a mesma gravacao nao soar igual.
+const SOBRA_DO_TRECHO := 0.8
+const SEGUNDOS_PARA_CALAR := 0.08
+
 var _efeitos := {}
 var _musica: AudioStreamPlayer
 var _ambiente: AudioStreamPlayer
+var _voz: AudioStreamPlayer
+## A voz falando agora ("" calada), e os trechos ja carregados de cada uma.
+var _voz_atual := ""
+var _trechos := {}
+var _calando: Tween
 
 func _ready() -> void:
 	# O som nao para quando a arvore pausa: a fala de perto (rua/caixa_de_fala.gd)
@@ -62,6 +80,11 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_musica = _novo_player()
 	_ambiente = _novo_player()
+	_voz = _novo_player()
+	_voz.finished.connect(func() -> void:
+		# O trecho acabou e a linha ainda esta sendo escrita: entra outro.
+		if _voz_atual != "":
+			_proximo_trecho())
 
 ## Ao fechar o jogo, cala tudo e solta os streams antes de o servidor de audio
 ## fechar (21/10/2026): fechar no meio de um som deixava o mp3 e a reproducao
@@ -70,7 +93,7 @@ func _ready() -> void:
 ## da casa) ainda fica preso no servidor de audio, que so o solta na mixagem
 ## seguinte - e ela nao vem. So aparece no console, nunca para quem joga.
 func _exit_tree() -> void:
-	for player in [_musica, _ambiente] + _efeitos.values():
+	for player in [_musica, _ambiente, _voz] + _efeitos.values():
 		(player as AudioStreamPlayer).stop()
 		(player as AudioStreamPlayer).stream = null
 
@@ -124,6 +147,49 @@ func tocar_em(nome: String, onde: Vector2, alcance := 700.0, tom := 1.0) -> void
 	cena.add_child(player)
 	player.global_position = onde
 	player.play()
+
+## A caixa de fala chama no comeco de cada linha: a voz `voz` fala (um trecho
+## sorteado, de um ponto sorteado dele, e outro quando ele acaba) ate
+## `calar_a_voz`, quando a linha termina de ser escrita. "" nao fala.
+func falar(voz: String) -> void:
+	if mudo or voz == "":
+		return
+	if _calando != null:
+		_calando.kill()
+	_voz_atual = voz
+	_voz.volume_db = VOLUME.get(PASTA_DAS_VOZES + voz, 0.0)
+	_proximo_trecho()
+
+func calar_a_voz() -> void:
+	_voz_atual = ""
+	if mudo or not _voz.playing:
+		return
+	if _calando != null:
+		_calando.kill()
+	_calando = create_tween()
+	_calando.tween_property(_voz, "volume_db", -40.0, SEGUNDOS_PARA_CALAR)
+	_calando.tween_callback(_voz.stop)
+
+func _proximo_trecho() -> void:
+	var trechos := _trechos_de(_voz_atual)
+	if trechos.is_empty():
+		_voz_atual = ""
+		return
+	var trecho: AudioStream = trechos.pick_random()
+	_voz.stream = trecho
+	_voz.play(randf_range(0.0, maxf(0.0, trecho.get_length() - SOBRA_DO_TRECHO)))
+
+func _trechos_de(voz: String) -> Array:
+	if not _trechos.has(voz):
+		var lista := []
+		var n := 1
+		while ResourceLoader.exists("%s%s%s_%d.wav" % [PASTA, PASTA_DAS_VOZES, voz, n]):
+			lista.append(load("%s%s%s_%d.wav" % [PASTA, PASTA_DAS_VOZES, voz, n]))
+			n += 1
+		if lista.is_empty():
+			push_error("som: a voz \"%s\" nao tem trecho em %s%s" % [voz, PASTA, PASTA_DAS_VOZES])
+		_trechos[voz] = lista
+	return _trechos[voz]
 
 ## A musica, em loop a menos que `repetir` seja false (o game over toca uma
 ## vez); "" para. Pedir a que ja toca nao a recomeca.

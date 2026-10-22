@@ -3,10 +3,10 @@
 [ext_resource type="Script" path="res://rua/caixa_de_fala.gd" id="1_caixa"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_caixa"]
-content_margin_left = 14.0
-content_margin_top = 12.0
-content_margin_right = 14.0
-content_margin_bottom = 12.0
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
 bg_color = Color(0.07, 0.06, 0.05, 1)
 border_width_left = 2
 border_width_top = 2
@@ -23,10 +23,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 280.0
-offset_top = -176.0
-offset_right = -280.0
-offset_bottom = -24.0
+offset_left = 250.0
+offset_top = -236.0
+offset_right = -250.0
+offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -38,7 +38,7 @@ theme_override_constants/separation = 16
 
 [node name="Retrato" type="TextureRect" parent="Caixa/Linha"]
 texture_filter = 1
-custom_minimum_size = Vector2(128, 128)
+custom_minimum_size = Vector2(176, 176)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
@@ -50,18 +50,18 @@ size_flags_horizontal = 3
 [node name="Nome" type="Label" parent="Caixa/Linha/Coluna"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.909804, 0.690196, 0.380392, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 25
 
 [node name="Texto" type="Label" parent="Caixa/Linha/Coluna"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.909804, 0.886275, 0.839216, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 23
 autowrap_mode = 3
 
 [node name="Dica" type="Label" parent="Caixa/Linha/Coluna"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.909804, 0.886275, 0.839216, 0.6)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 16
 text = "[E] continuar"
 horizontal_alignment = 2

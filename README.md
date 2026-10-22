@@ -99,18 +99,20 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   o storyboard do João é só o conceito, e cada quadro espera um PNG da equipe
   em `cena_inicial/arte/`. Sem ele, o quadro fica escuro e só o texto conta.
 - **O tutorial** (21/10/2026, entrega de 22/10) é a partida que começa pelo
-  título, em dois dias. Dia 1, desarmado: a cena de abertura (você anda pela
+  título, no dia 1, desarmado: a cena de abertura (você anda pela
   calçada na frente da sua casa, um zumbi sai correndo do terreno ao lado, você
   foge para a rua e o Antônio abre o portão e o mata), a
   conversa no portão (o roteiro do João: o susto, o portão fechando, o rádio
   por cima do muro e o favor em troca de uma arma), a apresentação pelo rádio
   (você é o Fabiano; ele, o "Rei do Apocalipse"), o caminho até a Cover
-  Pizzaria, em que cada aula vem de um obstáculo de zumbis de posto (como eles
-  veem, o barulho e agachar, a pedra e o arremesso para tirar o da porta), a
+  Pizzaria, em que cada aula vem de um obstáculo de zumbis de posto e toca uma
+  de cada vez, quando a de antes acabou (como eles veem, o barulho e agachar,
+  o aviso da porta, pegar a pedra, arremessar para tirar o zumbi da porta), a
   piada do pepperoni na chegada, o vasculho, e a volta ao portão, que dá a
-  9mm. Dia 2: explorar e atirar; o primeiro zumbi abatido fecha o tutorial.
-  **Ainda são marcadores** (`[... — fala do João]`) as falas da volta ao
-  portão em diante; as aulas do caminho são proposta, no estilo que ele pediu.
+  9mm; ali o Antônio agradece por jogar a beta e o tutorial acaba — dali em
+  diante o jogo é livre. **Ainda são marcadores** (`[... — fala do João]`) as
+  falas da volta ao portão; as aulas do caminho e o agradecimento são
+  proposta, no estilo que ele pediu.
 - **A arquitetura** (21/10/2026, a pedido do João: "que o restaurante realmente
   se pareça com um restaurante, que as casas não sejam só quadrados iguais").
   Todo prédio tem telhado de verdade e a fachada sul de frente, na vista
@@ -176,8 +178,8 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | arquivo | o quê |
 |---|---|
 | `travessia.gd` | autoload. O dia, o prazo, o que chegou em casa — o **único** lugar onde a rua e a casa se encontram |
-| `som.gd` | autoload. **O áudio**: `Som.tocar("armas/Beretta")` para efeito, `Som.tocar_em(nome, ponto)` para o que sai de um lugar do mundo, `Som.musica` e `Som.ambiente` para os loops (com fade, atravessando a troca de cena), e o volume de cada som. Headless fica mudo |
-| `som/` | os sons, na mesma árvore da pasta `sons` do Drive (raiz, `armas/`, `menu/`), com os nomes sem acento. Som novo = largar o arquivo aqui e chamar pelo caminho sem extensão; o som do tiro de cada arma é o `som` da ficha em `rua/arma.gd` |
+| `som.gd` | autoload. **O áudio**: `Som.tocar("armas/Beretta")` para efeito, `Som.tocar_em(nome, ponto)` para o que sai de um lugar do mundo, `Som.musica` e `Som.ambiente` para os loops (com fade, atravessando a troca de cena), e o volume de cada som. Também **a voz da caixa de fala** (`Som.falar(voz)` / `Som.calar_a_voz()`): um trecho sorteado da voz enquanto a linha é escrita. Headless fica mudo |
+| `som/` | os sons, na mesma árvore da pasta `sons` do Drive (raiz, `armas/`, `menu/`, `personagens/`), com os nomes sem acento. As vozes de `personagens/` vieram em m4a, que o Godot não abre: estão convertidas para wav e cortadas nos trechos de fala de cada gravação (`vizinho_1`, `pp_1`, ...), com o volume igualado. Som novo = largar o arquivo aqui e chamar pelo caminho sem extensão; o som do tiro de cada arma é o `som` da ficha em `rua/arma.gd` |
 | `design/urussanga.png` | **o desenho do mapa**, feito pelo João — a fonte de tudo o que está na rua |
 | `design/tracar_desenho.js` | lê o desenho, separa cada cor numa classe (grama, mata, pavimento, asfalto, milho, terra, água; vermelho, marrom e cinza são prédio), apaga texto e linha fina e escreve o traçado. `node design/tracar_desenho.js`, sem dependência |
 | `rua/mapa_tracado.json` | o traçado: polígonos de chão, retângulos de prédio, blocos sólidos e veículos, em px do desenho. **Gerado — não editar à mão** |
@@ -227,7 +229,7 @@ O layout do mapa é **dado, não cena**: não existe `mapa.tscn`.
 | `design/sintetizar_arremesso.js` | os sons do arremesso (o assobio, a pedra no chão, a garrafa quebrando) sintetizados por regra em `som/arremesso/` — marcadores até a equipe de som trocar pelo arquivo de verdade |
 | `rua/arma.gd` | a arma na mão: a ficha das oito (dano em unidade de vida, projéteis, espera, automática ou não, alcance, estrondo, desenho), o sprite apontado para onde ele olha, o tiro, o coice e o estrondo chamando a horda; `Q` troca (protótipo) |
 | `rua/hud.gd` | a HUD nos três cantos |
-| `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas. Está na rua, escondida até alguém falar |
+| `rua/caixa_de_fala.gd` | **a caixa de fala** (20/10/2026): toda fala sai numa caixa embaixo da tela, com nome, retrato e o texto sendo escrito. `falar()` é de perto — o jogo para e o E avança —; `pelo_radio()` não para o jogo, e as linhas passam sozinhas. O texto das falas é da narrativa: quem chama manda as linhas e a voz (a de cada personagem em `rua/falas_do_tutorial.gd`, `VOZES`), que toca enquanto a linha é escrita. Maior desde 21/10/2026, a pedido do João. Está na rua, escondida até alguém falar |
 | `rua/tutorial.gd` | **o tutorial** (21/10/2026): quando cada etapa e cada fala acontece — a cena de abertura sob roteiro, o objetivo no alto da tela com a seta, os obstáculos do caminho (`OBSTACULOS`, zumbis de posto que puxam cada aula do rádio), o item do favor na geladeira da Cover Pizzaria, a chegada, a 9mm, o dia 2. A etapa mora em `Travessia.tutorial` e atravessa os dias |
 | `rua/falas_do_tutorial.gd` | **o texto das falas do tutorial**, e só ele — e o nome do item do favor (pepperoni). É aqui que o texto do João entra: o roteiro da conversa dele já está, as aulas do caminho são proposta |
 | `rua/antonio.gd` | o Antônio na rua: parado no quintal dele, vira para o alvo e atira (clarão e som); quem decide quando é o roteiro |
@@ -310,7 +312,7 @@ jogando dois minutos.
 | `rua/conferir_arma.tscn` | você começa com a Beretta, balas são equipamento, o tiro fere e o quinto derruba, o corpo se vasculha, a parede corta, o estrondo chama a horda, o baleado não renasce, as oito armas existem e ferem |
 | `rua/conferir_fim.tscn` | a partida dá para ganhar, a vitória, a derrota e a escalada de zumbis |
 | `cena_inicial/conferir_cena_inicial.tscn` | a partida nova abre a cena inicial, com o tutorial na abertura e desarmado; o `E` completa o texto e o segundo passa adiante; o `Esc` para a cena ali e abre a rua; sem ninguém no teclado, os oito textos dos seis quadros aparecem inteiros e na ordem, e no fim a rua abre na abertura do tutorial; a arte que existir é 16:9 e tem 1920 × 1080 ou mais | ~15 s |
-| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o objetivo não entrega a piada antes da chegada, os zumbis de posto estão no lugar (longe de casa, longe um do outro, parados) e cada um puxa a sua aula, o da porta larga o posto com o barulho, entrar na pizzaria toca a chegada, o item está na Cover Pizzaria, a entrega dá a Beretta com um pente, o dia 2 acaba no primeiro zumbi abatido | ~30 s |
+| `rua/conferir_tutorial.tscn` | o tutorial de ponta a ponta, sem ninguém no teclado: o zumbi da abertura corre atrás do jogador e o Antônio o mata do portão, o objetivo não entrega a piada antes da chegada, os zumbis de posto estão no lugar (longe de casa, longe um do outro, parados) e as aulas tocam uma de cada vez (a do barulho espera passar do primeiro, o arremesso espera pegar a pedra), o da porta larga o posto com o barulho, entrar na pizzaria toca a chegada, o item está na geladeira da Cover Pizzaria, a entrega dá a Beretta com um pente e o fim da beta fecha o tutorial, e o dia seguinte é livre | ~30 s |
 | `rua/conferir_tela_do_mapa.tscn` | o que passa na tela fica visto e o longe não; andar descobre o caminho; o `M` abre e fecha sem parar o jogo; sob roteiro o mapa não abre; o dia seguinte lembra e a partida nova esquece | segundos |
 | `rua/conferir_arremesso.tscn` | o scroll passa pelo que dá para ter na mão; a pedra gasta e chama o zumbi perto, e só ele; o passo chama (correndo de mais longe, andando só colado, agachado nunca); o monte de pedras rende pedra | segundos |
 | `rua/conferir_falas.tscn` | os dois jeitos de falar (de perto o jogo para, o E completa e avança, e o jogo só volta com o E solto; pelo rádio o jogo segue e as linhas passam sozinhas) e a fila | segundos |

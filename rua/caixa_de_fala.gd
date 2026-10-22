@@ -20,7 +20,13 @@ extends CanvasLayer
 ##
 ## A caixa fica no meio de baixo e deixa livres os dois cantos da HUD (vida e
 ## balas a esquerda, mochila a direita): pelo radio o jogo segue, e o jogador
-## precisa ver a vida enquanto ouve.
+## precisa ver a vida enquanto ouve. Maior desde 21/10/2026 (Joao: "aumenta a
+## caixa de texto e a fonte"): ocupa todo o vao entre os cantos, mais alta, com
+## letra e retrato maiores.
+##
+## **A voz** (21/10/2026): enquanto a linha e escrita, a voz de quem fala toca
+## (Som.falar, as gravacoes da pasta "personagens" do Drive) e cala quando a
+## linha fica inteira. Quem chama diz a voz; sem voz, a caixa fala muda.
 
 ## Emitido no fim de cada fala - quem chamou espera com `await`.
 signal acabou
@@ -60,12 +66,12 @@ func _exit_tree() -> void:
 		_parar_o_jogo(false)
 
 ## Fala de perto: o jogo para e o E avanca.
-func falar(nome: String, linhas: PackedStringArray, retrato: Texture2D = null) -> void:
-	_entrar({ "nome": nome, "linhas": linhas, "retrato": retrato, "radio": false })
+func falar(nome: String, linhas: PackedStringArray, retrato: Texture2D = null, voz := "") -> void:
+	_entrar({ "nome": nome, "linhas": linhas, "retrato": retrato, "radio": false, "voz": voz })
 
 ## Fala pelo radio: o jogo segue e as linhas passam sozinhas.
-func pelo_radio(nome: String, linhas: PackedStringArray, retrato: Texture2D = null) -> void:
-	_entrar({ "nome": nome, "linhas": linhas, "retrato": retrato, "radio": true })
+func pelo_radio(nome: String, linhas: PackedStringArray, retrato: Texture2D = null, voz := "") -> void:
+	_entrar({ "nome": nome, "linhas": linhas, "retrato": retrato, "radio": true, "voz": voz })
 
 ## Se ainda ha fala na tela, na fila, ou o E de uma fala de perto ainda nao foi
 ## solto. Quem encadeia falas (o tutorial) espera isto, e nao o `acabou`: o
@@ -84,6 +90,7 @@ func calar_o_radio() -> void:
 	if not _atual.is_empty() and _atual["radio"]:
 		_atual = {}
 		_caixa.visible = false
+		Som.calar_a_voz()
 		acabou.emit()
 
 func _entrar(fala: Dictionary) -> void:
@@ -109,6 +116,8 @@ func _process(delta: float) -> void:
 		if de_perto and Input.is_action_just_pressed("vasculhar"):
 			_letras = linha.length()
 		_texto.visible_characters = int(_letras)
+		if _letras >= linha.length():
+			Som.calar_a_voz()
 		return
 
 	if de_perto:
@@ -136,6 +145,7 @@ func _avancar() -> void:
 
 func _proxima_fala() -> void:
 	if _fila.is_empty():
+		Som.calar_a_voz()
 		_caixa.visible = false
 		_parar_o_jogo(false)
 		return
@@ -155,6 +165,7 @@ func _mostrar_linha() -> void:
 	_texto.visible_characters = 0
 	_letras = 0.0
 	_lendo = 0.0
+	Som.falar(_atual.get("voz", ""))
 
 func _parar_o_jogo(sim: bool) -> void:
 	aberta = sim
