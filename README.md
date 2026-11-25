@@ -13,6 +13,9 @@ ponto e clique, onde está a narrativa.
 
 1. Baixe o **Godot 4.7.2 stable**, build padrão (não a .NET/C# — o projeto é em
    GDScript): <https://godotengine.org/download>. É portátil, não tem instalador.
+   O jogo é desenhado em 1280 × 720 e escala com a janela (`canvas_items`,
+   proporção mantida): maximizado ou em tela cheia, tudo cresce junto, e a rua
+   mostra o mesmo pedaço do mapa em qualquer tamanho.
 2. Abra o `project.godot` desta pasta.
 3. **F5** roda o jogo: abre na tela de título, onde se escolhe o modo. **F6**
    roda a cena aberta (`rua/rua.tscn` pula o título e começa na campanha).
@@ -144,13 +147,18 @@ noite — examinar ela ou estudar um documento gasta uma. A cama encerra a noite
   João, como era: 100 pontos, cada toque de zumbi tira 12, e zerar acaba o dia
   na força — você acorda em casa de vida cheia, e a mochila fica na rua. O toque
   também empurra e interrompe o vasculho. Fome e água continuam fora.
-- **O mundo esvazia e não repõe.** Móvel vasculhado ontem nasce vazio hoje.
+- **O mundo esvazia e não repõe.** Móvel vasculhado ontem nasce vazio hoje —
+  menos o **documento que não chegou em casa** (25/11/2026): perdido num dia
+  que deu errado, ou largado no chão, ele volta sozinho para o móvel de onde
+  saiu, sem o resto do que o móvel tinha. São seis e a cura pede quatro;
+  sem isso, perder três deixava a partida sem como ganhar, em silêncio.
 - **A porta da fachada é a única entrada da sua casa.** Ela é sólida e fecha o
   vão inteiro: não se atravessa a pé. O único jeito de entrar é segurar `E`
   nela — e o que se entra é a cena da casa, não o interior do prédio. É por isso
   que o jogador nasce na calçada, e é a única construção do mapa assim.
 - **Só entra em casa o que passou por essa porta.** Amanhecer na rua ou cair
-  sem vida deixa a mochila na calçada e custa o dia — são os três únicos jeitos
+  sem vida custa o dia e o que estava na mochila não entra — o documento volta
+  para onde estava, e é preciso buscá-lo de novo. São os três únicos jeitos
   de um dia acabar (no hardcore, cair acaba a partida em vez do dia).
 - **Você começa armado, com uma Beretta 9mm e um pente** (30/09/2026). O
   vasculho rende balas, e só balas, além dos documentos; balas são equipamento:

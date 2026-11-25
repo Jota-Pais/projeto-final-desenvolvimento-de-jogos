@@ -449,9 +449,11 @@ func o_que_voltou() -> String:
 	if Travessia.fim_do_dia != Travessia.FimDoDia.PELA_PORTA:
 		if Travessia.documentos_perdidos == 0:
 			return "Você não estava carregando documento nenhum. Não havia o que perder."
-		return "Ficou na rua: %d documento%s. Nada disso entrou em casa." % [
+		var um := Travessia.documentos_perdidos == 1
+		return "Ficou na rua: %d documento%s. Nada disso entrou em casa. %s" % [
 			Travessia.documentos_perdidos,
-			"" if Travessia.documentos_perdidos == 1 else "s",
+			"" if um else "s",
+			"Ele continua onde você o achou." if um else "Eles continuam onde você os achou.",
 		]
 	if Travessia.documentos.is_empty():
 		return "Da rua não veio nada."

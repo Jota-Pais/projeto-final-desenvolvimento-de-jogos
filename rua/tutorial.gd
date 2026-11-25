@@ -208,7 +208,9 @@ func _ready() -> void:
 	_montar_a_tela()
 	# A rua inteira montada (cenario, jogador no lugar) antes do roteiro.
 	await get_tree().process_frame
+	if _saiu(): return
 	await get_tree().process_frame
+	if _saiu(): return
 	_jogador = get_tree().get_first_node_in_group("jogador") as Node2D
 	_cenario = get_parent().get_node_or_null("Cenario")
 	_caixa = get_parent().get_node_or_null("CaixaDeFala")
@@ -220,10 +222,18 @@ func _ready() -> void:
 	match Travessia.tutorial:
 		"abertura":
 			await _abertura()
+			if _saiu(): return
 		"favor":
 			_comecar_o_favor()
 		"voltar_ao_portao":
 			_voltar_ao_portao()
+
+## Se a rua ja fechou (o dia acabou, a cena trocou) enquanto um roteiro
+## esperava: daqui nao ha mais arvore, e quem esperava para ali mesmo. Sem
+## isto, morrer na abertura ou entrar em casa no primeiro quadro deixava o
+## roteiro rodando fora da cena, cuspindo erro (25/11/2026).
+func _saiu() -> bool:
+	return not is_inside_tree()
 
 func _p(ponto_do_png: Vector2) -> Vector2:
 	return Mapa.ponto_do_png(ponto_do_png)
@@ -375,12 +385,15 @@ func _abertura() -> void:
 	_mostrar_objetivo("")
 	_cena(true, 0.0)
 	await _conversa(Falas.ABERTURA)
+	if _saiu(): return
 
 	# A caminhada apreensiva pela calcada: devagar, parando para olhar em volta.
 	for passo in CAMINHADA:
 		await _andar_ate(_p(passo["ponto"]), VELOCIDADE_SEM_RUMO)
+		if _saiu(): return
 		for olhar in passo.get("olhares", []):
 			await _parar_olhando(olhar[0], olhar[1])
+			if _saiu(): return
 
 	# O zumbi sai correndo do terreno, atras dele. A memoria do toque
 	# (rua/zumbi.gd) faz ele perseguir de longe, sem ter precisado ver.
@@ -389,8 +402,10 @@ func _abertura() -> void:
 	# A camera pega os dois.
 	_no_quadro = [_jogador, zumbi]
 	await get_tree().create_timer(0.35).timeout
+	if _saiu(): return
 	_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
 	await get_tree().create_timer(SUSTO).timeout
+	if _saiu(): return
 
 	# A fuga para a rua, e o portao do Antonio correndo enquanto isso; a
 	# camera pega o portao tambem.
@@ -400,6 +415,7 @@ func _abertura() -> void:
 	_antonio.mirar(zumbi.global_position)
 	for ponto in FUGA:
 		await _andar_ate(_p(ponto), Jogador.VELOCIDADE_CORRENDO, 3.0)
+		if _saiu(): return
 	_jogador.direcao_do_roteiro = Vector2.ZERO
 
 	# O tiro do Antonio, do vao: quando o zumbi chega perto (ou encalhou).
@@ -409,6 +425,7 @@ func _abertura() -> void:
 		_jogador.olhar_para(zumbi.global_position - _jogador.global_position)
 		_antonio.olhar_para(zumbi.global_position)
 		await get_tree().physics_frame
+		if _saiu(): return
 		tempo += get_physics_process_delta_time()
 	if is_instance_valid(zumbi):
 		_antonio.atirar_em(zumbi.global_position)
@@ -420,26 +437,35 @@ func _abertura() -> void:
 	# depois do tiro") e o resto e com ele fechado.
 	_no_quadro = [_jogador, _antonio]
 	await get_tree().create_timer(0.6).timeout
+	if _saiu(): return
 	await _andar_ate(_p(DEPOIS_DO_TIRO), Jogador.VELOCIDADE)
+	if _saiu(): return
 	_jogador.olhar_para(_antonio.global_position - _jogador.global_position)
 	_antonio.olhar_para(_jogador.global_position)
 	_no_quadro.clear()
 	create_tween().tween_property(camera, "offset", _meio_da_conversa(), 0.4)
 	await _conversa(Falas.O_TIRO)
+	if _saiu(): return
 	await _correr_o_portao(false)
+	if _saiu(): return
 	_antonio.baixar_a_arma()
 	await _conversa(Falas.PORTAO_FECHADO)
+	if _saiu(): return
 
 	# "Nao, espera!": ele corre ate o portao fechado.
 	_no_quadro.clear()
 	await _andar_ate(_p(CONVERSA_NO_PORTAO), Jogador.VELOCIDADE_CORRENDO)
+	if _saiu(): return
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
 	create_tween().tween_property(camera, "offset", _meio_da_conversa(), 0.6)
 	await _conversa(Falas.PORTAO)
+	if _saiu(): return
 	# "Quer saber? Pega isso.": o radio por cima do muro, e o favor.
 	await _jogar_o_radio()
+	if _saiu(): return
 	await _conversa(Falas.PORTAO_DEPOIS_DO_RADIO)
+	if _saiu(): return
 
 	_cena(false)
 	camera.zoom = Vector2.ONE * Jogador.ZOOM_DA_CAMERA
@@ -505,6 +531,7 @@ func _correr_o_portao(abrir: bool) -> void:
 	passo.tween_property(portao, "position", aberto if abrir else fechado, SEGUNDOS_DO_PORTAO) \
 		.set_trans(Tween.TRANS_SINE)
 	await passo.finished
+	if _saiu(): return
 
 ## O radio voando do Antonio para a mao do jogador, e o aviso de que chegou.
 func _jogar_o_radio() -> void:
@@ -525,6 +552,7 @@ func _jogar_o_radio() -> void:
 		radio.global_position = de.lerp(ate, f) - Vector2(0.0, 4.0 * 70.0 * f * (1.0 - f))
 		radio.rotation = f * TAU
 		await get_tree().process_frame
+		if _saiu(): return
 	radio.queue_free()
 	_avisar("Você recebeu: rádio")
 
@@ -535,12 +563,14 @@ func _andar_ate(alvo: Vector2, velocidade: float, limite := 10.0) -> void:
 	while _jogador.global_position.distance_to(alvo) > 4.0 and tempo < limite:
 		_jogador.direcao_do_roteiro = (alvo - _jogador.global_position).normalized()
 		await get_tree().physics_frame
+		if _saiu(): return
 		tempo += get_physics_process_delta_time()
 	_jogador.direcao_do_roteiro = Vector2.ZERO
 
 func _parar_olhando(direcao: Vector2, segundos: float) -> void:
 	_jogador.olhar_para(direcao)
 	await get_tree().create_timer(segundos).timeout
+	if _saiu(): return
 
 ## Uma conversa de perto: cada bloco de linhas seguidas do mesmo personagem
 ## numa caixa, com o retrato de quem fala. Espera o jogo voltar
@@ -557,9 +587,11 @@ func _conversa(falas: Array) -> void:
 		_caixa.calar_o_radio()
 		while _caixa.ocupada():
 			await get_tree().process_frame
+			if _saiu(): return
 		_caixa.falar(quem, linhas, retrato, Falas.VOZES.get(quem, ""))
 		while _caixa.ocupada() or get_tree().paused:
 			await get_tree().process_frame
+			if _saiu(): return
 
 ## Uma fala pelo radio: como a conversa, uma caixa por bloco de linhas do
 ## mesmo personagem, com o retrato dele - desde o roteiro do Joao o Fabiano
@@ -717,6 +749,7 @@ func _ao_arremessar(_qual: String, _onde: Vector2) -> void:
 		return
 	Travessia.tutorial_avisos["arremessou"] = true
 	await get_tree().create_timer(ESPERA_DO_ARREMESSO).timeout
+	if _saiu(): return
 	if Travessia.tutorial_avisos.has("arremesso") and _de_posto(_zumbi_da_porta) and not _caixa.ocupada():
 		_radio(Falas.RADIO_ARREMESSO_ERROU)
 
@@ -774,13 +807,16 @@ func _entregar() -> void:
 	_jogador.olhar_para(Vector2.DOWN)
 	_antonio.olhar_para(_jogador.global_position)
 	await _conversa(Falas.PORTAO_VOLTA)
+	if _saiu(): return
 	_dar_a_9mm()
 	await _conversa(Falas.FIM_DA_BETA)
+	if _saiu(): return
 	_jogador.no_roteiro = false
 	_no_roteiro = false
 	Travessia.tutorial = "fim"
 	_mostrar_objetivo("Fim da beta — explore à vontade")
 	await get_tree().create_timer(FIM_NA_TELA).timeout
+	if _saiu(): return
 	_mostrar_objetivo("")
 
 ## A recompensa: a Beretta 9mm na mao, com um pente.

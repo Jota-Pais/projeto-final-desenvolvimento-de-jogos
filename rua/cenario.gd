@@ -944,6 +944,18 @@ func _criar_movel(tipo: String, posicao: Vector2, chave: String, documento := 0,
 	_indice_da_chave[chave] = _chaves_dos_moveis.size()
 	_chaves_dos_moveis.append(chave)
 	movel.nasce_vazio = Travessia.moveis_vazios.has(chave)
+	# O documento que nao chegou em casa volta para o movel de onde saiu
+	# (25/11/2026): sao seis no mapa e a cura pede quatro, entao perder tres
+	# num dia que deu errado (ou largados no chao, que nao passa do dia)
+	# deixava a partida sem como ganhar, e o jogo seguia ate o prazo sem
+	# dizer. O movel continua sem o resto (balas, garrafa): so o documento
+	# volta.
+	if movel.nasce_vazio and documento > 0:
+		var doc: String = Construcao.DOCUMENTOS[documento - 1]
+		if not doc in Travessia.documentos:
+			var so_o_documento: Array[String] = [doc]
+			movel.achados = so_o_documento
+			movel.nasce_vazio = false
 	if movel.nasce_vazio:
 		_moveis_ja_vazios += 1
 
